@@ -129,7 +129,7 @@ export default function CameraScreen() {
           autoPlay
           playsInline
           muted
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover z-0"
           data-testid="video-camera-preview"
         />
       )}
