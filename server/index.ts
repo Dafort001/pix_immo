@@ -196,6 +196,16 @@ app.use("*", async (c, next) => {
 app.use("/public/*", serveStatic({ root: "./" }));
 app.use("/favicon.ico", serveStatic({ path: "./public/favicon.ico" }));
 
+// In production, serve built static assets from dist/public
+if (process.env.NODE_ENV === "production") {
+  // Serve all static assets (JS, CSS, images, etc.)
+  app.use("/assets/*", serveStatic({ root: "./dist/public" }));
+  app.use("/manifest.json", serveStatic({ path: "./dist/public/manifest.json" }));
+  app.use("/sw.js", serveStatic({ path: "./dist/public/sw.js" }));
+  app.use("/robots.txt", serveStatic({ path: "./public/robots.txt" }));
+  app.use("/sitemap.xml", serveStatic({ path: "./public/sitemap.xml" }));
+}
+
 // Middleware to get current user from session cookie
 async function getSessionUser(c: any) {
   const sessionId = getCookie(c, SESSION_CONFIG.cookieName);
@@ -2763,6 +2773,11 @@ app.get("/healthz", (c) => {
     version: "1.0.0",
   });
 });
+
+// SPA fallback: serve index.html for all non-API routes (production only)
+if (process.env.NODE_ENV === "production") {
+  app.get("*", serveStatic({ path: "./dist/public/index.html" }));
+}
 
 // Start server with async initialization (production mode)
 async function startServer() {
