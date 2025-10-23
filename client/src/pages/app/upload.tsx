@@ -81,8 +81,8 @@ export default function UploadScreen() {
           
           {/* WiFi Toggle - Landscape optimiert */}
           <div className="flex items-center gap-3">
-            <span style={{ fontSize: '14px' }} className="text-gray-600">
-              {wifiOnly ? '📶 Nur WLAN' : '📡 Mobil erlaubt'}
+            <span style={{ fontSize: '14px' }} className="text-gray-600" data-testid="text-wifi-status">
+              {wifiOnly ? 'Nur WLAN' : 'Mobil erlaubt'}
             </span>
             <HapticButton
               variant={wifiOnly ? 'outline' : 'default'}
@@ -177,7 +177,7 @@ export default function UploadScreen() {
                   {file.status === 'complete' && '✓ Fertig'}
                   {file.status === 'uploading' && `${Math.round(file.progress)}%`}
                   {file.status === 'pending' && 'Wartend...'}
-                  {file.status === 'error' && '⚠ Fehler'}
+                  {file.status === 'error' && 'Fehler'}
                 </div>
               </div>
               {file.status !== 'complete' && (

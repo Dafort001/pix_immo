@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Upload, Home, ChevronRight, Layers } from 'lucide-react';
+import { Check, Upload, Home, ChevronRight, Layers, ImageIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { useHaptic } from '@/hooks/useHaptic';
@@ -158,7 +158,7 @@ export default function GalleryScreen() {
                 style={{ backgroundColor: photo.color }}
               >
                 {/* Image Placeholder */}
-                <div className="text-5xl opacity-30">🏠</div>
+                <ImageIcon className="w-12 h-12 text-gray-400" strokeWidth={1} />
                 
                 {/* Gradient Overlay on hover */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />

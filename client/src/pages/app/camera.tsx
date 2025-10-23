@@ -151,7 +151,7 @@ export default function CameraScreen() {
               >
                 <CameraIcon className="w-16 h-16 mb-4 mx-auto text-blue-500" strokeWidth={1} />
               </motion.div>
-              <p className="text-sm text-white" style={{ fontSize: '14px' }}>
+              <p className="text-sm text-white" style={{ fontSize: '14px' }} data-testid="text-camera-loading">
                 Kamera wird geladen...
               </p>
             </div>
@@ -162,13 +162,13 @@ export default function CameraScreen() {
               <div className="w-20 h-20 mx-auto mb-4 bg-blue-500/20 rounded-full flex items-center justify-center">
                 <CameraIcon className="w-10 h-10 text-blue-400" strokeWidth={1.5} />
               </div>
-              <p className="text-white mb-2" style={{ fontSize: '16px' }}>
+              <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-demo-mode-title">
                 Demo-Modus
               </p>
-              <p className="text-gray-400 mb-4" style={{ fontSize: '14px' }}>
+              <p className="text-gray-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-demo-mode-subtitle">
                 Live-Kamera nur auf echten Geräten mit HTTPS verfügbar
               </p>
-              <p className="text-xs text-gray-500" style={{ fontSize: '12px' }}>
+              <p className="text-xs text-gray-500" style={{ fontSize: '12px' }} data-testid="text-demo-mode-description">
                 Alle Funktionen sind testbar. Die Kamera wird automatisch aktiviert, wenn die App auf einem iPhone über HTTPS läuft.
               </p>
             </div>
