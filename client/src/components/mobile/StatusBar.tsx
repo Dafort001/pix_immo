@@ -1,33 +1,42 @@
-import { Wifi, Battery, Signal } from "lucide-react";
+import { Wifi, Battery } from 'lucide-react';
 
 interface StatusBarProps {
-  time?: string;
-  showNotch?: boolean;
+  variant?: 'light' | 'dark';
 }
 
-export function StatusBar({ time, showNotch = true }: StatusBarProps) {
-  const currentTime = time || new Date().toLocaleTimeString('de-DE', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-
+export function StatusBar({ variant = 'dark' }: StatusBarProps) {
+  const textColor = variant === 'dark' ? 'text-gray-900' : 'text-white';
+  
+  const now = new Date();
+  const hours = now.getHours().toString().padStart(2, '0');
+  const minutes = now.getMinutes().toString().padStart(2, '0');
+  
   return (
-    <div className="relative w-full">
-      {/* iOS-Style Notch */}
-      {showNotch && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-40 h-7 bg-black rounded-b-3xl z-50" />
-      )}
+    <div className={`w-full h-11 flex items-center justify-between px-6 ${textColor}`} data-testid="statusbar-container">
+      {/* Zeit */}
+      <div className="flex-1" data-testid="statusbar-time">
+        <span className="text-sm">{hours}:{minutes}</span>
+      </div>
 
-      {/* Status Bar Content */}
-      <div className="relative flex items-center justify-between px-6 h-12 text-sm z-40">
-        {/* Left: Time */}
-        <div className="font-semibold">{currentTime}</div>
+      {/* Dynamic Island Spacer */}
+      <div style={{ width: '126px' }} />
 
-        {/* Right: Icons */}
-        <div className="flex items-center gap-2">
-          <Signal className="w-4 h-4" />
-          <Wifi className="w-4 h-4" />
-          <Battery className="w-5 h-4" />
+      {/* Status Icons */}
+      <div className="flex-1 flex items-center justify-end gap-1" data-testid="statusbar-icons">
+        {/* Signal Bars */}
+        <div className="flex items-center gap-0.5">
+          <div className={`w-0.5 h-2 rounded-full ${variant === 'dark' ? 'bg-gray-900' : 'bg-white'}`} />
+          <div className={`w-0.5 h-2.5 rounded-full ${variant === 'dark' ? 'bg-gray-900' : 'bg-white'}`} />
+          <div className={`w-0.5 h-3 rounded-full ${variant === 'dark' ? 'bg-gray-900' : 'bg-white'}`} />
+          <div className={`w-0.5 h-3.5 rounded-full ${variant === 'dark' ? 'bg-gray-900' : 'bg-white'}`} />
+        </div>
+
+        {/* WiFi */}
+        <Wifi className="w-4 h-4 ml-1" strokeWidth={2} />
+
+        {/* Batterie */}
+        <div className="ml-1 flex items-center gap-0.5">
+          <Battery className="w-6 h-4" strokeWidth={2} fill="currentColor" />
         </div>
       </div>
     </div>

@@ -1,36 +1,29 @@
-import { Button, ButtonProps } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { motion } from 'framer-motion';
+import { useHaptic, type HapticStyle } from '@/hooks/useHaptic';
+import { Button, type ButtonProps } from '@/components/ui/button';
+import { forwardRef } from 'react';
 
 interface HapticButtonProps extends ButtonProps {
-  hapticStyle?: "light" | "medium" | "heavy";
+  hapticStyle?: HapticStyle;
 }
 
-export function HapticButton({ 
-  hapticStyle = "medium", 
-  className,
-  onClick,
-  ...props 
-}: HapticButtonProps) {
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    // Trigger haptic feedback if available
-    if ('vibrate' in navigator) {
-      const vibrationPattern = {
-        light: [10],
-        medium: [20],
-        heavy: [30, 10, 30],
-      };
-      navigator.vibrate(vibrationPattern[hapticStyle]);
-    }
+export const HapticButton = forwardRef<HTMLButtonElement, HapticButtonProps>(
+  ({ hapticStyle = 'light', onClick, children, ...props }, ref) => {
+    const { trigger } = useHaptic();
 
-    // Call original onClick
-    onClick?.(e);
-  };
+    const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      trigger(hapticStyle);
+      onClick?.(e);
+    };
 
-  return (
-    <Button
-      {...props}
-      onClick={handleClick}
-      className={cn("active:scale-95 transition-transform", className)}
-    />
-  );
-}
+    return (
+      <motion.div whileTap={{ scale: 0.95 }}>
+        <Button ref={ref} onClick={handleClick} {...props}>
+          {children}
+        </Button>
+      </motion.div>
+    );
+  }
+);
+
+HapticButton.displayName = 'HapticButton';

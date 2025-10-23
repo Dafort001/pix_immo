@@ -1,89 +1,111 @@
-import { useEffect } from "react";
-import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
-import { Camera, Image, Upload } from "lucide-react";
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { Camera, Sparkles, Image } from 'lucide-react';
+import { HapticButton } from '@/components/mobile/HapticButton';
+import { useLocation } from 'wouter';
 
 export default function SplashScreen() {
   const [, setLocation] = useLocation();
+  const [fadeIn, setFadeIn] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setFadeIn(true), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
-    <div className="flex flex-col items-center justify-between min-h-screen bg-background p-8">
-      {/* Logo/Brand */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="w-24 h-24 mx-auto bg-primary rounded-3xl flex items-center justify-center">
-            <Camera className="w-12 h-12 text-primary-foreground" />
+    <div className="h-full w-full bg-gradient-to-br from-blue-50 to-white flex flex-col items-center justify-center p-8 pb-20">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="text-center max-w-sm flex-1 flex flex-col justify-center"
+      >
+        {/* Logo mit Animation */}
+        <motion.div
+          initial={{ scale: 0.8 }}
+          animate={{ scale: 1 }}
+          transition={{
+            duration: 0.6,
+            type: 'spring',
+            stiffness: 200,
+          }}
+          className="mb-8"
+        >
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl mb-4">
+            <Camera className="w-12 h-12 text-white" strokeWidth={1.5} />
           </div>
-          <h1 className="text-4xl font-bold">pix.immo</h1>
-          <p className="text-muted-foreground text-lg">
-            Professional Real Estate Photography
+        </motion.div>
+
+        {/* Title & Subtitle */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}
+        >
+          <h1 style={{ fontSize: '32px' }} className="text-gray-900 mb-2 font-bold">
+            pix.immo Capture
+          </h1>
+          <p style={{ fontSize: '16px' }} className="text-gray-600 mb-10">
+            Professionelle Immobilienfotografie
           </p>
-        </div>
-      </div>
+        </motion.div>
 
-      {/* Feature Cards */}
-      <div className="w-full max-w-md space-y-4 mb-8">
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Camera className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Professionelle Kamera</h3>
-            <p className="text-sm text-muted-foreground">HDR & RAW Support</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Image className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Galerie-Verwaltung</h3>
-            <p className="text-sm text-muted-foreground">Organisiere deine Fotos</p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 p-4 rounded-xl bg-card border">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Upload className="w-6 h-6 text-primary" />
-          </div>
-          <div>
-            <h3 className="font-semibold">Automatischer Upload</h3>
-            <p className="text-sm text-muted-foreground">Direkt zur Cloud</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Action Buttons */}
-      <div className="w-full max-w-md space-y-3">
-        <Button
-          className="w-full h-14 text-lg"
-          onClick={() => setLocation("/app/camera")}
-          data-testid="button-start-camera"
+        {/* Action Buttons - Horizontal angeordnet */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="flex gap-4 justify-center"
         >
-          <Camera className="w-5 h-5 mr-2" />
-          Kamera öffnen
-        </Button>
-        
-        <Button
-          variant="outline"
-          className="w-full h-14 text-lg"
-          onClick={() => setLocation("/app/gallery")}
-          data-testid="button-open-gallery"
-        >
-          <Image className="w-5 h-5 mr-2" />
-          Galerie ansehen
-        </Button>
+          <HapticButton
+            size="lg"
+            onClick={() => setLocation('/app/camera')}
+            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-8"
+            hapticStyle="medium"
+            style={{ fontSize: '16px' }}
+            data-testid="button-start-camera"
+          >
+            <Sparkles className="w-5 h-5 mr-2" strokeWidth={1.5} />
+            Neues Projekt
+          </HapticButton>
+          
+          <HapticButton
+            size="lg"
+            variant="outline"
+            onClick={() => setLocation('/app/gallery')}
+            className="border-gray-300 text-gray-700 hover:bg-gray-100 px-8"
+            hapticStyle="light"
+            style={{ fontSize: '16px' }}
+            data-testid="button-open-gallery"
+          >
+            <Image className="w-5 h-5 mr-2" strokeWidth={1.5} />
+            Projekt fortsetzen
+          </HapticButton>
+        </motion.div>
 
-        <Button
-          variant="ghost"
-          className="w-full"
-          onClick={() => setLocation("/")}
-          data-testid="link-back-home"
+        {/* Feature Highlights */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
+          className="mt-10 flex items-center justify-center gap-8 text-gray-500"
+          style={{ fontSize: '13px' }}
         >
-          Zurück zur Website
-        </Button>
-      </div>
+          <span className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            RAW Format
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            47 Raumtypen
+          </span>
+          <span className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            Auto-Upload
+          </span>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
