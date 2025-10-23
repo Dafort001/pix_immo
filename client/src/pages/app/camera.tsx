@@ -134,53 +134,56 @@ export default function CameraScreen() {
         />
       )}
 
-      {/* Top Controls - DEBUG VERSION */}
-      <div className="absolute top-16 left-0 right-0 z-50 flex items-center justify-between px-6">
-        <div 
-          onClick={closeCamera}
-          className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
-          data-testid="button-close-camera"
-        >
-          X
-        </div>
-
-        <div 
-          onClick={flipCamera}
-          className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
-          data-testid="button-flip-camera"
-        >
-          ↻
-        </div>
-      </div>
-
-      {/* Bottom Controls - DEBUG VERSION */}
-      <div className="absolute bottom-0 left-0 right-0 z-50 pb-8">
-        <div className="flex items-center justify-center gap-8 px-6">
-          {/* Flash Toggle */}
+      {/* UI Overlay - Force new compositing layer for iOS Safari */}
+      <div className="fixed inset-0 z-50 pointer-events-none" style={{ transform: 'translateZ(0)' }}>
+        {/* Top Controls - DEBUG VERSION */}
+        <div className="absolute top-16 left-0 right-0 flex items-center justify-between px-6 pointer-events-auto">
           <div 
-            onClick={() => setFlashEnabled(!flashEnabled)}
-            className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-black text-2xl font-bold cursor-pointer"
-            data-testid="button-toggle-flash"
+            onClick={closeCamera}
+            className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
+            data-testid="button-close-camera"
           >
-            ⚡
+            X
           </div>
 
-          {/* Capture Button */}
           <div 
-            onClick={capturePhoto}
-            className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer"
-            data-testid="button-capture-photo"
+            onClick={flipCamera}
+            className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
+            data-testid="button-flip-camera"
           >
-            📷
+            ↻
           </div>
+        </div>
 
-          {/* Gallery Button */}
-          <div 
-            onClick={goToGallery}
-            className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer"
-            data-testid="button-goto-gallery"
-          >
-            {photoCount || "📁"}
+        {/* Bottom Controls - DEBUG VERSION */}
+        <div className="absolute bottom-0 left-0 right-0 pb-8 pointer-events-auto">
+          <div className="flex items-center justify-center gap-8 px-6">
+            {/* Flash Toggle */}
+            <div 
+              onClick={() => setFlashEnabled(!flashEnabled)}
+              className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-black text-2xl font-bold cursor-pointer"
+              data-testid="button-toggle-flash"
+            >
+              ⚡
+            </div>
+
+            {/* Capture Button */}
+            <div 
+              onClick={capturePhoto}
+              className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer"
+              data-testid="button-capture-photo"
+            >
+              📷
+            </div>
+
+            {/* Gallery Button */}
+            <div 
+              onClick={goToGallery}
+              className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer"
+              data-testid="button-goto-gallery"
+            >
+              {photoCount || "📁"}
+            </div>
           </div>
         </div>
       </div>
