@@ -134,72 +134,54 @@ export default function CameraScreen() {
         />
       )}
 
-      {/* Top Controls */}
-      <div className="absolute top-16 left-0 right-0 z-40 flex items-center justify-between px-6">
-        <HapticButton
-          size="icon"
-          variant="ghost"
+      {/* Top Controls - DEBUG VERSION */}
+      <div className="absolute top-16 left-0 right-0 z-50 flex items-center justify-between px-6">
+        <div 
           onClick={closeCamera}
-          className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
+          className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
           data-testid="button-close-camera"
         >
-          <X className="w-6 h-6" />
-        </HapticButton>
+          X
+        </div>
 
-        <HapticButton
-          size="icon"
-          variant="ghost"
+        <div 
           onClick={flipCamera}
-          className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
+          className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
           data-testid="button-flip-camera"
         >
-          <RotateCcw className="w-6 h-6" />
-        </HapticButton>
+          ↻
+        </div>
       </div>
 
-      {/* Bottom Controls */}
-      <div className="absolute bottom-0 left-0 right-0 z-40 pb-8 safe-area-bottom">
+      {/* Bottom Controls - DEBUG VERSION */}
+      <div className="absolute bottom-0 left-0 right-0 z-50 pb-8">
         <div className="flex items-center justify-center gap-8 px-6">
           {/* Flash Toggle */}
-          <HapticButton
-            size="icon"
-            variant="ghost"
+          <div 
             onClick={() => setFlashEnabled(!flashEnabled)}
-            className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
+            className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-black text-2xl font-bold cursor-pointer"
             data-testid="button-toggle-flash"
           >
-            {flashEnabled ? (
-              <Zap className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-            ) : (
-              <ZapOff className="w-6 h-6" />
-            )}
-          </HapticButton>
+            ⚡
+          </div>
 
           {/* Capture Button */}
-          <HapticButton
-            size="icon"
+          <div 
             onClick={capturePhoto}
-            hapticStyle="heavy"
-            className="w-20 h-20 rounded-full border-4 border-white bg-black/30 hover:bg-black/50 active:scale-90"
+            className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer"
             data-testid="button-capture-photo"
           >
-            <div className="w-16 h-16 rounded-full bg-white" />
-          </HapticButton>
+            📷
+          </div>
 
-          {/* Gallery Button (with count) */}
-          <HapticButton
-            size="icon"
-            variant="ghost"
+          {/* Gallery Button */}
+          <div 
             onClick={goToGallery}
-            className="relative text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
+            className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer"
             data-testid="button-goto-gallery"
           >
-            <div className="w-10 h-10 rounded-lg border-2 border-white flex items-center justify-center">
-              {photoCount > 0 && (
-                <span className="text-sm font-bold" data-testid="text-photo-count">{photoCount}</span>
-              )}
-            </div>
-          </HapticButton>
+            {photoCount || "📁"}
+          </div>
         </div>
       </div>
     </div>
