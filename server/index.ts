@@ -748,7 +748,7 @@ app.post("/api/ios/auth/refresh", tokenRefreshLimiter, async (c) => {
 
 // POST /api/ios/upload/init - Initialize upload session (iOS-specific, uses jobId instead of jobNumber)
 app.post("/api/ios/upload/init", iosUploadLimiter, async (c) => {
-  const logCtx: LogContext = { request_id: c.get("request_id") };
+  const logCtx: LogContext = { requestId: c.req.header("X-Request-ID") || "unknown" };
   
   try {
     // Authenticate user via JWT Bearer token
@@ -1932,7 +1932,7 @@ app.post("/api/jobs", async (c) => {
 
     const demoUser = await ensureDemoUser();
     const { propertyName, propertyAddress } = validation.data;
-    const job = await storage.createJob(demoUser.id, propertyName, propertyAddress);
+    const job = await storage.createJob(demoUser.id, { propertyName, propertyAddress });
     
     return c.json(job, 201);
   } catch (error) {

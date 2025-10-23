@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Grid3x3, Timer, Image, X, Camera as CameraIcon, BarChart3, Layers } from 'lucide-react';
+import { Grid3x3, Timer, Image, X, Camera as CameraIcon, BarChart3, Layers, RotateCw } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { Badge } from '@/components/ui/badge';
 import { StatusBar } from '@/components/mobile/StatusBar';
@@ -22,6 +22,7 @@ export default function CameraScreen() {
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string>('');
   const [cameraLoading, setCameraLoading] = useState(true);
+  const [videoRotation, setVideoRotation] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const { trigger } = useHaptic();
 
@@ -121,6 +122,11 @@ export default function CameraScreen() {
     setShowHistogram(!showHistogram);
   };
 
+  const rotateVideo = () => {
+    trigger('medium');
+    setVideoRotation((prev) => (prev + 180) % 360);
+  };
+
   return (
     <div className="h-full flex flex-col bg-black">
       {/* Capture Flash */}
@@ -139,7 +145,7 @@ export default function CameraScreen() {
             playsInline
             muted
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ transform: `scale(${zoom})` }}
+            style={{ transform: `scale(${zoom}) rotate(${videoRotation}deg)` }}
             data-testid="video-camera-preview"
           />
         ) : cameraLoading ? (
@@ -218,6 +224,18 @@ export default function CameraScreen() {
               data-testid="button-toggle-grid"
             >
               <Grid3x3 className="w-5 h-5" strokeWidth={1.5} />
+            </HapticButton>
+            <HapticButton
+              size="icon"
+              variant="ghost"
+              onClick={rotateVideo}
+              hapticStyle="medium"
+              className={`bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 ${
+                videoRotation !== 0 ? 'text-blue-400' : 'text-white'
+              }`}
+              data-testid="button-rotate-video"
+            >
+              <RotateCw className="w-5 h-5" strokeWidth={1.5} />
             </HapticButton>
             <HapticButton
               size="icon"
