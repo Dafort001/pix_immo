@@ -79,7 +79,7 @@ async function startDevServer() {
   // Seed demo jobs on startup (only if database is empty)
   await seedDemoJobs(storage);
 
-  server.listen(port, "0.0.0.0", () => {
+  server.listen(Number(port), "0.0.0.0", () => {
     console.log(`🚀 Dev server running on http://0.0.0.0:${port}`);
     console.log(`🎨 React app: http://localhost:${port}/`);
     console.log(`📝 Auth sandbox: http://localhost:${port}/public/auth.html`);
