@@ -136,54 +136,72 @@ export default function CameraScreen() {
 
       {/* UI Overlay - Force new compositing layer for iOS Safari */}
       <div className="fixed inset-0 z-50 pointer-events-none" style={{ transform: 'translateZ(0)' }}>
-        {/* Top Controls - DEBUG VERSION */}
+        {/* Top Controls */}
         <div className="absolute top-16 left-0 right-0 flex items-center justify-between px-6 pointer-events-auto">
-          <div 
+          <HapticButton
+            size="icon"
+            variant="ghost"
             onClick={closeCamera}
-            className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
+            className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
             data-testid="button-close-camera"
           >
-            X
-          </div>
+            <X className="w-6 h-6" />
+          </HapticButton>
 
-          <div 
+          <HapticButton
+            size="icon"
+            variant="ghost"
             onClick={flipCamera}
-            className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold cursor-pointer"
+            className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
             data-testid="button-flip-camera"
           >
-            ↻
-          </div>
+            <RotateCcw className="w-6 h-6" />
+          </HapticButton>
         </div>
 
-        {/* Bottom Controls - DEBUG VERSION */}
-        <div className="absolute bottom-0 left-0 right-0 pb-8 pointer-events-auto">
+        {/* Bottom Controls */}
+        <div className="absolute bottom-0 left-0 right-0 pb-8 safe-area-bottom pointer-events-auto">
           <div className="flex items-center justify-center gap-8 px-6">
             {/* Flash Toggle */}
-            <div 
+            <HapticButton
+              size="icon"
+              variant="ghost"
               onClick={() => setFlashEnabled(!flashEnabled)}
-              className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-black text-2xl font-bold cursor-pointer"
+              className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
               data-testid="button-toggle-flash"
             >
-              ⚡
-            </div>
+              {flashEnabled ? (
+                <Zap className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+              ) : (
+                <ZapOff className="w-6 h-6" />
+              )}
+            </HapticButton>
 
             {/* Capture Button */}
-            <div 
+            <HapticButton
+              size="icon"
               onClick={capturePhoto}
-              className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center text-white text-3xl font-bold cursor-pointer"
+              hapticStyle="heavy"
+              className="w-20 h-20 rounded-full border-4 border-white bg-black/30 hover:bg-black/50 active:scale-90"
               data-testid="button-capture-photo"
             >
-              📷
-            </div>
+              <div className="w-16 h-16 rounded-full bg-white" />
+            </HapticButton>
 
-            {/* Gallery Button */}
-            <div 
+            {/* Gallery Button (with count) */}
+            <HapticButton
+              size="icon"
+              variant="ghost"
               onClick={goToGallery}
-              className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer"
+              className="relative text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
               data-testid="button-goto-gallery"
             >
-              {photoCount || "📁"}
-            </div>
+              <div className="w-10 h-10 rounded-lg border-2 border-white flex items-center justify-center">
+                {photoCount > 0 && (
+                  <span className="text-sm font-bold" data-testid="text-photo-count">{photoCount}</span>
+                )}
+              </div>
+            </HapticButton>
           </div>
         </div>
       </div>
