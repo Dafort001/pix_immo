@@ -102,7 +102,7 @@ export default function CameraScreen() {
   };
 
   return (
-    <div className="relative w-full h-screen bg-black overflow-hidden">
+    <div className="relative w-full h-screen bg-black">
       {/* Status Bar */}
       <div className="absolute top-0 left-0 right-0 z-50 text-white">
         <StatusBar />
@@ -140,7 +140,7 @@ export default function CameraScreen() {
           size="icon"
           variant="ghost"
           onClick={closeCamera}
-          className="text-white hover:bg-white/20 rounded-full w-12 h-12"
+          className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
           data-testid="button-close-camera"
         >
           <X className="w-6 h-6" />
@@ -150,7 +150,7 @@ export default function CameraScreen() {
           size="icon"
           variant="ghost"
           onClick={flipCamera}
-          className="text-white hover:bg-white/20 rounded-full w-12 h-12"
+          className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
           data-testid="button-flip-camera"
         >
           <RotateCcw className="w-6 h-6" />
@@ -165,7 +165,7 @@ export default function CameraScreen() {
             size="icon"
             variant="ghost"
             onClick={() => setFlashEnabled(!flashEnabled)}
-            className="text-white hover:bg-white/20 rounded-full w-12 h-12"
+            className="text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
             data-testid="button-toggle-flash"
           >
             {flashEnabled ? (
@@ -180,7 +180,7 @@ export default function CameraScreen() {
             size="icon"
             onClick={capturePhoto}
             hapticStyle="heavy"
-            className="w-20 h-20 rounded-full border-4 border-white bg-white/20 hover:bg-white/30 active:scale-90"
+            className="w-20 h-20 rounded-full border-4 border-white bg-black/30 hover:bg-black/50 active:scale-90"
             data-testid="button-capture-photo"
           >
             <div className="w-16 h-16 rounded-full bg-white" />
@@ -191,7 +191,7 @@ export default function CameraScreen() {
             size="icon"
             variant="ghost"
             onClick={goToGallery}
-            className="relative text-white hover:bg-white/20 rounded-full w-12 h-12"
+            className="relative text-white bg-black/50 hover:bg-black/70 rounded-full w-12 h-12"
             data-testid="button-goto-gallery"
           >
             <div className="w-10 h-10 rounded-lg border-2 border-white flex items-center justify-center">
