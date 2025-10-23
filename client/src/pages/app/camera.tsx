@@ -103,6 +103,11 @@ export default function CameraScreen() {
 
   return (
     <div className="relative w-full h-screen bg-black">
+      {/* EXTREME DEBUG TEST - FULL SCREEN RED BOX */}
+      <div className="fixed inset-0 z-[9999] bg-red-500 flex items-center justify-center text-white text-4xl font-bold" style={{ transform: 'translateZ(0)', pointerEvents: 'auto' }}>
+        SIEHST DU DAS?
+      </div>
+
       {/* Status Bar */}
       <div className="absolute top-0 left-0 right-0 z-50 text-white">
         <StatusBar />
