@@ -50,6 +50,7 @@ import Payment from "@/pages/portal/payment";
 import StatusTimeline from "@/pages/portal/status-timeline";
 import Delivery from "@/pages/portal/delivery";
 import NotFound from "@/pages/not-found";
+import TestDebug from "@/pages/test-debug";
 
 function Router() {
   return (
@@ -100,6 +101,7 @@ function Router() {
       <Route path="/portal/payment/:jobId" component={Payment} />
       <Route path="/portal/status/:jobId" component={StatusTimeline} />
       <Route path="/portal/delivery/:jobId" component={Delivery} />
+      <Route path="/test" component={TestDebug} />
       <Route component={NotFound} />
     </Switch>
   );
