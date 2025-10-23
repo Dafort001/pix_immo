@@ -21,54 +21,75 @@ export default function CameraScreen() {
   const [horizonTilt, setHorizonTilt] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [cameraError, setCameraError] = useState<string>('');
-  const [cameraLoading, setCameraLoading] = useState(true);
+  const [cameraReady, setCameraReady] = useState(false);
   const [videoRotation, setVideoRotation] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
 
   const zoomLevels = [0.5, 1, 1.5, 2];
 
-  // Kamera-Stream initialisieren
+  // Automatische iOS-Orientierungskorrektur
   useEffect(() => {
-    let mounted = true;
-
-    const initCamera = async () => {
-      setCameraLoading(true);
-      try {
-        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-          throw new Error('Camera API not supported');
-        }
-
-        const mediaStream = await navigator.mediaDevices.getUserMedia({
-          video: {
-            facingMode: 'environment',
-            width: { ideal: 1920 },
-            height: { ideal: 1080 }
-          }
-        });
-        
-        if (mounted && videoRef.current) {
-          videoRef.current.srcObject = mediaStream;
-          setStream(mediaStream);
-          setCameraError('');
-        }
-      } catch (err: any) {
-        console.log('Kamera-Initialisierung:', err.name, err.message);
-        
-        if (mounted) {
-          setCameraError('demo');
-        }
-      } finally {
-        setCameraLoading(false);
-      }
+    const updateOrientation = () => {
+      // iOS-spezifische Orientierung
+      const orientation = (window as any).orientation || screen.orientation?.angle || 0;
+      // Kompensiere iOS Kamera-Rotation (environment camera ist um 180° pre-rotiert)
+      setVideoRotation(-orientation);
     };
 
-    initCamera();
-
+    updateOrientation();
+    window.addEventListener('orientationchange', updateOrientation);
+    
     return () => {
-      mounted = false;
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
+      window.removeEventListener('orientationchange', updateOrientation);
+    };
+  }, []);
+
+  // Kamera-Stream initialisieren (nur bei User-Klick!)
+  const startCamera = async () => {
+    trigger('medium');
+    setCameraError('');
+    
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('Camera API not supported on this device');
+      }
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: 'environment',
+          width: { ideal: 1920 },
+          height: { ideal: 1080 }
+        }
+      });
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = mediaStream;
+        // iOS braucht explizites play()
+        await videoRef.current.play();
+        streamRef.current = mediaStream;
+        setStream(mediaStream);
+        setCameraReady(true);
+      }
+    } catch (err: any) {
+      console.error('Kamera-Fehler:', err.name, err.message);
+      
+      if (err.name === 'NotAllowedError') {
+        setCameraError('Kamera-Zugriff wurde verweigert. Bitte erlaube den Zugriff in den Einstellungen.');
+      } else if (err.name === 'NotFoundError') {
+        setCameraError('Keine Kamera gefunden.');
+      } else {
+        setCameraError(`Fehler: ${err.message}`);
+      }
+    }
+  };
+
+  // Cleanup beim Verlassen
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
   }, []);
@@ -122,10 +143,6 @@ export default function CameraScreen() {
     setShowHistogram(!showHistogram);
   };
 
-  const rotateVideo = () => {
-    trigger('medium');
-    setVideoRotation((prev) => (prev + 180) % 360);
-  };
 
   return (
     <div className="h-full flex flex-col bg-black">
@@ -138,7 +155,7 @@ export default function CameraScreen() {
       {/* Camera Viewfinder */}
       <div className="flex-1 relative bg-black overflow-hidden">
         {/* Live-Kamera-Vorschau oder Fallback */}
-        {stream ? (
+        {stream && cameraReady ? (
           <video
             ref={videoRef}
             autoPlay
@@ -148,35 +165,49 @@ export default function CameraScreen() {
             style={{ transform: `scale(${zoom}) rotate(${videoRotation}deg)` }}
             data-testid="video-camera-preview"
           />
-        ) : cameraLoading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-gray-600 text-center">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-              >
-                <CameraIcon className="w-16 h-16 mb-4 mx-auto text-blue-500" strokeWidth={1} />
-              </motion.div>
-              <p className="text-sm text-white" style={{ fontSize: '14px' }} data-testid="text-camera-loading">
-                Kamera wird geladen...
-              </p>
-            </div>
-          </div>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-900 to-gray-900">
             <div className="text-center px-6 max-w-sm">
-              <div className="w-20 h-20 mx-auto mb-4 bg-blue-500/20 rounded-full flex items-center justify-center">
+              <div className="w-20 h-20 mx-auto mb-6 bg-blue-500/20 rounded-full flex items-center justify-center">
                 <CameraIcon className="w-10 h-10 text-blue-400" strokeWidth={1.5} />
               </div>
-              <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-demo-mode-title">
-                Demo-Modus
-              </p>
-              <p className="text-gray-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-demo-mode-subtitle">
-                Live-Kamera nur auf echten Geräten mit HTTPS verfügbar
-              </p>
-              <p className="text-xs text-gray-500" style={{ fontSize: '12px' }} data-testid="text-demo-mode-description">
-                Alle Funktionen sind testbar. Die Kamera wird automatisch aktiviert, wenn die App auf einem iPhone über HTTPS läuft.
-              </p>
+              
+              {cameraError ? (
+                <>
+                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-error-title">
+                    Kamera-Fehler
+                  </p>
+                  <p className="text-red-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-camera-error-message">
+                    {cameraError}
+                  </p>
+                  <HapticButton
+                    onClick={startCamera}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    hapticStyle="medium"
+                    data-testid="button-retry-camera"
+                  >
+                    Erneut versuchen
+                  </HapticButton>
+                </>
+              ) : (
+                <>
+                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-start-title">
+                    Kamera starten
+                  </p>
+                  <p className="text-gray-400 mb-6" style={{ fontSize: '14px' }} data-testid="text-camera-start-subtitle">
+                    Tippe auf den Button um die Kamera zu aktivieren
+                  </p>
+                  <HapticButton
+                    onClick={startCamera}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    hapticStyle="medium"
+                    data-testid="button-start-camera"
+                  >
+                    <CameraIcon className="w-5 h-5 mr-2 inline" />
+                    Kamera aktivieren
+                  </HapticButton>
+                </>
+              )}
             </div>
           </div>
         )}
@@ -224,18 +255,6 @@ export default function CameraScreen() {
               data-testid="button-toggle-grid"
             >
               <Grid3x3 className="w-5 h-5" strokeWidth={1.5} />
-            </HapticButton>
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={rotateVideo}
-              hapticStyle="medium"
-              className={`bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 ${
-                videoRotation !== 0 ? 'text-blue-400' : 'text-white'
-              }`}
-              data-testid="button-rotate-video"
-            >
-              <RotateCw className="w-5 h-5" strokeWidth={1.5} />
             </HapticButton>
             <HapticButton
               size="icon"
