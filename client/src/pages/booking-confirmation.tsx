@@ -140,12 +140,12 @@ export default function BookingConfirmation() {
                 </div>
               )}
 
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <h3 className="mb-2 flex items-center gap-2 font-semibold text-blue-900">
+              <div className="rounded-lg border p-4" style={{ borderColor: 'rgba(74, 88, 73, 0.3)', backgroundColor: 'rgba(74, 88, 73, 0.05)' }}>
+                <h3 className="mb-2 flex items-center gap-2 font-semibold" style={{ color: '#4A5849' }}>
                   <Calendar className="h-4 w-4" />
                   Nächste Schritte
                 </h3>
-                <ul className="space-y-2 text-sm text-blue-800">
+                <ul className="space-y-2 text-sm" style={{ color: '#5B6D5A' }}>
                   <li>✓ Wir werden Ihre Anfrage prüfen und uns innerhalb von 24 Stunden bei Ihnen melden.</li>
                   <li>✓ Sie erhalten eine Bestätigung per E-Mail mit allen Details.</li>
                   <li>✓ Nach Terminabsprache erhalten Sie weitere Informationen zum Ablauf.</li>

@@ -32,7 +32,7 @@ export default function UploadsOverview() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "uploaded": return "bg-blue-500";
+      case "uploaded": return "bg-[#4A5849]";
       case "processing": return "bg-yellow-500";
       case "captioned": return "bg-purple-500";
       case "expose_ready": return "bg-green-500";
