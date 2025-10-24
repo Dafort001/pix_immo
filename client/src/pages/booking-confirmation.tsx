@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Home, Calendar } from "lucide-react";
+import { SunPositionIndicator } from "@/components/SunPositionIndicator";
 
 export default function BookingConfirmation() {
   const [, setLocation] = useLocation();
@@ -137,6 +138,23 @@ export default function BookingConfirmation() {
                       </li>
                     ))}
                   </ul>
+                </div>
+              )}
+
+              {/* Sun Position Indicator */}
+              {booking.addressLat && booking.addressLng && (
+                <div className="rounded-lg border p-4" style={{ borderColor: 'rgba(74, 88, 73, 0.3)', backgroundColor: 'rgba(74, 88, 73, 0.05)' }}>
+                  <h3 className="mb-3 font-semibold" style={{ color: '#4A5849' }}>
+                    Sonnenstand-Planer
+                  </h3>
+                  <SunPositionIndicator
+                    lat={parseFloat(booking.addressLat)}
+                    lng={parseFloat(booking.addressLng)}
+                    initialDate={booking.preferredDate ? new Date(booking.preferredDate) : new Date()}
+                  />
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    Optimal für Immobilienfotografie: 1-2 Stunden vor Sonnenuntergang (Goldene Stunde)
+                  </p>
                 </div>
               )}
 
