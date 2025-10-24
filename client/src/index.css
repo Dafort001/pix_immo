@@ -4,6 +4,15 @@
 
 /* LIGHT MODE */
 :root {
+  /* === Sage & Clay v3 Brand Colors === */
+  --sage-dark: 140 15% 29%;        /* #4A5849 - Haupttextfarbe, gedecktes Grün */
+  --ui-sage: 140 9% 46%;           /* #6E7E6B - Sekundäre UI, Linien/Rahmen */
+  --copper: 21 57% 42%;            /* #A85B2E - Akzent- und CTA-Farbe, warmes Kupfer */
+  --copper-dark: 21 55% 36%;       /* #8F4C28 - Hover/Active-Zustände */
+  --neutral-white: 0 0% 98%;       /* #FAFAFA - Seitenhintergrund */
+  --pure-white: 0 0% 100%;         /* #FFFFFF - Content-Container */
+  --border-gray: 0 0% 90%;         /* #E5E5E5 - Trennlinien */
+  
   --button-outline: rgba(0,0,0, .10);
   --badge-outline: rgba(0,0,0, .05);
 
@@ -14,67 +23,67 @@
   --elevate-1: rgba(0,0,0, .03);
   --elevate-2: rgba(0,0,0, .08);
 
-  --background: 0 0% 98%;
+  --background: 0 0% 98%;           /* Neutral White #FAFAFA */
 
-  --foreground: 220 15% 15%;
+  --foreground: 140 15% 29%;        /* Sage Dark #4A5849 */
 
-  --border: 220 10% 88%;
+  --border: 0 0% 90%;               /* Border Gray #E5E5E5 */
 
-  --card: 0 0% 100%;
+  --card: 0 0% 100%;                /* Pure White #FFFFFF */
 
-  --card-foreground: 220 15% 15%;
+  --card-foreground: 140 15% 29%;   /* Sage Dark #4A5849 */
 
-  --card-border: 220 8% 93%;
+  --card-border: 0 0% 90%;          /* Border Gray #E5E5E5 */
 
-  --sidebar: 0 0% 98%;
+  --sidebar: 0 0% 98%;              /* Neutral White #FAFAFA */
 
-  --sidebar-foreground: 220 15% 15%;
+  --sidebar-foreground: 140 15% 29%;  /* Sage Dark #4A5849 */
 
-  --sidebar-border: 220 8% 90%;
+  --sidebar-border: 0 0% 90%;       /* Border Gray #E5E5E5 */
 
-  --sidebar-primary: 140 15% 29%;
+  --sidebar-primary: 140 15% 29%;   /* Sage Dark #4A5849 */
 
-  --sidebar-primary-foreground: 220 15% 98%;
+  --sidebar-primary-foreground: 0 0% 100%;  /* Pure White #FFFFFF */
 
-  --sidebar-accent: 220 10% 92%;
+  --sidebar-accent: 140 9% 46%;     /* UI-Sage #6E7E6B */
 
-  --sidebar-accent-foreground: 220 15% 20%;
+  --sidebar-accent-foreground: 0 0% 100%;  /* Pure White #FFFFFF */
 
-  --sidebar-ring: 140 15% 29%;
+  --sidebar-ring: 140 15% 29%;      /* Sage Dark #4A5849 */
 
-  --popover: 0 0% 100%;
+  --popover: 0 0% 100%;             /* Pure White #FFFFFF */
 
-  --popover-foreground: 220 15% 15%;
+  --popover-foreground: 140 15% 29%;  /* Sage Dark #4A5849 */
 
-  --popover-border: 220 10% 90%;
+  --popover-border: 0 0% 90%;       /* Border Gray #E5E5E5 */
 
-  --primary: 140 15% 29%;
+  --primary: 140 15% 29%;           /* Sage Dark #4A5849 - Hauptfarbe */
 
-  --primary-foreground: 220 15% 98%;
+  --primary-foreground: 0 0% 100%;  /* Pure White #FFFFFF */
 
-  --secondary: 220 10% 94%;
+  --secondary: 0 0% 95%;            /* Helles Neutralgrau */
 
-  --secondary-foreground: 220 15% 20%;
+  --secondary-foreground: 140 15% 29%;  /* Sage Dark #4A5849 */
 
-  --muted: 220 10% 95%;
+  --muted: 0 0% 96%;                /* Sehr helles Grau */
 
-  --muted-foreground: 220 10% 45%;
+  --muted-foreground: 140 9% 46%;   /* UI-Sage #6E7E6B */
 
-  --accent: 220 12% 93%;
+  --accent: 21 57% 42%;             /* Copper #A85B2E - CTA/Akzent */
 
-  --accent-foreground: 220 15% 20%;
+  --accent-foreground: 0 0% 100%;   /* Pure White #FFFFFF */
 
   --destructive: 0 72% 51%;
 
   --destructive-foreground: 0 0% 98%;
 
-  --input: 220 15% 75%;
-  --ring: 140 15% 29%;
-  --chart-1: 140 15% 29%;
-  --chart-2: 142 71% 45%;
-  --chart-3: 280 85% 60%;
-  --chart-4: 25 95% 53%;
-  --chart-5: 340 82% 52%;
+  --input: 140 9% 46%;              /* UI-Sage #6E7E6B */
+  --ring: 140 15% 29%;              /* Sage Dark #4A5849 */
+  --chart-1: 140 15% 29%;           /* Sage Dark */
+  --chart-2: 21 57% 42%;            /* Copper */
+  --chart-3: 140 9% 46%;            /* UI-Sage */
+  --chart-4: 21 55% 36%;            /* Copper Dark */
+  --chart-5: 0 0% 70%;              /* Neutral Gray */
 
   --font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-serif: Georgia, serif;
@@ -123,6 +132,12 @@
 }
 
 .dark {
+  /* === Sage & Clay v3 Dark Mode === */
+  --sage-dark: 140 15% 45%;        /* Aufgehellt für Dark Mode */
+  --ui-sage: 140 9% 52%;           /* Aufgehellt für Dark Mode */
+  --copper: 21 57% 52%;            /* Aufgehellt für Dark Mode */
+  --copper-dark: 21 55% 46%;       /* Aufgehellt für Dark Mode */
+  
   --button-outline: rgba(255,255,255, .10);
   --badge-outline: rgba(255,255,255, .05);
 
@@ -132,67 +147,67 @@
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
 
-  --background: 220 15% 12%;
+  --background: 140 10% 12%;        /* Dunkles Sageolive-Grau */
 
-  --foreground: 220 15% 95%;
+  --foreground: 140 5% 95%;         /* Helles Sage-Weiß */
 
-  --border: 220 12% 22%;
+  --border: 140 8% 22%;             /* Sage-Grau Border */
 
-  --card: 220 15% 16%;
+  --card: 140 8% 16%;               /* Dunkle Sage-Card */
 
-  --card-foreground: 220 15% 95%;
+  --card-foreground: 140 5% 95%;    /* Helles Sage-Weiß */
 
-  --card-border: 220 12% 24%;
+  --card-border: 140 8% 24%;        /* Sage Border */
 
-  --sidebar: 220 15% 14%;
+  --sidebar: 140 10% 14%;           /* Dunkles Sage */
 
-  --sidebar-foreground: 220 15% 95%;
+  --sidebar-foreground: 140 5% 95%; /* Helles Sage-Weiß */
 
-  --sidebar-border: 220 12% 20%;
+  --sidebar-border: 140 8% 20%;     /* Sage Border */
 
-  --sidebar-primary: 140 15% 35%;
+  --sidebar-primary: 140 15% 45%;   /* Sage Dark aufgehellt */
 
-  --sidebar-primary-foreground: 220 15% 98%;
+  --sidebar-primary-foreground: 0 0% 100%;  /* Pure White */
 
-  --sidebar-accent: 220 12% 20%;
+  --sidebar-accent: 140 8% 20%;     /* Dunkel Sage-Akzent */
 
-  --sidebar-accent-foreground: 220 15% 95%;
+  --sidebar-accent-foreground: 140 5% 95%;  /* Helles Sage */
 
-  --sidebar-ring: 140 15% 35%;
+  --sidebar-ring: 140 15% 45%;      /* Sage Dark aufgehellt */
 
-  --popover: 220 14% 18%;
+  --popover: 140 10% 18%;           /* Dunkles Sage Popover */
 
-  --popover-foreground: 220 15% 95%;
+  --popover-foreground: 140 5% 95%; /* Helles Sage */
 
-  --popover-border: 220 12% 26%;
+  --popover-border: 140 8% 26%;     /* Sage Border */
 
-  --primary: 140 15% 35%;
+  --primary: 140 15% 45%;           /* Sage Dark aufgehellt für Dark Mode */
 
-  --primary-foreground: 220 15% 98%;
+  --primary-foreground: 0 0% 100%;  /* Pure White */
 
-  --secondary: 220 12% 22%;
+  --secondary: 140 8% 22%;          /* Dunkles Sage-Grau */
 
-  --secondary-foreground: 220 15% 95%;
+  --secondary-foreground: 140 5% 95%;  /* Helles Sage */
 
-  --muted: 220 12% 20%;
+  --muted: 140 8% 18%;              /* Dunkles Sage */
 
-  --muted-foreground: 220 10% 70%;
+  --muted-foreground: 140 9% 65%;   /* UI-Sage aufgehellt */
 
-  --accent: 220 14% 24%;
+  --accent: 21 57% 52%;             /* Copper aufgehellt */
 
-  --accent-foreground: 220 15% 95%;
+  --accent-foreground: 0 0% 100%;   /* Pure White */
 
   --destructive: 0 84% 60%;
 
   --destructive-foreground: 220 15% 98%;
 
-  --input: 220 15% 35%;
-  --ring: 140 15% 35%;
-  --chart-1: 140 15% 35%;
-  --chart-2: 142 76% 50%;
-  --chart-3: 280 85% 65%;
-  --chart-4: 25 95% 58%;
-  --chart-5: 340 82% 57%;
+  --input: 140 9% 52%;              /* UI-Sage aufgehellt */
+  --ring: 140 15% 45%;              /* Sage Dark aufgehellt */
+  --chart-1: 140 15% 45%;           /* Sage Dark */
+  --chart-2: 21 57% 52%;            /* Copper */
+  --chart-3: 140 9% 52%;            /* UI-Sage */
+  --chart-4: 21 55% 46%;            /* Copper Dark */
+  --chart-5: 0 0% 60%;              /* Neutral Gray */
 
   --shadow-2xs: 0px 1px 2px 0px hsl(220 15% 5% / 0.3);
   --shadow-xs: 0px 1px 3px 0px hsl(220 15% 5% / 0.4);
