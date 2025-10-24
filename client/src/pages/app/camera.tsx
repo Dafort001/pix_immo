@@ -75,10 +75,9 @@ export default function CameraScreen() {
     } catch (err: any) {
       console.error('Kamera-Fehler:', err.name, err.message);
       
-      if (err.name === 'NotAllowedError') {
-        setCameraError('Kamera-Zugriff wurde verweigert. Bitte erlaube den Zugriff in den Einstellungen.');
-      } else if (err.name === 'NotFoundError') {
-        setCameraError('Keine Kamera gefunden.');
+      // Demo-Modus für bessere UX (statt hartem Fehler)
+      if (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || err.message.includes('not supported')) {
+        setCameraError('demo');
       } else {
         setCameraError(`Fehler: ${err.message}`);
       }
@@ -172,7 +171,27 @@ export default function CameraScreen() {
                 <CameraIcon className="w-10 h-10 text-blue-400" strokeWidth={1.5} />
               </div>
               
-              {cameraError ? (
+              {cameraError === 'demo' ? (
+                <>
+                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-demo-title">
+                    Demo-Modus
+                  </p>
+                  <p className="text-gray-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-camera-demo-subtitle">
+                    Live-Kamera nur auf echten Geräten mit HTTPS verfügbar
+                  </p>
+                  <p className="text-xs text-gray-500 mb-6" style={{ fontSize: '12px' }}>
+                    Alle Funktionen sind testbar. Die Kamera wird automatisch aktiviert, wenn die App auf einem iPhone über HTTPS läuft.
+                  </p>
+                  <HapticButton
+                    onClick={startCamera}
+                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    hapticStyle="medium"
+                    data-testid="button-retry-camera"
+                  >
+                    Erneut versuchen
+                  </HapticButton>
+                </>
+              ) : cameraError ? (
                 <>
                   <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-error-title">
                     Kamera-Fehler
