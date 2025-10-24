@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SEOHead } from "@/components/SEOHead";
+import { WebHeader } from "@/components/WebHeader";
 
 type Job = {
   id: string;
@@ -94,7 +95,9 @@ export default function StatusTimeline() {
         description="Verfolgen Sie den Fortschritt Ihres Fotoshootings"
       />
 
-      {/* Header */}
+      <WebHeader />
+
+      {/* Page Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">

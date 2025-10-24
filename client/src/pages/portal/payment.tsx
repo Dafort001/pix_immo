@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { SEOHead } from "@/components/SEOHead";
+import { WebHeader } from "@/components/WebHeader";
 
 type Job = {
   id: string;
@@ -71,7 +72,9 @@ export default function Payment() {
         description="Bezahlen Sie Ihr Fotoshooting"
       />
 
-      {/* Header */}
+      <WebHeader />
+
+      {/* Page Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">

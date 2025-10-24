@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { SEOHead } from "@/components/SEOHead";
+import { WebHeader } from "@/components/WebHeader";
 
 type Image = {
   id: string;
@@ -72,8 +73,10 @@ export default function GallerySelection() {
         description="Wählen Sie die Bilder für die Bearbeitung aus"
       />
 
-      {/* Header */}
-      <div className="border-b bg-card sticky top-0 z-10">
+      <WebHeader />
+
+      {/* Page Header */}
+      <div className="border-b bg-card sticky top-[60px] z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

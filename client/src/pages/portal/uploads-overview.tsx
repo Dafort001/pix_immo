@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queryClient } from "@/lib/queryClient";
 import { SEOHead } from "@/components/SEOHead";
+import { WebHeader } from "@/components/WebHeader";
 
 type Job = {
   id: string;
@@ -48,7 +49,9 @@ export default function UploadsOverview() {
         description="Übersicht Ihrer hochgeladenen Immobilien-Fotoshootings"
       />
 
-      {/* Header */}
+      <WebHeader />
+
+      {/* Page Title */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
           <h1 className="text-3xl font-bold mb-2">Uploads</h1>

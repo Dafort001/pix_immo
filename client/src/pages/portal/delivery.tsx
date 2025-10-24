@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { SEOHead } from "@/components/SEOHead";
+import { WebHeader } from "@/components/WebHeader";
 
 type DeliveryPackage = {
   id: string;
@@ -106,7 +107,9 @@ export default function Delivery() {
         description="Laden Sie Ihre fertigen Bilder herunter"
       />
 
-      {/* Header */}
+      <WebHeader />
+
+      {/* Page Header */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
