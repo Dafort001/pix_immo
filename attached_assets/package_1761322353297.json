@@ -1,0 +1,49 @@
+{
+  "name": "pix-immo-capture",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Professional iPhone Camera App for Real Estate Photography",
+  "type": "module",
+  "author": "pix.immo Team",
+  "license": "UNLICENSED",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "motion": "^10.18.0",
+    "lucide-react": "^0.460.0",
+    "sonner": "2.0.3",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.5.5"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@types/node": "^22.10.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.6.3",
+    "vite": "^6.0.3",
+    "eslint": "^9.15.0",
+    "tailwindcss": "^4.0.0",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/pix-immo-capture.git"
+  },
+  "keywords": [
+    "pix.immo",
+    "real-estate",
+    "photography",
+    "iphone",
+    "camera-app",
+    "react",
+    "typescript"
+  ]
+}
