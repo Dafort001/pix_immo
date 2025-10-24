@@ -6,7 +6,28 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 import { getQueryFn } from "@/lib/queryClient";
-import type { Service } from "@shared/schema";
+
+// Service catalog structure from API
+interface ServiceData {
+  code: string;
+  category: string;
+  title: string;
+  description: string;
+  price_net: number | null;
+  unit: "flat" | "per_item" | "per_km" | "range" | "from";
+  price_range?: string;
+  price_from?: string;
+  notes: string;
+}
+
+interface ServiceCatalog {
+  services: ServiceData[];
+  meta: {
+    currency: string;
+    vat_rate: number;
+    last_updated: string;
+  };
+}
 
 const categoryLabels: Record<string, string> = {
   photography: "Immobilienfotografie",
@@ -28,26 +49,38 @@ const categoryOrder = [
   "travel"
 ];
 
-function formatPrice(priceInCents: number | null, priceNote?: string | null): string {
-  if (priceNote) return priceNote;
-  if (priceInCents === null) return "auf Anfrage";
-  const euros = priceInCents / 100;
-  return `€${euros.toFixed(2).replace(".", ",")}`;
+function formatPrice(service: ServiceData): string {
+  // Handle special pricing formats
+  if (service.price_range) return service.price_range;
+  if (service.price_from) return service.price_from;
+  if (service.price_net === null) return "auf Anfrage";
+  
+  // Format regular price
+  const euros = service.price_net;
+  const formatted = `€${euros.toFixed(2).replace(".", ",")}`;
+  
+  // Add unit suffix
+  if (service.unit === "per_item") return `${formatted} / Stück`;
+  if (service.unit === "per_km") return `${formatted} / km`;
+  
+  return formatted;
 }
 
 export default function Preisliste() {
   const [, setLocation] = useLocation();
   
-  const { data: services, isLoading, error } = useQuery<Service[]>({
+  const { data: catalog, isLoading, error } = useQuery<ServiceCatalog>({
     queryKey: ["/api/services"],
-    queryFn: getQueryFn<Service[]>({ on401: "returnNull" }),
+    queryFn: getQueryFn<ServiceCatalog>({ on401: "returnNull" }),
   });
 
   // Redirect to login if not authenticated
-  if (!services && !isLoading && !error) {
+  if (!catalog && !isLoading && !error) {
     setLocation("/login");
     return null;
   }
+  
+  const services = catalog?.services || [];
 
   if (isLoading) {
     return (
@@ -74,7 +107,7 @@ export default function Preisliste() {
     );
   }
 
-  if (!services || services.length === 0) {
+  if (services.length === 0) {
     return (
       <div className="container max-w-5xl py-8">
         <Alert data-testid="alert-empty">
@@ -88,13 +121,13 @@ export default function Preisliste() {
     );
   }
 
-  const servicesByCategory = services?.reduce((acc, service) => {
+  const servicesByCategory = services.reduce((acc, service) => {
     if (!acc[service.category]) {
       acc[service.category] = [];
     }
     acc[service.category].push(service);
     return acc;
-  }, {} as Record<string, Service[]>) || {};
+  }, {} as Record<string, ServiceData[]>);
 
   return (
     <div className="container max-w-5xl py-8" data-testid="page-preisliste">
@@ -116,23 +149,23 @@ export default function Preisliste() {
               
               <div className="space-y-4">
                 {categoryServices.map((service) => (
-                  <Card key={service.id} data-testid={`service-${service.serviceCode}`}>
+                  <Card key={service.code} data-testid={`service-${service.code}`}>
                     <CardHeader>
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <Badge variant="secondary" data-testid={`code-${service.serviceCode}`}>
-                              {service.serviceCode}
+                            <Badge variant="secondary" data-testid={`code-${service.code}`}>
+                              {service.code}
                             </Badge>
-                            <CardTitle className="text-lg">{service.name}</CardTitle>
+                            <CardTitle className="text-lg">{service.title}</CardTitle>
                           </div>
                           {service.description && (
                             <CardDescription>{service.description}</CardDescription>
                           )}
                         </div>
                         <div className="text-right shrink-0">
-                          <div className="text-lg" data-testid={`price-${service.serviceCode}`}>
-                            {formatPrice(service.netPrice, service.priceNote)}
+                          <div className="text-lg font-semibold" data-testid={`price-${service.code}`}>
+                            {formatPrice(service)}
                           </div>
                         </div>
                       </div>
