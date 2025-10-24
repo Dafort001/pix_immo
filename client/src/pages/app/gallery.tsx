@@ -5,13 +5,13 @@ import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { useHaptic } from '@/hooks/useHaptic';
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerDescription,
+  DrawerTrigger,
+} from '@/components/ui/drawer';
 import { useLocation } from 'wouter';
 
 interface Photo {
@@ -167,7 +167,7 @@ export default function GalleryScreen() {
               <motion.p
                 initial={{ opacity: 0, y: -5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-blue-600"
+                className="text-[#4A5849]"
                 style={{ fontSize: '14px', fontWeight: '400', marginTop: '2px' }}
                 data-testid="text-selection-count"
               >
@@ -180,7 +180,7 @@ export default function GalleryScreen() {
             variant="ghost"
             onClick={toggleSelectionMode}
             hapticStyle="medium"
-            className="text-blue-600 hover:bg-blue-50 rounded-lg px-3 py-1.5"
+            className="text-[#4A5849] hover:bg-[#4A5849]/10 rounded-lg px-3 py-1.5"
             style={{ fontSize: '16px' }}
             data-testid="button-toggle-selection-mode"
           >
@@ -221,8 +221,8 @@ export default function GalleryScreen() {
                   className="absolute top-2 right-2"
                 >
                   {photo.selected ? (
-                    <div className="w-6 h-6 bg-blue-600 rounded-full flex items-center justify-center shadow-lg" data-testid={`photo-selected-${photo.id}`}>
-                      <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                    <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4A5849' }} data-testid={`photo-selected-${photo.id}`}>
+                      <Check className="w-4 h-4 text-white" strokeWidth={1.5} />
                     </div>
                   ) : (
                     <div className="w-6 h-6 border-2 border-white rounded-full bg-black/20 backdrop-blur-sm" />
@@ -277,10 +277,11 @@ export default function GalleryScreen() {
                 setLocation('/app/upload');
               }}
               hapticStyle="medium"
-              className="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-2xl flex items-center justify-center"
+              className="w-14 h-14 rounded-full text-white shadow-2xl flex items-center justify-center"
+              style={{ backgroundColor: '#4A5849' }}
               data-testid="button-goto-upload"
             >
-              <Upload className="w-6 h-6" strokeWidth={2} />
+              <Upload className="w-4 h-4" strokeWidth={1.5} />
             </HapticButton>
           </motion.div>
         )}
@@ -297,46 +298,49 @@ export default function GalleryScreen() {
           >
             <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 p-4">
               <div className="flex items-center gap-3">
-                <Sheet>
-                  <SheetTrigger asChild>
+                <Drawer>
+                  <DrawerTrigger asChild>
                     <HapticButton
                       variant="default"
                       hapticStyle="medium"
-                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-xl py-3"
+                      className="flex-1 text-white rounded-xl py-3"
+                      style={{ backgroundColor: '#4A5849', gap: '8px' }}
                       data-testid="button-assign-roomtype"
                     >
-                      <Home className="w-5 h-5 mr-2" strokeWidth={1.5} />
+                      <Home className="w-4 h-4" strokeWidth={1.5} />
                       Raumtyp zuweisen
                     </HapticButton>
-                  </SheetTrigger>
-                  <SheetContent side="bottom" className="h-[400px]">
-                    <SheetHeader>
-                      <SheetTitle>Raumtyp auswählen</SheetTitle>
-                      <SheetDescription>
-                        Wählen Sie den Raumtyp für die ausgewählten Fotos aus.
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-4 space-y-2">
-                      {ROOM_TYPES.map((room) => (
-                        <button
-                          key={room}
-                          onClick={() => {
-                            setPhotos(photos.map(p => 
-                              p.selected ? { ...p, roomType: room, selected: false } : p
-                            ));
-                            setSelectionMode(false);
-                            trigger('success');
-                          }}
-                          className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
-                          data-testid={`roomtype-option-${room}`}
-                        >
-                          <span style={{ fontSize: '16px' }}>{room}</span>
-                          <ChevronRight className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
-                        </button>
-                      ))}
+                  </DrawerTrigger>
+                  <DrawerContent className="max-h-[80vh]">
+                    <div className="mx-auto w-full max-w-md p-4">
+                      <DrawerHeader className="p-0 mb-4">
+                        <DrawerTitle>Raumtyp auswählen</DrawerTitle>
+                        <DrawerDescription>
+                          Wählen Sie den Raumtyp für die ausgewählten Fotos aus.
+                        </DrawerDescription>
+                      </DrawerHeader>
+                      <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>
+                        {ROOM_TYPES.map((room) => (
+                          <button
+                            key={room}
+                            onClick={() => {
+                              setPhotos(photos.map(p => 
+                                p.selected ? { ...p, roomType: room, selected: false } : p
+                              ));
+                              setSelectionMode(false);
+                              trigger('success');
+                            }}
+                            className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
+                            data-testid={`roomtype-option-${room}`}
+                          >
+                            <span style={{ fontSize: '16px' }}>{room}</span>
+                            <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </SheetContent>
-                </Sheet>
+                  </DrawerContent>
+                </Drawer>
                 
                 <HapticButton
                   variant="default"
@@ -348,7 +352,7 @@ export default function GalleryScreen() {
                   className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 py-3"
                   data-testid="button-upload-selected"
                 >
-                  <Upload className="w-5 h-5" strokeWidth={1.5} />
+                  <Upload className="w-4 h-4" strokeWidth={1.5} />
                 </HapticButton>
               </div>
             </div>
@@ -356,33 +360,35 @@ export default function GalleryScreen() {
         )}
       </AnimatePresence>
 
-      {/* Room Type Assignment Sheet (Single Photo) */}
-      <Sheet open={selectedPhoto !== null} onOpenChange={(open) => !open && setSelectedPhoto(null)}>
-        <SheetContent side="bottom" className="h-[400px]">
-          <SheetHeader>
-            <SheetTitle>Raumtyp zuweisen</SheetTitle>
-            <SheetDescription>
-              Wählen Sie den Raumtyp für das ausgewählte Foto aus.
-            </SheetDescription>
-          </SheetHeader>
-          <div className="mt-4 space-y-2">
-            {ROOM_TYPES.map((room) => (
-              <button
-                key={room}
-                onClick={() => {
-                  updateRoomType(room);
-                  trigger('success');
-                }}
-                className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
-                data-testid={`single-roomtype-option-${room}`}
-              >
-                <span style={{ fontSize: '16px' }}>{room}</span>
-                <ChevronRight className="w-5 h-5 text-gray-400" strokeWidth={1.5} />
-              </button>
-            ))}
+      {/* Room Type Assignment Drawer (Single Photo) */}
+      <Drawer open={selectedPhoto !== null} onOpenChange={(open) => !open && setSelectedPhoto(null)}>
+        <DrawerContent className="max-h-[80vh]">
+          <div className="mx-auto w-full max-w-md p-4">
+            <DrawerHeader className="p-0 mb-4">
+              <DrawerTitle>Raumtyp zuweisen</DrawerTitle>
+              <DrawerDescription>
+                Wählen Sie den Raumtyp für das ausgewählte Foto aus.
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>
+              {ROOM_TYPES.map((room) => (
+                <button
+                  key={room}
+                  onClick={() => {
+                    updateRoomType(room);
+                    trigger('success');
+                  }}
+                  className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
+                  data-testid={`single-roomtype-option-${room}`}
+                >
+                  <span style={{ fontSize: '16px' }}>{room}</span>
+                  <ChevronRight className="w-4 h-4 text-gray-400" strokeWidth={1.5} />
+                </button>
+              ))}
+            </div>
           </div>
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
