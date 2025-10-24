@@ -41,10 +41,10 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
               className={`flex flex-col items-center gap-1 relative px-4 py-2 rounded-lg transition-all ${
                 isDark
                   ? isActive
-                    ? 'bg-blue-500/20 text-blue-400'
+                    ? 'bg-[#4A5849]/20 text-[#6B8268]'
                     : 'text-gray-400 hover:bg-white/10'
                   : isActive
-                    ? 'bg-blue-50 text-blue-600'
+                    ? 'bg-[#4A5849]/10 text-[#4A5849]'
                     : 'text-gray-600 hover:bg-gray-50'
               }`}
               data-testid={item.testId}
@@ -53,8 +53,8 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
                 <Icon 
                   className={`w-5 h-5 ${
                     isDark
-                      ? isActive ? 'text-blue-400' : 'text-gray-400'
-                      : isActive ? 'text-blue-600' : 'text-gray-600'
+                      ? isActive ? 'text-[#6B8268]' : 'text-gray-400'
+                      : isActive ? 'text-[#4A5849]' : 'text-gray-600'
                   }`} 
                   strokeWidth={1.5} 
                 />
@@ -62,7 +62,7 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="absolute -top-2 -right-2 bg-blue-500 text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1"
+                    className="absolute -top-2 -right-2 bg-[#4A5849] text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1"
                     style={{ fontSize: '10px' }}
                     data-testid={`${item.testId}-badge`}
                   >
@@ -73,8 +73,8 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
               <span 
                 className={`${
                   isDark
-                    ? isActive ? 'text-blue-400' : 'text-gray-400'
-                    : isActive ? 'text-blue-600' : 'text-gray-600'
+                    ? isActive ? 'text-[#6B8268]' : 'text-gray-400'
+                    : isActive ? 'text-[#4A5849]' : 'text-gray-600'
                 }`}
                 style={{ fontSize: '11px' }}
               >
@@ -84,7 +84,7 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
                 <motion.div
                   layoutId="activeTab"
                   className={`absolute -bottom-2 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full ${
-                    isDark ? 'bg-blue-400' : 'bg-blue-600'
+                    isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
                   }`}
                   transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                 />

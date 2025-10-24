@@ -25,28 +25,77 @@ interface Photo {
 }
 
 const ROOM_TYPES = [
-  'Unzugeordnet',
+  // Wohnbereiche
   'Wohnzimmer',
+  'Esszimmer',
   'Küche',
+  'Offene Küche',
+  'Essbereich',
+  'Flur/Eingang',
+  'Diele',
+  'Galerie',
+  'Wintergarten',
+  
+  // Schlafbereiche
   'Schlafzimmer',
-  'Bad',
+  'Hauptschlafzimmer',
+  'Kinderzimmer',
+  'Gästezimmer',
+  'Ankleidezimmer',
+  
+  // Sanitär
+  'Badezimmer',
+  'Gästebad',
+  'Hauptbad',
+  'En-Suite Bad',
   'WC',
-  'Flur',
+  'Sauna',
+  'Wellness',
+  
+  // Arbeit/Hobby
+  'Arbeitszimmer',
+  'Homeoffice',
+  'Bibliothek',
+  'Hobbyraum',
+  'Atelier',
+  
+  // Außenbereiche
   'Balkon',
   'Terrasse',
+  'Loggia',
+  'Dachterrasse',
   'Garten',
-  'Keller',
-  'Dachboden',
-  'Garage',
-  'Arbeitszimmer',
-  'Esszimmer',
-  'Kinderzimmer',
-  'Ankleidezimmer',
-  'Waschküche',
+  'Innenhof',
+  'Pool',
+  'Poolhaus',
+  
+  // Nebenräume
   'Abstellraum',
-  'Eingang',
+  'Hauswirtschaftsraum',
+  'Waschküche',
+  'Speisekammer',
+  'Garderobe',
+  
+  // Keller/Dach
+  'Keller',
+  'Weinkeller',
+  'Fitnessraum',
+  'Partyraum',
+  'Dachboden',
+  
+  // Außenansichten
+  'Außenansicht Vorne',
+  'Außenansicht Hinten',
+  'Außenansicht Seitlich',
+  'Fassade',
+  'Eingangsbereich',
+  'Carport',
+  'Garage',
+  
+  // Sonstiges
   'Treppenhaus',
-  'Außenansicht',
+  'Gemeinschaftsraum',
+  'Sonstiges'
 ];
 
 export default function GalleryScreen() {

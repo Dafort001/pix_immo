@@ -14,7 +14,7 @@ export default function SplashScreen() {
   }, []);
 
   return (
-    <div className="h-full w-full bg-gradient-to-br from-blue-50 to-white flex flex-col items-center justify-center p-8 pb-20">
+    <div className="h-full w-full bg-gradient-to-br from-[#4A5849]/5 to-white flex flex-col items-center justify-center p-8 pb-20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -32,7 +32,7 @@ export default function SplashScreen() {
           }}
           className="mb-8"
         >
-          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-blue-500 to-blue-600 shadow-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-gradient-to-br from-[#4A5849] to-[#3A4839] shadow-2xl mb-4">
             <Camera className="w-12 h-12 text-white" strokeWidth={1.5} />
           </div>
         </motion.div>
@@ -61,7 +61,7 @@ export default function SplashScreen() {
           <HapticButton
             size="lg"
             onClick={() => setLocation('/app/camera')}
-            className="bg-[#3B82F6] hover:bg-[#2563EB] text-white px-8"
+            className="bg-[#4A5849] hover:bg-[#3A4839] text-white px-8"
             hapticStyle="medium"
             style={{ fontSize: '16px' }}
             data-testid="button-start-camera"
@@ -93,15 +93,15 @@ export default function SplashScreen() {
           style={{ fontSize: '13px' }}
         >
           <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
             RAW Format
           </span>
           <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            47 Raumtypen
+            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
+            57 Raumtypen
           </span>
           <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
             Auto-Upload
           </span>
         </motion.div>
