@@ -4,6 +4,7 @@ import { Grid3x3, Timer, Image, X, Camera as CameraIcon, BarChart3, Layers, Rota
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { Badge } from '@/components/ui/badge';
 import { StatusBar } from '@/components/mobile/StatusBar';
+import { BottomNav } from '@/components/mobile/BottomNav';
 import { Histogram } from '@/components/mobile/Histogram';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
@@ -165,10 +166,10 @@ export default function CameraScreen() {
             data-testid="video-camera-preview"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-900 to-gray-900">
+          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
             <div className="text-center px-6 max-w-sm">
-              <div className="w-20 h-20 mx-auto mb-6 bg-blue-500/20 rounded-full flex items-center justify-center">
-                <CameraIcon className="w-10 h-10 text-blue-400" strokeWidth={1.5} />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(74, 88, 73, 0.2)' }}>
+                <CameraIcon className="w-10 h-10" style={{ color: '#6B8268' }} strokeWidth={1.5} />
               </div>
               
               {cameraError === 'demo' ? (
@@ -184,7 +185,8 @@ export default function CameraScreen() {
                   </p>
                   <HapticButton
                     onClick={startCamera}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    className="text-white px-6 py-3 rounded-lg"
+                    style={{ backgroundColor: '#4A5849' }}
                     hapticStyle="medium"
                     data-testid="button-retry-camera"
                   >
@@ -201,7 +203,8 @@ export default function CameraScreen() {
                   </p>
                   <HapticButton
                     onClick={startCamera}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    className="text-white px-6 py-3 rounded-lg"
+                    style={{ backgroundColor: '#4A5849' }}
                     hapticStyle="medium"
                     data-testid="button-retry-camera"
                   >
@@ -218,7 +221,8 @@ export default function CameraScreen() {
                   </p>
                   <HapticButton
                     onClick={startCamera}
-                    className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg"
+                    className="text-white px-6 py-3 rounded-lg"
+                    style={{ backgroundColor: '#4A5849' }}
                     hapticStyle="medium"
                     data-testid="button-start-camera"
                   >
@@ -254,8 +258,8 @@ export default function CameraScreen() {
             transition={{ type: 'spring', stiffness: 100, damping: 20 }}
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none"
           >
-            <div className="relative w-full h-px bg-blue-500">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-2 border-blue-500 rounded-full" />
+            <div className="relative w-full h-px" style={{ backgroundColor: '#4A5849' }}>
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-2 rounded-full" style={{ borderColor: '#4A5849' }} />
             </div>
           </motion.div>
         )}
@@ -269,7 +273,7 @@ export default function CameraScreen() {
               onClick={toggleGrid}
               hapticStyle="light"
               className={`bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 ${
-                showGrid ? 'text-blue-400' : 'text-white'
+                showGrid ? 'text-white' : 'text-white/60'
               }`}
               data-testid="button-toggle-grid"
             >
@@ -285,7 +289,7 @@ export default function CameraScreen() {
             >
               <Timer className="w-5 h-5" strokeWidth={1.5} />
               {timer > 0 && (
-                <span className="absolute -top-1 -right-1 bg-blue-500 text-white rounded-full w-5 h-5 flex items-center justify-center" style={{ fontSize: '10px' }} data-testid="text-timer-value">
+                <span className="absolute -top-1 -right-1 text-white rounded-full w-5 h-5 flex items-center justify-center" style={{ fontSize: '10px', backgroundColor: '#4A5849' }} data-testid="text-timer-value">
                   {timer}
                 </span>
               )}
@@ -327,12 +331,12 @@ export default function CameraScreen() {
             >
               <Badge
                 variant="secondary"
-                className="bg-blue-500/80 backdrop-blur-md text-white border border-blue-400/30 cursor-pointer hover:bg-blue-500/90 transition-colors flex items-center gap-1"
+                className="backdrop-blur-md text-white border cursor-pointer transition-colors flex items-center gap-1"
                 onClick={() => {
                   trigger('light');
                   setHdrMode(hdrMode === 3 ? 5 : 3);
                 }}
-                style={{ fontSize: '11px', padding: '3px 8px' }}
+                style={{ backgroundColor: 'rgba(74, 88, 73, 0.8)', borderColor: 'rgba(107, 130, 104, 0.3)', fontSize: '11px', padding: '3px 8px' }}
                 data-testid="badge-hdr-mode"
               >
                 <Layers className="w-3 h-3" strokeWidth={2} />
@@ -352,10 +356,10 @@ export default function CameraScreen() {
                 whileTap={{ scale: 0.9 }}
                 className={`min-w-10 px-3 py-1.5 rounded-full transition-all ${
                   zoom === level
-                    ? 'bg-blue-500 text-white shadow-md'
+                    ? 'text-white shadow-md'
                     : 'text-white hover:bg-white/20'
                 }`}
-                style={{ fontSize: '14px' }}
+                style={zoom === level ? { backgroundColor: '#4A5849', fontSize: '14px' } : { fontSize: '14px' }}
                 data-testid={`button-zoom-${level}x`}
               >
                 {level}×
@@ -435,6 +439,8 @@ export default function CameraScreen() {
           </HapticButton>
         </div>
       </div>
+
+      <BottomNav variant="dark" />
     </div>
   );
 }

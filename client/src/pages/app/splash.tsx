@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Sparkles, Image } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
+import { BottomNav } from '@/components/mobile/BottomNav';
 import { useLocation } from 'wouter';
 
 export default function SplashScreen() {
@@ -106,6 +107,8 @@ export default function SplashScreen() {
           </span>
         </motion.div>
       </motion.div>
+
+      <BottomNav />
     </div>
   );
 }

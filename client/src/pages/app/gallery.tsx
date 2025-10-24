@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Upload, Home, ChevronRight, Layers, ImageIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
+import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
 import {
   Drawer,
@@ -325,9 +326,8 @@ export default function GalleryScreen() {
                             key={room}
                             onClick={() => {
                               setPhotos(photos.map(p => 
-                                p.selected ? { ...p, roomType: room, selected: false } : p
+                                p.selected ? { ...p, roomType: room } : p
                               ));
-                              setSelectionMode(false);
                               trigger('success');
                             }}
                             className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
@@ -389,6 +389,8 @@ export default function GalleryScreen() {
           </div>
         </DrawerContent>
       </Drawer>
+
+      <BottomNav photoCount={photos.length} />
     </div>
   );
 }

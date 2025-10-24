@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
+import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
 
 interface Photo {
@@ -253,6 +254,8 @@ export default function UploadScreen() {
 
         </div>
       </div>
+
+      <BottomNav photoCount={photos.length} />
     </div>
   );
 }
