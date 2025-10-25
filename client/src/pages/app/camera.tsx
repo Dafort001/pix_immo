@@ -777,7 +777,7 @@ export default function CameraScreen() {
               </div>
             )}
             <HapticButton
-              onClick={startCamera}
+              onClick={() => startCamera()}
               className="w-full bg-white text-black px-8 py-4 font-bold rounded-xl text-lg"
               hapticStyle="medium"
               data-testid="button-start-camera"
