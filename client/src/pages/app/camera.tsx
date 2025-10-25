@@ -14,7 +14,7 @@ export default function CameraScreen() {
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string>('');
-  const [supportsExposure, setSupportsExposure] = useState(false);
+  const [baseExposureTime, setBaseExposureTime] = useState<number | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -38,22 +38,21 @@ export default function CameraScreen() {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-
-      // Check if camera supports exposure compensation
       const videoTrack = mediaStream.getVideoTracks()[0];
       const capabilities: any = videoTrack.getCapabilities();
+      const settings: any = videoTrack.getSettings();
       
       console.log('Camera capabilities:', capabilities);
+      console.log('Current settings:', settings);
       
-      if (capabilities.exposureCompensation) {
-        setSupportsExposure(true);
-        console.log('✅ Exposure compensation supported:', capabilities.exposureCompensation);
-      } else if (capabilities.exposureTime) {
-        setSupportsExposure(true);
-        console.log('✅ Exposure time supported:', capabilities.exposureTime);
+      if (capabilities.exposureTime) {
+        const currentExposure = settings.exposureTime || capabilities.exposureTime.max / 2;
+        setBaseExposureTime(currentExposure);
+        console.log(`✅ Exposure time control available`);
+        console.log(`   Range: ${capabilities.exposureTime.min}ms - ${capabilities.exposureTime.max}ms`);
+        console.log(`   Current: ${currentExposure.toFixed(2)}ms`);
       } else {
-        setSupportsExposure(false);
-        console.log('⚠️ No exposure control - will use software compensation');
+        console.log('⚠️ No exposureTime control - HDR will not work correctly');
       }
 
       if (!videoRef.current) {
@@ -89,80 +88,50 @@ export default function CameraScreen() {
     };
   }, []);
 
-  const setExposureCompensation = async (evStops: number): Promise<boolean> => {
+  const setExposureTime = async (exposureTimeMs: number): Promise<boolean> => {
     if (!streamRef.current) return false;
 
     const videoTrack = streamRef.current.getVideoTracks()[0];
     if (!videoTrack) return false;
 
     const capabilities: any = videoTrack.getCapabilities();
-    const settings: any = videoTrack.getSettings();
+    
+    if (!capabilities.exposureTime) {
+      console.log('⚠️ exposureTime not supported');
+      return false;
+    }
 
     try {
-      // Try exposureCompensation first (preferred)
-      if (capabilities.exposureCompensation) {
-        const min = capabilities.exposureCompensation.min || -3;
-        const max = capabilities.exposureCompensation.max || 3;
-        const compensationValue = Math.max(min, Math.min(max, evStops));
-        
-        await videoTrack.applyConstraints({
-          advanced: [{ exposureCompensation: compensationValue } as any]
-        });
-        
-        console.log(`✅ Set exposureCompensation to ${compensationValue} EV`);
-        return true;
-      }
+      const min = capabilities.exposureTime.min;
+      const max = capabilities.exposureTime.max;
+      const clampedExposure = Math.max(min, Math.min(max, exposureTimeMs));
       
-      // Try exposureTime as fallback
-      if (capabilities.exposureTime) {
-        const currentExposure = settings.exposureTime || capabilities.exposureTime.max / 2;
-        const factor = Math.pow(2, evStops);
-        const newExposure = currentExposure * factor;
-        
-        const min = capabilities.exposureTime.min;
-        const max = capabilities.exposureTime.max;
-        const clampedExposure = Math.max(min, Math.min(max, newExposure));
-        
-        await videoTrack.applyConstraints({
-          advanced: [{ exposureTime: clampedExposure } as any]
-        });
-        
-        console.log(`✅ Set exposureTime to ${clampedExposure.toFixed(2)}ms (${evStops} EV)`);
-        return true;
-      }
-
-      return false;
+      // Turn off auto-exposure first
+      await videoTrack.applyConstraints({
+        advanced: [{ 
+          exposureMode: 'manual' as any,
+          exposureTime: clampedExposure 
+        } as any]
+      });
+      
+      console.log(`✅ Set exposureTime: ${clampedExposure.toFixed(2)}ms`);
+      return true;
     } catch (err) {
-      console.error('Failed to set exposure:', err);
+      console.error('Failed to set exposureTime:', err);
       return false;
     }
   };
 
-  const applySoftwareExposure = (imageData: ImageData, evStops: number): ImageData => {
-    const factor = Math.pow(2, evStops);
-    const data = imageData.data;
-    
-    for (let i = 0; i < data.length; i += 4) {
-      data[i] = Math.min(255, data[i] * factor);
-      data[i + 1] = Math.min(255, data[i + 1] * factor);
-      data[i + 2] = Math.min(255, data[i + 2] * factor);
-    }
-    
-    return imageData;
-  };
-
-  const captureWithEV = async (evCompensation: number): Promise<string> => {
+  const captureWithExposureTime = async (exposureTimeMs: number): Promise<string> => {
     if (!videoRef.current || !canvasRef.current) {
       throw new Error('No video/canvas');
     }
 
-    // Try hardware exposure first
-    const hardwareSuccess = await setExposureCompensation(evCompensation);
+    // Set exposure time
+    await setExposureTime(exposureTimeMs);
     
-    // Wait for camera to adjust
-    if (hardwareSuccess) {
-      await new Promise(resolve => setTimeout(resolve, 300));
-    }
+    // Wait for camera to adjust (important!)
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -174,16 +143,8 @@ export default function CameraScreen() {
       throw new Error('No canvas context');
     }
 
-    // Draw frame
+    // Capture frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    
-    // If hardware exposure failed, use software compensation
-    if (!hardwareSuccess && evCompensation !== 0) {
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      const adjustedData = applySoftwareExposure(imageData, evCompensation);
-      ctx.putImageData(adjustedData, 0, 0);
-      console.log(`⚠️ Using software exposure: ${evCompensation} EV`);
-    }
 
     return canvas.toDataURL('image/jpeg', 0.90);
   };
@@ -198,12 +159,20 @@ export default function CameraScreen() {
       const stackId = Date.now();
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
 
-      if (hdrEnabled) {
-        // 3-Shot HDR: -2 EV, 0 EV, +2 EV
+      if (hdrEnabled && baseExposureTime) {
+        // 3-Shot HDR with exposure time bracketing
+        // -2 EV = 1/4 of base time (faster shutter = darker)
+        // 0 EV = base time (normal)
+        // +2 EV = 4x base time (slower shutter = brighter)
+        const exposureTimes = [
+          baseExposureTime / 4,  // -2 EV
+          baseExposureTime,       // 0 EV
+          baseExposureTime * 4    // +2 EV
+        ];
         const evStops = [-2, 0, 2];
         
-        for (let i = 0; i < evStops.length; i++) {
-          setCaptureProgress({ current: i + 1, total: evStops.length });
+        for (let i = 0; i < exposureTimes.length; i++) {
+          setCaptureProgress({ current: i + 1, total: exposureTimes.length });
           
           // Flash
           const flash = document.getElementById('capture-flash');
@@ -215,7 +184,9 @@ export default function CameraScreen() {
           // Haptic feedback per shot
           if (i > 0) trigger('light');
 
-          const imageData = await captureWithEV(evStops[i]);
+          console.log(`Capturing ${evStops[i]} EV at ${exposureTimes[i].toFixed(2)}ms`);
+          
+          const imageData = await captureWithExposureTime(exposureTimes[i]);
           
           photos.push({
             id: Date.now() + i * 100,
@@ -225,20 +196,21 @@ export default function CameraScreen() {
             height: canvasRef.current!.height,
             stackId: stackId,
             stackIndex: i,
-            stackTotal: evStops.length,
-            evCompensation: evStops[i]
+            stackTotal: exposureTimes.length,
+            evCompensation: evStops[i],
+            exposureTimeMs: exposureTimes[i]
           });
 
-          // Longer delay between shots for camera adjustment
-          if (i < evStops.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 600));
+          // Delay between shots
+          if (i < exposureTimes.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
         
-        // Reset to normal exposure
-        await setExposureCompensation(0);
+        // Reset to base exposure
+        await setExposureTime(baseExposureTime);
       } else {
-        // Single shot
+        // Single shot with current exposure
         setCaptureProgress({ current: 1, total: 1 });
         
         const flash = document.getElementById('capture-flash');
@@ -247,15 +219,25 @@ export default function CameraScreen() {
           setTimeout(() => flash.classList.add('hidden'), 150);
         }
 
-        const imageData = await captureWithEV(0);
-        
-        photos.push({
-          id: Date.now(),
-          timestamp: new Date().toISOString(),
-          imageData: imageData,
-          width: canvasRef.current!.width,
-          height: canvasRef.current!.height
-        });
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        if (video && canvas) {
+          canvas.width = video.videoWidth;
+          canvas.height = video.videoHeight;
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const imageData = canvas.toDataURL('image/jpeg', 0.90);
+            
+            photos.push({
+              id: Date.now(),
+              timestamp: new Date().toISOString(),
+              imageData: imageData,
+              width: canvas.width,
+              height: canvas.height
+            });
+          }
+        }
       }
 
       sessionStorage.setItem('appPhotos', JSON.stringify(photos));
@@ -316,8 +298,10 @@ export default function CameraScreen() {
                 <span className="text-sm font-semibold">
                   {hdrEnabled ? 'HDR' : 'Normal'}
                 </span>
-                {supportsExposure && hdrEnabled && (
-                  <span className="text-xs opacity-75">HW</span>
+                {baseExposureTime && hdrEnabled && (
+                  <span className="text-xs opacity-75">
+                    {baseExposureTime.toFixed(0)}ms
+                  </span>
                 )}
               </HapticButton>
 
@@ -371,13 +355,13 @@ export default function CameraScreen() {
           <div className="absolute bottom-24 left-0 right-0 flex justify-center z-50">
             <motion.button
               onClick={handleCapture}
-              disabled={capturing}
+              disabled={capturing || (hdrEnabled && !baseExposureTime)}
               whileTap={{ scale: capturing ? 1 : 0.9 }}
               className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
                 hdrEnabled
                   ? 'border-yellow-500'
                   : 'border-white'
-              } ${capturing ? 'opacity-50' : ''}`}
+              } ${capturing || (hdrEnabled && !baseExposureTime) ? 'opacity-50' : ''}`}
               data-testid="button-capture-photo"
             >
               <div className={`w-16 h-16 rounded-full ${
