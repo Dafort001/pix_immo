@@ -122,31 +122,31 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VERSION BANNER MIT DEBUG LOGS - OBEN! */}
+      {/* VERSION BANNER MIT DEBUG LOGS - KOMPAKT! */}
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="absolute top-12 left-0 right-0 z-50 px-4"
+        className="absolute top-12 left-0 right-0 z-50 px-3"
       >
-        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-2xl p-4 shadow-2xl border-2 border-lime-300">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <Zap className="w-6 h-6 text-white animate-pulse" strokeWidth={2.5} />
+        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-xl p-3 shadow-2xl border-2 border-lime-300">
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
             <div className="text-center">
-              <p className="text-white font-bold text-xl">VERSION 2.0</p>
-              <p className="text-white/90 text-xs">Mini Camera Test</p>
+              <p className="text-white font-bold text-lg">VERSION 2.0</p>
+              <p className="text-white/90 text-xs">Mini Test</p>
             </div>
-            <Zap className="w-6 h-6 text-white animate-pulse" strokeWidth={2.5} />
+            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
           </div>
           
-          {/* DEBUG LOGS DIREKT IM BANNER! */}
-          <div className="bg-black/30 backdrop-blur-sm rounded-xl p-3 max-h-48 overflow-y-auto">
-            <div className="flex items-center gap-2 mb-2">
+          {/* DEBUG LOGS KOMPAKT */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 max-h-32 overflow-y-auto">
+            <div className="flex items-center gap-1 mb-1">
               <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <p className="text-white font-bold text-xs">DEBUG CONSOLE</p>
+              <p className="text-white font-bold text-xs">DEBUG</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {debugInfo.map((info, i) => (
-                <p key={i} className="text-white text-xs font-mono break-all">
+                <p key={i} className="text-white text-xs font-mono break-all leading-tight">
                   {info}
                 </p>
               ))}
@@ -155,8 +155,8 @@ export default function CameraScreen() {
         </div>
       </motion.div>
 
-      {/* Main Content */}
-      <div className="flex-1 relative overflow-hidden mt-80 bg-gradient-to-b from-gray-900 to-black">
+      {/* Main Content - HÖHER! */}
+      <div className="flex-1 relative overflow-hidden mt-52 bg-gradient-to-b from-gray-900 to-black">
         {stream ? (
           <video
             ref={videoRef}
@@ -168,23 +168,23 @@ export default function CameraScreen() {
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-            {/* Icon */}
+            {/* Icon - KLEINER */}
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              className="w-28 h-28 mb-8 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center shadow-2xl"
+              className="w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center shadow-2xl"
             >
-              <CameraIcon className="w-14 h-14 text-white" strokeWidth={2} />
+              <CameraIcon className="w-10 h-10 text-white" strokeWidth={2} />
             </motion.div>
 
             {error ? (
               <div className="text-center max-w-sm">
-                <p className="text-red-400 text-xl font-bold mb-4">Error</p>
-                <p className="text-white text-lg mb-6">{error}</p>
+                <p className="text-red-400 text-lg font-bold mb-3">Error</p>
+                <p className="text-white text-base mb-5">{error}</p>
                 <HapticButton
                   onClick={startCamera}
-                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-lg"
+                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-3 text-base font-bold rounded-xl shadow-lg"
                   hapticStyle="medium"
                   data-testid="button-retry-camera"
                 >
@@ -193,17 +193,17 @@ export default function CameraScreen() {
               </div>
             ) : (
               <div className="text-center max-w-sm">
-                <p className="text-white text-2xl font-bold mb-3">Camera Test</p>
-                <p className="text-gray-300 text-base mb-8">
+                <p className="text-white text-xl font-bold mb-2">Camera Test</p>
+                <p className="text-gray-300 text-sm mb-6">
                   Tap button to activate
                 </p>
                 <HapticButton
                   onClick={startCamera}
-                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-10 py-5 text-xl font-bold rounded-xl shadow-2xl"
+                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-2xl"
                   hapticStyle="medium"
                   data-testid="button-start-camera"
                 >
-                  <CameraIcon className="w-6 h-6 mr-3 inline" />
+                  <CameraIcon className="w-5 h-5 mr-2 inline" />
                   START CAMERA
                 </HapticButton>
               </div>
