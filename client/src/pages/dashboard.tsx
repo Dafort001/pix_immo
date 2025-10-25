@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, LogOut, Image as ImageIcon, ListOrdered, Briefcase, CalendarCheck, FileText, Upload, Sparkles, Download } from "lucide-react";
+import { Plus, LogOut, Image as ImageIcon, ListOrdered, Briefcase, CalendarCheck, FileText, Upload, Sparkles, Download, Camera, Folder, ImagePlus } from "lucide-react";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -167,8 +167,22 @@ export default function Dashboard() {
                 Portfolio
               </Button>
             </Link>
-            {user.role === "admin" && (
+            
+            {/* Gallery Upload System V1.0 */}
+            {user.role === "admin" ? (
               <>
+                <Link href="/portal/gallery-photographer">
+                  <Button variant="ghost" data-testid="button-gallery-photographer">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Photo Upload
+                  </Button>
+                </Link>
+                <Link href="/portal/gallery-editing">
+                  <Button variant="ghost" data-testid="button-gallery-editing">
+                    <ImagePlus className="mr-2 h-4 w-4" />
+                    Final Editing
+                  </Button>
+                </Link>
                 <Link href="/upload-raw">
                   <Button variant="ghost" data-testid="button-upload-raw">
                     <Upload className="mr-2 h-4 w-4" />
@@ -182,6 +196,13 @@ export default function Dashboard() {
                   </Button>
                 </Link>
               </>
+            ) : (
+              <Link href="/portal/gallery-upload">
+                <Button variant="ghost" data-testid="button-gallery-upload">
+                  <Folder className="mr-2 h-4 w-4" />
+                  Bilder hochladen
+                </Button>
+              </Link>
             )}
             <Link href="/downloads">
               <Button variant="ghost" data-testid="button-downloads">
