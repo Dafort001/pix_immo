@@ -66,6 +66,47 @@
       "form_factor": "narrow"
     }
   ],
+  "shortcuts": [
+    {
+      "name": "Kamera öffnen",
+      "short_name": "Kamera",
+      "description": "Starte direkt die Kamera für neue Fotos",
+      "url": "/app/camera",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Galerie anzeigen",
+      "short_name": "Galerie",
+      "description": "Zeige deine aufgenommenen Fotos",
+      "url": "/app/gallery",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Hochladen",
+      "short_name": "Upload",
+      "description": "Fotos zu Auftrag hochladen",
+      "url": "/app/upload",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
   "permissions": [
     "camera",
     "storage"
