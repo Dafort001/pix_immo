@@ -52,11 +52,21 @@ export default function CameraScreen() {
     trigger('medium');
     setCameraError('');
     
+    console.log('[Camera] Starting camera...');
+    console.log('[Camera] HTTPS:', window.location.protocol === 'https:');
+    console.log('[Camera] Has MediaDevices:', !!navigator.mediaDevices);
+    console.log('[Camera] Has getUserMedia:', !!navigator.mediaDevices?.getUserMedia);
+    
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error('Camera API not supported on this device');
+        const error = !navigator.mediaDevices 
+          ? 'MediaDevices API nicht verfügbar (HTTPS erforderlich)'
+          : 'getUserMedia nicht verfügbar';
+        console.error('[Camera] Not supported:', error);
+        throw new Error(error);
       }
 
+      console.log('[Camera] Requesting camera permission...');
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -65,6 +75,8 @@ export default function CameraScreen() {
         }
       });
       
+      console.log('[Camera] Permission granted! Stream:', mediaStream);
+      
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
         // iOS braucht explizites play()
@@ -72,23 +84,30 @@ export default function CameraScreen() {
         streamRef.current = mediaStream;
         setStream(mediaStream);
         setCameraReady(true);
+        console.log('[Camera] Camera ready!');
       }
     } catch (err: any) {
-      console.error('Kamera-Fehler:', err.name, err.message);
+      console.error('[Camera] Error:', err);
+      console.error('[Camera] Error name:', err.name);
+      console.error('[Camera] Error message:', err.message);
       
-      // Demo-Modus für bessere UX (statt hartem Fehler)
-      if (err.name === 'NotAllowedError' || err.name === 'NotFoundError' || err.message.includes('not supported')) {
-        setCameraError('demo');
+      // Spezifische Error-Messages
+      let errorMsg = '';
+      if (err.name === 'NotAllowedError') {
+        errorMsg = 'Kamera-Berechtigung verweigert. Bitte in Browser-Einstellungen erlauben.';
+      } else if (err.name === 'NotFoundError') {
+        errorMsg = 'Keine Kamera gefunden.';
+      } else if (err.name === 'NotSupportedError' || err.message.includes('not supported')) {
+        errorMsg = 'Kamera-API nicht unterstützt. HTTPS erforderlich.';
+      } else if (err.name === 'NotReadableError') {
+        errorMsg = 'Kamera wird bereits verwendet.';
       } else {
-        setCameraError(`Fehler: ${err.message}`);
+        errorMsg = `Kamera-Fehler: ${err.message}`;
       }
+      
+      setCameraError(errorMsg);
     }
   };
-
-  // Automatisch Kamera beim Laden starten
-  useEffect(() => {
-    startCamera();
-  }, []);
 
   // Cleanup beim Verlassen
   useEffect(() => {
