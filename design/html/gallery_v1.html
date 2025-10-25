@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gallery - pix.immo</title>
+  <style>
+    
+    /* Tailwind CSS Base */
+    *, ::before, ::after {
+      box-sizing: border-box;
+      border-width: 0;
+      border-style: solid;
+      border-color: #e5e7eb;
+    }
+    
+    html { line-height: 1.5; -webkit-text-size-adjust: 100%; tab-size: 4; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { margin: 0; line-height: inherit; }
+    
+    /* Brand Colors - Sage & Clay v3 */
+    :root {
+      --sage-dark: #4A5849;
+      --ui-sage: #6E7E6B;
+      --copper: #A85B2E;
+      --copper-dark: #8F4C28;
+      --neutral-white: #FAFAFA;
+      --pure-white: #FFFFFF;
+      --border-gray: #E5E5E5;
+    }
+    
+    /* Utility Classes */
+    .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
+    .flex { display: flex; }
+    .flex-col { flex-direction: column; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-4 { gap: 1rem; }
+    .p-4 { padding: 1rem; }
+    .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+    .bg-sage-dark { background-color: var(--sage-dark); }
+    .bg-copper { background-color: var(--copper); }
+    .text-white { color: white; }
+    .text-sage-dark { color: var(--sage-dark); }
+    .rounded { border-radius: 0.375rem; }
+    .shadow { box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1); }
+    
+    button {
+      cursor: pointer;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+  
+    
+    /* Page-specific placeholder styles */
+    .page-container {
+      min-height: 100vh;
+      background-color: var(--neutral-white);
+    }
+    
+    .header {
+      background-color: var(--sage-dark);
+      color: white;
+      padding: 1rem 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .main-content {
+      padding: 2rem 0;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .button-primary {
+      background-color: var(--copper);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      border: none;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    .button-secondary {
+      background-color: var(--ui-sage);
+      color: white;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.375rem;
+      border: none;
+      cursor: pointer;
+    }
+    
+    input, textarea, select {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-gray);
+      border-radius: 0.375rem;
+      margin-bottom: 1rem;
+    }
+    
+    .grid {
+      display: grid;
+      gap: 1rem;
+    }
+    
+    .grid-cols-2 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .grid-cols-3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    
+    @media (max-width: 768px) {
+      .grid-cols-2, .grid-cols-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="container">
+        <div class="flex items-center justify-between">
+          <h1 style="margin: 0; font-size: 1.5rem;">pix.immo</h1>
+          <nav class="flex gap-4">
+            <a href="/" style="color: white; text-decoration: none;">Home</a>
+            <a href="/gallery" style="color: white; text-decoration: none;">Gallery</a>
+            <a href="/preise" style="color: white; text-decoration: none;">Pricing</a>
+            <a href="/buchen" style="color: white; text-decoration: none;">Booking</a>
+            <a href="/login" style="color: white; text-decoration: none;">Login</a>
+          </nav>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      
+      <div class="container">
+        <h1>Gallery</h1>
+        <div class="grid grid-cols-3">
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 1</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 2</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 3</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 4</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 5</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 6</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 7</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 8</p>
+            </div>
+          
+            <div class="card">
+              <div style="background: #ddd; height: 200px; border-radius: 0.375rem; margin-bottom: 0.5rem;"></div>
+              <p>Image 9</p>
+            </div>
+          
+        </div>
+      </div>
+    
+    </main>
+  </div>
+  
+  <!-- Static HTML Export for Figma Review -->
+  <!-- Generated: 2025-10-25T08:47:58.415Z -->
+  <!-- Route: /gallery -->
+  <!-- Version: v1 -->
+</body>
+</html>
