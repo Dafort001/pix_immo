@@ -9,7 +9,7 @@ import { useLocation } from 'wouter';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string>('');
   const [debugInfo, setDebugInfo] = useState<string[]>(['Ready - V2.0']);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -28,6 +28,7 @@ export default function CameraScreen() {
       trigger('medium');
       setError('');
       setDebugInfo([]);
+      setIsPlaying(false);
       
       log('🔍 Starting...');
       
@@ -58,36 +59,41 @@ export default function CameraScreen() {
       log(`Active: ${mediaStream.active}`);
       log(`Tracks: ${mediaStream.getVideoTracks().length}`);
 
-      if (videoRef.current) {
-        log('🎬 Setting srcObject...');
-        
-        // SAFARI FIX: Set srcObject and wait for loadedmetadata
-        videoRef.current.srcObject = mediaStream;
-        streamRef.current = mediaStream;
-        
-        videoRef.current.onloadedmetadata = async () => {
-          log('📊 Metadata loaded');
-          
-          if (videoRef.current) {
-            log(`Video size: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-            
-            // SAFARI FIX: Delay play() to ensure stream is ready
-            try {
-              await new Promise(resolve => setTimeout(resolve, 100));
-              await videoRef.current.play();
-              log('▶️ Playing!');
-              setStream(mediaStream);
-            } catch (err: any) {
-              log(`❌ Play error: ${err.message}`);
-              setError('Video play failed');
-            }
-          }
-        };
-
-        videoRef.current.onerror = (err) => {
-          log(`❌ Video error: ${err}`);
-        };
+      if (!videoRef.current) {
+        log('❌ No video element');
+        return;
       }
+
+      log('🎬 Setting srcObject...');
+      
+      // Set stream immediately
+      videoRef.current.srcObject = mediaStream;
+      streamRef.current = mediaStream;
+      
+      // Wait for metadata
+      videoRef.current.onloadedmetadata = async () => {
+        log('📊 Metadata loaded');
+        
+        if (videoRef.current) {
+          log(`Video size: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+          
+          try {
+            // Small delay for Safari
+            await new Promise(resolve => setTimeout(resolve, 100));
+            await videoRef.current.play();
+            log('▶️ Playing!');
+            setIsPlaying(true); // NOW show the video!
+          } catch (err: any) {
+            log(`❌ Play error: ${err.message}`);
+            setError('Video play failed');
+          }
+        }
+      };
+
+      videoRef.current.onerror = (err) => {
+        log(`❌ Video error: ${err}`);
+      };
+      
     } catch (err: any) {
       log(`❌ ERROR: ${err.name}`);
       log(`Msg: ${err.message}`);
@@ -136,35 +142,35 @@ export default function CameraScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex flex-col bg-black relative">
       {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[100]" />
 
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VERSION BANNER */}
-      <div className="flex-1 flex flex-col p-3 pt-14">
+      {/* VERSION BANNER - IMMER OBEN */}
+      <div className="absolute top-12 left-0 right-0 z-50 px-3 pt-2">
         <motion.div
           initial={{ y: -100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
-          className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-2xl p-4 shadow-2xl border-2 border-lime-300"
+          className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-xl p-3 shadow-2xl border-2 border-lime-300"
         >
           {/* Header */}
-          <div className="flex items-center justify-center gap-2 mb-3">
+          <div className="flex items-center justify-center gap-2 mb-2">
             <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
             <div className="text-center">
-              <p className="text-white font-bold text-xl">VERSION 2.0</p>
+              <p className="text-white font-bold text-lg">VERSION 2.0</p>
               <p className="text-white/90 text-xs">Safari Fix</p>
             </div>
             <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
           </div>
 
           {/* DEBUG LOGS */}
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 mb-3 max-h-40 overflow-y-auto">
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 mb-2 max-h-32 overflow-y-auto">
             <div className="flex items-center gap-1 mb-1">
               <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <p className="text-white font-bold text-xs">DEBUG CONSOLE</p>
+              <p className="text-white font-bold text-xs">DEBUG</p>
             </div>
             <div className="space-y-0.5">
               {debugInfo.map((info, i) => (
@@ -176,71 +182,74 @@ export default function CameraScreen() {
           </div>
 
           {/* START BUTTON */}
-          {!stream && (
+          {!isPlaying && (
             <div className="text-center">
               {error && (
                 <p className="text-white text-sm mb-2 font-bold">⚠️ {error}</p>
               )}
               <HapticButton
                 onClick={startCamera}
-                className="w-full bg-white text-lime-600 px-6 py-4 text-lg font-bold rounded-xl shadow-lg hover:bg-lime-50"
+                className="w-full bg-white text-lime-600 px-4 py-3 text-base font-bold rounded-xl shadow-lg hover:bg-lime-50"
                 hapticStyle="medium"
                 data-testid="button-start-camera"
               >
-                <CameraIcon className="w-6 h-6 mr-2 inline" strokeWidth={2.5} />
+                <CameraIcon className="w-5 h-5 mr-2 inline" strokeWidth={2.5} />
                 START CAMERA
               </HapticButton>
             </div>
           )}
         </motion.div>
+      </div>
 
-        {/* Video Preview - Mit Safari Fixes! */}
-        {stream && (
-          <div className="flex-1 relative mt-4 rounded-2xl overflow-hidden bg-black">
-            <video
-              ref={videoRef}
-              autoPlay
-              playsInline
-              webkit-playsinline="true"
-              muted
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                display: 'block'
+      {/* Video Container - IMMER DA! */}
+      <div className="flex-1 relative bg-black">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            display: isPlaying ? 'block' : 'none'
+          }}
+          data-testid="video-camera-preview"
+        />
+
+        {/* Close Button */}
+        {isPlaying && (
+          <div className="absolute top-4 right-4 z-10">
+            <HapticButton
+              size="icon"
+              variant="ghost"
+              onClick={() => {
+                trigger('light');
+                setLocation('/app');
               }}
-              className="absolute inset-0"
-              data-testid="video-camera-preview"
-            />
+              hapticStyle="medium"
+              className="bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/40 text-white rounded-full"
+              data-testid="button-close-camera"
+            >
+              <X className="w-6 h-6" strokeWidth={2.5} />
+            </HapticButton>
+          </div>
+        )}
 
-            {/* Close Button */}
-            <div className="absolute top-4 right-4 z-10">
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  trigger('light');
-                  setLocation('/app');
-                }}
-                hapticStyle="medium"
-                className="bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/40 text-white rounded-full"
-                data-testid="button-close-camera"
-              >
-                <X className="w-6 h-6" strokeWidth={2.5} />
-              </HapticButton>
-            </div>
-
-            {/* Capture Button */}
-            <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center">
-              <motion.button
-                onClick={handleCapture}
-                whileTap={{ scale: 0.9 }}
-                className="w-20 h-20 rounded-full border-4 border-lime-400 flex items-center justify-center shadow-2xl"
-                data-testid="button-capture-photo"
-              >
-                <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
-              </motion.button>
-            </div>
+        {/* Capture Button */}
+        {isPlaying && (
+          <div className="absolute bottom-24 left-0 right-0 flex items-center justify-center">
+            <motion.button
+              onClick={handleCapture}
+              whileTap={{ scale: 0.9 }}
+              className="w-20 h-20 rounded-full border-4 border-lime-400 flex items-center justify-center shadow-2xl"
+              data-testid="button-capture-photo"
+            >
+              <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
+            </motion.button>
           </div>
         )}
       </div>
