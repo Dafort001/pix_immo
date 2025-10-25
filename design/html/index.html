@@ -5,137 +5,318 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>pix.immo - HTML Exports Index</title>
   <style>
-    body { font-family: system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+    body { font-family: system-ui, -apple-system, sans-serif; max-width: 1400px; margin: 2rem auto; padding: 0 1rem; background: #fafafa; }
     h1 { color: #4A5849; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
-    .card { background: white; border: 1px solid #e5e5e5; border-radius: 0.5rem; padding: 1.5rem; }
-    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h2 { color: #6E7E6B; margin-top: 2rem; }
+    .stats { background: white; padding: 1.5rem; border-radius: 0.5rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .card { background: white; border: 1px solid #e5e5e5; border-radius: 0.5rem; padding: 1rem; transition: all 0.2s; }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-2px); }
+    .card h3 { margin: 0 0 0.5rem 0; font-size: 1rem; }
+    .card p { margin: 0; font-size: 0.875rem; color: #666; }
     a { color: #A85B2E; text-decoration: none; font-weight: 500; }
     a:hover { text-decoration: underline; }
     .badge { display: inline-block; background: #e5e7eb; padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; margin-right: 0.5rem; }
+    .count { background: #A85B2E; color: white; padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem; }
   </style>
 </head>
 <body>
-  <h1>📱 pix.immo - HTML Exports for Figma</h1>
-  <p>Generated: 25.10.2025, 08:47:58</p>
-  <p>Total exports: <strong>19</strong></p>
+  <h1>📱 pix.immo - Alle HTML Exports für Figma</h1>
   
-  <h2>Public Pages</h2>
-  <div class="grid">
-    <div class="card">
-      <h3><a href="./index_v1.html">Homepage</a></h3>
-      <span class="badge">v1</span>
-      <p>Main landing page</p>
-    </div>
-    <div class="card">
-      <h3><a href="./gallery_v1.html">Gallery</a></h3>
-      <span class="badge">v1</span>
-      <p>Public gallery view</p>
-    </div>
-    <div class="card">
-      <h3><a href="./pricing_v1.html">Pricing</a></h3>
-      <span class="badge">v1</span>
-      <p>Service pricing page</p>
-    </div>
-    <div class="card">
-      <h3><a href="./booking_v1.html">Booking</a></h3>
-      <span class="badge">v1</span>
-      <p>Booking form</p>
-    </div>
-    <div class="card">
-      <h3><a href="./login_v1.html">Login</a></h3>
-      <span class="badge">v1</span>
-      <p>User login page</p>
-    </div>
-    <div class="card">
-      <h3><a href="./contact_v1.html">Contact</a></h3>
-      <span class="badge">v1</span>
-      <p>Contact form</p>
-    </div>
+  <div class="stats">
+    <p><strong>Generiert:</strong> 25.10.2025, 08:51:22</p>
+    <p><strong>Gesamt:</strong> <span class="count">50</span> Seiten exportiert</p>
   </div>
   
-  <h2>Portal Pages (Gallery Upload System V1.0)</h2>
+  <h2>Public Pages <span class="count">27</span></h2>
   <div class="grid">
-    <div class="card">
-      <h3><a href="./portal_uploads_v1.html">Uploads Overview</a></h3>
-      <span class="badge">v1</span>
-      <p>Job list and status tracking</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_gallery_upload_v1.html">Customer Upload</a></h3>
-      <span class="badge">v1</span>
-      <p>Client image upload interface</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_photographer_v1.html">Photographer RAW</a></h3>
-      <span class="badge">v1</span>
-      <p>RAW file upload (13 formats)</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_editing_v1.html">Final Editing</a></h3>
-      <span class="badge">v1</span>
-      <p>Edited images with presets</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_payment_v1.html">Payment</a></h3>
-      <span class="badge">v1</span>
-      <p>Stripe checkout integration</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_status_v1.html">Status Timeline</a></h3>
-      <span class="badge">v1</span>
-      <p>5-step progress tracker</p>
-    </div>
-    <div class="card">
-      <h3><a href="./portal_delivery_v1.html">Delivery</a></h3>
-      <span class="badge">v1</span>
-      <p>Download packages</p>
-    </div>
+    
+      <div class="card">
+        <h3><a href="./index_v1.html">Homepage</a></h3>
+        <p>/</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./gallery_v1.html">Gallery</a></h3>
+        <p>/gallery</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./blog_v1.html">Blog</a></h3>
+        <p>/blog</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./blog_post_v1.html">Blog Post</a></h3>
+        <p>/blog/example</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./pricing_v1.html">Pricing</a></h3>
+        <p>/preise</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./preisliste_v1.html">Preisliste</a></h3>
+        <p>/preisliste</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./booking_v1.html">Booking</a></h3>
+        <p>/buchen</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./booking_confirmation_v1.html">Booking Confirmation</a></h3>
+        <p>/booking-confirmation</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./galerie_v1.html">Galerie</a></h3>
+        <p>/galerie</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./downloads_v1.html">Downloads</a></h3>
+        <p>/downloads</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./about_v1.html">About</a></h3>
+        <p>/about</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./faq_v1.html">FAQ</a></h3>
+        <p>/faq</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./login_v1.html">Login</a></h3>
+        <p>/login</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./register_v1.html">Register</a></h3>
+        <p>/register</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./dashboard_v1.html">Dashboard</a></h3>
+        <p>/dashboard</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./contact_v1.html">Contact</a></h3>
+        <p>/kontakt</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./contact_form_v1.html">Contact Form</a></h3>
+        <p>/kontakt-formular</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./imprint_v1.html">Imprint</a></h3>
+        <p>/impressum</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./agb_v1.html">AGB</a></h3>
+        <p>/agb</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./datenschutz_v1.html">Datenschutz</a></h3>
+        <p>/datenschutz</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./order_v1.html">Order Form</a></h3>
+        <p>/order</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./intake_v1.html">Intake</a></h3>
+        <p>/intake</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./jobs_v1.html">Jobs</a></h3>
+        <p>/jobs</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./review_v1.html">Review</a></h3>
+        <p>/review/1/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./upload_raw_v1.html">Upload RAW</a></h3>
+        <p>/upload-raw</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./ai_lab_v1.html">AI Lab</a></h3>
+        <p>/ai-lab</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./gallery_classify_v1.html">Gallery Classify</a></h3>
+        <p>/gallery/classify/1</p>
+      </div>
+    
   </div>
   
-  <h2>Mobile App (PWA)</h2>
+  <h2>Portal Pages (Gallery System V1.0) <span class="count">8</span></h2>
   <div class="grid">
-    <div class="card">
-      <h3><a href="./app_splash_v1.html">Splash Screen</a></h3>
-      <span class="badge">v1</span>
-      <p>App landing page</p>
-    </div>
-    <div class="card">
-      <h3><a href="./app_camera_v1.html">Camera</a></h3>
-      <span class="badge">v1</span>
-      <p>iOS-style camera interface</p>
-    </div>
-    <div class="card">
-      <h3><a href="./app_gallery_v1.html">Gallery</a></h3>
-      <span class="badge">v1</span>
-      <p>Photo review grid</p>
-    </div>
-    <div class="card">
-      <h3><a href="./app_upload_v1.html">Upload</a></h3>
-      <span class="badge">v1</span>
-      <p>Upload progress tracking</p>
-    </div>
+    
+      <div class="card">
+        <h3><a href="./portal_uploads_v1.html">Portal - Uploads Overview</a></h3>
+        <p>/portal/uploads</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_gallery_selection_v1.html">Portal - Gallery Selection</a></h3>
+        <p>/portal/job/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_payment_v1.html">Portal - Payment</a></h3>
+        <p>/portal/payment/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_status_v1.html">Portal - Status Timeline</a></h3>
+        <p>/portal/status/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_delivery_v1.html">Portal - Delivery</a></h3>
+        <p>/portal/delivery/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_gallery_upload_v1.html">Portal - Customer Upload</a></h3>
+        <p>/portal/gallery-upload</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_photographer_v1.html">Portal - Photographer RAW</a></h3>
+        <p>/portal/gallery-photographer</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_editing_v1.html">Portal - Final Editing</a></h3>
+        <p>/portal/gallery-editing</p>
+      </div>
+    
   </div>
   
-  <h2>Additional Pages</h2>
+  <h2>Mobile App - New (/app/*) <span class="count">4</span></h2>
   <div class="grid">
-    <div class="card">
-      <h3><a href="./dashboard_v1.html">Dashboard</a></h3>
-      <span class="badge">v1</span>
-      <p>User dashboard</p>
-    </div>
-    <div class="card">
-      <h3><a href="./order_v1.html">Order Form</a></h3>
-      <span class="badge">v1</span>
-      <p>Order creation form</p>
-    </div>
+    
+      <div class="card">
+        <h3><a href="./app_splash_v1.html">App - Splash</a></h3>
+        <p>/app</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./app_camera_v1.html">App - Camera</a></h3>
+        <p>/app/camera</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./app_gallery_v1.html">App - Gallery</a></h3>
+        <p>/app/gallery</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./app_upload_v1.html">App - Upload</a></h3>
+        <p>/app/upload</p>
+      </div>
+    
+  </div>
+  
+  <h2>Mobile App - Legacy (/capture/*) <span class="count">4</span></h2>
+  <div class="grid">
+    
+      <div class="card">
+        <h3><a href="./capture_index_v1.html">Capture - Index</a></h3>
+        <p>/capture</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./capture_camera_v1.html">Capture - Camera</a></h3>
+        <p>/capture/camera</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./capture_review_v1.html">Capture - Review</a></h3>
+        <p>/capture/review</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./capture_upload_v1.html">Capture - Upload</a></h3>
+        <p>/capture/upload</p>
+      </div>
+    
+  </div>
+  
+  <h2>Admin Pages <span class="count">2</span></h2>
+  <div class="grid">
+    
+      <div class="card">
+        <h3><a href="./admin_editorial_v1.html">Admin Editorial</a></h3>
+        <p>/admin/editorial</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./admin_seo_v1.html">Admin SEO</a></h3>
+        <p>/admin/seo</p>
+      </div>
+    
+  </div>
+  
+  <h2>Demo & Testing <span class="count">6</span></h2>
+  <div class="grid">
+    
+      <div class="card">
+        <h3><a href="./demo_upload_v1.html">Demo Upload</a></h3>
+        <p>/demo-upload</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./demo_jobs_v1.html">Demo Jobs</a></h3>
+        <p>/demo-jobs</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./demo_job_detail_v1.html">Demo Job Detail</a></h3>
+        <p>/job/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./portal_gallery_selection_v1.html">Portal - Gallery Selection</a></h3>
+        <p>/portal/job/1</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./docs_rooms_spec_v1.html">Rooms Specification</a></h3>
+        <p>/docs/rooms-spec</p>
+      </div>
+    
+      <div class="card">
+        <h3><a href="./test_debug_v1.html">Test Debug</a></h3>
+        <p>/test</p>
+      </div>
+    
   </div>
   
   <hr style="margin: 2rem 0;" />
   <p style="color: #666; font-size: 0.875rem;">
-    <strong>Usage:</strong> Open these HTML files in Figma via "File → Import" or paste GitHub raw URLs.
-    <br>
-    <strong>GitHub URL Pattern:</strong> <code>https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/[filename]</code>
+    <strong>GitHub Raw URLs:</strong><br>
+    <code>https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/[filename]</code>
   </p>
 </body>
 </html>

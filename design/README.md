@@ -31,32 +31,40 @@ Diese HTML-Dateien dienen als **Design-Referenz für Figma**.
 
 ## 📄 Verfügbare Exports (v1)
 
-### Public Pages
-- `index_v1.html` - Homepage
-- `gallery_v1.html` - Gallery
-- `pricing_v1.html` - Pricing
-- `booking_v1.html` - Booking Form
-- `login_v1.html` - Login Page
-- `contact_v1.html` - Contact Form
+**Gesamt: 51 HTML-Dateien** (alle Routen aus App.tsx)
 
-### Portal Pages (Gallery Upload System V1.0)
-- `portal_uploads_v1.html` - Uploads Overview
-- `portal_gallery_upload_v1.html` - Customer Upload
-- `portal_photographer_v1.html` - Photographer RAW Upload
-- `portal_editing_v1.html` - Final Editing
-- `portal_payment_v1.html` - Payment (Stripe)
-- `portal_status_v1.html` - Status Timeline
-- `portal_delivery_v1.html` - Delivery
+### Public Pages (20)
+- Homepage, Gallery, Blog, Blog Post
+- Pricing, Preisliste, Booking, Booking Confirmation
+- Galerie, Downloads, About, FAQ
+- Login, Register, Dashboard
+- Contact, Contact Form, Imprint, AGB, Datenschutz
 
-### Mobile App (PWA)
-- `app_splash_v1.html` - Splash Screen
-- `app_camera_v1.html` - Camera Interface
-- `app_gallery_v1.html` - Photo Gallery
-- `app_upload_v1.html` - Upload Progress
+### Portal Pages - Gallery Upload System V1.0 (8)
+- Uploads Overview, Gallery Selection
+- Customer Upload, Photographer RAW Upload, Final Editing
+- Payment, Status Timeline, Delivery
 
-### Additional
-- `dashboard_v1.html` - User Dashboard
-- `order_v1.html` - Order Form
+### Mobile App - New Routes (/app/*) (4)
+- Splash Screen, Camera Interface, Photo Gallery, Upload Progress
+
+### Mobile App - Legacy Routes (/capture/*) (4)
+- Capture Index, Camera, Review, Upload
+
+### Order & Jobs Management (4)
+- Order Form, Intake, Jobs, Review
+
+### Upload & Processing (3)
+- Upload RAW, AI Lab, Gallery Classify
+
+### Admin Pages (2)
+- Admin Editorial, Admin SEO
+
+### Demo & Testing (4)
+- Demo Upload, Demo Jobs, Demo Job Detail, Test Debug
+
+### Documentation (1)
+- Rooms Specification
 
 ---
 
@@ -228,11 +236,17 @@ https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/porta
 ## 📝 Changelog
 
 ### v1 (Oktober 2025)
-- ✅ Initial Export: 19 Seiten
-- ✅ Public Pages (6)
-- ✅ Portal Pages (7)
-- ✅ Mobile App (4)
-- ✅ Additional (2)
+- ✅ Kompletter Export: **51 Seiten**
+- ✅ Public Pages (20)
+- ✅ Portal Pages (8)
+- ✅ Mobile App - New (4)
+- ✅ Mobile App - Legacy (4)
+- ✅ Admin Pages (2)
+- ✅ Demo & Testing (4)
+- ✅ Order & Jobs (4)
+- ✅ Upload & Processing (3)
+- ✅ Documentation (1)
+- ✅ Navigation Index (1)
 - ✅ Navigation-Index
 
 ---

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Payment - pix.immo</title>
+  <title>Portal - Payment - pix.immo</title>
   <style>
     
     /* Tailwind CSS Base */
@@ -28,7 +28,6 @@
       --border-gray: #E5E5E5;
     }
     
-    /* Utility Classes */
     .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
@@ -54,12 +53,9 @@
       transition: all 0.2s;
     }
     
-    button:hover {
-      opacity: 0.9;
-    }
+    button:hover { opacity: 0.9; }
   
     
-    /* Page-specific placeholder styles */
     .page-container {
       min-height: 100vh;
       background-color: var(--neutral-white);
@@ -118,13 +114,8 @@
       gap: 1rem;
     }
     
-    .grid-cols-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .grid-cols-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
     
     @media (max-width: 768px) {
       .grid-cols-2, .grid-cols-3 {
@@ -135,7 +126,6 @@
 </head>
 <body>
   <div class="page-container">
-    <!-- Header -->
     <header class="header">
       <div class="container">
         <div class="flex items-center justify-between">
@@ -151,54 +141,22 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
       
-      <div class="container">
-        <h1>Zahlung</h1>
-        <div class="grid grid-cols-2">
-          <div class="card">
-            <h2>Bestellübersicht</h2>
-            <div style="margin: 1rem 0;">
-              <div class="flex justify-between" style="margin-bottom: 0.5rem;">
-                <span>Fotografie Paket</span>
-                <span>€ 299,00</span>
-              </div>
-              <div class="flex justify-between" style="margin-bottom: 0.5rem;">
-                <span>Drohnenaufnahmen</span>
-                <span>€ 149,00</span>
-              </div>
-              <div class="flex justify-between" style="margin-bottom: 0.5rem;">
-                <span>Bildbearbeitung (15 Bilder)</span>
-                <span>€ 90,00</span>
-              </div>
-              <hr style="margin: 1rem 0;" />
-              <div class="flex justify-between" style="font-weight: bold; font-size: 1.25rem;">
-                <span>Gesamt</span>
-                <span>€ 538,00</span>
-              </div>
-            </div>
-          </div>
-          
-          <div class="card">
-            <h2>Zahlungsmethode</h2>
-            <div style="background: #f9f9f9; padding: 2rem; border-radius: 0.5rem; text-align: center;">
-              <p style="font-size: 2rem;">💳</p>
-              <p>Stripe Checkout</p>
-            </div>
-            <button class="button-primary" style="width: 100%; margin-top: 1.5rem;">
-              Zur Zahlung
-            </button>
-          </div>
+    <div class="container">
+      <div class="card">
+        <h1>/portal/payment/1</h1>
+        <p>Placeholder für Figma Design Review</p>
+        <div style="background: #f5f5f5; padding: 2rem; border-radius: 0.5rem; margin-top: 1rem;">
+          <p style="color: #666; text-align: center;">📄 Statischer HTML Export</p>
         </div>
       </div>
-    
+    </div>
+  
     </main>
   </div>
   
-  <!-- Static HTML Export for Figma Review -->
-  <!-- Generated: 2025-10-25T08:47:58.419Z -->
+  <!-- Generated: 2025-10-25T08:51:22.271Z -->
   <!-- Route: /portal/payment/1 -->
-  <!-- Version: v1 -->
 </body>
 </html>

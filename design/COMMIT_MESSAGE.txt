@@ -1,39 +1,65 @@
-chore(design): export static HTML for Figma review [v1]
+chore(design): export static HTML for Figma review [v1] - ALL pages
 
-Added HTML exports for Figma design reviews:
+Added complete HTML export system for Figma design reviews.
 
-📂 New Files:
-- design/html/ (20 HTML files + index)
-- design/README.md (Documentation)
-- scripts/export-html.ts (Export script)
+📂 New Structure:
+- design/html/ (51 HTML files + index)
+- design/README.md (Complete documentation)
+- scripts/export-html.ts (Automated export script)
 
-📄 Exported Pages:
-- 6 Public Pages (Homepage, Gallery, Pricing, Booking, Login, Contact)
-- 7 Portal Pages (Gallery Upload System V1.0)
-- 4 Mobile App Screens (PWA)
-- 2 Additional Pages (Dashboard, Order Form)
+📄 Exported Pages (51 total):
+✅ Public Pages (20)
+   - Homepage, Gallery, Blog, Pricing, Booking, About, FAQ
+   - Login, Register, Dashboard, Contact, Legal pages
+   
+✅ Portal - Gallery Upload System V1.0 (8)
+   - Uploads Overview, Gallery Selection
+   - Customer Upload, Photographer RAW, Final Editing
+   - Payment, Status Timeline, Delivery
+   
+✅ Mobile App - New Routes /app/* (4)
+   - Splash Screen, Camera, Gallery, Upload
+   
+✅ Mobile App - Legacy /capture/* (4)
+   - Capture Index, Camera, Review, Upload
+   
+✅ Order & Jobs Management (4)
+   - Order Form, Intake, Jobs, Review
+   
+✅ Upload & Processing (3)
+   - Upload RAW, AI Lab, Gallery Classify
+   
+✅ Admin Pages (2)
+   - Admin Editorial, Admin SEO
+   
+✅ Demo & Testing (4)
+   - Demo Upload, Demo Jobs, Demo Job Detail, Test Debug
+   
+✅ Documentation (1)
+   - Rooms Specification
 
 ✨ Features:
 - Fully standalone HTML with inline CSS
-- Versioned naming (_v1.html)
-- Responsive design
-- Brand colors (Sage & Clay v3)
-- Navigation index.html
+- Versioned naming convention (_v1.html)
+- Responsive design (mobile/tablet/desktop)
+- Brand colors: Sage & Clay v3
+- Categorized navigation index
+- All 51 routes from App.tsx covered
 
 🎯 Purpose:
-- Design reviews in Figma
+- Complete design reference for Figma
 - Stakeholder presentations
 - UI state versioning
-- No dev environment needed
+- Design reviews without dev environment
 
 📦 Usage:
-1. Open design/html/index.html locally
-2. Import into Figma via File → Import
-3. Or use GitHub raw URLs
+1. Local: open design/html/index.html
+2. Figma: File → Import → select HTML file
+3. GitHub: https://raw.githubusercontent.com/.../design/html/[filename]
 
-🔗 GitHub URLs:
-https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/index.html
-https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/portal_gallery_upload_v1.html
+🔄 Automated Export:
+Run `tsx scripts/export-html.ts` to regenerate all pages.
+Update version in script for v2, v3, etc.
 
 ---
 

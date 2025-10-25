@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobile App - Camera - pix.immo</title>
+  <title>App - Camera - pix.immo</title>
   <style>
     
     /* Tailwind CSS Base */
@@ -28,7 +28,6 @@
       --border-gray: #E5E5E5;
     }
     
-    /* Utility Classes */
     .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
@@ -54,12 +53,9 @@
       transition: all 0.2s;
     }
     
-    button:hover {
-      opacity: 0.9;
-    }
+    button:hover { opacity: 0.9; }
   
     
-    /* Page-specific placeholder styles */
     .page-container {
       min-height: 100vh;
       background-color: var(--neutral-white);
@@ -118,13 +114,8 @@
       gap: 1rem;
     }
     
-    .grid-cols-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .grid-cols-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
     
     @media (max-width: 768px) {
       .grid-cols-2, .grid-cols-3 {
@@ -135,7 +126,6 @@
 </head>
 <body>
   <div class="page-container">
-    <!-- Header -->
     <header class="header">
       <div class="container">
         <div class="flex items-center justify-between">
@@ -151,62 +141,22 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
       
-      <div style="max-width: 375px; margin: 0 auto; background: black; min-height: 100vh; position: relative;">
-        <!-- StatusBar -->
-        <div style="background: rgba(0,0,0,0.8); color: white; padding: 0.5rem 1rem; display: flex; justify-content: space-between;">
-          <span>9:41</span>
-          <span>📶 📡 🔋</span>
-        </div>
-        
-        <!-- Camera Preview -->
-        <div style="background: #333; height: 500px; position: relative;">
-          <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; text-align: center;">
-            <p style="font-size: 3rem;">📷</p>
-            <p>Camera Preview</p>
-          </div>
-        </div>
-        
-        <!-- Controls -->
-        <div style="background: rgba(0,0,0,0.9); padding: 2rem; text-align: center;">
-          <div style="display: flex; justify-content: space-around; align-items: center;">
-            <button style="background: white; color: black; border-radius: 50%; width: 50px; height: 50px;">
-              🔄
-            </button>
-            <button style="background: white; border-radius: 50%; width: 70px; height: 70px; border: 3px solid #ccc;">
-              ⚫
-            </button>
-            <button style="background: white; color: black; border-radius: 50%; width: 50px; height: 50px;">
-              ⚡
-            </button>
-          </div>
-        </div>
-        
-        <!-- Bottom Nav -->
-        <div style="position: fixed; bottom: 0; left: 0; right: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); padding: 0.5rem; display: flex; justify-content: space-around;">
-          <div style="text-align: center;">
-            <span style="font-size: 1.5rem;">📷</span>
-            <p style="margin: 0; font-size: 0.75rem;">Camera</p>
-          </div>
-          <div style="text-align: center;">
-            <span style="font-size: 1.5rem;">🖼️</span>
-            <p style="margin: 0; font-size: 0.75rem;">Gallery</p>
-          </div>
-          <div style="text-align: center;">
-            <span style="font-size: 1.5rem;">📤</span>
-            <p style="margin: 0; font-size: 0.75rem;">Upload</p>
-          </div>
+    <div class="container">
+      <div class="card">
+        <h1>/app/camera</h1>
+        <p>Placeholder für Figma Design Review</p>
+        <div style="background: #f5f5f5; padding: 2rem; border-radius: 0.5rem; margin-top: 1rem;">
+          <p style="color: #666; text-align: center;">📄 Statischer HTML Export</p>
         </div>
       </div>
-    
+    </div>
+  
     </main>
   </div>
   
-  <!-- Static HTML Export for Figma Review -->
-  <!-- Generated: 2025-10-25T08:47:58.420Z -->
+  <!-- Generated: 2025-10-25T08:51:22.278Z -->
   <!-- Route: /app/camera -->
-  <!-- Version: v1 -->
 </body>
 </html>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mobile App - Gallery - pix.immo</title>
+  <title>App - Gallery - pix.immo</title>
   <style>
     
     /* Tailwind CSS Base */
@@ -28,7 +28,6 @@
       --border-gray: #E5E5E5;
     }
     
-    /* Utility Classes */
     .container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
     .flex { display: flex; }
     .flex-col { flex-direction: column; }
@@ -54,12 +53,9 @@
       transition: all 0.2s;
     }
     
-    button:hover {
-      opacity: 0.9;
-    }
+    button:hover { opacity: 0.9; }
   
     
-    /* Page-specific placeholder styles */
     .page-container {
       min-height: 100vh;
       background-color: var(--neutral-white);
@@ -118,13 +114,8 @@
       gap: 1rem;
     }
     
-    .grid-cols-2 {
-      grid-template-columns: repeat(2, 1fr);
-    }
-    
-    .grid-cols-3 {
-      grid-template-columns: repeat(3, 1fr);
-    }
+    .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .grid-cols-3 { grid-template-columns: repeat(3, 1fr); }
     
     @media (max-width: 768px) {
       .grid-cols-2, .grid-cols-3 {
@@ -135,7 +126,6 @@
 </head>
 <body>
   <div class="page-container">
-    <!-- Header -->
     <header class="header">
       <div class="container">
         <div class="flex items-center justify-between">
@@ -151,25 +141,22 @@
       </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main-content">
       
     <div class="container">
       <div class="card">
-        <h1>Page: /app/gallery</h1>
-        <p>Placeholder content for design review</p>
-        <p style="color: #666; font-size: 0.875rem;">
-          This is a static HTML export for Figma import. Actual implementation uses React components.
-        </p>
+        <h1>/app/gallery</h1>
+        <p>Placeholder für Figma Design Review</p>
+        <div style="background: #f5f5f5; padding: 2rem; border-radius: 0.5rem; margin-top: 1rem;">
+          <p style="color: #666; text-align: center;">📄 Statischer HTML Export</p>
+        </div>
       </div>
     </div>
   
     </main>
   </div>
   
-  <!-- Static HTML Export for Figma Review -->
-  <!-- Generated: 2025-10-25T08:47:58.421Z -->
+  <!-- Generated: 2025-10-25T08:51:22.279Z -->
   <!-- Route: /app/gallery -->
-  <!-- Version: v1 -->
 </body>
 </html>
