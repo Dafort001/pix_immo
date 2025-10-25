@@ -302,6 +302,61 @@ export const bookingItems = pgTable("booking_items", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
+// Gallery System V1.0
+export const galleries = pgTable("galleries", {
+  id: varchar("id").primaryKey(),
+  galleryType: varchar("gallery_type", { length: 50 }).notNull(), // 'customer_upload', 'photographer_upload', 'editing'
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  shootId: varchar("shoot_id").references(() => shoots.id, { onDelete: "set null" }), // Optional link to shoot
+  jobId: varchar("job_id").references(() => jobs.id, { onDelete: "set null" }), // Optional link to job
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'annotated', 'reviewed', 'editing', 'delivered'
+  // Global preset settings (can be overridden per file)
+  globalStylePreset: varchar("global_style_preset", { length: 50 }), // 'PURE', 'EDITORIAL', 'CLASSIC'
+  globalWindowPreset: varchar("global_window_preset", { length: 50 }), // 'CLEAR', 'SCANDINAVIAN', 'BRIGHT'
+  globalSkyPreset: varchar("global_sky_preset", { length: 100 }), // 'CLEAR BLUE', 'PASTEL CLOUDS', 'DAYLIGHT SOFT', 'EVENING HAZE'
+  globalFireplace: varchar("global_fireplace", { length: 5 }).notNull().default("false"), // 'true' or 'false'
+  globalRetouch: varchar("global_retouch", { length: 5 }).notNull().default("true"), // 'true' or 'false'
+  globalEnhancements: varchar("global_enhancements", { length: 5 }).notNull().default("true"), // 'true' or 'false'
+  finalizedAt: bigint("finalized_at", { mode: "number" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+
+export const galleryFiles = pgTable("gallery_files", {
+  id: varchar("id").primaryKey(),
+  galleryId: varchar("gallery_id").notNull().references(() => galleries.id, { onDelete: "cascade" }),
+  originalFilename: varchar("original_filename", { length: 255 }).notNull(),
+  storedFilename: varchar("stored_filename", { length: 255 }).notNull(), // {date}-{shootcode}_{roomtype}_{index}_v{ver}.jpg
+  filePath: text("file_path").notNull(), // R2 path: /uploads/raw/...
+  thumbnailPath: text("thumbnail_path"), // R2 path: /uploads/thumbs/...
+  fileType: varchar("file_type", { length: 50 }).notNull(), // 'jpg', 'dng', 'cr2', 'nef', etc.
+  fileSize: bigint("file_size", { mode: "number" }), // in bytes
+  roomType: varchar("room_type", { length: 50 }), // 'livingroom', 'kitchen', etc.
+  sequenceIndex: bigint("sequence_index", { mode: "number" }).notNull(), // Ordering within gallery
+  // Per-file overrides (if set, override global settings)
+  stylePreset: varchar("style_preset", { length: 50 }), // 'PURE', 'EDITORIAL', 'CLASSIC'
+  windowPreset: varchar("window_preset", { length: 50 }), // 'CLEAR', 'SCANDINAVIAN', 'BRIGHT'
+  skyPreset: varchar("sky_preset", { length: 100 }), // 'CLEAR BLUE', 'PASTEL CLOUDS', etc.
+  fireplaceEnabled: varchar("fireplace_enabled", { length: 5 }), // 'true' or 'false'
+  retouchEnabled: varchar("retouch_enabled", { length: 5 }), // 'true' or 'false'
+  enhancementsEnabled: varchar("enhancements_enabled", { length: 5 }), // 'true' or 'false'
+  status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'annotated', 'processing', 'complete'
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+
+export const galleryAnnotations = pgTable("gallery_annotations", {
+  id: varchar("id").primaryKey(),
+  fileId: varchar("file_id").notNull().references(() => galleryFiles.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  annotationType: varchar("annotation_type", { length: 50 }).notNull(), // 'comment', 'mask'
+  comment: text("comment"), // For comment type (max 500 chars enforced in frontend)
+  maskPath: text("mask_path"), // R2 path for PNG mask: /uploads/masks/...
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   sessions: many(sessions),
@@ -314,6 +369,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   imageComments: many(imageComments),
   uploadSessions: many(uploadSessions),
   aiJobs: many(aiJobs),
+  galleries: many(galleries),
+  galleryAnnotations: many(galleryAnnotations),
 }));
 
 export const sessionsRelations = relations(sessions, ({ one }) => ({
@@ -491,6 +548,41 @@ export const aiJobsRelations = relations(aiJobs, ({ one }) => ({
   }),
 }));
 
+export const galleriesRelations = relations(galleries, ({ one, many }) => ({
+  user: one(users, {
+    fields: [galleries.userId],
+    references: [users.id],
+  }),
+  shoot: one(shoots, {
+    fields: [galleries.shootId],
+    references: [shoots.id],
+  }),
+  job: one(jobs, {
+    fields: [galleries.jobId],
+    references: [jobs.id],
+  }),
+  files: many(galleryFiles),
+}));
+
+export const galleryFilesRelations = relations(galleryFiles, ({ one, many }) => ({
+  gallery: one(galleries, {
+    fields: [galleryFiles.galleryId],
+    references: [galleries.id],
+  }),
+  annotations: many(galleryAnnotations),
+}));
+
+export const galleryAnnotationsRelations = relations(galleryAnnotations, ({ one }) => ({
+  file: one(galleryFiles, {
+    fields: [galleryAnnotations.fileId],
+    references: [galleryFiles.id],
+  }),
+  user: one(users, {
+    fields: [galleryAnnotations.userId],
+    references: [users.id],
+  }),
+}));
+
 // Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
@@ -536,6 +628,12 @@ export type Caption = typeof captions.$inferSelect;
 export type InsertCaption = typeof captions.$inferInsert;
 export type Expose = typeof exposes.$inferSelect;
 export type InsertExpose = typeof exposes.$inferInsert;
+export type Gallery = typeof galleries.$inferSelect;
+export type InsertGallery = typeof galleries.$inferInsert;
+export type GalleryFile = typeof galleryFiles.$inferSelect;
+export type InsertGalleryFile = typeof galleryFiles.$inferInsert;
+export type GalleryAnnotation = typeof galleryAnnotations.$inferSelect;
+export type InsertGalleryAnnotation = typeof galleryAnnotations.$inferInsert;
 
 // Validation Schemas
 export const signupSchema = z.object({
@@ -841,3 +939,26 @@ export const insertExposeSchema = createInsertSchema(exposes).omit({
 export type CreateDemoJobInput = z.infer<typeof createDemoJobSchema>;
 export type InsertCaptionInput = z.infer<typeof insertCaptionSchema>;
 export type InsertExposeInput = z.infer<typeof insertExposeSchema>;
+
+// Gallery Insert Schemas
+export const insertGallerySchema = createInsertSchema(galleries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  finalizedAt: true,
+});
+
+export const insertGalleryFileSchema = createInsertSchema(galleryFiles).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertGalleryAnnotationSchema = createInsertSchema(galleryAnnotations).omit({
+  id: true,
+  createdAt: true,
+});
+
+export type InsertGalleryInput = z.infer<typeof insertGallerySchema>;
+export type InsertGalleryFileInput = z.infer<typeof insertGalleryFileSchema>;
+export type InsertGalleryAnnotationInput = z.infer<typeof insertGalleryAnnotationSchema>;
