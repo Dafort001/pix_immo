@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Upload, Home, ChevronRight, Layers, ImageIcon, Trash2, X } from 'lucide-react';
+import { Check, Upload, Home, ChevronRight, Layers, ImageIcon, Trash2, X, CheckCheck, XCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -155,6 +155,16 @@ export default function GalleryScreen() {
     }
   };
 
+  const selectAll = () => {
+    trigger('medium');
+    setStacks(stacks.map(s => ({ ...s, selected: true })));
+  };
+
+  const deselectAll = () => {
+    trigger('medium');
+    setStacks(stacks.map(s => ({ ...s, selected: false })));
+  };
+
   const handleStackClick = (stack: PhotoStack) => {
     if (selectionMode) {
       toggleSelection(stack.stackId);
@@ -186,10 +196,10 @@ export default function GalleryScreen() {
   };
 
   const handleDelete = () => {
+    trigger('heavy');
+    
     if (lightboxStack) {
-      trigger('heavy');
-      
-      // Remove from sessionStorage
+      // Single stack delete (from lightbox)
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
       const filteredPhotos = photos.filter((p: Photo) => {
         if (lightboxStack.photos.length > 1) {
@@ -200,10 +210,20 @@ export default function GalleryScreen() {
       });
       sessionStorage.setItem('appPhotos', JSON.stringify(filteredPhotos));
       
-      // Close lightbox and dialog
       setLightboxStack(null);
-      setDeleteDialogOpen(false);
+    } else if (selectionMode) {
+      // Bulk delete (from selection mode)
+      const selectedStackIds = stacks.filter(s => s.selected).map(s => s.stackId);
+      const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+      const filteredPhotos = photos.filter((p: Photo) => {
+        return !selectedStackIds.includes(p.stackId || 0) && !selectedStackIds.includes(p.id);
+      });
+      sessionStorage.setItem('appPhotos', JSON.stringify(filteredPhotos));
+      
+      setSelectionMode(false);
     }
+    
+    setDeleteDialogOpen(false);
   };
 
   return (
@@ -213,7 +233,7 @@ export default function GalleryScreen() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200/50 px-4 py-3">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1">
             <h1 className="text-gray-900" style={{ fontSize: '28px', fontWeight: '700' }}>
               Galerie
             </h1>
@@ -230,16 +250,31 @@ export default function GalleryScreen() {
             )}
           </div>
           
-          <HapticButton
-            variant="ghost"
-            onClick={toggleSelectionMode}
-            hapticStyle="medium"
-            className="text-[#4A5849] hover:bg-[#4A5849]/10 rounded-lg px-3 py-1.5"
-            style={{ fontSize: '16px' }}
-            data-testid="button-toggle-selection-mode"
-          >
-            {selectionMode ? 'Fertig' : 'Auswählen'}
-          </HapticButton>
+          <div className="flex items-center gap-2">
+            {selectionMode && stacks.length > 0 && (
+              <HapticButton
+                variant="ghost"
+                onClick={selectedCount === stacks.length ? deselectAll : selectAll}
+                hapticStyle="medium"
+                className="text-[#4A5849] hover:bg-[#4A5849]/10 rounded-lg px-3 py-1.5"
+                style={{ fontSize: '14px' }}
+                data-testid="button-toggle-select-all"
+              >
+                {selectedCount === stacks.length ? 'Keine' : 'Alle'}
+              </HapticButton>
+            )}
+            
+            <HapticButton
+              variant="ghost"
+              onClick={toggleSelectionMode}
+              hapticStyle="medium"
+              className="text-[#4A5849] hover:bg-[#4A5849]/10 rounded-lg px-3 py-1.5"
+              style={{ fontSize: '16px' }}
+              data-testid="button-toggle-selection-mode"
+            >
+              {selectionMode ? 'Fertig' : 'Auswählen'}
+            </HapticButton>
+          </div>
         </div>
       </div>
 
@@ -408,11 +443,17 @@ export default function GalleryScreen() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Foto löschen?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {selectionMode && !lightboxStack
+                ? `${selectedCount} ${selectedCount === 1 ? 'Stack' : 'Stacks'} löschen?`
+                : 'Foto löschen?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {lightboxStack && lightboxStack.photos.length > 1
-                ? `Diese Aktion löscht alle ${lightboxStack.photos.length} Fotos im HDR-Stack.`
-                : 'Diese Aktion kann nicht rückgängig gemacht werden.'
+              {selectionMode && !lightboxStack
+                ? `Diese Aktion löscht ${stacks.filter(s => s.selected).reduce((sum, s) => sum + s.photos.length, 0)} Fotos.`
+                : lightboxStack && lightboxStack.photos.length > 1
+                  ? `Diese Aktion löscht alle ${lightboxStack.photos.length} Fotos im HDR-Stack.`
+                  : 'Diese Aktion kann nicht rückgängig gemacht werden.'
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -471,7 +512,7 @@ export default function GalleryScreen() {
                       data-testid="button-assign-roomtype"
                     >
                       <Home className="w-4 h-4" strokeWidth={1.5} />
-                      Raumtyp zuweisen
+                      Raumtyp
                     </HapticButton>
                   </DrawerTrigger>
                   <DrawerContent className="max-h-[80vh]">
@@ -514,6 +555,16 @@ export default function GalleryScreen() {
                     </div>
                   </DrawerContent>
                 </Drawer>
+                
+                <HapticButton
+                  variant="default"
+                  hapticStyle="heavy"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 py-3"
+                  data-testid="button-bulk-delete"
+                >
+                  <Trash2 className="w-4 h-4" strokeWidth={1.5} />
+                </HapticButton>
                 
                 <HapticButton
                   variant="default"
