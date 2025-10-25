@@ -145,6 +145,54 @@ export default function UploadScreen() {
     }
   };
 
+  // Helper: Upload single photo with retry logic
+  const uploadPhotoWithRetry = async (
+    blob: Blob, 
+    photo: Photo, 
+    maxRetries = 3
+  ): Promise<void> => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        // Create form data
+        const formData = new FormData();
+        formData.append('photo', blob, `photo_${photo.id}.jpg`);
+        formData.append('jobId', selectedJobId!);
+        formData.append('roomType', photo.roomType || 'general');
+        formData.append('capturedAt', photo.timestamp);
+        if (photo.stackId) formData.append('stackId', photo.stackId.toString());
+        if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());
+        if (photo.evCompensation !== undefined) formData.append('evCompensation', photo.evCompensation.toString());
+        
+        // Upload to server
+        const response = await fetch('/api/mobile-uploads', {
+          method: 'POST',
+          body: formData,
+          credentials: 'include',
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+        
+        // Success - exit retry loop
+        return;
+        
+      } catch (error) {
+        console.warn(`[Upload] Attempt ${attempt}/${maxRetries} failed for photo ${photo.id}:`, error);
+        
+        // If this was the last attempt, throw the error
+        if (attempt === maxRetries) {
+          throw new Error(`Upload failed after ${maxRetries} attempts: ${error}`);
+        }
+        
+        // Wait with exponential backoff (1s, 2s, 4s)
+        const delay = Math.pow(2, attempt - 1) * 1000;
+        console.log(`[Upload] Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  };
+
   const handleUpload = async () => {
     if (uploadSelection.length === 0 || !selectedJobId) return;
     
@@ -158,6 +206,8 @@ export default function UploadScreen() {
     }, 0);
     
     setUploadProgress({ current: 0, total: totalPhotos });
+    
+    const failedPhotos: { id: number; error: string }[] = [];
     
     try {
       let uploadedCount = 0;
@@ -178,63 +228,75 @@ export default function UploadScreen() {
           
           if (!photoData) {
             console.warn(`Photo ${photo.id} not found in sessionStorage`);
+            failedPhotos.push({ id: photo.id, error: 'Not found in storage' });
             continue;
           }
           
-          const parsed = JSON.parse(photoData);
-          
-          // Convert base64 to blob
-          const base64Data = parsed.dataUrl.split(',')[1];
-          const byteString = atob(base64Data);
-          const ab = new ArrayBuffer(byteString.length);
-          const ia = new Uint8Array(ab);
-          for (let j = 0; j < byteString.length; j++) {
-            ia[j] = byteString.charCodeAt(j);
+          try {
+            const parsed = JSON.parse(photoData);
+            
+            // Convert base64 to blob
+            const base64Data = parsed.dataUrl.split(',')[1];
+            const byteString = atob(base64Data);
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            for (let j = 0; j < byteString.length; j++) {
+              ia[j] = byteString.charCodeAt(j);
+            }
+            const blob = new Blob([ab], { type: 'image/jpeg' });
+            
+            // Upload with retry logic
+            await uploadPhotoWithRetry(blob, photo);
+            
+            // Update progress
+            uploadedCount++;
+            setUploadProgress({ current: uploadedCount, total: totalPhotos });
+            
+          } catch (error) {
+            console.error(`Failed to upload photo ${photo.id}:`, error);
+            failedPhotos.push({ 
+              id: photo.id, 
+              error: error instanceof Error ? error.message : 'Unknown error' 
+            });
+            // Continue with next photo instead of stopping entire upload
           }
-          const blob = new Blob([ab], { type: 'image/jpeg' });
-          
-          // Create form data
-          const formData = new FormData();
-          formData.append('photo', blob, `photo_${photo.id}.jpg`);
-          formData.append('jobId', selectedJobId);
-          formData.append('roomType', photo.roomType || 'general');
-          formData.append('capturedAt', photo.timestamp);
-          if (photo.stackId) formData.append('stackId', photo.stackId.toString());
-          if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());
-          if (photo.evCompensation !== undefined) formData.append('evCompensation', photo.evCompensation.toString());
-          
-          // Upload to server (placeholder endpoint - will be implemented)
-          const response = await fetch('/api/mobile-uploads', {
-            method: 'POST',
-            body: formData,
-            credentials: 'include',
-          });
-          
-          if (!response.ok) {
-            throw new Error(`Upload failed for photo ${photo.id}`);
-          }
-          
-          // Update progress
-          uploadedCount++;
-          setUploadProgress({ current: uploadedCount, total: totalPhotos });
         }
       }
       
       setIsUploading(false);
-      trigger('success');
       
-      // Clear uploaded photos from sessionStorage
-      uploadSelection.forEach(stackId => {
-        const stack = stacks.find(s => s.stackId === stackId);
-        if (stack) {
-          stack.photos.forEach(photo => {
-            sessionStorage.removeItem(`photo_${photo.id}`);
-          });
-        }
-      });
-      
-      // Reload to show updated state
-      window.location.reload();
+      // Show results
+      if (failedPhotos.length === 0) {
+        // All uploads successful
+        trigger('success');
+        
+        // Clear uploaded photos from sessionStorage
+        uploadSelection.forEach(stackId => {
+          const stack = stacks.find(s => s.stackId === stackId);
+          if (stack) {
+            stack.photos.forEach(photo => {
+              sessionStorage.removeItem(`photo_${photo.id}`);
+            });
+          }
+        });
+        
+        // Reload to show updated state
+        window.location.reload();
+      } else {
+        // Some uploads failed
+        trigger('error');
+        
+        // uploadedCount already tracks successful uploads only
+        const successCount = uploadedCount;
+        const failureCount = failedPhotos.length;
+        
+        const message = successCount > 0
+          ? `${successCount} ${successCount === 1 ? 'Foto' : 'Fotos'} erfolgreich hochgeladen.\n${failureCount} ${failureCount === 1 ? 'Foto' : 'Fotos'} fehlgeschlagen.\n\nBitte versuchen Sie es erneut.`
+          : `Upload fehlgeschlagen (${failureCount} ${failureCount === 1 ? 'Foto' : 'Fotos'}).\n\nBitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.`;
+        
+        alert(message);
+        console.error('[Upload] Failed photos:', failedPhotos);
+      }
       
     } catch (error) {
       console.error('Upload error:', error);
