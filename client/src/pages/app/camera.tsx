@@ -85,6 +85,11 @@ export default function CameraScreen() {
     }
   };
 
+  // Automatisch Kamera beim Laden starten
+  useEffect(() => {
+    startCamera();
+  }, []);
+
   // Cleanup beim Verlassen
   useEffect(() => {
     return () => {
