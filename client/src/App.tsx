@@ -49,6 +49,9 @@ import GallerySelection from "@/pages/portal/gallery-selection";
 import Payment from "@/pages/portal/payment";
 import StatusTimeline from "@/pages/portal/status-timeline";
 import Delivery from "@/pages/portal/delivery";
+import CustomerUploadGallery from "@/pages/portal/gallery-upload";
+import PhotographerUploadGallery from "@/pages/portal/gallery-photographer";
+import EditingGallery from "@/pages/portal/gallery-editing";
 import NotFound from "@/pages/not-found";
 import TestDebug from "@/pages/test-debug";
 
@@ -101,6 +104,9 @@ function Router() {
       <Route path="/portal/payment/:jobId" component={Payment} />
       <Route path="/portal/status/:jobId" component={StatusTimeline} />
       <Route path="/portal/delivery/:jobId" component={Delivery} />
+      <Route path="/portal/gallery-upload" component={CustomerUploadGallery} />
+      <Route path="/portal/gallery-photographer" component={PhotographerUploadGallery} />
+      <Route path="/portal/gallery-editing" component={EditingGallery} />
       <Route path="/test" component={TestDebug} />
       <Route component={NotFound} />
     </Switch>
