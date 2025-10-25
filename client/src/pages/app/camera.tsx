@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera as CameraIcon, Zap, AlertCircle } from 'lucide-react';
+import { X, Camera as CameraIcon, Zap } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -11,7 +11,7 @@ export default function CameraScreen() {
   const [, setLocation] = useLocation();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
-  const [debugInfo, setDebugInfo] = useState<string[]>([]);
+  const [debugInfo, setDebugInfo] = useState<string[]>(['Waiting...']);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
@@ -115,33 +115,48 @@ export default function CameraScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
+    <div className="h-full flex flex-col bg-black">
       {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[100]" />
 
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VERSION BANNER - UNMÖGLICH ZU ÜBERSEHEN! */}
+      {/* VERSION BANNER MIT DEBUG LOGS - OBEN! */}
       <motion.div
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         className="absolute top-12 left-0 right-0 z-50 px-4"
       >
         <div className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-2xl p-4 shadow-2xl border-2 border-lime-300">
-          <div className="flex items-center justify-center gap-3">
-            <Zap className="w-8 h-8 text-white animate-pulse" strokeWidth={2.5} />
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <Zap className="w-6 h-6 text-white animate-pulse" strokeWidth={2.5} />
             <div className="text-center">
-              <p className="text-white font-bold text-2xl">VERSION 2.0</p>
-              <p className="text-white/90 text-sm">Mini Camera Test</p>
+              <p className="text-white font-bold text-xl">VERSION 2.0</p>
+              <p className="text-white/90 text-xs">Mini Camera Test</p>
             </div>
-            <Zap className="w-8 h-8 text-white animate-pulse" strokeWidth={2.5} />
+            <Zap className="w-6 h-6 text-white animate-pulse" strokeWidth={2.5} />
+          </div>
+          
+          {/* DEBUG LOGS DIREKT IM BANNER! */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-xl p-3 max-h-48 overflow-y-auto">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <p className="text-white font-bold text-xs">DEBUG CONSOLE</p>
+            </div>
+            <div className="space-y-1">
+              {debugInfo.map((info, i) => (
+                <p key={i} className="text-white text-xs font-mono break-all">
+                  {info}
+                </p>
+              ))}
+            </div>
           </div>
         </div>
       </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 relative overflow-hidden mt-32">
+      <div className="flex-1 relative overflow-hidden mt-80 bg-gradient-to-b from-gray-900 to-black">
         {stream ? (
           <video
             ref={videoRef}
@@ -165,10 +180,7 @@ export default function CameraScreen() {
 
             {error ? (
               <div className="text-center max-w-sm">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <AlertCircle className="w-6 h-6 text-red-400" />
-                  <p className="text-red-400 text-xl font-bold">Error</p>
-                </div>
+                <p className="text-red-400 text-xl font-bold mb-4">Error</p>
                 <p className="text-white text-lg mb-6">{error}</p>
                 <HapticButton
                   onClick={startCamera}
@@ -195,27 +207,6 @@ export default function CameraScreen() {
                   START CAMERA
                 </HapticButton>
               </div>
-            )}
-
-            {/* DEBUG LOGS - UNTEN mit anderer Farbe! */}
-            {debugInfo.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="absolute bottom-24 left-4 right-4 bg-black/90 backdrop-blur-md rounded-2xl p-4 border-2 border-lime-400 max-h-64 overflow-y-auto shadow-2xl"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-3 h-3 rounded-full bg-lime-400 animate-pulse" />
-                  <p className="text-lime-400 font-bold text-sm">DEBUG CONSOLE</p>
-                </div>
-                <div className="space-y-1">
-                  {debugInfo.map((info, i) => (
-                    <p key={i} className="text-lime-300 text-xs font-mono break-all">
-                      {info}
-                    </p>
-                  ))}
-                </div>
-              </motion.div>
             )}
           </div>
         )}
