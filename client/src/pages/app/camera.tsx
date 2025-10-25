@@ -30,7 +30,6 @@ export default function CameraScreen() {
   // Camera Controls
   const [gridEnabled, setGridEnabled] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [maxZoom, setMaxZoom] = useState(1);
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
@@ -75,16 +74,8 @@ export default function CameraScreen() {
       
       const capabilities: any = videoTrack.getCapabilities();
       
-      // Detect Zoom Capability
-      if (capabilities.zoom) {
-        setMaxZoom(capabilities.zoom.max || 1);
-        setZoom(1);
-        log(`🔍 Zoom: 1.0× - ${capabilities.zoom.max.toFixed(1)}×`);
-      } else {
-        setMaxZoom(1);
-        setZoom(1);
-        log('⚠️ Zoom not available');
-      }
+      // Set default zoom
+      setZoom(1);
       
       log('📸 Checking ALL controls...');
       
@@ -174,11 +165,20 @@ export default function CameraScreen() {
     };
   }, []);
 
-  // Zoom Handler with Slider
+  // Zoom Handler with Buttons
   const handleZoomChange = async (newZoom: number) => {
-    if (!streamRef.current || maxZoom === 1) return;
+    if (!streamRef.current) return;
     
     const videoTrack = streamRef.current.getVideoTracks()[0];
+    const capabilities: any = videoTrack.getCapabilities();
+    
+    // Check if zoom is supported
+    if (!capabilities.zoom) {
+      log('⚠️ Zoom not available');
+      return;
+    }
+    
+    const maxZoom = capabilities.zoom.max || 1;
     const clampedZoom = Math.max(1, Math.min(maxZoom, newZoom));
     
     try {
@@ -186,6 +186,7 @@ export default function CameraScreen() {
         advanced: [{ zoom: clampedZoom } as any]
       });
       setZoom(clampedZoom);
+      log(`🔍 Zoom: ${clampedZoom.toFixed(1)}×`);
     } catch (e) {
       log('⚠️ Zoom failed');
     }
@@ -551,18 +552,26 @@ export default function CameraScreen() {
             </div>
           )}
 
-          {/* Histogram */}
+          {/* Histogram - Kleiner, unten, wegklickbar */}
           {showHistogram && (
             <motion.div
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-32 left-4 z-50"
+              exit={{ opacity: 0, y: 20 }}
+              className="absolute bottom-40 left-4 z-50"
             >
-              <div className="bg-black/80 backdrop-blur-md rounded-xl p-2 border border-white/20">
+              <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
+                <button
+                  onClick={() => setShowHistogram(false)}
+                  className="absolute -top-1 -right-1 w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-white text-xs hover:bg-white/30"
+                  data-testid="button-close-histogram"
+                >
+                  <X className="w-3 h-3" />
+                </button>
                 <Histogram 
                   videoElement={videoRef.current} 
-                  width={200}
-                  height={60}
+                  width={140}
+                  height={40}
                 />
               </div>
             </motion.div>
@@ -643,34 +652,24 @@ export default function CameraScreen() {
 
           {/* Bottom Controls */}
           <div className="absolute bottom-0 left-0 right-0 z-50 pb-28 px-4">
-            {/* Zoom Slider */}
-            {maxZoom > 1 && (
-              <div className="mb-4">
-                <div className="bg-black/60 backdrop-blur-md rounded-full p-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-white text-xs font-semibold min-w-[40px]">
-                      {zoom.toFixed(1)}×
-                    </span>
-                    <input
-                      type="range"
-                      min="1"
-                      max={maxZoom}
-                      step="0.1"
-                      value={zoom}
-                      onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
-                      className="flex-1 h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
-                      style={{
-                        background: `linear-gradient(to right, #4A5849 0%, #4A5849 ${((zoom - 1) / (maxZoom - 1)) * 100}%, rgba(255,255,255,0.2) ${((zoom - 1) / (maxZoom - 1)) * 100}%, rgba(255,255,255,0.2) 100%)`
-                      }}
-                      data-testid="slider-zoom"
-                    />
-                    <span className="text-white text-xs min-w-[40px] text-right">
-                      {maxZoom.toFixed(1)}×
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
+            {/* Zoom Buttons - Wie im Figma */}
+            <div className="mb-4 flex justify-center gap-2">
+              {[0.5, 1, 1.5, 2].map((zoomLevel) => (
+                <button
+                  key={zoomLevel}
+                  onClick={() => handleZoomChange(zoomLevel)}
+                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${
+                    zoom === zoomLevel
+                      ? 'text-white'
+                      : 'bg-white/20 backdrop-blur-md text-white/70'
+                  }`}
+                  style={zoom === zoomLevel ? { backgroundColor: '#4A5849' } : {}}
+                  data-testid={`button-zoom-${zoomLevel}x`}
+                >
+                  {zoomLevel}×
+                </button>
+              ))}
+            </div>
             
             {/* Capture & Room Type Row */}
             <div className="flex items-center justify-between">
