@@ -1,140 +1,109 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Grid3x3, Timer, Image, X, Camera as CameraIcon, BarChart3, Layers, RotateCw } from 'lucide-react';
+import { X, Camera as CameraIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
-import { Badge } from '@/components/ui/badge';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
-import { Histogram } from '@/components/mobile/Histogram';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
-  const [showGrid, setShowGrid] = useState(true);
-  const [showHorizon, setShowHorizon] = useState(true);
-  const [showHistogram, setShowHistogram] = useState(false);
-  const [zoom, setZoom] = useState(1);
-  const [format, setFormat] = useState<'DNG' | 'HEIC'>('DNG');
-  const [timer, setTimer] = useState<0 | 3 | 10>(0);
-  const [hdrMode, setHdrMode] = useState<3 | 5>(3);
-  const [hdrEnabled, setHdrEnabled] = useState(true);
-  const [horizonTilt, setHorizonTilt] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
-  const [cameraError, setCameraError] = useState<string>('');
-  const [cameraReady, setCameraReady] = useState(false);
-  const [videoRotation, setVideoRotation] = useState(0);
-  const [debugLogs, setDebugLogs] = useState<string[]>([]);
+  const [error, setError] = useState<string>('');
+  const [debugInfo, setDebugInfo] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
 
-  const addDebugLog = (message: string) => {
-    console.log(message);
-    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`].slice(-10));
+  const log = (msg: string) => {
+    const time = new Date().toLocaleTimeString();
+    const entry = `${time}: ${msg}`;
+    console.log(entry);
+    setDebugInfo(prev => [...prev, entry]);
   };
 
-  const zoomLevels = [0.5, 1, 1.5, 2];
-
-  // Automatische iOS-Orientierungskorrektur
-  useEffect(() => {
-    const updateOrientation = () => {
-      // iOS-spezifische Orientierung
-      const orientation = (window as any).orientation || screen.orientation?.angle || 0;
-      // Kompensiere iOS Kamera-Rotation (environment camera ist um 180° pre-rotiert)
-      setVideoRotation(-orientation);
-    };
-
-    updateOrientation();
-    window.addEventListener('orientationchange', updateOrientation);
-    
-    return () => {
-      window.removeEventListener('orientationchange', updateOrientation);
-    };
-  }, []);
-
-  // Kamera-Stream initialisieren (nur bei User-Klick!)
   const startCamera = async () => {
-    trigger('medium');
-    setCameraError('');
-    setDebugLogs([]);
-    
-    addDebugLog('🎥 Starting camera...');
-    addDebugLog(`🔒 HTTPS: ${window.location.protocol === 'https:' ? 'YES ✅' : 'NO ❌'}`);
-    addDebugLog(`📱 Has MediaDevices: ${!!navigator.mediaDevices ? 'YES ✅' : 'NO ❌'}`);
-    addDebugLog(`📷 Has getUserMedia: ${!!navigator.mediaDevices?.getUserMedia ? 'YES ✅' : 'NO ❌'}`);
-    
     try {
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        const error = !navigator.mediaDevices 
-          ? 'MediaDevices API nicht verfügbar (HTTPS erforderlich)'
-          : 'getUserMedia nicht verfügbar';
-        addDebugLog(`❌ Not supported: ${error}`);
-        throw new Error(error);
+      trigger('medium');
+      setError('');
+      setDebugInfo([]);
+      
+      log('🔍 Starting camera...');
+      log(`HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}`);
+      log(`MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}`);
+      log(`getUserMedia: ${navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}`);
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error('Camera API not available');
       }
 
-      addDebugLog('🔑 Requesting camera permission...');
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
+      log('📸 Requesting camera...');
+      
+      const constraints = {
         video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 }
         }
-      });
-      
-      addDebugLog(`✅ Permission granted!`);
-      addDebugLog(`📹 Stream active: ${mediaStream.active}`);
-      
+      };
+
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      log('✅ Camera permission granted');
+      log(`Stream active: ${mediaStream.active}`);
+      log(`Tracks: ${mediaStream.getVideoTracks().length}`);
+
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        await videoRef.current.play();
         streamRef.current = mediaStream;
         setStream(mediaStream);
-        setCameraReady(true);
-        addDebugLog('🎉 Camera ready!');
+        
+        // Wait for video to be ready
+        videoRef.current.onloadedmetadata = () => {
+          log('🎬 Video metadata loaded');
+          videoRef.current?.play().then(() => {
+            log('▶️ Video playing');
+          }).catch(err => {
+            log(`❌ Play error: ${err.message}`);
+          });
+        };
       }
     } catch (err: any) {
-      addDebugLog(`❌ Error: ${err.name}`);
-      addDebugLog(`📝 Message: ${err.message}`);
+      log(`❌ ERROR: ${err.name}`);
+      log(`Message: ${err.message}`);
       
-      // Spezifische Error-Messages
       let errorMsg = '';
       if (err.name === 'NotAllowedError') {
-        errorMsg = 'Kamera-Berechtigung verweigert. Bitte in Browser-Einstellungen erlauben.';
-        addDebugLog('💡 Tipp: Safari → Einstellungen → Diese Website → Kamera: Erlauben');
+        errorMsg = 'Camera permission denied';
+        log('💡 Fix: Settings → Safari → Camera → Allow');
       } else if (err.name === 'NotFoundError') {
-        errorMsg = 'Keine Kamera gefunden.';
-      } else if (err.name === 'NotSupportedError' || err.message.includes('not supported')) {
-        errorMsg = 'Kamera-API nicht unterstützt. HTTPS erforderlich.';
+        errorMsg = 'No camera found';
       } else if (err.name === 'NotReadableError') {
-        errorMsg = 'Kamera wird bereits verwendet.';
+        errorMsg = 'Camera already in use';
       } else {
-        errorMsg = `Kamera-Fehler: ${err.message}`;
+        errorMsg = err.message || 'Camera error';
       }
-      
-      setCameraError(errorMsg);
+      setError(errorMsg);
     }
   };
 
-  // Cleanup beim Verlassen
+  // Cleanup
   useEffect(() => {
     return () => {
       if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current.getTracks().forEach(track => {
+          track.stop();
+          log('🛑 Camera stopped');
+        });
       }
     };
   }, []);
 
-  // Simuliere Horizont-Neigung
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setHorizonTilt(Math.sin(Date.now() / 1000) * 2);
-    }, 100);
-    return () => clearInterval(interval);
-  }, []);
-
   const handleCapture = () => {
     trigger('heavy');
+    log('📷 Photo captured');
+    
+    // Flash effect
     const flash = document.getElementById('capture-flash');
     if (flash) {
       flash.classList.remove('hidden');
@@ -145,206 +114,92 @@ export default function CameraScreen() {
     const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
     photos.push({ id: Date.now(), timestamp: new Date().toISOString() });
     sessionStorage.setItem('appPhotos', JSON.stringify(photos));
+    
+    log(`Total photos: ${photos.length}`);
   };
-
-  const cycleTimer = () => {
-    trigger('light');
-    const timers: Array<0 | 3 | 10> = [0, 3, 10];
-    const currentIndex = timers.indexOf(timer);
-    setTimer(timers[(currentIndex + 1) % timers.length]);
-  };
-
-  const handleZoomChange = (level: number) => {
-    trigger('light');
-    setZoom(level);
-  };
-
-  const toggleGrid = () => {
-    trigger('light');
-    setShowGrid(!showGrid);
-  };
-
-  const toggleFormat = () => {
-    trigger('medium');
-    setFormat(format === 'DNG' ? 'HEIC' : 'DNG');
-  };
-
-  const toggleHistogram = () => {
-    trigger('light');
-    setShowHistogram(!showHistogram);
-  };
-
 
   return (
     <div className="h-full flex flex-col bg-black">
-      {/* Capture Flash */}
+      {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[100]" />
 
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* Camera Viewfinder */}
+      {/* Debug Info - ALWAYS VISIBLE AT TOP */}
+      {debugInfo.length > 0 && (
+        <div className="absolute top-12 left-2 right-2 z-50 bg-black/90 backdrop-blur-md rounded-lg p-3 border border-green-500/30 max-h-48 overflow-y-auto">
+          <div className="text-green-400 text-xs font-mono space-y-0.5">
+            {debugInfo.map((info, i) => (
+              <div key={i} className="break-all">{info}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Main Content */}
       <div className="flex-1 relative bg-black overflow-hidden">
-        {/* Live-Kamera-Vorschau oder Fallback */}
-        {stream && cameraReady ? (
+        {stream ? (
+          // Camera Preview
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
             className="absolute inset-0 w-full h-full object-cover"
-            style={{ transform: `scale(${zoom}) rotate(${videoRotation}deg)` }}
             data-testid="video-camera-preview"
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+          // Start Screen
+          <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center px-6 max-w-sm">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(74, 88, 73, 0.2)' }}>
-                <CameraIcon className="w-10 h-10" style={{ color: '#6B8268' }} strokeWidth={1.5} />
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#4A5849]/20 flex items-center justify-center">
+                <CameraIcon className="w-10 h-10 text-[#4A5849]" strokeWidth={1.5} />
               </div>
-              
-              {cameraError === 'demo' ? (
+
+              {error ? (
                 <>
-                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-demo-title">
-                    Demo-Modus
-                  </p>
-                  <p className="text-gray-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-camera-demo-subtitle">
-                    Live-Kamera nur auf echten Geräten mit HTTPS verfügbar
-                  </p>
-                  <p className="text-xs text-gray-500 mb-6" style={{ fontSize: '12px' }}>
-                    Alle Funktionen sind testbar. Die Kamera wird automatisch aktiviert, wenn die App auf einem iPhone über HTTPS läuft.
-                  </p>
+                  <p className="text-white text-lg mb-2">Camera Error</p>
+                  <p className="text-red-400 text-sm mb-6">{error}</p>
                   <HapticButton
                     onClick={startCamera}
-                    className="text-white px-6 py-3 rounded-lg"
-                    style={{ backgroundColor: '#4A5849' }}
+                    className="bg-[#4A5849] text-white px-6 py-3"
                     hapticStyle="medium"
                     data-testid="button-retry-camera"
                   >
-                    Erneut versuchen
-                  </HapticButton>
-                </>
-              ) : cameraError ? (
-                <>
-                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-error-title">
-                    Kamera-Fehler
-                  </p>
-                  <p className="text-red-400 mb-4" style={{ fontSize: '14px' }} data-testid="text-camera-error-message">
-                    {cameraError}
-                  </p>
-                  <HapticButton
-                    onClick={startCamera}
-                    className="text-white px-6 py-3 rounded-lg"
-                    style={{ backgroundColor: '#4A5849' }}
-                    hapticStyle="medium"
-                    data-testid="button-retry-camera"
-                  >
-                    Erneut versuchen
+                    Retry
                   </HapticButton>
                 </>
               ) : (
                 <>
-                  <p className="text-white mb-2" style={{ fontSize: '16px' }} data-testid="text-camera-start-title">
-                    Kamera starten
-                  </p>
-                  <p className="text-gray-400 mb-6" style={{ fontSize: '14px' }} data-testid="text-camera-start-subtitle">
-                    Tippe auf den Button um die Kamera zu aktivieren
+                  <p className="text-white text-lg mb-2">Start Camera</p>
+                  <p className="text-gray-400 text-sm mb-6">
+                    Tap to activate camera
                   </p>
                   <HapticButton
                     onClick={startCamera}
-                    className="text-white px-6 py-3 rounded-lg mb-4"
-                    style={{ backgroundColor: '#4A5849' }}
+                    className="bg-[#4A5849] text-white px-8 py-3"
                     hapticStyle="medium"
                     data-testid="button-start-camera"
                   >
                     <CameraIcon className="w-5 h-5 mr-2 inline" />
-                    Kamera aktivieren
+                    Start Camera
                   </HapticButton>
-
-                  {/* Debug-Logs Panel */}
-                  {debugLogs.length > 0 && (
-                    <div className="mt-4 bg-black/60 rounded-lg p-3 text-left max-w-sm border border-white/10">
-                      <p className="text-white text-xs mb-2 font-mono">Debug-Logs:</p>
-                      <div className="space-y-1 max-h-48 overflow-y-auto">
-                        {debugLogs.map((log, i) => (
-                          <p key={i} className="text-gray-300 text-xs font-mono break-all">
-                            {log}
-                          </p>
-                        ))}
-                      </div>
-                    </div>
-                  )}
                 </>
               )}
             </div>
           </div>
         )}
 
-        {/* Grid Overlay */}
-        {showGrid && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="absolute inset-0 pointer-events-none"
-          >
-            <div className="h-full w-full grid grid-cols-3 grid-rows-3">
-              {Array.from({ length: 9 }).map((_, i) => (
-                <div key={i} className="border border-white/20" />
-              ))}
-            </div>
-          </motion.div>
-        )}
-
-        {/* Horizont-Linie mit Animation */}
-        {showHorizon && (
-          <motion.div
-            animate={{ rotate: horizonTilt }}
-            transition={{ type: 'spring', stiffness: 100, damping: 20 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none"
-          >
-            <div className="relative w-full h-px" style={{ backgroundColor: '#4A5849' }}>
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 border-2 rounded-full" style={{ borderColor: '#4A5849' }} />
-            </div>
-          </motion.div>
-        )}
-
-        {/* Top Controls mit Safe Area */}
-        <div className="absolute top-14 left-0 right-0 px-4 flex items-start justify-between z-10">
-          <div className="flex gap-2">
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={toggleGrid}
-              hapticStyle="light"
-              className={`bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 ${
-                showGrid ? 'text-white' : 'text-white/60'
-              }`}
-              data-testid="button-toggle-grid"
-            >
-              <Grid3x3 className="w-5 h-5" strokeWidth={1.5} />
-            </HapticButton>
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={cycleTimer}
-              hapticStyle="light"
-              className="bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 text-white relative"
-              data-testid="button-cycle-timer"
-            >
-              <Timer className="w-5 h-5" strokeWidth={1.5} />
-              {timer > 0 && (
-                <span className="absolute -top-1 -right-1 text-white rounded-full w-5 h-5 flex items-center justify-center" style={{ fontSize: '10px', backgroundColor: '#4A5849' }} data-testid="text-timer-value">
-                  {timer}
-                </span>
-              )}
-            </HapticButton>
-          </div>
-
+        {/* Close Button */}
+        <div className="absolute top-14 right-4 z-10">
           <HapticButton
             size="icon"
             variant="ghost"
-            onClick={() => setLocation('/app/gallery')}
+            onClick={() => {
+              trigger('light');
+              setLocation('/app');
+            }}
             hapticStyle="medium"
             className="bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 text-white"
             data-testid="button-close-camera"
@@ -352,136 +207,22 @@ export default function CameraScreen() {
             <X className="w-5 h-5" strokeWidth={1.5} />
           </HapticButton>
         </div>
-
-        {/* Format Badge (rechts) mit Glassmorphism */}
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
-          <motion.div whileTap={{ scale: 0.9 }}>
-            <Badge
-              variant="secondary"
-              className="bg-white/10 backdrop-blur-md text-white border border-white/20 cursor-pointer hover:bg-white/20 transition-colors"
-              onClick={toggleFormat}
-              style={{ fontSize: '12px', padding: '4px 10px' }}
-              data-testid="badge-format"
-            >
-              {format}
-            </Badge>
-          </motion.div>
-          
-          {/* HDR Bracketing Badge */}
-          {hdrEnabled && (
-            <motion.div 
-              whileTap={{ scale: 0.9 }}
-              initial={{ opacity: 0, x: 10 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <Badge
-                variant="secondary"
-                className="backdrop-blur-md text-white border cursor-pointer transition-colors flex items-center gap-1"
-                onClick={() => {
-                  trigger('light');
-                  setHdrMode(hdrMode === 3 ? 5 : 3);
-                }}
-                style={{ backgroundColor: 'rgba(74, 88, 73, 0.8)', borderColor: 'rgba(107, 130, 104, 0.3)', fontSize: '11px', padding: '3px 8px' }}
-                data-testid="badge-hdr-mode"
-              >
-                <Layers className="w-3 h-3" strokeWidth={2} />
-                <span>{hdrMode}×</span>
-              </Badge>
-            </motion.div>
-          )}
-        </div>
-
-        {/* Zoom Overlay mit Glassmorphism */}
-        <div className="absolute bottom-32 left-1/2 -translate-x-1/2 z-10">
-          <div className="flex items-center gap-2 bg-black/40 backdrop-blur-xl px-4 py-2 rounded-full border border-white/10 shadow-lg">
-            {zoomLevels.map((level) => (
-              <motion.button
-                key={level}
-                onClick={() => handleZoomChange(level)}
-                whileTap={{ scale: 0.9 }}
-                className={`min-w-10 px-3 py-1.5 rounded-full transition-all ${
-                  zoom === level
-                    ? 'text-white shadow-md'
-                    : 'text-white hover:bg-white/20'
-                }`}
-                style={zoom === level ? { backgroundColor: '#4A5849', fontSize: '14px' } : { fontSize: '14px' }}
-                data-testid={`button-zoom-${level}x`}
-              >
-                {level}×
-              </motion.button>
-            ))}
-          </div>
-        </div>
-
-        {/* Histogram Overlay mit Glassmorphism */}
-        {showHistogram && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 10 }}
-            className="absolute top-20 left-4 z-10"
-          >
-            <div className="bg-black/40 backdrop-blur-xl rounded-lg border border-white/20 p-2 shadow-lg">
-              <Histogram
-                videoElement={videoRef.current}
-                width={200}
-                height={60}
-                className="rounded"
-              />
-              <div className="flex justify-between mt-1 px-1">
-                <span className="text-white/60 text-xs" style={{ fontSize: '10px' }}>
-                  Shadows
-                </span>
-                <span className="text-white/60 text-xs" style={{ fontSize: '10px' }}>
-                  Midtones
-                </span>
-                <span className="text-white/60 text-xs" style={{ fontSize: '10px' }}>
-                  Highlights
-                </span>
-              </div>
-            </div>
-          </motion.div>
-        )}
       </div>
 
       {/* Bottom Controls */}
       <div className="bg-black py-6 px-6 pb-20 safe-area-bottom">
-        <div className="flex items-center justify-between max-w-md mx-auto">
-          {/* Galerie Button */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => {
-              trigger('medium');
-              setLocation('/app/gallery');
-            }}
-            className="w-12 h-12 rounded-lg border-2 border-white/50 flex items-center justify-center bg-gray-700 hover:border-white transition-colors"
-            data-testid="button-goto-gallery"
-          >
-            <Image className="w-6 h-6 text-white" strokeWidth={1.5} />
-          </motion.button>
-
-          {/* Auslöser */}
+        <div className="flex items-center justify-center">
           <motion.button
             onClick={handleCapture}
             whileTap={{ scale: 0.95 }}
-            whileHover={{ scale: 1.05 }}
-            className="w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-transform"
+            disabled={!stream}
+            className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-opacity ${
+              !stream ? 'opacity-30' : 'opacity-100'
+            }`}
             data-testid="button-capture-photo"
           >
             <div className="w-16 h-16 bg-white rounded-full" />
           </motion.button>
-
-          {/* Histogram Button */}
-          <HapticButton
-            size="icon"
-            variant="ghost"
-            onClick={toggleHistogram}
-            hapticStyle="light"
-            className="bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 text-white"
-            data-testid="button-toggle-histogram"
-          >
-            <BarChart3 className="w-5 h-5" strokeWidth={1.5} />
-          </HapticButton>
         </div>
       </div>
 
