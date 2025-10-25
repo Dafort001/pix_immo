@@ -36,6 +36,7 @@ export default function UploadScreen() {
   const [wifiOnly, setWifiOnly] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
+  const [uploadSuccess, setUploadSuccess] = useState(false);
   const { trigger } = useHaptic();
   const hasAutoSelectedRef = useRef(false);
 
@@ -280,8 +281,8 @@ export default function UploadScreen() {
           }
         });
         
-        // Reload to show updated state
-        window.location.reload();
+        // Show success state
+        setUploadSuccess(true);
       } else {
         // Some uploads failed
         trigger('error');
@@ -599,6 +600,85 @@ export default function UploadScreen() {
       </div>
 
       <BottomNav photoCount={stacks.reduce((sum, s) => sum + s.photos.length, 0)} />
+
+      {/* Success State Overlay */}
+      {uploadSuccess && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center px-6"
+          style={{ paddingTop: 'env(safe-area-inset-top)', paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          {/* Animated Checkmark */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 20, delay: 0.1 }}
+            className="w-24 h-24 rounded-full flex items-center justify-center mb-6"
+            style={{ backgroundColor: '#4A5849' }}
+          >
+            <motion.svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="white"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <motion.path d="M20 6L9 17l-5-5" />
+            </motion.svg>
+          </motion.div>
+
+          {/* Success Message */}
+          <motion.h2
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="text-2xl font-semibold text-gray-900 mb-2"
+            style={{ fontSize: '24px' }}
+            data-testid="text-success-headline"
+          >
+            Upload erfolgreich!
+          </motion.h2>
+
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="text-gray-600 text-center mb-8"
+            style={{ fontSize: '16px' }}
+            data-testid="text-success-count"
+          >
+            {uploadProgress.total} {uploadProgress.total === 1 ? 'Foto wurde' : 'Fotos wurden'} erfolgreich hochgeladen
+          </motion.p>
+
+          {/* Done Button */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="w-full max-w-sm"
+          >
+            <HapticButton
+              onClick={() => {
+                trigger('success');
+                window.location.reload();
+              }}
+              hapticStyle="success"
+              className="w-full text-white rounded-xl py-4 flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#4A5849', fontSize: '16px' }}
+              data-testid="button-success-done"
+            >
+              Fertig
+            </HapticButton>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
