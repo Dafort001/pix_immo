@@ -23,6 +23,7 @@ import { notifyHandoffReady, notifyEditorUploadComplete } from "./notifications"
 import { generatePresignedPutUrl, generateObjectPath } from "./objectStorage";
 import { isValidFilenameV31 } from "./fileNaming";
 import { processJobDemo } from "./demo-processing";
+import { registerGalleryRoutes } from "./gallery-routes";
 
 // Middleware to validate request body with Zod
 function validateBody(schema: z.ZodSchema) {
@@ -1136,6 +1137,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       version: "1.0.0",
     });
   });
+
+  // Register Gallery System V1.0 routes
+  registerGalleryRoutes(app);
 
   const httpServer = createServer(app);
 
