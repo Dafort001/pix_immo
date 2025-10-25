@@ -271,15 +271,36 @@ export default function UploadScreen() {
         // All uploads successful
         trigger('success');
         
-        // Clear uploaded photos from sessionStorage
+        // Collect all uploaded photo IDs
+        const uploadedPhotoIds = new Set<number>();
         uploadSelection.forEach(stackId => {
           const stack = stacks.find(s => s.stackId === stackId);
           if (stack) {
             stack.photos.forEach(photo => {
+              uploadedPhotoIds.add(photo.id);
+              // Remove photo blob data
               sessionStorage.removeItem(`photo_${photo.id}`);
             });
           }
         });
+        
+        // Update appPhotos array - remove uploaded photos
+        const appPhotosJson = sessionStorage.getItem('appPhotos');
+        if (appPhotosJson) {
+          try {
+            const appPhotos: Photo[] = JSON.parse(appPhotosJson);
+            const remainingPhotos = appPhotos.filter(photo => !uploadedPhotoIds.has(photo.id));
+            
+            if (remainingPhotos.length > 0) {
+              sessionStorage.setItem('appPhotos', JSON.stringify(remainingPhotos));
+            } else {
+              // All photos uploaded - clear the array
+              sessionStorage.removeItem('appPhotos');
+            }
+          } catch (error) {
+            console.error('[Upload] Failed to update appPhotos array:', error);
+          }
+        }
         
         // Show success state
         setUploadSuccess(true);
