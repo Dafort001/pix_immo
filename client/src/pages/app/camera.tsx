@@ -24,9 +24,15 @@ export default function CameraScreen() {
   const [cameraError, setCameraError] = useState<string>('');
   const [cameraReady, setCameraReady] = useState(false);
   const [videoRotation, setVideoRotation] = useState(0);
+  const [debugLogs, setDebugLogs] = useState<string[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
+
+  const addDebugLog = (message: string) => {
+    console.log(message);
+    setDebugLogs(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`].slice(-10));
+  };
 
   const zoomLevels = [0.5, 1, 1.5, 2];
 
@@ -51,22 +57,23 @@ export default function CameraScreen() {
   const startCamera = async () => {
     trigger('medium');
     setCameraError('');
+    setDebugLogs([]);
     
-    console.log('[Camera] Starting camera...');
-    console.log('[Camera] HTTPS:', window.location.protocol === 'https:');
-    console.log('[Camera] Has MediaDevices:', !!navigator.mediaDevices);
-    console.log('[Camera] Has getUserMedia:', !!navigator.mediaDevices?.getUserMedia);
+    addDebugLog('🎥 Starting camera...');
+    addDebugLog(`🔒 HTTPS: ${window.location.protocol === 'https:' ? 'YES ✅' : 'NO ❌'}`);
+    addDebugLog(`📱 Has MediaDevices: ${!!navigator.mediaDevices ? 'YES ✅' : 'NO ❌'}`);
+    addDebugLog(`📷 Has getUserMedia: ${!!navigator.mediaDevices?.getUserMedia ? 'YES ✅' : 'NO ❌'}`);
     
     try {
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         const error = !navigator.mediaDevices 
           ? 'MediaDevices API nicht verfügbar (HTTPS erforderlich)'
           : 'getUserMedia nicht verfügbar';
-        console.error('[Camera] Not supported:', error);
+        addDebugLog(`❌ Not supported: ${error}`);
         throw new Error(error);
       }
 
-      console.log('[Camera] Requesting camera permission...');
+      addDebugLog('🔑 Requesting camera permission...');
       const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: 'environment',
@@ -75,26 +82,26 @@ export default function CameraScreen() {
         }
       });
       
-      console.log('[Camera] Permission granted! Stream:', mediaStream);
+      addDebugLog(`✅ Permission granted!`);
+      addDebugLog(`📹 Stream active: ${mediaStream.active}`);
       
       if (videoRef.current) {
         videoRef.current.srcObject = mediaStream;
-        // iOS braucht explizites play()
         await videoRef.current.play();
         streamRef.current = mediaStream;
         setStream(mediaStream);
         setCameraReady(true);
-        console.log('[Camera] Camera ready!');
+        addDebugLog('🎉 Camera ready!');
       }
     } catch (err: any) {
-      console.error('[Camera] Error:', err);
-      console.error('[Camera] Error name:', err.name);
-      console.error('[Camera] Error message:', err.message);
+      addDebugLog(`❌ Error: ${err.name}`);
+      addDebugLog(`📝 Message: ${err.message}`);
       
       // Spezifische Error-Messages
       let errorMsg = '';
       if (err.name === 'NotAllowedError') {
         errorMsg = 'Kamera-Berechtigung verweigert. Bitte in Browser-Einstellungen erlauben.';
+        addDebugLog('💡 Tipp: Safari → Einstellungen → Diese Website → Kamera: Erlauben');
       } else if (err.name === 'NotFoundError') {
         errorMsg = 'Keine Kamera gefunden.';
       } else if (err.name === 'NotSupportedError' || err.message.includes('not supported')) {
@@ -245,7 +252,7 @@ export default function CameraScreen() {
                   </p>
                   <HapticButton
                     onClick={startCamera}
-                    className="text-white px-6 py-3 rounded-lg"
+                    className="text-white px-6 py-3 rounded-lg mb-4"
                     style={{ backgroundColor: '#4A5849' }}
                     hapticStyle="medium"
                     data-testid="button-start-camera"
@@ -253,6 +260,20 @@ export default function CameraScreen() {
                     <CameraIcon className="w-5 h-5 mr-2 inline" />
                     Kamera aktivieren
                   </HapticButton>
+
+                  {/* Debug-Logs Panel */}
+                  {debugLogs.length > 0 && (
+                    <div className="mt-4 bg-black/60 rounded-lg p-3 text-left max-w-sm border border-white/10">
+                      <p className="text-white text-xs mb-2 font-mono">Debug-Logs:</p>
+                      <div className="space-y-1 max-h-48 overflow-y-auto">
+                        {debugLogs.map((log, i) => (
+                          <p key={i} className="text-gray-300 text-xs font-mono break-all">
+                            {log}
+                          </p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </>
               )}
             </div>
