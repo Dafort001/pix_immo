@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon } from 'lucide-react';
+import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon, ChevronDown, MapPin, Loader2 } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
+import { useQuery } from '@tanstack/react-query';
+import type { Job } from '@shared/schema';
 
 interface Photo {
   id: number;
@@ -30,10 +32,21 @@ interface PhotoStack {
 export default function UploadScreen() {
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [uploadSelection, setUploadSelection] = useState<number[]>([]);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [wifiOnly, setWifiOnly] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const { trigger } = useHaptic();
   const hasAutoSelectedRef = useRef(false);
+
+  // Fetch available jobs
+  const { data: jobs, isLoading: jobsLoading, isError: jobsError } = useQuery<Job[]>({
+    queryKey: ['/api/jobs'],
+    queryFn: async () => {
+      const res = await fetch('/api/jobs', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch jobs');
+      return res.json();
+    }
+  });
 
   // Load photos from sessionStorage and group into stacks
   useEffect(() => {
@@ -169,6 +182,76 @@ export default function UploadScreen() {
       <div className="flex-1 overflow-y-scroll help-scrollbar pb-20">
         <div className="max-w-md mx-auto p-4 space-y-4">
           
+          {/* Job Selection */}
+          <div className="space-y-3">
+            <h3 className="text-gray-900" style={{ fontSize: '16px', fontWeight: '600' }}>
+              Auftrag auswählen
+            </h3>
+            
+            {jobsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-gray-400 animate-spin" />
+              </div>
+            ) : jobsError ? (
+              <div className="bg-red-50 rounded-lg p-4 text-center">
+                <p className="text-red-600" style={{ fontSize: '14px' }}>
+                  Fehler beim Laden der Aufträge
+                </p>
+              </div>
+            ) : !jobs || jobs.length === 0 ? (
+              <div className="bg-gray-50 rounded-lg p-4 text-center">
+                <p className="text-gray-500" style={{ fontSize: '14px' }}>
+                  Keine Aufträge verfügbar
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {(jobs || []).map((job) => (
+                  <motion.div
+                    key={job.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    onClick={() => {
+                      trigger('light');
+                      setSelectedJobId(job.id);
+                    }}
+                    className="bg-white rounded-lg p-3 border-2 transition-all cursor-pointer"
+                    style={{
+                      borderColor: selectedJobId === job.id ? '#4A5849' : '#E5E5E5'
+                    }}
+                    data-testid={`job-card-${job.id}`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-gray-900 font-medium truncate" style={{ fontSize: '14px' }}>
+                            {job.propertyName || 'Unbenannt'}
+                          </span>
+                          <span className="text-gray-400 flex-shrink-0" style={{ fontSize: '12px' }}>
+                            #{job.jobNumber}
+                          </span>
+                        </div>
+                        {job.addressFormatted && (
+                          <div className="flex items-start gap-1">
+                            <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
+                            <p className="text-gray-500 text-xs line-clamp-2">
+                              {job.addressFormatted}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      {selectedJobId === job.id && (
+                        <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#4A5849' }}>
+                          <Check className="w-3 h-3 text-white" strokeWidth={2} />
+                        </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            )}
+          </div>
+
           {stacks.length > 0 && (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
               <span style={{ fontSize: '14px' }} className="text-gray-900">
@@ -305,7 +388,7 @@ export default function UploadScreen() {
           <HapticButton
             onClick={handleUpload}
             hapticStyle="success"
-            disabled={uploadSelection.length === 0 || isUploading}
+            disabled={uploadSelection.length === 0 || !selectedJobId || isUploading}
             className="w-full text-white rounded-xl py-4 disabled:opacity-50 flex items-center justify-center gap-2"
             style={{ backgroundColor: '#4A5849', fontSize: '16px' }}
             data-testid="button-start-upload"
@@ -317,11 +400,21 @@ export default function UploadScreen() {
                   transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
                   className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
                 />
-                <span>Uploading...</span>
+                <span>Wird hochgeladen...</span>
+              </>
+            ) : uploadSelection.length === 0 ? (
+              <>
+                <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
+                <span>Keine Fotos ausgewählt</span>
+              </>
+            ) : !selectedJobId ? (
+              <>
+                <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
+                <span>Auftrag auswählen</span>
               </>
             ) : (
               <>
-                <UploadIcon className="w-4 h-4" strokeWidth={1.5} />
+                <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
                 <span>{uploadSelection.length} {uploadSelection.length === 1 ? 'Foto' : 'Fotos'} hochladen</span>
               </>
             )}
