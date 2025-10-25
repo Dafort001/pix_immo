@@ -1,0 +1,77 @@
+{
+  "version": "1.0.0",
+  "gallery": {
+    "id": 123,
+    "type": "customer_upload",
+    "name": "Luxury Villa Hamburg",
+    "description": "Customer reference images for luxury property in Blankenese",
+    "status": "finalized",
+    "createdAt": "2025-10-25T10:30:00.000Z",
+    "updatedAt": "2025-10-25T14:45:30.000Z"
+  },
+  "files": [
+    {
+      "id": 1001,
+      "filename": "galleries/123/1729858200000-living-room.jpg",
+      "originalName": "living-room.jpg",
+      "fileType": "JPEG",
+      "fileSize": 2458624,
+      "thumbnailUrl": "https://r2.pix.immo/galleries/123/thumbnails/1729858200000-living-room.jpg",
+      "presets": {
+        "style": "EDITORIAL",
+        "window": "SCANDINAVIAN",
+        "sky": "CLEAR BLUE"
+      },
+      "corrections": {
+        "verticalCorrection": true,
+        "deNoiseFloor": true,
+        "deNoiseWall": false,
+        "deNoiseCeiling": false,
+        "removePowerCables": true,
+        "removePlumbing": false
+      },
+      "annotations": [
+        {
+          "id": 5001,
+          "type": "comment",
+          "maskImageUrl": null,
+          "notes": "Please brighten the left corner near the window",
+          "createdAt": "2025-10-25T11:15:00.000Z"
+        },
+        {
+          "id": 5002,
+          "type": "mask",
+          "maskImageUrl": "https://r2.pix.immo/galleries/123/masks/1729858200000-living-room-mask.png",
+          "notes": "Remove furniture in marked area",
+          "createdAt": "2025-10-25T11:20:00.000Z"
+        }
+      ],
+      "uploadedAt": "2025-10-25T10:35:12.000Z"
+    },
+    {
+      "id": 1002,
+      "filename": "galleries/123/1729858300000-exterior.dng",
+      "originalName": "IMG_4521.DNG",
+      "fileType": "DNG",
+      "fileSize": 24586240,
+      "thumbnailUrl": "https://r2.pix.immo/galleries/123/thumbnails/1729858300000-exterior.jpg",
+      "presets": {
+        "style": "PURE",
+        "window": "CLEAR",
+        "sky": "PASTEL CLOUDS"
+      },
+      "corrections": {
+        "verticalCorrection": true,
+        "deNoiseFloor": false,
+        "deNoiseWall": false,
+        "deNoiseCeiling": false,
+        "removePowerCables": false,
+        "removePlumbing": false
+      },
+      "annotations": [],
+      "uploadedAt": "2025-10-25T10:38:45.000Z"
+    }
+  ],
+  "exportedAt": "2025-10-25T14:45:30.000Z",
+  "exportedBy": "admin@pix.immo"
+}

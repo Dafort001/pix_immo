@@ -1,0 +1,199 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://pix.immo/schemas/gallery_meta.json",
+  "title": "Gallery Metadata",
+  "description": "Complete metadata export for pix.immo gallery uploads including files, annotations, and editing presets",
+  "type": "object",
+  "required": ["version", "gallery", "files", "exportedAt"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^1\\.0(\\.\\d+)?$",
+      "description": "Schema version for compatibility tracking"
+    },
+    "gallery": {
+      "type": "object",
+      "required": ["id", "type", "name", "status"],
+      "properties": {
+        "id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Unique gallery identifier"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["customer_upload", "photographer_raw", "final_edited"],
+          "description": "Gallery workflow type"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 255,
+          "description": "Human-readable gallery name"
+        },
+        "description": {
+          "type": ["string", "null"],
+          "maxLength": 1000,
+          "description": "Optional gallery description"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["active", "finalized"],
+          "description": "Gallery workflow status"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 creation timestamp"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 last update timestamp"
+        }
+      }
+    },
+    "files": {
+      "type": "array",
+      "minItems": 0,
+      "items": {
+        "type": "object",
+        "required": ["id", "filename", "fileType", "fileSize"],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Unique file identifier"
+          },
+          "filename": {
+            "type": "string",
+            "pattern": "^galleries/\\d+/[\\w\\-\\.]+$",
+            "description": "R2 storage path"
+          },
+          "originalName": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Original upload filename"
+          },
+          "fileType": {
+            "type": "string",
+            "enum": [
+              "JPEG", "PNG", "HEIC",
+              "DNG", "CR2", "NEF", "ARW", "ORF", 
+              "RW2", "RAF", "PEF", "SR2", "X3F", 
+              "3FR", "FFF", "MEF"
+            ],
+            "description": "File format type"
+          },
+          "fileSize": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "File size in bytes"
+          },
+          "thumbnailUrl": {
+            "type": ["string", "null"],
+            "format": "uri",
+            "description": "Public URL to generated thumbnail (600x600 JPEG)"
+          },
+          "presets": {
+            "type": "object",
+            "required": ["style", "window", "sky"],
+            "properties": {
+              "style": {
+                "type": "string",
+                "enum": ["PURE", "EDITORIAL", "CLASSIC"],
+                "description": "Editing style preset"
+              },
+              "window": {
+                "type": "string",
+                "enum": ["CLEAR", "SCANDINAVIAN", "BRIGHT"],
+                "description": "Window treatment preset"
+              },
+              "sky": {
+                "type": "string",
+                "enum": ["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"],
+                "description": "Sky replacement preset"
+              }
+            }
+          },
+          "corrections": {
+            "type": "object",
+            "properties": {
+              "verticalCorrection": {
+                "type": "boolean",
+                "description": "Apply vertical perspective correction"
+              },
+              "deNoiseFloor": {
+                "type": "boolean",
+                "description": "Apply floor noise reduction"
+              },
+              "deNoiseWall": {
+                "type": "boolean",
+                "description": "Apply wall noise reduction"
+              },
+              "deNoiseCeiling": {
+                "type": "boolean",
+                "description": "Apply ceiling noise reduction"
+              },
+              "removePowerCables": {
+                "type": "boolean",
+                "description": "Remove visible power cables"
+              },
+              "removePlumbing": {
+                "type": "boolean",
+                "description": "Remove visible plumbing"
+              }
+            }
+          },
+          "annotations": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id", "type"],
+              "properties": {
+                "id": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "type": {
+                  "type": "string",
+                  "enum": ["comment", "mask"],
+                  "description": "Annotation type"
+                },
+                "maskImageUrl": {
+                  "type": ["string", "null"],
+                  "format": "uri",
+                  "description": "URL to mask PNG (for type=mask)"
+                },
+                "notes": {
+                  "type": ["string", "null"],
+                  "maxLength": 2000,
+                  "description": "Text notes or instructions"
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "uploadedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 upload timestamp"
+          }
+        }
+      }
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 export timestamp"
+    },
+    "exportedBy": {
+      "type": ["string", "null"],
+      "format": "email",
+      "description": "Email of user who finalized the gallery"
+    }
+  }
+}
