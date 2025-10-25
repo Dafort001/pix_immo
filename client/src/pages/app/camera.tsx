@@ -11,7 +11,7 @@ export default function CameraScreen() {
   const [, setLocation] = useLocation();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
-  const [debugInfo, setDebugInfo] = useState<string[]>(['Ready']);
+  const [debugInfo, setDebugInfo] = useState<string[]>(['Ready - V2.0']);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
@@ -30,6 +30,11 @@ export default function CameraScreen() {
       setDebugInfo([]);
       
       log('🔍 Starting...');
+      
+      // Safari detection
+      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+      log(`Safari: ${isSafari ? '✅' : '❌'}`);
+      
       log(`HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}`);
       log(`Device: ${navigator.mediaDevices ? '✅' : '❌'}`);
       log(`getUserMedia: ${typeof navigator.mediaDevices?.getUserMedia === 'function' ? '✅' : '❌'}`);
@@ -54,17 +59,33 @@ export default function CameraScreen() {
       log(`Tracks: ${mediaStream.getVideoTracks().length}`);
 
       if (videoRef.current) {
+        log('🎬 Setting srcObject...');
+        
+        // SAFARI FIX: Set srcObject and wait for loadedmetadata
         videoRef.current.srcObject = mediaStream;
         streamRef.current = mediaStream;
-        setStream(mediaStream);
         
-        videoRef.current.onloadedmetadata = () => {
-          log('🎬 Metadata loaded');
-          videoRef.current?.play().then(() => {
-            log('▶️ Playing');
-          }).catch(err => {
-            log(`❌ Play: ${err.message}`);
-          });
+        videoRef.current.onloadedmetadata = async () => {
+          log('📊 Metadata loaded');
+          
+          if (videoRef.current) {
+            log(`Video size: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
+            
+            // SAFARI FIX: Delay play() to ensure stream is ready
+            try {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              await videoRef.current.play();
+              log('▶️ Playing!');
+              setStream(mediaStream);
+            } catch (err: any) {
+              log(`❌ Play error: ${err.message}`);
+              setError('Video play failed');
+            }
+          }
+        };
+
+        videoRef.current.onerror = (err) => {
+          log(`❌ Video error: ${err}`);
         };
       }
     } catch (err: any) {
@@ -122,7 +143,7 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* KOMPLETT NEUES LAYOUT - ALLES IM BANNER! */}
+      {/* VERSION BANNER */}
       <div className="flex-1 flex flex-col p-3 pt-14">
         <motion.div
           initial={{ y: -100, opacity: 0 }}
@@ -134,7 +155,7 @@ export default function CameraScreen() {
             <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
             <div className="text-center">
               <p className="text-white font-bold text-xl">VERSION 2.0</p>
-              <p className="text-white/90 text-xs">Mini Camera Test</p>
+              <p className="text-white/90 text-xs">Safari Fix</p>
             </div>
             <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
           </div>
@@ -154,7 +175,7 @@ export default function CameraScreen() {
             </div>
           </div>
 
-          {/* START BUTTON - DIREKT IM BANNER! */}
+          {/* START BUTTON */}
           {!stream && (
             <div className="text-center">
               {error && (
@@ -173,15 +194,22 @@ export default function CameraScreen() {
           )}
         </motion.div>
 
-        {/* Video Preview - Wenn Kamera läuft */}
+        {/* Video Preview - Mit Safari Fixes! */}
         {stream && (
-          <div className="flex-1 relative mt-4 rounded-2xl overflow-hidden">
+          <div className="flex-1 relative mt-4 rounded-2xl overflow-hidden bg-black">
             <video
               ref={videoRef}
               autoPlay
               playsInline
+              webkit-playsinline="true"
               muted
-              className="absolute inset-0 w-full h-full object-cover"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                display: 'block'
+              }}
+              className="absolute inset-0"
               data-testid="video-camera-preview"
             />
 
