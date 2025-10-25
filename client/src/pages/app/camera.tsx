@@ -8,7 +8,7 @@ import { Histogram } from '@/components/mobile/Histogram';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
-import { ALL_ROOM_TYPES, ROOM_DISPLAY_NAMES, type RoomType } from '@shared/room-types';
+import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType } from '@shared/room-types';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -33,7 +33,7 @@ export default function CameraScreen() {
   const [maxZoom, setMaxZoom] = useState(1);
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [currentRoomType, setCurrentRoomType] = useState<RoomType>('undefined_space');
+  const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -684,7 +684,7 @@ export default function CameraScreen() {
                   >
                     <Home className="w-4 h-4" strokeWidth={1.5} />
                     <span className="text-sm font-semibold">
-                      {ROOM_DISPLAY_NAMES[currentRoomType]}
+                      {currentRoomType}
                     </span>
                   </HapticButton>
                 </DrawerTrigger>
@@ -693,7 +693,7 @@ export default function CameraScreen() {
                     <DrawerHeader className="p-0 mb-4">
                       <DrawerTitle>Raumtyp auswählen</DrawerTitle>
                       <DrawerDescription>
-                        Für die nächsten Aufnahmen
+                        Wähle den Raum für die nächsten Aufnahmen ({ALL_ROOM_TYPES.length} verfügbar)
                       </DrawerDescription>
                     </DrawerHeader>
                     <div className="space-y-2 overflow-y-scroll pr-2" style={{ maxHeight: '50vh' }}>
@@ -709,9 +709,9 @@ export default function CameraScreen() {
                               ? 'bg-gray-200 font-semibold'
                               : 'hover:bg-gray-100'
                           }`}
-                          data-testid={`roomtype-option-${room}`}
+                          data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
                         >
-                          <span style={{ fontSize: '16px' }}>{ROOM_DISPLAY_NAMES[room]}</span>
+                          <span style={{ fontSize: '16px' }}>{room}</span>
                           {currentRoomType === room && (
                             <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#4A5849' }} />
                           )}
