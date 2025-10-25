@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X, Camera as CameraIcon } from 'lucide-react';
+import { X, Camera as CameraIcon, Zap, AlertCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -58,7 +58,6 @@ export default function CameraScreen() {
         streamRef.current = mediaStream;
         setStream(mediaStream);
         
-        // Wait for video to be ready
         videoRef.current.onloadedmetadata = () => {
           log('🎬 Video metadata loaded');
           videoRef.current?.play().then(() => {
@@ -87,7 +86,6 @@ export default function CameraScreen() {
     }
   };
 
-  // Cleanup
   useEffect(() => {
     return () => {
       if (streamRef.current) {
@@ -103,14 +101,12 @@ export default function CameraScreen() {
     trigger('heavy');
     log('📷 Photo captured');
     
-    // Flash effect
     const flash = document.getElementById('capture-flash');
     if (flash) {
       flash.classList.remove('hidden');
       setTimeout(() => flash.classList.add('hidden'), 150);
     }
 
-    // Store photo
     const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
     photos.push({ id: Date.now(), timestamp: new Date().toISOString() });
     sessionStorage.setItem('appPhotos', JSON.stringify(photos));
@@ -119,28 +115,34 @@ export default function CameraScreen() {
   };
 
   return (
-    <div className="h-full flex flex-col bg-black">
+    <div className="h-full flex flex-col" style={{ background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)' }}>
       {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[100]" />
 
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* Debug Info - ALWAYS VISIBLE AT TOP */}
-      {debugInfo.length > 0 && (
-        <div className="absolute top-12 left-2 right-2 z-50 bg-black/90 backdrop-blur-md rounded-lg p-3 border border-green-500/30 max-h-48 overflow-y-auto">
-          <div className="text-green-400 text-xs font-mono space-y-0.5">
-            {debugInfo.map((info, i) => (
-              <div key={i} className="break-all">{info}</div>
-            ))}
+      {/* VERSION BANNER - UNMÖGLICH ZU ÜBERSEHEN! */}
+      <motion.div
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        className="absolute top-12 left-0 right-0 z-50 px-4"
+      >
+        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-2xl p-4 shadow-2xl border-2 border-lime-300">
+          <div className="flex items-center justify-center gap-3">
+            <Zap className="w-8 h-8 text-white animate-pulse" strokeWidth={2.5} />
+            <div className="text-center">
+              <p className="text-white font-bold text-2xl">VERSION 2.0</p>
+              <p className="text-white/90 text-sm">Mini Camera Test</p>
+            </div>
+            <Zap className="w-8 h-8 text-white animate-pulse" strokeWidth={2.5} />
           </div>
         </div>
-      )}
+      </motion.div>
 
       {/* Main Content */}
-      <div className="flex-1 relative bg-black overflow-hidden">
+      <div className="flex-1 relative overflow-hidden mt-32">
         {stream ? (
-          // Camera Preview
           <video
             ref={videoRef}
             autoPlay
@@ -150,49 +152,76 @@ export default function CameraScreen() {
             data-testid="video-camera-preview"
           />
         ) : (
-          // Start Screen
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center px-6 max-w-sm">
-              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-[#4A5849]/20 flex items-center justify-center">
-                <CameraIcon className="w-10 h-10 text-[#4A5849]" strokeWidth={1.5} />
-              </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
+            {/* Icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              className="w-28 h-28 mb-8 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center shadow-2xl"
+            >
+              <CameraIcon className="w-14 h-14 text-white" strokeWidth={2} />
+            </motion.div>
 
-              {error ? (
-                <>
-                  <p className="text-white text-lg mb-2">Camera Error</p>
-                  <p className="text-red-400 text-sm mb-6">{error}</p>
-                  <HapticButton
-                    onClick={startCamera}
-                    className="bg-[#4A5849] text-white px-6 py-3"
-                    hapticStyle="medium"
-                    data-testid="button-retry-camera"
-                  >
-                    Retry
-                  </HapticButton>
-                </>
-              ) : (
-                <>
-                  <p className="text-white text-lg mb-2">Start Camera</p>
-                  <p className="text-gray-400 text-sm mb-6">
-                    Tap to activate camera
-                  </p>
-                  <HapticButton
-                    onClick={startCamera}
-                    className="bg-[#4A5849] text-white px-8 py-3"
-                    hapticStyle="medium"
-                    data-testid="button-start-camera"
-                  >
-                    <CameraIcon className="w-5 h-5 mr-2 inline" />
-                    Start Camera
-                  </HapticButton>
-                </>
-              )}
-            </div>
+            {error ? (
+              <div className="text-center max-w-sm">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <AlertCircle className="w-6 h-6 text-red-400" />
+                  <p className="text-red-400 text-xl font-bold">Error</p>
+                </div>
+                <p className="text-white text-lg mb-6">{error}</p>
+                <HapticButton
+                  onClick={startCamera}
+                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-lg"
+                  hapticStyle="medium"
+                  data-testid="button-retry-camera"
+                >
+                  Retry Camera
+                </HapticButton>
+              </div>
+            ) : (
+              <div className="text-center max-w-sm">
+                <p className="text-white text-2xl font-bold mb-3">Camera Test</p>
+                <p className="text-gray-300 text-base mb-8">
+                  Tap button to activate
+                </p>
+                <HapticButton
+                  onClick={startCamera}
+                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-10 py-5 text-xl font-bold rounded-xl shadow-2xl"
+                  hapticStyle="medium"
+                  data-testid="button-start-camera"
+                >
+                  <CameraIcon className="w-6 h-6 mr-3 inline" />
+                  START CAMERA
+                </HapticButton>
+              </div>
+            )}
+
+            {/* DEBUG LOGS - UNTEN mit anderer Farbe! */}
+            {debugInfo.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="absolute bottom-24 left-4 right-4 bg-black/90 backdrop-blur-md rounded-2xl p-4 border-2 border-lime-400 max-h-64 overflow-y-auto shadow-2xl"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-3 h-3 rounded-full bg-lime-400 animate-pulse" />
+                  <p className="text-lime-400 font-bold text-sm">DEBUG CONSOLE</p>
+                </div>
+                <div className="space-y-1">
+                  {debugInfo.map((info, i) => (
+                    <p key={i} className="text-lime-300 text-xs font-mono break-all">
+                      {info}
+                    </p>
+                  ))}
+                </div>
+              </motion.div>
+            )}
           </div>
         )}
 
         {/* Close Button */}
-        <div className="absolute top-14 right-4 z-10">
+        <div className="absolute top-4 right-4 z-10">
           <HapticButton
             size="icon"
             variant="ghost"
@@ -201,30 +230,29 @@ export default function CameraScreen() {
               setLocation('/app');
             }}
             hapticStyle="medium"
-            className="bg-white/10 backdrop-blur-md hover:bg-white/20 border border-white/20 text-white"
+            className="bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/40 text-white rounded-full"
             data-testid="button-close-camera"
           >
-            <X className="w-5 h-5" strokeWidth={1.5} />
+            <X className="w-6 h-6" strokeWidth={2.5} />
           </HapticButton>
         </div>
       </div>
 
       {/* Bottom Controls */}
-      <div className="bg-black py-6 px-6 pb-20 safe-area-bottom">
-        <div className="flex items-center justify-center">
-          <motion.button
-            onClick={handleCapture}
-            whileTap={{ scale: 0.95 }}
-            disabled={!stream}
-            className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center transition-opacity ${
-              !stream ? 'opacity-30' : 'opacity-100'
-            }`}
-            data-testid="button-capture-photo"
-          >
-            <div className="w-16 h-16 bg-white rounded-full" />
-          </motion.button>
+      {stream && (
+        <div className="bg-black/50 backdrop-blur-md py-6 px-6 pb-20 border-t-2 border-lime-400/30">
+          <div className="flex items-center justify-center">
+            <motion.button
+              onClick={handleCapture}
+              whileTap={{ scale: 0.9 }}
+              className="w-24 h-24 rounded-full border-4 border-lime-400 flex items-center justify-center shadow-2xl"
+              data-testid="button-capture-photo"
+            >
+              <div className="w-20 h-20 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
+            </motion.button>
+          </div>
         </div>
-      </div>
+      )}
 
       <BottomNav variant="dark" />
     </div>
