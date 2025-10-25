@@ -14,6 +14,7 @@ export default function CameraScreen() {
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string>('');
+  const [supportsExposure, setSupportsExposure] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -37,6 +38,23 @@ export default function CameraScreen() {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+
+      // Check if camera supports exposure compensation
+      const videoTrack = mediaStream.getVideoTracks()[0];
+      const capabilities: any = videoTrack.getCapabilities();
+      
+      console.log('Camera capabilities:', capabilities);
+      
+      if (capabilities.exposureCompensation) {
+        setSupportsExposure(true);
+        console.log('✅ Exposure compensation supported:', capabilities.exposureCompensation);
+      } else if (capabilities.exposureTime) {
+        setSupportsExposure(true);
+        console.log('✅ Exposure time supported:', capabilities.exposureTime);
+      } else {
+        setSupportsExposure(false);
+        console.log('⚠️ No exposure control - will use software compensation');
+      }
 
       if (!videoRef.current) {
         return;
@@ -71,18 +89,63 @@ export default function CameraScreen() {
     };
   }, []);
 
-  const applyExposureCompensation = (imageData: ImageData, evStops: number): ImageData => {
-    // EV to exposure factor: 2^EV
-    // -2 EV = 0.25x (darker), 0 EV = 1x (normal), +2 EV = 4x (brighter)
+  const setExposureCompensation = async (evStops: number): Promise<boolean> => {
+    if (!streamRef.current) return false;
+
+    const videoTrack = streamRef.current.getVideoTracks()[0];
+    if (!videoTrack) return false;
+
+    const capabilities: any = videoTrack.getCapabilities();
+    const settings: any = videoTrack.getSettings();
+
+    try {
+      // Try exposureCompensation first (preferred)
+      if (capabilities.exposureCompensation) {
+        const min = capabilities.exposureCompensation.min || -3;
+        const max = capabilities.exposureCompensation.max || 3;
+        const compensationValue = Math.max(min, Math.min(max, evStops));
+        
+        await videoTrack.applyConstraints({
+          advanced: [{ exposureCompensation: compensationValue } as any]
+        });
+        
+        console.log(`✅ Set exposureCompensation to ${compensationValue} EV`);
+        return true;
+      }
+      
+      // Try exposureTime as fallback
+      if (capabilities.exposureTime) {
+        const currentExposure = settings.exposureTime || capabilities.exposureTime.max / 2;
+        const factor = Math.pow(2, evStops);
+        const newExposure = currentExposure * factor;
+        
+        const min = capabilities.exposureTime.min;
+        const max = capabilities.exposureTime.max;
+        const clampedExposure = Math.max(min, Math.min(max, newExposure));
+        
+        await videoTrack.applyConstraints({
+          advanced: [{ exposureTime: clampedExposure } as any]
+        });
+        
+        console.log(`✅ Set exposureTime to ${clampedExposure.toFixed(2)}ms (${evStops} EV)`);
+        return true;
+      }
+
+      return false;
+    } catch (err) {
+      console.error('Failed to set exposure:', err);
+      return false;
+    }
+  };
+
+  const applySoftwareExposure = (imageData: ImageData, evStops: number): ImageData => {
     const factor = Math.pow(2, evStops);
-    
     const data = imageData.data;
+    
     for (let i = 0; i < data.length; i += 4) {
-      // Apply exposure to RGB (not alpha)
-      data[i] = Math.min(255, data[i] * factor);     // R
-      data[i + 1] = Math.min(255, data[i + 1] * factor); // G
-      data[i + 2] = Math.min(255, data[i + 2] * factor); // B
-      // data[i + 3] is alpha, leave unchanged
+      data[i] = Math.min(255, data[i] * factor);
+      data[i + 1] = Math.min(255, data[i + 1] * factor);
+      data[i + 2] = Math.min(255, data[i + 2] * factor);
     }
     
     return imageData;
@@ -91,6 +154,14 @@ export default function CameraScreen() {
   const captureWithEV = async (evCompensation: number): Promise<string> => {
     if (!videoRef.current || !canvasRef.current) {
       throw new Error('No video/canvas');
+    }
+
+    // Try hardware exposure first
+    const hardwareSuccess = await setExposureCompensation(evCompensation);
+    
+    // Wait for camera to adjust
+    if (hardwareSuccess) {
+      await new Promise(resolve => setTimeout(resolve, 300));
     }
 
     const video = videoRef.current;
@@ -103,13 +174,16 @@ export default function CameraScreen() {
       throw new Error('No canvas context');
     }
 
-    // Draw original frame
+    // Draw frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     
-    // Get pixel data and apply exposure compensation
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const adjustedData = applyExposureCompensation(imageData, evCompensation);
-    ctx.putImageData(adjustedData, 0, 0);
+    // If hardware exposure failed, use software compensation
+    if (!hardwareSuccess && evCompensation !== 0) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const adjustedData = applySoftwareExposure(imageData, evCompensation);
+      ctx.putImageData(adjustedData, 0, 0);
+      console.log(`⚠️ Using software exposure: ${evCompensation} EV`);
+    }
 
     return canvas.toDataURL('image/jpeg', 0.90);
   };
@@ -144,7 +218,7 @@ export default function CameraScreen() {
           const imageData = await captureWithEV(evStops[i]);
           
           photos.push({
-            id: Date.now() + i,
+            id: Date.now() + i * 100,
             timestamp: new Date().toISOString(),
             imageData: imageData,
             width: canvasRef.current!.width,
@@ -155,11 +229,14 @@ export default function CameraScreen() {
             evCompensation: evStops[i]
           });
 
-          // Delay between shots
+          // Longer delay between shots for camera adjustment
           if (i < evStops.length - 1) {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 600));
           }
         }
+        
+        // Reset to normal exposure
+        await setExposureCompensation(0);
       } else {
         // Single shot
         setCaptureProgress({ current: 1, total: 1 });
@@ -239,6 +316,9 @@ export default function CameraScreen() {
                 <span className="text-sm font-semibold">
                   {hdrEnabled ? 'HDR' : 'Normal'}
                 </span>
+                {supportsExposure && hdrEnabled && (
+                  <span className="text-xs opacity-75">HW</span>
+                )}
               </HapticButton>
 
               {/* Close Button */}
