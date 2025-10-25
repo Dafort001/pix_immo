@@ -873,6 +873,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Mobile photo upload endpoint (simplified for PWA)
+  app.post("/api/mobile-uploads", upload.single('photo'), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { jobId, roomType, capturedAt, stackId, stackIndex, evCompensation } = req.body;
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      if (!jobId) {
+        return res.status(400).json({ error: "jobId is required" });
+      }
+
+      // Validate job exists and user has access
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      // TODO: Upload to R2 when R2 integration is ready
+      // For now, just log the upload details
+      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}`);
+      
+      // TODO: Create image record in database when R2 is ready
+      // await storage.createImage({ ... });
+
+      res.json({
+        success: true,
+        message: "Upload prepared (R2 integration pending)",
+        filename: file.originalname,
+        size: file.size,
+        jobId,
+        roomType
+      });
+    } catch (error) {
+      console.error("Error in mobile upload:", error);
+      res.status(500).json({ error: "Failed to process upload" });
+    }
+  });
+
   // AI processing endpoints
   app.get("/api/ai/tools", async (req: Request, res: Response) => {
     try {

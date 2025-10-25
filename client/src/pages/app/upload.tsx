@@ -35,6 +35,7 @@ export default function UploadScreen() {
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [wifiOnly, setWifiOnly] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const { trigger } = useHaptic();
   const hasAutoSelectedRef = useRef(false);
 
@@ -144,16 +145,103 @@ export default function UploadScreen() {
     }
   };
 
-  const handleUpload = () => {
-    if (uploadSelection.length === 0) return;
+  const handleUpload = async () => {
+    if (uploadSelection.length === 0 || !selectedJobId) return;
     
-    trigger('success');
     setIsUploading(true);
-    console.log('Uploading:', uploadSelection);
+    trigger('success');
     
-    setTimeout(() => {
+    // Calculate total photos to upload
+    const totalPhotos = uploadSelection.reduce((sum, stackId) => {
+      const stack = stacks.find(s => s.stackId === stackId);
+      return sum + (stack?.photos.length || 0);
+    }, 0);
+    
+    setUploadProgress({ current: 0, total: totalPhotos });
+    
+    try {
+      let uploadedCount = 0;
+      
+      // Upload each selected stack
+      for (let i = 0; i < uploadSelection.length; i++) {
+        const stackId = uploadSelection[i];
+        const stack = stacks.find(s => s.stackId === stackId);
+        
+        if (!stack) {
+          console.warn(`Stack ${stackId} not found`);
+          continue;
+        }
+        
+        // Upload all photos in the stack
+        for (const photo of stack.photos) {
+          const photoData = sessionStorage.getItem(`photo_${photo.id}`);
+          
+          if (!photoData) {
+            console.warn(`Photo ${photo.id} not found in sessionStorage`);
+            continue;
+          }
+          
+          const parsed = JSON.parse(photoData);
+          
+          // Convert base64 to blob
+          const base64Data = parsed.dataUrl.split(',')[1];
+          const byteString = atob(base64Data);
+          const ab = new ArrayBuffer(byteString.length);
+          const ia = new Uint8Array(ab);
+          for (let j = 0; j < byteString.length; j++) {
+            ia[j] = byteString.charCodeAt(j);
+          }
+          const blob = new Blob([ab], { type: 'image/jpeg' });
+          
+          // Create form data
+          const formData = new FormData();
+          formData.append('photo', blob, `photo_${photo.id}.jpg`);
+          formData.append('jobId', selectedJobId);
+          formData.append('roomType', photo.roomType || 'general');
+          formData.append('capturedAt', photo.timestamp);
+          if (photo.stackId) formData.append('stackId', photo.stackId.toString());
+          if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());
+          if (photo.evCompensation !== undefined) formData.append('evCompensation', photo.evCompensation.toString());
+          
+          // Upload to server (placeholder endpoint - will be implemented)
+          const response = await fetch('/api/mobile-uploads', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include',
+          });
+          
+          if (!response.ok) {
+            throw new Error(`Upload failed for photo ${photo.id}`);
+          }
+          
+          // Update progress
+          uploadedCount++;
+          setUploadProgress({ current: uploadedCount, total: totalPhotos });
+        }
+      }
+      
       setIsUploading(false);
-    }, 2000);
+      trigger('success');
+      
+      // Clear uploaded photos from sessionStorage
+      uploadSelection.forEach(stackId => {
+        const stack = stacks.find(s => s.stackId === stackId);
+        if (stack) {
+          stack.photos.forEach(photo => {
+            sessionStorage.removeItem(`photo_${photo.id}`);
+          });
+        }
+      });
+      
+      // Reload to show updated state
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Upload error:', error);
+      setIsUploading(false);
+      trigger('error');
+      alert('Upload fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    }
   };
 
   return (
@@ -384,6 +472,31 @@ export default function UploadScreen() {
               {wifiOnly ? 'Ändern' : 'Ändern'}
             </HapticButton>
           </div>
+
+          {isUploading && uploadProgress.total > 0 && (
+            <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600">Upload läuft...</span>
+                <span className="text-gray-900 font-medium">
+                  {uploadProgress.current} / {uploadProgress.total}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+                <motion.div
+                  className="h-full rounded-full"
+                  style={{ backgroundColor: '#4A5849' }}
+                  initial={{ width: 0 }}
+                  animate={{ 
+                    width: `${(uploadProgress.current / uploadProgress.total) * 100}%` 
+                  }}
+                  transition={{ duration: 0.3 }}
+                />
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                {Math.round((uploadProgress.current / uploadProgress.total) * 100)}% abgeschlossen
+              </p>
+            </div>
+          )}
 
           <HapticButton
             onClick={handleUpload}
