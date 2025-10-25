@@ -1,7 +1,18 @@
 # pix.immo - Real Estate Media Platform
 
 ## Overview
-pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React. Its core purpose is to connect real estate professionals with photography services, streamlining the ordering and management of property photography. Key features include an order management system, robust session-based authentication with role-based access control, a React SPA frontend, and a Progressive Web App (PWA) mobile camera integration for on-site photo capture. The platform is designed for future integration with AI for image analysis and deployment to Cloudflare Workers, aiming to enhance property listings with high-quality, AI-analyzed media.
+pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React. Its core purpose is to connect real estate professionals with photography services, streamlining the ordering and management of property photography. 
+
+**The project consists of two logically separate applications:**
+1. **Mobile PWA** (`/app/*`) - iOS-style camera app for photographers on-site
+2. **Web Portal** (`/portal/*`) - Client/Admin management with Gallery Upload System V1.0
+
+Key features include an order management system, robust session-based authentication with role-based access control, a React SPA frontend, and a Progressive Web App (PWA) mobile camera integration for on-site photo capture. The platform is designed for future integration with AI for image analysis and deployment to Cloudflare Workers, aiming to enhance property listings with high-quality, AI-analyzed media.
+
+**Documentation Structure:**
+- 📂 `docs/mobile/` - Mobile PWA documentation
+- 📂 `docs/portal/` - Web Portal documentation
+- 📄 `PROJECT_STRUCTURE.md` - Architecture & deployment strategies
 
 ### Brand Colors - Sage & Clay v3
 - **Sage Dark #4A5849** (HSL: 140 15% 29%) - Primary color, main text, navigation
