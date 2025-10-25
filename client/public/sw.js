@@ -5,10 +5,10 @@ const RUNTIME_CACHE = 'pix-immo-runtime-v1';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
-  '/capture',
-  '/capture/camera',
-  '/capture/review',
-  '/capture/upload',
+  '/app',
+  '/app/camera',
+  '/app/gallery',
+  '/app/upload',
   '/',
   '/manifest.json',
 ];
@@ -142,7 +142,7 @@ self.addEventListener('push', (event) => {
     body: data.body || 'New notification',
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-72.png',
-    data: data.url || '/capture',
+    data: data.url || '/app',
   };
 
   event.waitUntil(
@@ -156,7 +156,7 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   event.waitUntil(
-    clients.openWindow(event.notification.data || '/capture')
+    clients.openWindow(event.notification.data || '/app')
   );
 });
 
