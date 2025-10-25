@@ -16,7 +16,7 @@ import Stripe from "stripe";
 
 // Initialize Stripe from Replit's Stripe integration
 const stripe = process.env.STRIPE_SECRET_KEY 
-  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2023-10-16" })
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-09-30.clover" })
   : null;
 import { scheduleEditorReturnProcessing, scheduleAICaptioning } from "./backgroundQueue";
 import { notifyHandoffReady, notifyEditorUploadComplete } from "./notifications";
