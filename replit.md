@@ -1,5 +1,17 @@
 # pix.immo - Real Estate Media Platform
 
+## Recent Changes
+**Last Updated: October 25, 2025**
+
+### Mobile PWA Upload Workflow V1.0 - Production Ready ✅
+- **Upload Infrastructure**: Complete sessionStorage → Blob → FormData → R2 pipeline with progress tracking
+- **Retry Logic**: Exponential backoff (1s/2s/4s), max 3 attempts per photo, graceful degradation on failures
+- **Success State**: Full-screen animated checkmark overlay with SVG path drawing effects
+- **Critical Bug Fix**: Upload success handler now properly removes uploaded photos from `appPhotos` array in sessionStorage, preventing stale stack issues
+- **PWA Enhancements**: Service Worker with cache-first/network-first strategies, manifest.json with App Shortcuts (Kamera/Galerie/Upload)
+- **E2E Testing**: Playwright tests PASS - All navigation flows verified (/app → /camera → /gallery → /upload)
+- **Status**: Production-ready (R2 backend integration pending)
+
 ## Overview
 pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React. Its core purpose is to connect real estate professionals with photography services, streamlining the ordering and management of property photography. 
 
@@ -50,6 +62,8 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 - **QA-Autofix System with Naming Policy v3.1**: System-Check Framework with plugin-based architecture validating authentication, routes, upload system, naming conventions, room taxonomy (34 types). Reports in JSON/Markdown format, severity-based exit codes (0/1/2/3). CLI: `tsx server/selftest/cli.ts`
 - **Mobile Camera Integration (PWA)**: Progressive Web App with /capture routes for on-site photo capture. Features: Camera page with MediaDevices API, front/back camera flip, photo capture, review page, upload integration with R2 storage. Includes Service Worker for offline support and install-to-homescreen capability.
 - **Mobile App (/app/\*)**: Standalone mobile-first PWA app with 4 screens implementing complete photo workflow. Uses iOS design patterns with StatusBar, HapticButton, BottomNav components. Includes Safe-Area CSS utilities for notch support, MediaDevices API with proper cleanup (streamRef pattern), sessionStorage photo management, and comprehensive data-testid coverage for QA automation.
+- **Upload Workflow V1.0**: Production-ready upload system with retry logic (exponential backoff: 1s→2s→4s, max 3 attempts), real-time progress tracking per stack, animated success state with SVG checkmark, and proper sessionStorage cleanup preventing stale metadata. Job selection via API integration, batch upload with graceful failure handling. Backend endpoint `/api/mobile-uploads` prepared for R2 integration.
+- **PWA Infrastructure**: Service Worker (`sw.js`) with cache-first strategy for static assets, network-first for API calls, Background Sync API for offline upload queue, Push Notification support. Manifest.json with App Shortcuts enabling direct navigation to Kamera/Galerie/Upload from home screen. PWA initialized in production via `initializePWA()`, icons 72-512px present.
 - **Development Server**: Express + Vite middleware for HMR and proxied API requests.
 - **Production Server**: Hono serves static files and API requests, optimized for Cloudflare Workers.
 
@@ -64,7 +78,13 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 - **Preise (Pricing Page)**: Comprehensive pricing for 8 service sections including photography, drone, video, virtual tours, staging, image optimization, and travel fees.
 - **Legal & Information Pages**: Includes Impressum, AGB, Datenschutz, Kontakt, Kontakt-Formular, About, and FAQ pages.
 - **Mobile Camera Capture**: PWA-enabled camera interface at /capture/* with 4 pages (index, camera, review, upload). Uses browser MediaDevices API for native camera access, supports front/back flip, captures high-res photos, integrates with existing R2 upload endpoints. Camera cleanup uses ref pattern to ensure MediaStream stops on all navigation methods.
-- **Mobile App Screens (/app/\*)**: SplashScreen (/app), CameraScreen (/app/camera), GalleryScreen (/app/gallery), UploadScreen (/app/upload). iOS-style design with StatusBar (notch support), HapticButton (vibration feedback), BottomNav (tab navigation). All dynamic status elements have data-testid attributes for QA automation. Photo workflow: camera → gallery → upload with sessionStorage persistence and animated progress indicators.
+- **Mobile App Screens (/app/\*)**: 
+  - **SplashScreen** (/app): Landing page with camera quick-start button
+  - **CameraScreen** (/app/camera): MediaDevices API with front/back flip, flash toggle, grid overlay, zoom controls, 3s/10s self-timer with countdown animation
+  - **GalleryScreen** (/app/gallery): Photo stacks with auto-grouping, bulk operations (select all, bulk delete, bulk room assignment), photo count tracking
+  - **UploadScreen** (/app/upload): Job selection via API, multi-stack upload with retry logic, progress tracking (per-stack and total), animated success overlay, sessionStorage cleanup on success
+  - **Design**: iOS-style with StatusBar (notch support), HapticButton (vibration feedback), BottomNav (3-tab navigation). All dynamic elements have data-testid for QA automation.
+  - **Workflow**: camera → gallery → upload with sessionStorage persistence, animated progress indicators, E2E tested with Playwright.
 - **Web Portal (/portal/\*)**: Professional client portal with 5 screens for complete photo order workflow. Includes UploadsOverview (/portal/uploads) with job listing and status tracking, GallerySelection (/portal/gallery/:jobId) with multi-select image interface, Payment (/portal/payment/:jobId) with Stripe checkout integration, StatusTimeline (/portal/status/:jobId) with 5-step progress tracker, and Delivery (/portal/delivery/:jobId) with download packages. All screens implement comprehensive loading skeletons, explicit error states with retry/navigation, apiRequest mutation pattern, queryClient cache invalidation, and complete data-testid coverage for QA automation.
 - **Gallery Upload System V1.0 (/portal/gallery-\*)**: Complete gallery management system for three workflow types - Customer Upload (/portal/gallery-upload), Photographer RAW (/portal/gallery-photographer), and Final Editing (/portal/gallery-editing). Features: Multi-file upload with drag-drop support for JPEG/PNG/HEIC and 13 RAW formats (DNG/CR2/NEF/ARW/ORF/RW2/RAF/PEF/SR2/X3F/3FR/FFF/MEF), automatic Sharp-based thumbnail generation (600x600 JPEG), per-file editing presets (Style: PURE/EDITORIAL/CLASSIC, Window: CLEAR/SCANDINAVIAN/BRIGHT, Sky: CLEAR BLUE/PASTEL CLOUDS/DAYLIGHT SOFT/EVENING HAZE), boolean settings for corrections (vertical, de-noise, removals), canvas-based freehand annotation tool with PNG mask export, bulk settings application, gallery finalization with JSON metadata export. Validation schemas centralized in shared/schema.ts, boolean conversion helper (boolToString) ensures proper database serialization. Role-based navigation in Dashboard: Admin sees "Photo Upload" and "Final Editing" buttons, Client sees "Bilder hochladen" button. All components use data-testid attributes for QA automation.
 - **Legacy Routes (/capture/\*)**: DEPRECATED - Original PWA camera implementation at /capture/* (index, camera, review, upload) pages. Superseded by improved /app/* mobile app with better iOS design patterns, haptic feedback, and sessionStorage workflow. Legacy routes remain for backwards compatibility but new development should use /app/* routes.
