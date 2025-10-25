@@ -32,9 +32,9 @@ export default function CameraScreen() {
       log('🔍 Starting camera...');
       log(`HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}`);
       log(`MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}`);
-      log(`getUserMedia: ${navigator.mediaDevices?.getUserMedia ? '✅' : '❌'}`);
+      log(`getUserMedia: ${typeof navigator.mediaDevices?.getUserMedia === 'function' ? '✅' : '❌'}`);
 
-      if (!navigator.mediaDevices?.getUserMedia) {
+      if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
         throw new Error('Camera API not available');
       }
 
