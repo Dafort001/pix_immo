@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -280,6 +280,62 @@ export interface IStorage {
   // Demo: Extended job operations
   updateJobDeadline(id: string, deadlineAt: number): Promise<void>;
   updateJobDeliverables(id: string, deliverGallery: boolean, deliverAlttext: boolean, deliverExpose: boolean): Promise<void>;
+
+  // Gallery System V1.0 operations
+  createGallery(data: {
+    galleryType: string;
+    userId: string;
+    shootId?: string;
+    jobId?: string;
+    title: string;
+    description?: string;
+  }): Promise<import("@shared/schema").Gallery>;
+  getGallery(id: string): Promise<import("@shared/schema").Gallery | undefined>;
+  getUserGalleries(userId: string, galleryType?: string): Promise<import("@shared/schema").Gallery[]>;
+  updateGalleryGlobalSettings(id: string, settings: {
+    globalStylePreset?: string;
+    globalWindowPreset?: string;
+    globalSkyPreset?: string;
+    globalFireplace?: string;
+    globalRetouch?: string;
+    globalEnhancements?: string;
+  }): Promise<void>;
+  updateGalleryStatus(id: string, status: string): Promise<void>;
+  finalizeGallery(id: string): Promise<void>;
+
+  createGalleryFile(data: {
+    galleryId: string;
+    originalFilename: string;
+    storedFilename: string;
+    filePath: string;
+    thumbnailPath?: string;
+    fileType: string;
+    fileSize?: number;
+    roomType?: string;
+    sequenceIndex: number;
+  }): Promise<import("@shared/schema").GalleryFile>;
+  getGalleryFile(id: string): Promise<import("@shared/schema").GalleryFile | undefined>;
+  getGalleryFiles(galleryId: string): Promise<import("@shared/schema").GalleryFile[]>;
+  updateGalleryFileSettings(id: string, settings: {
+    stylePreset?: string;
+    windowPreset?: string;
+    skyPreset?: string;
+    fireplaceEnabled?: string;
+    retouchEnabled?: string;
+    enhancementsEnabled?: string;
+  }): Promise<void>;
+  updateGalleryFileStatus(id: string, status: string): Promise<void>;
+  updateGalleryFileThumbnail(id: string, thumbnailPath: string): Promise<void>;
+
+  createGalleryAnnotation(data: {
+    fileId: string;
+    userId: string;
+    annotationType: string;
+    comment?: string;
+    maskPath?: string;
+  }): Promise<import("@shared/schema").GalleryAnnotation>;
+  getFileAnnotations(fileId: string): Promise<import("@shared/schema").GalleryAnnotation[]>;
+  deleteGalleryAnnotation(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1557,6 +1613,220 @@ export class DatabaseStorage implements IStorage {
         deliverExpose: deliverExpose ? "true" : "false",
       })
       .where(eq(jobs.id, id));
+  }
+
+  // Gallery System V1.0 operations
+  async createGallery(data: {
+    galleryType: string;
+    userId: string;
+    shootId?: string;
+    jobId?: string;
+    title: string;
+    description?: string;
+  }): Promise<Gallery> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [gallery] = await db
+      .insert(galleries)
+      .values({
+        id,
+        galleryType: data.galleryType,
+        userId: data.userId,
+        shootId: data.shootId,
+        jobId: data.jobId,
+        title: data.title,
+        description: data.description,
+        status: "uploaded",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return gallery;
+  }
+
+  async getGallery(id: string): Promise<Gallery | undefined> {
+    const [gallery] = await db
+      .select()
+      .from(galleries)
+      .where(eq(galleries.id, id));
+    return gallery || undefined;
+  }
+
+  async getUserGalleries(userId: string, galleryType?: string): Promise<Gallery[]> {
+    if (galleryType) {
+      return await db
+        .select()
+        .from(galleries)
+        .where(and(eq(galleries.userId, userId), eq(galleries.galleryType, galleryType)))
+        .orderBy(desc(galleries.createdAt));
+    }
+    return await db
+      .select()
+      .from(galleries)
+      .where(eq(galleries.userId, userId))
+      .orderBy(desc(galleries.createdAt));
+  }
+
+  async updateGalleryGlobalSettings(id: string, settings: {
+    globalStylePreset?: string;
+    globalWindowPreset?: string;
+    globalSkyPreset?: string;
+    globalFireplace?: string;
+    globalRetouch?: string;
+    globalEnhancements?: string;
+  }): Promise<void> {
+    await db
+      .update(galleries)
+      .set({ 
+        ...settings,
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleries.id, id));
+  }
+
+  async updateGalleryStatus(id: string, status: string): Promise<void> {
+    await db
+      .update(galleries)
+      .set({ 
+        status,
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleries.id, id));
+  }
+
+  async finalizeGallery(id: string): Promise<void> {
+    await db
+      .update(galleries)
+      .set({ 
+        status: "editing",
+        finalizedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleries.id, id));
+  }
+
+  async createGalleryFile(data: {
+    galleryId: string;
+    originalFilename: string;
+    storedFilename: string;
+    filePath: string;
+    thumbnailPath?: string;
+    fileType: string;
+    fileSize?: number;
+    roomType?: string;
+    sequenceIndex: number;
+  }): Promise<GalleryFile> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [file] = await db
+      .insert(galleryFiles)
+      .values({
+        id,
+        galleryId: data.galleryId,
+        originalFilename: data.originalFilename,
+        storedFilename: data.storedFilename,
+        filePath: data.filePath,
+        thumbnailPath: data.thumbnailPath,
+        fileType: data.fileType,
+        fileSize: data.fileSize,
+        roomType: data.roomType,
+        sequenceIndex: data.sequenceIndex,
+        status: "uploaded",
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return file;
+  }
+
+  async getGalleryFile(id: string): Promise<GalleryFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(galleryFiles)
+      .where(eq(galleryFiles.id, id));
+    return file || undefined;
+  }
+
+  async getGalleryFiles(galleryId: string): Promise<GalleryFile[]> {
+    return await db
+      .select()
+      .from(galleryFiles)
+      .where(eq(galleryFiles.galleryId, galleryId))
+      .orderBy(galleryFiles.sequenceIndex);
+  }
+
+  async updateGalleryFileSettings(id: string, settings: {
+    stylePreset?: string;
+    windowPreset?: string;
+    skyPreset?: string;
+    fireplaceEnabled?: string;
+    retouchEnabled?: string;
+    enhancementsEnabled?: string;
+  }): Promise<void> {
+    await db
+      .update(galleryFiles)
+      .set({ 
+        ...settings,
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleryFiles.id, id));
+  }
+
+  async updateGalleryFileStatus(id: string, status: string): Promise<void> {
+    await db
+      .update(galleryFiles)
+      .set({ 
+        status,
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleryFiles.id, id));
+  }
+
+  async updateGalleryFileThumbnail(id: string, thumbnailPath: string): Promise<void> {
+    await db
+      .update(galleryFiles)
+      .set({ 
+        thumbnailPath,
+        updatedAt: Date.now(),
+      })
+      .where(eq(galleryFiles.id, id));
+  }
+
+  async createGalleryAnnotation(data: {
+    fileId: string;
+    userId: string;
+    annotationType: string;
+    comment?: string;
+    maskPath?: string;
+  }): Promise<GalleryAnnotation> {
+    const id = randomUUID();
+    const [annotation] = await db
+      .insert(galleryAnnotations)
+      .values({
+        id,
+        fileId: data.fileId,
+        userId: data.userId,
+        annotationType: data.annotationType,
+        comment: data.comment,
+        maskPath: data.maskPath,
+        createdAt: Date.now(),
+      })
+      .returning();
+    return annotation;
+  }
+
+  async getFileAnnotations(fileId: string): Promise<GalleryAnnotation[]> {
+    return await db
+      .select()
+      .from(galleryAnnotations)
+      .where(eq(galleryAnnotations.fileId, fileId))
+      .orderBy(desc(galleryAnnotations.createdAt));
+  }
+
+  async deleteGalleryAnnotation(id: string): Promise<void> {
+    await db
+      .delete(galleryAnnotations)
+      .where(eq(galleryAnnotations.id, id));
   }
 }
 
