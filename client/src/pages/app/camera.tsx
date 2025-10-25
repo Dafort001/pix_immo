@@ -11,13 +11,13 @@ export default function CameraScreen() {
   const [, setLocation] = useLocation();
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [error, setError] = useState<string>('');
-  const [debugInfo, setDebugInfo] = useState<string[]>(['Waiting...']);
+  const [debugInfo, setDebugInfo] = useState<string[]>(['Ready']);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const { trigger } = useHaptic();
 
   const log = (msg: string) => {
-    const time = new Date().toLocaleTimeString();
+    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const entry = `${time}: ${msg}`;
     console.log(entry);
     setDebugInfo(prev => [...prev, entry]);
@@ -29,16 +29,16 @@ export default function CameraScreen() {
       setError('');
       setDebugInfo([]);
       
-      log('🔍 Starting camera...');
+      log('🔍 Starting...');
       log(`HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}`);
-      log(`MediaDevices: ${navigator.mediaDevices ? '✅' : '❌'}`);
+      log(`Device: ${navigator.mediaDevices ? '✅' : '❌'}`);
       log(`getUserMedia: ${typeof navigator.mediaDevices?.getUserMedia === 'function' ? '✅' : '❌'}`);
 
       if (!navigator.mediaDevices || typeof navigator.mediaDevices.getUserMedia !== 'function') {
         throw new Error('Camera API not available');
       }
 
-      log('📸 Requesting camera...');
+      log('📸 Requesting...');
       
       const constraints = {
         video: {
@@ -49,8 +49,8 @@ export default function CameraScreen() {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      log('✅ Camera permission granted');
-      log(`Stream active: ${mediaStream.active}`);
+      log('✅ Permission OK');
+      log(`Active: ${mediaStream.active}`);
       log(`Tracks: ${mediaStream.getVideoTracks().length}`);
 
       if (videoRef.current) {
@@ -59,26 +59,26 @@ export default function CameraScreen() {
         setStream(mediaStream);
         
         videoRef.current.onloadedmetadata = () => {
-          log('🎬 Video metadata loaded');
+          log('🎬 Metadata loaded');
           videoRef.current?.play().then(() => {
-            log('▶️ Video playing');
+            log('▶️ Playing');
           }).catch(err => {
-            log(`❌ Play error: ${err.message}`);
+            log(`❌ Play: ${err.message}`);
           });
         };
       }
     } catch (err: any) {
       log(`❌ ERROR: ${err.name}`);
-      log(`Message: ${err.message}`);
+      log(`Msg: ${err.message}`);
       
       let errorMsg = '';
       if (err.name === 'NotAllowedError') {
-        errorMsg = 'Camera permission denied';
-        log('💡 Fix: Settings → Safari → Camera → Allow');
+        errorMsg = 'Permission denied';
+        log('💡 Settings → Safari → Camera');
       } else if (err.name === 'NotFoundError') {
         errorMsg = 'No camera found';
       } else if (err.name === 'NotReadableError') {
-        errorMsg = 'Camera already in use';
+        errorMsg = 'Camera in use';
       } else {
         errorMsg = err.message || 'Camera error';
       }
@@ -91,7 +91,7 @@ export default function CameraScreen() {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => {
           track.stop();
-          log('🛑 Camera stopped');
+          log('🛑 Stopped');
         });
       }
     };
@@ -99,7 +99,7 @@ export default function CameraScreen() {
 
   const handleCapture = () => {
     trigger('heavy');
-    log('📷 Photo captured');
+    log('📷 Captured');
     
     const flash = document.getElementById('capture-flash');
     if (flash) {
@@ -111,7 +111,7 @@ export default function CameraScreen() {
     photos.push({ id: Date.now(), timestamp: new Date().toISOString() });
     sessionStorage.setItem('appPhotos', JSON.stringify(photos));
     
-    log(`Total photos: ${photos.length}`);
+    log(`Photos: ${photos.length}`);
   };
 
   return (
@@ -122,27 +122,28 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VERSION BANNER MIT DEBUG LOGS - KOMPAKT! */}
-      <motion.div
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className="absolute top-12 left-0 right-0 z-50 px-3"
-      >
-        <div className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-xl p-3 shadow-2xl border-2 border-lime-300">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
+      {/* KOMPLETT NEUES LAYOUT - ALLES IM BANNER! */}
+      <div className="flex-1 flex flex-col p-3 pt-14">
+        <motion.div
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-2xl p-4 shadow-2xl border-2 border-lime-300"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
             <div className="text-center">
-              <p className="text-white font-bold text-lg">VERSION 2.0</p>
-              <p className="text-white/90 text-xs">Mini Test</p>
+              <p className="text-white font-bold text-xl">VERSION 2.0</p>
+              <p className="text-white/90 text-xs">Mini Camera Test</p>
             </div>
-            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={2.5} />
+            <Zap className="w-5 h-5 text-white animate-pulse" strokeWidth={3} />
           </div>
-          
-          {/* DEBUG LOGS KOMPAKT */}
-          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 max-h-32 overflow-y-auto">
+
+          {/* DEBUG LOGS */}
+          <div className="bg-black/30 backdrop-blur-sm rounded-lg p-2 mb-3 max-h-40 overflow-y-auto">
             <div className="flex items-center gap-1 mb-1">
               <div className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <p className="text-white font-bold text-xs">DEBUG</p>
+              <p className="text-white font-bold text-xs">DEBUG CONSOLE</p>
             </div>
             <div className="space-y-0.5">
               {debugInfo.map((info, i) => (
@@ -152,98 +153,69 @@ export default function CameraScreen() {
               ))}
             </div>
           </div>
-        </div>
-      </motion.div>
 
-      {/* Main Content - HÖHER! */}
-      <div className="flex-1 relative overflow-hidden mt-52 bg-gradient-to-b from-gray-900 to-black">
-        {stream ? (
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="absolute inset-0 w-full h-full object-cover"
-            data-testid="video-camera-preview"
-          />
-        ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
-            {/* Icon - KLEINER */}
-            <motion.div
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-              className="w-20 h-20 mb-6 rounded-full bg-gradient-to-br from-lime-400 to-emerald-500 flex items-center justify-center shadow-2xl"
-            >
-              <CameraIcon className="w-10 h-10 text-white" strokeWidth={2} />
-            </motion.div>
+          {/* START BUTTON - DIREKT IM BANNER! */}
+          {!stream && (
+            <div className="text-center">
+              {error && (
+                <p className="text-white text-sm mb-2 font-bold">⚠️ {error}</p>
+              )}
+              <HapticButton
+                onClick={startCamera}
+                className="w-full bg-white text-lime-600 px-6 py-4 text-lg font-bold rounded-xl shadow-lg hover:bg-lime-50"
+                hapticStyle="medium"
+                data-testid="button-start-camera"
+              >
+                <CameraIcon className="w-6 h-6 mr-2 inline" strokeWidth={2.5} />
+                START CAMERA
+              </HapticButton>
+            </div>
+          )}
+        </motion.div>
 
-            {error ? (
-              <div className="text-center max-w-sm">
-                <p className="text-red-400 text-lg font-bold mb-3">Error</p>
-                <p className="text-white text-base mb-5">{error}</p>
-                <HapticButton
-                  onClick={startCamera}
-                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-3 text-base font-bold rounded-xl shadow-lg"
-                  hapticStyle="medium"
-                  data-testid="button-retry-camera"
-                >
-                  Retry Camera
-                </HapticButton>
-              </div>
-            ) : (
-              <div className="text-center max-w-sm">
-                <p className="text-white text-xl font-bold mb-2">Camera Test</p>
-                <p className="text-gray-300 text-sm mb-6">
-                  Tap button to activate
-                </p>
-                <HapticButton
-                  onClick={startCamera}
-                  className="bg-gradient-to-r from-lime-400 to-emerald-500 text-white px-8 py-4 text-lg font-bold rounded-xl shadow-2xl"
-                  hapticStyle="medium"
-                  data-testid="button-start-camera"
-                >
-                  <CameraIcon className="w-5 h-5 mr-2 inline" />
-                  START CAMERA
-                </HapticButton>
-              </div>
-            )}
+        {/* Video Preview - Wenn Kamera läuft */}
+        {stream && (
+          <div className="flex-1 relative mt-4 rounded-2xl overflow-hidden">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-cover"
+              data-testid="video-camera-preview"
+            />
+
+            {/* Close Button */}
+            <div className="absolute top-4 right-4 z-10">
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  trigger('light');
+                  setLocation('/app');
+                }}
+                hapticStyle="medium"
+                className="bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/40 text-white rounded-full"
+                data-testid="button-close-camera"
+              >
+                <X className="w-6 h-6" strokeWidth={2.5} />
+              </HapticButton>
+            </div>
+
+            {/* Capture Button */}
+            <div className="absolute bottom-6 left-0 right-0 flex items-center justify-center">
+              <motion.button
+                onClick={handleCapture}
+                whileTap={{ scale: 0.9 }}
+                className="w-20 h-20 rounded-full border-4 border-lime-400 flex items-center justify-center shadow-2xl"
+                data-testid="button-capture-photo"
+              >
+                <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
+              </motion.button>
+            </div>
           </div>
         )}
-
-        {/* Close Button */}
-        <div className="absolute top-4 right-4 z-10">
-          <HapticButton
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              trigger('light');
-              setLocation('/app');
-            }}
-            hapticStyle="medium"
-            className="bg-white/20 backdrop-blur-md hover:bg-white/30 border-2 border-white/40 text-white rounded-full"
-            data-testid="button-close-camera"
-          >
-            <X className="w-6 h-6" strokeWidth={2.5} />
-          </HapticButton>
-        </div>
       </div>
-
-      {/* Bottom Controls */}
-      {stream && (
-        <div className="bg-black/50 backdrop-blur-md py-6 px-6 pb-20 border-t-2 border-lime-400/30">
-          <div className="flex items-center justify-center">
-            <motion.button
-              onClick={handleCapture}
-              whileTap={{ scale: 0.9 }}
-              className="w-24 h-24 rounded-full border-4 border-lime-400 flex items-center justify-center shadow-2xl"
-              data-testid="button-capture-photo"
-            >
-              <div className="w-20 h-20 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
-            </motion.button>
-          </div>
-        </div>
-      )}
 
       <BottomNav variant="dark" />
     </div>
