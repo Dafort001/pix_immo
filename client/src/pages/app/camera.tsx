@@ -413,16 +413,18 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VIDEO - FULLSCREEN */}
-      <div className="absolute inset-0 bg-gray-900">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-          data-testid="video-camera-preview"
-        />
+      {/* VIDEO - 2:3 Aspect Ratio Portrait */}
+      <div className="absolute inset-0 bg-black flex items-center justify-center">
+        <div className="relative w-full" style={{ aspectRatio: '2/3', maxHeight: '100%' }}>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            data-testid="video-camera-preview"
+          />
+        </div>
       </div>
 
       {/* CONTROLS */}
