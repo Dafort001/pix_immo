@@ -34,6 +34,7 @@ export default function CameraScreen() {
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
   const [isLandscape, setIsLandscape] = useState(false);
+  const [horizonLineEnabled, setHorizonLineEnabled] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -431,21 +432,16 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VIDEO - Responsive Aspect Ratio */}
-      <div className="absolute inset-0 bg-black flex items-center justify-center">
-        <div 
-          className="relative w-full h-full" 
-          style={isLandscape ? {} : { aspectRatio: '2/3', maxHeight: '100%' }}
-        >
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-            data-testid="video-camera-preview"
-          />
-        </div>
+      {/* VIDEO - Fullscreen (Landscape primary, Portrait secondary) */}
+      <div className="absolute inset-0 bg-black">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover"
+          data-testid="video-camera-preview"
+        />
       </div>
 
       {/* CONTROLS */}
@@ -501,6 +497,26 @@ export default function CameraScreen() {
                   data-testid="button-toggle-grid"
                 >
                   <Grid3x3 className="w-5 h-5" />
+                </HapticButton>
+                
+                {/* Horizon Line Toggle */}
+                <HapticButton
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    setHorizonLineEnabled(!horizonLineEnabled);
+                    trigger('light');
+                  }}
+                  className={`backdrop-blur-md rounded-full ${
+                    horizonLineEnabled 
+                      ? 'bg-yellow-500/50 text-white' 
+                      : 'bg-white/20 text-white'
+                  }`}
+                  data-testid="button-toggle-horizon"
+                >
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="2" y1="12" x2="22" y2="12" />
+                  </svg>
                 </HapticButton>
                 
                 {/* Timer Toggle */}
@@ -572,30 +588,44 @@ export default function CameraScreen() {
             </div>
           )}
 
-          {/* Histogram - Kleiner, unten, wegklickbar */}
-          {showHistogram && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 20 }}
-              className="absolute bottom-40 left-4 z-50"
-            >
-              <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
-                <button
-                  onClick={() => setShowHistogram(false)}
-                  className="absolute -top-1 -right-1 w-5 h-5 bg-white/20 rounded-full flex items-center justify-center text-white text-xs hover:bg-white/30"
-                  data-testid="button-close-histogram"
-                >
-                  <X className="w-3 h-3" />
-                </button>
-                <Histogram 
-                  videoElement={videoRef.current} 
-                  width={140}
-                  height={40}
-                />
-              </div>
-            </motion.div>
+          {/* Horizontlinie */}
+          {horizonLineEnabled && (
+            <div className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center">
+              <div className="w-full h-px bg-yellow-400 opacity-70" style={{ boxShadow: '0 0 4px rgba(250, 204, 21, 0.8)' }} />
+            </div>
           )}
+
+          {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
+          <AnimatePresence>
+            {showHistogram && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="absolute bottom-40 right-4 z-50"
+              >
+                <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
+                  <HapticButton
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => {
+                      setShowHistogram(false);
+                      trigger('light');
+                    }}
+                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 rounded-full flex items-center justify-center text-white hover:bg-red-600 z-10"
+                    data-testid="button-close-histogram"
+                  >
+                    <X className="w-4 h-4" />
+                  </HapticButton>
+                  <Histogram 
+                    videoElement={videoRef.current} 
+                    width={140}
+                    height={40}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Debug Overlay */}
           <AnimatePresence>
