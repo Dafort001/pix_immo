@@ -85,27 +85,6 @@ export default function SplashScreen() {
           </HapticButton>
         </motion.div>
 
-        {/* Feature Highlights */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7, duration: 0.6 }}
-          className="mt-10 flex items-center justify-center gap-8 text-gray-500"
-          style={{ fontSize: '13px' }}
-        >
-          <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
-            RAW Format
-          </span>
-          <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
-            57 Raumtypen
-          </span>
-          <span className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#4A5849]" />
-            Auto-Upload
-          </span>
-        </motion.div>
       </motion.div>
 
       <BottomNav />

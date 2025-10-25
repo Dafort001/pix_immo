@@ -1,7 +1,7 @@
 // pix.immo Service Worker
-// Version 1.0.0
-const CACHE_NAME = 'pix-immo-v1';
-const RUNTIME_CACHE = 'pix-immo-runtime-v1';
+// Version 1.0.1
+const CACHE_NAME = 'pix-immo-v2';
+const RUNTIME_CACHE = 'pix-immo-runtime-v2';
 
 // Assets to cache on install
 const STATIC_ASSETS = [
