@@ -14,7 +14,12 @@ export default function CameraScreen() {
   const [capturing, setCapturing] = useState(false);
   const [captureProgress, setCaptureProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string>('');
-  const [baseExposureTime, setBaseExposureTime] = useState<number | null>(null);
+  const [exposureControl, setExposureControl] = useState<{
+    type: 'exposureTime' | 'exposureCompensation' | 'iso' | 'none';
+    baseValue: number;
+    min: number;
+    max: number;
+  } | null>(null);
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -24,7 +29,7 @@ export default function CameraScreen() {
 
   const log = (msg: string) => {
     console.log(msg);
-    setDebugLog(prev => [...prev.slice(-4), msg]);
+    setDebugLog(prev => [...prev.slice(-5), msg]);
   };
 
   const startCamera = async () => {
@@ -37,29 +42,87 @@ export default function CameraScreen() {
         throw new Error('Camera API not available');
       }
 
-      const constraints = {
+      log('🔍 Chrome Mode');
+
+      // Request with manual exposure mode
+      const constraints: any = {
         video: {
           facingMode: 'environment',
           width: { ideal: 1920 },
-          height: { ideal: 1080 }
+          height: { ideal: 1080 },
+          // Try to request manual mode upfront
+          exposureMode: 'manual',
+          focusMode: 'manual',
+          whiteBalanceMode: 'manual'
         }
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       const videoTrack = mediaStream.getVideoTracks()[0];
+      
+      // Get ALL capabilities
       const capabilities: any = videoTrack.getCapabilities();
       const settings: any = videoTrack.getSettings();
       
-      log('📸 Camera started');
+      log('📸 Checking ALL controls...');
       
-      if (capabilities.exposureTime) {
-        const currentExposure = settings.exposureTime || capabilities.exposureTime.max / 2;
-        setBaseExposureTime(currentExposure);
-        log(`✅ Exposure: ${currentExposure.toFixed(1)}ms`);
-        log(`Range: ${capabilities.exposureTime.min}-${capabilities.exposureTime.max}ms`);
-      } else {
-        log('❌ No exposure control!');
-        setError('Kamera unterstützt keine manuelle Belichtung');
+      // Try to enable manual mode FIRST
+      try {
+        await videoTrack.applyConstraints({
+          advanced: [{
+            exposureMode: 'manual',
+            focusMode: 'manual'
+          } as any]
+        });
+        log('✅ Manual mode ON');
+      } catch (e) {
+        log('⚠️ Manual mode failed');
+      }
+
+      // Re-check capabilities after manual mode
+      const updatedCaps: any = videoTrack.getCapabilities();
+      const updatedSettings: any = videoTrack.getSettings();
+      
+      // Check exposureTime (BEST)
+      if (updatedCaps.exposureTime) {
+        const current = updatedSettings.exposureTime || updatedCaps.exposureTime.max / 2;
+        setExposureControl({
+          type: 'exposureTime',
+          baseValue: current,
+          min: updatedCaps.exposureTime.min,
+          max: updatedCaps.exposureTime.max
+        });
+        log(`✅ exposureTime: ${current.toFixed(1)}ms`);
+        log(`   Range: ${updatedCaps.exposureTime.min}-${updatedCaps.exposureTime.max}ms`);
+      }
+      // Check exposureCompensation (GOOD)
+      else if (updatedCaps.exposureCompensation) {
+        const current = updatedSettings.exposureCompensation || 0;
+        setExposureControl({
+          type: 'exposureCompensation',
+          baseValue: current,
+          min: updatedCaps.exposureCompensation.min,
+          max: updatedCaps.exposureCompensation.max
+        });
+        log(`✅ exposureComp: ${current} EV`);
+        log(`   Range: ${updatedCaps.exposureCompensation.min} to ${updatedCaps.exposureCompensation.max}`);
+      }
+      // Check iso (FALLBACK)
+      else if (updatedCaps.iso) {
+        const current = updatedSettings.iso || updatedCaps.iso.max / 2;
+        setExposureControl({
+          type: 'iso',
+          baseValue: current,
+          min: updatedCaps.iso.min,
+          max: updatedCaps.iso.max
+        });
+        log(`✅ ISO: ${current}`);
+        log(`   Range: ${updatedCaps.iso.min}-${updatedCaps.iso.max}`);
+      }
+      else {
+        log('❌ NO exposure controls!');
+        log('Software HDR only');
+        setError('Software-HDR Modus (keine Hardware-Kontrolle)');
       }
 
       if (!videoRef.current) {
@@ -95,31 +158,30 @@ export default function CameraScreen() {
     };
   }, []);
 
-  const setExposureTime = async (exposureTimeMs: number): Promise<boolean> => {
-    if (!streamRef.current) return false;
+  const setExposure = async (value: number): Promise<boolean> => {
+    if (!streamRef.current || !exposureControl) return false;
 
     const videoTrack = streamRef.current.getVideoTracks()[0];
     if (!videoTrack) return false;
 
-    const capabilities: any = videoTrack.getCapabilities();
-    
-    if (!capabilities.exposureTime) {
-      return false;
-    }
+    const clampedValue = Math.max(exposureControl.min, Math.min(exposureControl.max, value));
 
     try {
-      const min = capabilities.exposureTime.min;
-      const max = capabilities.exposureTime.max;
-      const clampedExposure = Math.max(min, Math.min(max, exposureTimeMs));
+      let constraint: any = {};
       
+      if (exposureControl.type === 'exposureTime') {
+        constraint = { exposureTime: clampedValue };
+      } else if (exposureControl.type === 'exposureCompensation') {
+        constraint = { exposureCompensation: clampedValue };
+      } else if (exposureControl.type === 'iso') {
+        constraint = { iso: clampedValue };
+      }
+
       await videoTrack.applyConstraints({
-        advanced: [{ 
-          exposureMode: 'manual' as any,
-          exposureTime: clampedExposure 
-        } as any]
+        advanced: [constraint as any]
       });
       
-      log(`⚡ ${clampedExposure.toFixed(1)}ms`);
+      log(`⚡ ${exposureControl.type}: ${clampedValue.toFixed(1)}`);
       return true;
     } catch (err) {
       log(`❌ Set failed`);
@@ -127,13 +189,31 @@ export default function CameraScreen() {
     }
   };
 
-  const captureWithExposureTime = async (exposureTimeMs: number): Promise<string> => {
+  const applySoftwareExposure = (imageData: ImageData, evStops: number): ImageData => {
+    const factor = Math.pow(2, evStops);
+    const data = imageData.data;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      data[i] = Math.min(255, data[i] * factor);
+      data[i + 1] = Math.min(255, data[i + 1] * factor);
+      data[i + 2] = Math.min(255, data[i + 2] * factor);
+    }
+    
+    return imageData;
+  };
+
+  const captureWithExposure = async (exposureValue: number, evStops: number): Promise<string> => {
     if (!videoRef.current || !canvasRef.current) {
       throw new Error('No video/canvas');
     }
 
-    await setExposureTime(exposureTimeMs);
-    await new Promise(resolve => setTimeout(resolve, 500));
+    // Try hardware control
+    const hwSuccess = await setExposure(exposureValue);
+    
+    if (hwSuccess) {
+      // Wait for camera to adjust
+      await new Promise(resolve => setTimeout(resolve, 600));
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -146,6 +226,15 @@ export default function CameraScreen() {
     }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // If hardware failed, use software
+    if (!hwSuccess && evStops !== 0) {
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const adjusted = applySoftwareExposure(imageData, evStops);
+      ctx.putImageData(adjusted, 0, 0);
+      log(`💻 Software: ${evStops} EV`);
+    }
+
     return canvas.toDataURL('image/jpeg', 0.90);
   };
 
@@ -159,18 +248,39 @@ export default function CameraScreen() {
       const stackId = Date.now();
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
 
-      if (hdrEnabled && baseExposureTime) {
-        const exposureTimes = [
-          baseExposureTime / 4,
-          baseExposureTime,
-          baseExposureTime * 4
-        ];
-        const evStops = [-2, 0, 2];
-        
+      if (hdrEnabled) {
         log('🎬 HDR Start');
         
-        for (let i = 0; i < exposureTimes.length; i++) {
-          setCaptureProgress({ current: i + 1, total: exposureTimes.length });
+        const evStops = [-2, 0, 2];
+        let exposureValues: number[];
+
+        if (exposureControl) {
+          if (exposureControl.type === 'exposureTime') {
+            // Exposure time: 1/4, 1x, 4x
+            exposureValues = [
+              exposureControl.baseValue / 4,
+              exposureControl.baseValue,
+              exposureControl.baseValue * 4
+            ];
+          } else if (exposureControl.type === 'exposureCompensation') {
+            // Compensation: -2, 0, +2
+            exposureValues = [-2, 0, 2];
+          } else if (exposureControl.type === 'iso') {
+            // ISO: 1/4, 1x, 4x
+            exposureValues = [
+              exposureControl.baseValue / 4,
+              exposureControl.baseValue,
+              exposureControl.baseValue * 4
+            ];
+          } else {
+            exposureValues = [0, 0, 0];
+          }
+        } else {
+          exposureValues = [0, 0, 0];
+        }
+        
+        for (let i = 0; i < evStops.length; i++) {
+          setCaptureProgress({ current: i + 1, total: evStops.length });
           
           const flash = document.getElementById('capture-flash');
           if (flash) {
@@ -180,9 +290,9 @@ export default function CameraScreen() {
 
           if (i > 0) trigger('light');
 
-          log(`📷 ${evStops[i]} EV (${exposureTimes[i].toFixed(1)}ms)`);
+          log(`📷 ${evStops[i]} EV`);
           
-          const imageData = await captureWithExposureTime(exposureTimes[i]);
+          const imageData = await captureWithExposure(exposureValues[i], evStops[i]);
           
           photos.push({
             id: Date.now() + i * 100,
@@ -192,18 +302,21 @@ export default function CameraScreen() {
             height: canvasRef.current!.height,
             stackId: stackId,
             stackIndex: i,
-            stackTotal: exposureTimes.length,
-            evCompensation: evStops[i],
-            exposureTimeMs: exposureTimes[i]
+            stackTotal: evStops.length,
+            evCompensation: evStops[i]
           });
 
-          if (i < exposureTimes.length - 1) {
+          if (i < evStops.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
         
-        await setExposureTime(baseExposureTime);
-        log('✅ HDR Complete!');
+        // Reset to base
+        if (exposureControl) {
+          await setExposure(exposureControl.baseValue);
+        }
+        
+        log('✅ Complete!');
       } else {
         setCaptureProgress({ current: 1, total: 1 });
         
@@ -294,9 +407,14 @@ export default function CameraScreen() {
                 <span className="text-sm font-semibold">
                   {hdrEnabled ? 'HDR' : 'Normal'}
                 </span>
-                {baseExposureTime && hdrEnabled && (
+                {exposureControl && hdrEnabled && (
                   <span className="text-xs opacity-75">
-                    {baseExposureTime.toFixed(0)}ms
+                    {exposureControl.type === 'exposureTime' 
+                      ? `${exposureControl.baseValue.toFixed(0)}ms`
+                      : exposureControl.type === 'exposureCompensation'
+                      ? `${exposureControl.baseValue} EV`
+                      : `ISO${exposureControl.baseValue.toFixed(0)}`
+                    }
                   </span>
                 )}
               </HapticButton>
@@ -338,10 +456,10 @@ export default function CameraScreen() {
                 exit={{ opacity: 0, x: 100 }}
                 className="absolute top-32 right-4 z-50"
               >
-                <div className="bg-black/90 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-white/20 min-w-[200px]">
-                  <div className="text-xs text-green-400 font-mono space-y-1">
+                <div className="bg-black/90 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-green-500/30 min-w-[220px]">
+                  <div className="text-xs text-green-400 font-mono space-y-1 leading-tight">
                     {debugLog.map((log, i) => (
-                      <div key={i} className="leading-tight">
+                      <div key={i}>
                         {log}
                       </div>
                     ))}
@@ -385,13 +503,13 @@ export default function CameraScreen() {
           <div className="absolute bottom-24 left-0 right-0 flex justify-center z-50">
             <motion.button
               onClick={handleCapture}
-              disabled={capturing || (hdrEnabled && !baseExposureTime)}
+              disabled={capturing}
               whileTap={{ scale: capturing ? 1 : 0.9 }}
               className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
                 hdrEnabled
                   ? 'border-yellow-500'
                   : 'border-white'
-              } ${capturing || (hdrEnabled && !baseExposureTime) ? 'opacity-50' : ''}`}
+              } ${capturing ? 'opacity-50' : ''}`}
               data-testid="button-capture-photo"
             >
               <div className={`w-16 h-16 rounded-full ${
