@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -27,8 +27,49 @@ export default function PhotographerUploadGallery() {
   const [detailFile, setDetailFile] = useState<GalleryFile | null>(null);
   const [maskEditorFile, setMaskEditorFile] = useState<GalleryFile | null>(null);
 
-  // Fetch gallery - for demo purposes, we'll use galleryId=2 (photographer type)
-  const galleryId = 2;
+  // Get galleryId from URL parameters, or auto-create a new gallery
+  const urlParams = new URLSearchParams(window.location.search);
+  const galleryIdParam = urlParams.get("galleryId");
+  const [galleryId, setGalleryId] = useState<number | null>(
+    galleryIdParam ? parseInt(galleryIdParam, 10) : null
+  );
+
+  // Prevent duplicate gallery creation in React 18 Strict Mode
+  const hasCreatedGallery = useRef(false);
+
+  // Auto-create gallery if no ID provided
+  const createGalleryMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest("POST", "/api/gallery", {
+        type: "photographer_raw",
+        name: `Photographer RAW ${new Date().toLocaleDateString()}`,
+        description: "RAW files from photographer",
+      });
+    },
+    onSuccess: (data: any) => {
+      setGalleryId(data.id);
+      toast({
+        title: "Gallery created",
+        description: "New gallery ready for RAW uploads",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to create gallery",
+        description: error.message,
+        variant: "destructive",
+      });
+      hasCreatedGallery.current = false; // Allow retry
+    },
+  });
+
+  // Create gallery on mount if not provided (with duplicate prevention)
+  useEffect(() => {
+    if (!galleryId && !hasCreatedGallery.current && !createGalleryMutation.isPending) {
+      hasCreatedGallery.current = true;
+      createGalleryMutation.mutate();
+    }
+  }, [galleryId]);
 
   const { data: galleryData, isLoading, error } = useQuery<{
     gallery: any;
@@ -87,7 +128,46 @@ export default function PhotographerUploadGallery() {
     });
   };
 
-  if (isLoading) {
+  // Gallery creation error state
+  if (createGalleryMutation.isError && !galleryId) {
+    return (
+      <div className="min-h-screen bg-background">
+        <SEOHead 
+          title="Photographer Upload - Error | pix.immo" 
+          description="Gallery creation failed"
+        />
+        <div className="container mx-auto px-4 py-8">
+          <Alert variant="destructive">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="ml-2">
+              Failed to create gallery. Please try again.
+            </AlertDescription>
+          </Alert>
+          <div className="mt-4 flex justify-center">
+            <Button
+              onClick={() => {
+                hasCreatedGallery.current = false;
+                createGalleryMutation.mutate();
+              }}
+              disabled={createGalleryMutation.isPending}
+              data-testid="button-retry-gallery-creation"
+            >
+              {createGalleryMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                "Retry Gallery Creation"
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading || (createGalleryMutation.isPending && !createGalleryMutation.isError)) {
     return (
       <div className="min-h-screen bg-background">
         <SEOHead
@@ -307,20 +387,22 @@ export default function PhotographerUploadGallery() {
       </div>
 
       {/* Upload Dialog */}
-      <UploadDialog
-        open={uploadDialogOpen}
-        onOpenChange={setUploadDialogOpen}
-        galleryId={galleryId}
-        onUploadComplete={() => {
-          queryClient.invalidateQueries({ queryKey: ["/api/gallery", galleryId] });
-        }}
-        globalSettings={{
-          stylePreset: "PURE",
-          windowPreset: "CLEAR",
-          skyPreset: "CLEAR BLUE",
-          verticalCorrection: true,
-        }}
-      />
+      {galleryId && (
+        <UploadDialog
+          open={uploadDialogOpen}
+          onOpenChange={setUploadDialogOpen}
+          galleryId={galleryId}
+          onUploadComplete={() => {
+            queryClient.invalidateQueries({ queryKey: ["/api/gallery", galleryId] });
+          }}
+          globalSettings={{
+            stylePreset: "PURE",
+            windowPreset: "CLEAR",
+            skyPreset: "CLEAR BLUE",
+            verticalCorrection: true,
+          }}
+        />
+      )}
 
       {/* Mask Editor */}
       <MaskEditor

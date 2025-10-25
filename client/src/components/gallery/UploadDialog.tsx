@@ -66,10 +66,20 @@ const ACCEPTED_TYPES = {
   "image/jpeg": [".jpg", ".jpeg"],
   "image/png": [".png"],
   "image/heic": [".heic"],
+  // RAW formats (13 total)
   "image/x-adobe-dng": [".dng"],
   "image/x-canon-cr2": [".cr2"],
   "image/x-nikon-nef": [".nef"],
   "image/x-sony-arw": [".arw"],
+  "image/x-olympus-orf": [".orf"],
+  "image/x-panasonic-rw2": [".rw2"],
+  "image/x-fuji-raf": [".raf"],
+  "image/x-pentax-pef": [".pef"],
+  "image/x-sony-sr2": [".sr2"],
+  "image/x-sigma-x3f": [".x3f"],
+  "image/x-hasselblad-3fr": [".3fr"],
+  "image/x-hasselblad-fff": [".fff"],
+  "image/x-mamiya-mef": [".mef"],
 };
 
 export function UploadDialog({
