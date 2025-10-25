@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -15,15 +15,23 @@ export default function CameraScreen() {
   const [captureProgress, setCaptureProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string>('');
   const [baseExposureTime, setBaseExposureTime] = useState<number | null>(null);
+  const [debugLog, setDebugLog] = useState<string[]>([]);
+  const [showDebug, setShowDebug] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { trigger } = useHaptic();
 
+  const log = (msg: string) => {
+    console.log(msg);
+    setDebugLog(prev => [...prev.slice(-4), msg]);
+  };
+
   const startCamera = async () => {
     try {
       trigger('medium');
       setError('');
+      setDebugLog([]);
       
       if (!navigator.mediaDevices) {
         throw new Error('Camera API not available');
@@ -42,17 +50,16 @@ export default function CameraScreen() {
       const capabilities: any = videoTrack.getCapabilities();
       const settings: any = videoTrack.getSettings();
       
-      console.log('Camera capabilities:', capabilities);
-      console.log('Current settings:', settings);
+      log('📸 Camera started');
       
       if (capabilities.exposureTime) {
         const currentExposure = settings.exposureTime || capabilities.exposureTime.max / 2;
         setBaseExposureTime(currentExposure);
-        console.log(`✅ Exposure time control available`);
-        console.log(`   Range: ${capabilities.exposureTime.min}ms - ${capabilities.exposureTime.max}ms`);
-        console.log(`   Current: ${currentExposure.toFixed(2)}ms`);
+        log(`✅ Exposure: ${currentExposure.toFixed(1)}ms`);
+        log(`Range: ${capabilities.exposureTime.min}-${capabilities.exposureTime.max}ms`);
       } else {
-        console.log('⚠️ No exposureTime control - HDR will not work correctly');
+        log('❌ No exposure control!');
+        setError('Kamera unterstützt keine manuelle Belichtung');
       }
 
       if (!videoRef.current) {
@@ -76,7 +83,7 @@ export default function CameraScreen() {
       
     } catch (err: any) {
       setError(err.message || 'Camera error');
-      console.error('Camera error:', err);
+      log(`❌ ERROR: ${err.message}`);
     }
   };
 
@@ -97,7 +104,6 @@ export default function CameraScreen() {
     const capabilities: any = videoTrack.getCapabilities();
     
     if (!capabilities.exposureTime) {
-      console.log('⚠️ exposureTime not supported');
       return false;
     }
 
@@ -106,7 +112,6 @@ export default function CameraScreen() {
       const max = capabilities.exposureTime.max;
       const clampedExposure = Math.max(min, Math.min(max, exposureTimeMs));
       
-      // Turn off auto-exposure first
       await videoTrack.applyConstraints({
         advanced: [{ 
           exposureMode: 'manual' as any,
@@ -114,10 +119,10 @@ export default function CameraScreen() {
         } as any]
       });
       
-      console.log(`✅ Set exposureTime: ${clampedExposure.toFixed(2)}ms`);
+      log(`⚡ ${clampedExposure.toFixed(1)}ms`);
       return true;
     } catch (err) {
-      console.error('Failed to set exposureTime:', err);
+      log(`❌ Set failed`);
       return false;
     }
   };
@@ -127,10 +132,7 @@ export default function CameraScreen() {
       throw new Error('No video/canvas');
     }
 
-    // Set exposure time
     await setExposureTime(exposureTimeMs);
-    
-    // Wait for camera to adjust (important!)
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const video = videoRef.current;
@@ -143,9 +145,7 @@ export default function CameraScreen() {
       throw new Error('No canvas context');
     }
 
-    // Capture frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
     return canvas.toDataURL('image/jpeg', 0.90);
   };
 
@@ -160,31 +160,27 @@ export default function CameraScreen() {
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
 
       if (hdrEnabled && baseExposureTime) {
-        // 3-Shot HDR with exposure time bracketing
-        // -2 EV = 1/4 of base time (faster shutter = darker)
-        // 0 EV = base time (normal)
-        // +2 EV = 4x base time (slower shutter = brighter)
         const exposureTimes = [
-          baseExposureTime / 4,  // -2 EV
-          baseExposureTime,       // 0 EV
-          baseExposureTime * 4    // +2 EV
+          baseExposureTime / 4,
+          baseExposureTime,
+          baseExposureTime * 4
         ];
         const evStops = [-2, 0, 2];
+        
+        log('🎬 HDR Start');
         
         for (let i = 0; i < exposureTimes.length; i++) {
           setCaptureProgress({ current: i + 1, total: exposureTimes.length });
           
-          // Flash
           const flash = document.getElementById('capture-flash');
           if (flash) {
             flash.classList.remove('hidden');
             setTimeout(() => flash.classList.add('hidden'), 150);
           }
 
-          // Haptic feedback per shot
           if (i > 0) trigger('light');
 
-          console.log(`Capturing ${evStops[i]} EV at ${exposureTimes[i].toFixed(2)}ms`);
+          log(`📷 ${evStops[i]} EV (${exposureTimes[i].toFixed(1)}ms)`);
           
           const imageData = await captureWithExposureTime(exposureTimes[i]);
           
@@ -201,16 +197,14 @@ export default function CameraScreen() {
             exposureTimeMs: exposureTimes[i]
           });
 
-          // Delay between shots
           if (i < exposureTimes.length - 1) {
             await new Promise(resolve => setTimeout(resolve, 200));
           }
         }
         
-        // Reset to base exposure
         await setExposureTime(baseExposureTime);
+        log('✅ HDR Complete!');
       } else {
-        // Single shot with current exposure
         setCaptureProgress({ current: 1, total: 1 });
         
         const flash = document.getElementById('capture-flash');
@@ -236,6 +230,8 @@ export default function CameraScreen() {
               width: canvas.width,
               height: canvas.height
             });
+            
+            log('✅ Photo saved');
           }
         }
       }
@@ -244,7 +240,7 @@ export default function CameraScreen() {
       trigger('success');
       
     } catch (err: any) {
-      console.error('Capture error:', err);
+      log(`❌ ${err.message}`);
       trigger('error');
     } finally {
       setCapturing(false);
@@ -305,21 +301,55 @@ export default function CameraScreen() {
                 )}
               </HapticButton>
 
-              {/* Close Button */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  trigger('light');
-                  setLocation('/app');
-                }}
-                className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                data-testid="button-close-camera"
-              >
-                <X className="w-6 h-6" />
-              </HapticButton>
+              <div className="flex items-center gap-2">
+                {/* Debug Toggle */}
+                <HapticButton
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => setShowDebug(!showDebug)}
+                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
+                >
+                  <Info className="w-5 h-5" />
+                </HapticButton>
+                
+                {/* Close Button */}
+                <HapticButton
+                  size="icon"
+                  variant="ghost"
+                  onClick={() => {
+                    trigger('light');
+                    setLocation('/app');
+                  }}
+                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
+                  data-testid="button-close-camera"
+                >
+                  <X className="w-6 h-6" />
+                </HapticButton>
+              </div>
             </div>
           </div>
+
+          {/* Debug Overlay */}
+          <AnimatePresence>
+            {showDebug && debugLog.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, x: 100 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 100 }}
+                className="absolute top-32 right-4 z-50"
+              >
+                <div className="bg-black/90 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-white/20 min-w-[200px]">
+                  <div className="text-xs text-green-400 font-mono space-y-1">
+                    {debugLog.map((log, i) => (
+                      <div key={i} className="leading-tight">
+                        {log}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           {/* Capture Progress */}
           <AnimatePresence>
