@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Upload, Home, ChevronRight, Layers, ImageIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
@@ -17,12 +17,12 @@ import { useLocation } from 'wouter';
 
 interface Photo {
   id: number;
-  color: string;
-  selected: boolean;
+  timestamp: string;
+  imageData: string;
+  width: number;
+  height: number;
+  selected?: boolean;
   roomType?: string;
-  status: 'ok' | 'warning';
-  isHDR?: boolean;
-  bracketCount?: number;
 }
 
 const ROOM_TYPES = [
@@ -101,21 +101,31 @@ const ROOM_TYPES = [
 
 export default function GalleryScreen() {
   const [, setLocation] = useLocation();
-  const [photos, setPhotos] = useState<Photo[]>([
-    { id: 1, color: '#E8F4F8', selected: false, status: 'ok', isHDR: true, bracketCount: 3 },
-    { id: 2, color: '#FFE8E8', selected: false, status: 'warning' },
-    { id: 3, color: '#E8FFE8', selected: false, status: 'ok', isHDR: true, bracketCount: 5 },
-    { id: 4, color: '#FFF4E8', selected: false, status: 'ok' },
-    { id: 5, color: '#F8E8FF', selected: false, status: 'ok', isHDR: true, bracketCount: 3 },
-    { id: 6, color: '#E8F8FF', selected: false, status: 'warning' },
-    { id: 7, color: '#FFE8F4', selected: false, status: 'ok' },
-    { id: 8, color: '#F4FFE8', selected: false, status: 'ok', isHDR: true, bracketCount: 3 },
-    { id: 9, color: '#E8E8FF', selected: false, status: 'ok' },
-  ]);
-
+  const [photos, setPhotos] = useState<Photo[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const { trigger } = useHaptic();
+
+  // Load photos from sessionStorage
+  useEffect(() => {
+    const loadPhotos = () => {
+      const stored = sessionStorage.getItem('appPhotos');
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored);
+          setPhotos(parsed.map((p: any) => ({ ...p, selected: false })));
+        } catch (err) {
+          console.error('Failed to load photos:', err);
+        }
+      }
+    };
+    
+    loadPhotos();
+    
+    // Reload when returning to page
+    const interval = setInterval(loadPhotos, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const selectedCount = photos.filter(p => p.selected).length;
 
@@ -145,9 +155,11 @@ export default function GalleryScreen() {
 
   const updateRoomType = (roomType: string) => {
     if (selectedPhoto) {
-      setPhotos(photos.map(p => 
+      const updated = photos.map(p => 
         p.id === selectedPhoto.id ? { ...p, roomType } : p
-      ));
+      );
+      setPhotos(updated);
+      sessionStorage.setItem('appPhotos', JSON.stringify(updated));
       setSelectedPhoto(null);
     }
   };
@@ -192,78 +204,62 @@ export default function GalleryScreen() {
 
       {/* Photo Grid - Apple Photos Style */}
       <div className="flex-1 overflow-auto pb-20">
-        <div className="grid grid-cols-3 gap-0.5 p-0.5 bg-white">
-          {photos.map((photo) => (
-            <motion.div
-              key={photo.id}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="relative aspect-square cursor-pointer"
-              onClick={() => handlePhotoClick(photo)}
-              data-testid={`photo-thumbnail-${photo.id}`}
-            >
-              {/* Photo Thumbnail */}
-              <div 
-                className="w-full h-full flex items-center justify-center relative overflow-hidden"
-                style={{ backgroundColor: photo.color }}
+        {photos.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-center p-8">
+            <ImageIcon className="w-20 h-20 text-gray-300 mb-4" strokeWidth={1} />
+            <p className="text-gray-500 text-lg font-medium mb-2">Keine Fotos</p>
+            <p className="text-gray-400 text-sm">Nutze die Kamera um Fotos aufzunehmen</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-3 gap-0.5 p-0.5 bg-white">
+            {photos.map((photo) => (
+              <motion.div
+                key={photo.id}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="relative aspect-square cursor-pointer"
+                onClick={() => handlePhotoClick(photo)}
+                data-testid={`photo-thumbnail-${photo.id}`}
               >
-                {/* Image Placeholder */}
-                <ImageIcon className="w-12 h-12 text-gray-400" strokeWidth={1} />
-                
-                {/* Gradient Overlay on hover */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 hover:opacity-100 transition-opacity" />
-              </div>
+                {/* Photo Image */}
+                <img 
+                  src={photo.imageData}
+                  alt={`Photo ${photo.id}`}
+                  className="w-full h-full object-cover"
+                />
 
-              {/* Selection Indicator */}
-              {selectionMode && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute top-2 right-2"
-                >
-                  {photo.selected ? (
-                    <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4A5849' }} data-testid={`photo-selected-${photo.id}`}>
-                      <Check className="w-4 h-4 text-white" strokeWidth={1.5} />
-                    </div>
-                  ) : (
-                    <div className="w-6 h-6 border-2 border-white rounded-full bg-black/20 backdrop-blur-sm" />
-                  )}
-                </motion.div>
-              )}
+                {/* Selection Indicator */}
+                {selectionMode && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute top-2 right-2"
+                  >
+                    {photo.selected ? (
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4A5849' }} data-testid={`photo-selected-${photo.id}`}>
+                        <Check className="w-4 h-4 text-white" strokeWidth={1.5} />
+                      </div>
+                    ) : (
+                      <div className="w-6 h-6 border-2 border-white rounded-full bg-black/20 backdrop-blur-sm" />
+                    )}
+                  </motion.div>
+                )}
 
-              {/* Room Type Badge (wenn zugeordnet) */}
-              {!selectionMode && photo.roomType && (
-                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                  <p className="text-white text-xs truncate" style={{ fontSize: '11px' }} data-testid={`photo-roomtype-${photo.id}`}>
-                    {photo.roomType}
-                  </p>
-                </div>
-              )}
-
-              {/* Status Indicator (small dot) */}
-              {!selectionMode && photo.status === 'warning' && (
-                <div className="absolute top-2 left-2">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full shadow-md" />
-                </div>
-              )}
-
-              {/* HDR Bracketing Badge - Apple Photos Style */}
-              {!selectionMode && photo.isHDR && (
-                <div className="absolute top-2 left-2">
-                  <div className="bg-white/90 backdrop-blur-sm rounded px-1.5 py-0.5 shadow-md flex items-center gap-0.5" data-testid={`photo-hdr-badge-${photo.id}`}>
-                    <Layers className="w-3 h-3 text-gray-700" strokeWidth={2} />
-                    <span className="text-gray-700" style={{ fontSize: '10px', fontWeight: '600' }}>
-                      {photo.bracketCount}×
-                    </span>
+                {/* Room Type Badge */}
+                {!selectionMode && photo.roomType && (
+                  <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
+                    <p className="text-white text-xs truncate" style={{ fontSize: '11px' }} data-testid={`photo-roomtype-${photo.id}`}>
+                      {photo.roomType}
+                    </p>
                   </div>
-                </div>
-              )}
-            </motion.div>
-          ))}
-        </div>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Floating Action Button - Apple Style */}
+      {/* Floating Action Button */}
       <AnimatePresence>
         {!selectionMode && (
           <motion.div
@@ -325,9 +321,11 @@ export default function GalleryScreen() {
                           <button
                             key={room}
                             onClick={() => {
-                              setPhotos(photos.map(p => 
+                              const updated = photos.map(p => 
                                 p.selected ? { ...p, roomType: room } : p
-                              ));
+                              );
+                              setPhotos(updated);
+                              sessionStorage.setItem('appPhotos', JSON.stringify(updated));
                               trigger('success');
                             }}
                             className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"

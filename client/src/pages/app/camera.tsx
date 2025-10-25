@@ -14,6 +14,7 @@ export default function CameraScreen() {
   const [debugInfo, setDebugInfo] = useState<string[]>(['Ready - V2.0']);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const { trigger } = useHaptic();
 
   const log = (msg: string) => {
@@ -98,18 +99,57 @@ export default function CameraScreen() {
 
   const handleCapture = () => {
     trigger('heavy');
-    log('📷 Captured');
+    log('📷 Capturing...');
     
+    if (!videoRef.current || !canvasRef.current) {
+      log('❌ No video/canvas');
+      return;
+    }
+
+    // Flash
     const flash = document.getElementById('capture-flash');
     if (flash) {
       flash.classList.remove('hidden');
       setTimeout(() => flash.classList.add('hidden'), 150);
     }
 
-    const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
-    photos.push({ id: Date.now(), timestamp: new Date().toISOString() });
-    sessionStorage.setItem('appPhotos', JSON.stringify(photos));
-    log(`Photos: ${photos.length}`);
+    try {
+      // Set canvas size to video size
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      log(`Canvas: ${canvas.width}x${canvas.height}`);
+
+      // Draw video frame to canvas
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        log('❌ No canvas context');
+        return;
+      }
+      
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert to Base64 JPEG (better compression)
+      const imageData = canvas.toDataURL('image/jpeg', 0.85);
+      log(`Data size: ${Math.round(imageData.length / 1024)}KB`);
+
+      // Save to sessionStorage
+      const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+      photos.push({
+        id: Date.now(),
+        timestamp: new Date().toISOString(),
+        imageData: imageData,
+        width: canvas.width,
+        height: canvas.height
+      });
+      sessionStorage.setItem('appPhotos', JSON.stringify(photos));
+      
+      log(`✅ Saved! Total: ${photos.length}`);
+    } catch (err: any) {
+      log(`❌ Capture error: ${err.message}`);
+    }
   };
 
   return (
@@ -117,10 +157,13 @@ export default function CameraScreen() {
       {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[200]" />
 
+      {/* Hidden Canvas for capture */}
+      <canvas ref={canvasRef} className="hidden" />
+
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* ULTRA SIMPLE LAYOUT */}
+      {/* LAYOUT */}
       <div className="flex-1 flex flex-col">
         
         {/* DEBUG BANNER - OBEN */}
@@ -163,7 +206,7 @@ export default function CameraScreen() {
           </motion.div>
         </div>
 
-        {/* VIDEO - FULLSCREEN BEHIND BANNER */}
+        {/* VIDEO - FULLSCREEN */}
         <div className="absolute inset-0 bg-gray-900">
           <video
             ref={videoRef}
@@ -175,7 +218,7 @@ export default function CameraScreen() {
           />
         </div>
 
-        {/* CONTROLS - OVER VIDEO */}
+        {/* CONTROLS */}
         {cameraStarted && (
           <>
             {/* Close Button */}
