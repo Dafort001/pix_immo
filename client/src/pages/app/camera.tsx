@@ -71,6 +71,23 @@ export default function CameraScreen() {
     };
   }, []);
 
+  const applyExposureCompensation = (imageData: ImageData, evStops: number): ImageData => {
+    // EV to exposure factor: 2^EV
+    // -2 EV = 0.25x (darker), 0 EV = 1x (normal), +2 EV = 4x (brighter)
+    const factor = Math.pow(2, evStops);
+    
+    const data = imageData.data;
+    for (let i = 0; i < data.length; i += 4) {
+      // Apply exposure to RGB (not alpha)
+      data[i] = Math.min(255, data[i] * factor);     // R
+      data[i + 1] = Math.min(255, data[i + 1] * factor); // G
+      data[i + 2] = Math.min(255, data[i + 2] * factor); // B
+      // data[i + 3] is alpha, leave unchanged
+    }
+    
+    return imageData;
+  };
+
   const captureWithEV = async (evCompensation: number): Promise<string> => {
     if (!videoRef.current || !canvasRef.current) {
       throw new Error('No video/canvas');
@@ -86,12 +103,13 @@ export default function CameraScreen() {
       throw new Error('No canvas context');
     }
 
-    // Apply exposure compensation via brightness filter
-    // EV to brightness: -2 EV = 25%, 0 EV = 100%, +2 EV = 400%
-    const brightness = Math.pow(2, evCompensation);
-    ctx.filter = `brightness(${brightness})`;
+    // Draw original frame
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    ctx.filter = 'none';
+    
+    // Get pixel data and apply exposure compensation
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const adjustedData = applyExposureCompensation(imageData, evCompensation);
+    ctx.putImageData(adjustedData, 0, 0);
 
     return canvas.toDataURL('image/jpeg', 0.90);
   };
