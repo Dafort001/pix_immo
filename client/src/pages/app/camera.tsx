@@ -33,11 +33,28 @@ export default function CameraScreen() {
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
+  const [isLandscape, setIsLandscape] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { trigger } = useHaptic();
+
+  // Detect orientation changes
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   const log = (msg: string) => {
     console.log(msg);
@@ -414,9 +431,12 @@ export default function CameraScreen() {
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* VIDEO - 2:3 Aspect Ratio Portrait */}
+      {/* VIDEO - Responsive Aspect Ratio */}
       <div className="absolute inset-0 bg-black flex items-center justify-center">
-        <div className="relative w-full" style={{ aspectRatio: '2/3', maxHeight: '100%' }}>
+        <div 
+          className="relative w-full h-full" 
+          style={isLandscape ? {} : { aspectRatio: '2/3', maxHeight: '100%' }}
+        >
           <video
             ref={videoRef}
             autoPlay
