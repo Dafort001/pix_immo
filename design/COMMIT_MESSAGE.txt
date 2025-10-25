@@ -1,0 +1,42 @@
+chore(design): export static HTML for Figma review [v1]
+
+Added HTML exports for Figma design reviews:
+
+📂 New Files:
+- design/html/ (20 HTML files + index)
+- design/README.md (Documentation)
+- scripts/export-html.ts (Export script)
+
+📄 Exported Pages:
+- 6 Public Pages (Homepage, Gallery, Pricing, Booking, Login, Contact)
+- 7 Portal Pages (Gallery Upload System V1.0)
+- 4 Mobile App Screens (PWA)
+- 2 Additional Pages (Dashboard, Order Form)
+
+✨ Features:
+- Fully standalone HTML with inline CSS
+- Versioned naming (_v1.html)
+- Responsive design
+- Brand colors (Sage & Clay v3)
+- Navigation index.html
+
+🎯 Purpose:
+- Design reviews in Figma
+- Stakeholder presentations
+- UI state versioning
+- No dev environment needed
+
+📦 Usage:
+1. Open design/html/index.html locally
+2. Import into Figma via File → Import
+3. Or use GitHub raw URLs
+
+🔗 GitHub URLs:
+https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/index.html
+https://raw.githubusercontent.com/Dafort001/EstateSandbox/main/design/html/portal_gallery_upload_v1.html
+
+---
+
+Files to commit:
+  design/
+  scripts/export-html.ts
