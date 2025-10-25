@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle, Info, SwitchCamera, Zap, Grid3x3, ZoomIn, ZoomOut, Timer } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
+import { Histogram } from '@/components/mobile/Histogram';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
+import { ALL_ROOM_TYPES, ROOM_DISPLAY_NAMES, type RoomType } from '@shared/room-types';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -21,16 +24,16 @@ export default function CameraScreen() {
     max: number;
   } | null>(null);
   const [debugLog, setDebugLog] = useState<string[]>([]);
-  const [showDebug, setShowDebug] = useState(true);
+  const [showDebug, setShowDebug] = useState(false);
+  const [showHistogram, setShowHistogram] = useState(true);
   
-  // New Camera Controls
-  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
-  const [flashEnabled, setFlashEnabled] = useState(false);
+  // Camera Controls
   const [gridEnabled, setGridEnabled] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [maxZoom, setMaxZoom] = useState(1);
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [currentRoomType, setCurrentRoomType] = useState<RoomType>('undefined_space');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -42,13 +45,12 @@ export default function CameraScreen() {
     setDebugLog(prev => [...prev.slice(-5), msg]);
   };
 
-  const startCamera = async (newFacingMode?: 'environment' | 'user') => {
+  const startCamera = async () => {
     try {
       trigger('medium');
       setError('');
       setDebugLog([]);
       
-      // Stop existing stream
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
@@ -57,16 +59,11 @@ export default function CameraScreen() {
         throw new Error('Camera API not available');
       }
 
-      const targetFacingMode = newFacingMode || facingMode;
-      log(`🔍 ${targetFacingMode === 'environment' ? 'Back' : 'Front'} Camera`);
-
-      // Request with manual exposure mode
       const constraints: any = {
         video: {
-          facingMode: targetFacingMode,
+          facingMode: 'environment',
           width: { ideal: 1920 },
           height: { ideal: 1080 },
-          // Try to request manual mode upfront
           exposureMode: 'manual',
           focusMode: 'manual',
           whiteBalanceMode: 'manual'
@@ -76,9 +73,7 @@ export default function CameraScreen() {
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       const videoTrack = mediaStream.getVideoTracks()[0];
       
-      // Get ALL capabilities
       const capabilities: any = videoTrack.getCapabilities();
-      const settings: any = videoTrack.getSettings();
       
       // Detect Zoom Capability
       if (capabilities.zoom) {
@@ -93,7 +88,7 @@ export default function CameraScreen() {
       
       log('📸 Checking ALL controls...');
       
-      // Try to enable manual mode FIRST
+      // Try to enable manual mode
       try {
         await videoTrack.applyConstraints({
           advanced: [{
@@ -106,7 +101,6 @@ export default function CameraScreen() {
         log('⚠️ Manual mode failed');
       }
 
-      // Re-check capabilities after manual mode
       const updatedCaps: any = videoTrack.getCapabilities();
       const updatedSettings: any = videoTrack.getSettings();
       
@@ -120,7 +114,6 @@ export default function CameraScreen() {
           max: updatedCaps.exposureTime.max
         });
         log(`✅ exposureTime: ${current.toFixed(1)}ms`);
-        log(`   Range: ${updatedCaps.exposureTime.min}-${updatedCaps.exposureTime.max}ms`);
       }
       // Check exposureCompensation (GOOD)
       else if (updatedCaps.exposureCompensation) {
@@ -132,7 +125,6 @@ export default function CameraScreen() {
           max: updatedCaps.exposureCompensation.max
         });
         log(`✅ exposureComp: ${current} EV`);
-        log(`   Range: ${updatedCaps.exposureCompensation.min} to ${updatedCaps.exposureCompensation.max}`);
       }
       // Check iso (FALLBACK)
       else if (updatedCaps.iso) {
@@ -144,7 +136,6 @@ export default function CameraScreen() {
           max: updatedCaps.iso.max
         });
         log(`✅ ISO: ${current}`);
-        log(`   Range: ${updatedCaps.iso.min}-${updatedCaps.iso.max}`);
       }
       else {
         log('❌ NO exposure controls!');
@@ -152,9 +143,7 @@ export default function CameraScreen() {
         setError('Software-HDR Modus (keine Hardware-Kontrolle)');
       }
 
-      if (!videoRef.current) {
-        return;
-      }
+      if (!videoRef.current) return;
 
       videoRef.current.srcObject = mediaStream;
       streamRef.current = mediaStream;
@@ -185,39 +174,7 @@ export default function CameraScreen() {
     };
   }, []);
 
-  // Camera Flip Handler
-  const handleFlipCamera = async () => {
-    const newFacingMode = facingMode === 'environment' ? 'user' : 'environment';
-    setFacingMode(newFacingMode);
-    setCameraStarted(false);
-    await startCamera(newFacingMode);
-    trigger('medium');
-  };
-
-  // Flash Toggle Handler
-  const handleToggleFlash = async () => {
-    if (!streamRef.current) return;
-    
-    const videoTrack = streamRef.current.getVideoTracks()[0];
-    const capabilities: any = videoTrack.getCapabilities();
-    
-    if (capabilities.torch) {
-      try {
-        await videoTrack.applyConstraints({
-          advanced: [{ torch: !flashEnabled } as any]
-        });
-        setFlashEnabled(!flashEnabled);
-        trigger('light');
-        log(flashEnabled ? '💡 Flash OFF' : '⚡ Flash ON');
-      } catch (e) {
-        log('⚠️ Flash not available');
-      }
-    } else {
-      log('⚠️ Flash not supported');
-    }
-  };
-
-  // Zoom Handler
+  // Zoom Handler with Slider
   const handleZoomChange = async (newZoom: number) => {
     if (!streamRef.current || maxZoom === 1) return;
     
@@ -283,11 +240,9 @@ export default function CameraScreen() {
       throw new Error('No video/canvas');
     }
 
-    // Try hardware control
     const hwSuccess = await setExposure(exposureValue);
     
     if (hwSuccess) {
-      // Wait for camera to adjust
       await new Promise(resolve => setTimeout(resolve, 600));
     }
 
@@ -303,7 +258,6 @@ export default function CameraScreen() {
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // If hardware failed, use software
     if (!hwSuccess && evStops !== 0) {
       const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
       const adjusted = applySoftwareExposure(imageData, evStops);
@@ -315,7 +269,6 @@ export default function CameraScreen() {
   };
 
   const handleCapture = async () => {
-    // Prevent concurrent captures or countdowns
     if (capturing || countdown !== null) return;
     
     // Self-Timer Countdown
@@ -346,17 +299,14 @@ export default function CameraScreen() {
 
         if (exposureControl) {
           if (exposureControl.type === 'exposureTime') {
-            // Exposure time: 1/4, 1x, 4x
             exposureValues = [
               exposureControl.baseValue / 4,
               exposureControl.baseValue,
               exposureControl.baseValue * 4
             ];
           } else if (exposureControl.type === 'exposureCompensation') {
-            // Compensation: -2, 0, +2
             exposureValues = [-2, 0, 2];
           } else if (exposureControl.type === 'iso') {
-            // ISO: 1/4, 1x, 4x
             exposureValues = [
               exposureControl.baseValue / 4,
               exposureControl.baseValue,
@@ -393,7 +343,8 @@ export default function CameraScreen() {
             stackId: stackId,
             stackIndex: i,
             stackTotal: evStops.length,
-            evCompensation: evStops[i]
+            evCompensation: evStops[i],
+            roomType: currentRoomType
           });
 
           if (i < evStops.length - 1) {
@@ -401,7 +352,6 @@ export default function CameraScreen() {
           }
         }
         
-        // Reset to base
         if (exposureControl) {
           await setExposure(exposureControl.baseValue);
         }
@@ -431,7 +381,8 @@ export default function CameraScreen() {
               timestamp: new Date().toISOString(),
               imageData: imageData,
               width: canvas.width,
-              height: canvas.height
+              height: canvas.height,
+              roomType: currentRoomType
             });
             
             log('✅ Photo saved');
@@ -478,9 +429,9 @@ export default function CameraScreen() {
       {cameraStarted ? (
         <>
           {/* Top Bar */}
-          <div className="absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/50 to-transparent">
+          <div className="absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent">
             <div className="flex items-center justify-between">
-              {/* HDR Toggle */}
+              {/* HDR Toggle - Sage Color */}
               <HapticButton
                 onClick={() => {
                   setHdrEnabled(!hdrEnabled);
@@ -488,9 +439,10 @@ export default function CameraScreen() {
                 }}
                 className={`px-4 py-2 rounded-full flex items-center gap-2 ${
                   hdrEnabled 
-                    ? 'bg-yellow-500 text-black' 
+                    ? 'text-white' 
                     : 'bg-white/20 backdrop-blur-md text-white'
                 }`}
+                style={hdrEnabled ? { backgroundColor: '#4A5849' } : {}}
                 data-testid="button-toggle-hdr"
               >
                 <Layers className="w-4 h-4" strokeWidth={2} />
@@ -510,21 +462,6 @@ export default function CameraScreen() {
               </HapticButton>
 
               <div className="flex items-center gap-2">
-                {/* Flash Toggle */}
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={handleToggleFlash}
-                  className={`backdrop-blur-md rounded-full ${
-                    flashEnabled 
-                      ? 'bg-yellow-500 text-black' 
-                      : 'bg-white/20 text-white'
-                  }`}
-                  data-testid="button-toggle-flash"
-                >
-                  <Zap className={`w-5 h-5 ${flashEnabled ? 'fill-current' : ''}`} />
-                </HapticButton>
-                
                 {/* Grid Toggle */}
                 <HapticButton
                   size="icon"
@@ -535,7 +472,7 @@ export default function CameraScreen() {
                   }}
                   className={`backdrop-blur-md rounded-full ${
                     gridEnabled 
-                      ? 'bg-blue-500 text-white' 
+                      ? 'bg-white/30 text-white' 
                       : 'bg-white/20 text-white'
                   }`}
                   data-testid="button-toggle-grid"
@@ -556,7 +493,7 @@ export default function CameraScreen() {
                   }}
                   className={`backdrop-blur-md rounded-full ${
                     timerMode > 0 
-                      ? 'bg-orange-500 text-white' 
+                      ? 'bg-white/30 text-white' 
                       : 'bg-white/20 text-white'
                   }`}
                   data-testid="button-toggle-timer"
@@ -572,14 +509,16 @@ export default function CameraScreen() {
                 </HapticButton>
                 
                 {/* Debug Toggle */}
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setShowDebug(!showDebug)}
-                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                >
-                  <Info className="w-5 h-5" />
-                </HapticButton>
+                {showDebug && (
+                  <HapticButton
+                    size="icon"
+                    variant="ghost"
+                    onClick={() => setShowDebug(!showDebug)}
+                    className="bg-white/20 backdrop-blur-md text-white rounded-full"
+                  >
+                    <Info className="w-5 h-5" />
+                  </HapticButton>
+                )}
                 
                 {/* Close Button */}
                 <HapticButton
@@ -602,14 +541,29 @@ export default function CameraScreen() {
           {gridEnabled && (
             <div className="absolute inset-0 pointer-events-none z-40">
               <svg className="w-full h-full">
-                {/* Vertical Lines */}
                 <line x1="33.33%" y1="0" x2="33.33%" y2="100%" stroke="white" strokeWidth="1" opacity="0.5" />
                 <line x1="66.66%" y1="0" x2="66.66%" y2="100%" stroke="white" strokeWidth="1" opacity="0.5" />
-                {/* Horizontal Lines */}
                 <line x1="0" y1="33.33%" x2="100%" y2="33.33%" stroke="white" strokeWidth="1" opacity="0.5" />
                 <line x1="0" y1="66.66%" x2="100%" y2="66.66%" stroke="white" strokeWidth="1" opacity="0.5" />
               </svg>
             </div>
+          )}
+
+          {/* Histogram */}
+          {showHistogram && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-32 left-4 z-50"
+            >
+              <div className="bg-black/80 backdrop-blur-md rounded-xl p-2 border border-white/20">
+                <Histogram 
+                  videoElement={videoRef.current} 
+                  width={200}
+                  height={60}
+                />
+              </div>
+            </motion.div>
           )}
 
           {/* Debug Overlay */}
@@ -624,9 +578,7 @@ export default function CameraScreen() {
                 <div className="bg-black/90 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-green-500/30 min-w-[220px]">
                   <div className="text-xs text-green-400 font-mono space-y-1 leading-tight">
                     {debugLog.map((log, i) => (
-                      <div key={i}>
-                        {log}
-                      </div>
+                      <div key={i}>{log}</div>
                     ))}
                   </div>
                 </div>
@@ -673,7 +625,7 @@ export default function CameraScreen() {
                         key={i}
                         className={`w-2 h-2 ${
                           i < captureProgress.current
-                            ? 'fill-yellow-500 text-yellow-500'
+                            ? 'text-white fill-white'
                             : 'text-white/30'
                         }`}
                       />
@@ -688,83 +640,106 @@ export default function CameraScreen() {
           </AnimatePresence>
 
           {/* Bottom Controls */}
-          <div className="absolute bottom-24 left-0 right-0 z-50">
-            <div className="flex items-center justify-between px-8">
-              {/* Zoom Out */}
-              {maxZoom > 1 && (
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(Math.max(1, zoom - 0.5))}
-                  disabled={zoom <= 1}
-                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                  data-testid="button-zoom-out"
-                >
-                  <ZoomOut className="w-6 h-6" />
-                </HapticButton>
-              )}
+          <div className="absolute bottom-0 left-0 right-0 z-50 pb-28 px-4">
+            {/* Zoom Slider */}
+            {maxZoom > 1 && (
+              <div className="mb-4">
+                <div className="bg-black/60 backdrop-blur-md rounded-full p-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-white text-xs font-semibold min-w-[40px]">
+                      {zoom.toFixed(1)}×
+                    </span>
+                    <input
+                      type="range"
+                      min="1"
+                      max={maxZoom}
+                      step="0.1"
+                      value={zoom}
+                      onChange={(e) => handleZoomChange(parseFloat(e.target.value))}
+                      className="flex-1 h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
+                      style={{
+                        background: `linear-gradient(to right, #4A5849 0%, #4A5849 ${((zoom - 1) / (maxZoom - 1)) * 100}%, rgba(255,255,255,0.2) ${((zoom - 1) / (maxZoom - 1)) * 100}%, rgba(255,255,255,0.2) 100%)`
+                      }}
+                      data-testid="slider-zoom"
+                    />
+                    <span className="text-white text-xs min-w-[40px] text-right">
+                      {maxZoom.toFixed(1)}×
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            {/* Capture & Room Type Row */}
+            <div className="flex items-center justify-between">
+              {/* Room Type Button */}
+              <Drawer>
+                <DrawerTrigger asChild>
+                  <HapticButton
+                    hapticStyle="medium"
+                    className="bg-white/20 backdrop-blur-md text-white rounded-full px-4 py-3 flex items-center gap-2"
+                    data-testid="button-select-roomtype"
+                  >
+                    <Home className="w-4 h-4" strokeWidth={1.5} />
+                    <span className="text-sm font-semibold">
+                      {ROOM_DISPLAY_NAMES[currentRoomType]}
+                    </span>
+                  </HapticButton>
+                </DrawerTrigger>
+                <DrawerContent className="max-h-[80vh]">
+                  <div className="mx-auto w-full max-w-md p-4">
+                    <DrawerHeader className="p-0 mb-4">
+                      <DrawerTitle>Raumtyp auswählen</DrawerTitle>
+                      <DrawerDescription>
+                        Für die nächsten Aufnahmen
+                      </DrawerDescription>
+                    </DrawerHeader>
+                    <div className="space-y-2 overflow-y-scroll pr-2" style={{ maxHeight: '50vh' }}>
+                      {ALL_ROOM_TYPES.map((room) => (
+                        <button
+                          key={room}
+                          onClick={() => {
+                            setCurrentRoomType(room);
+                            trigger('success');
+                          }}
+                          className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${
+                            currentRoomType === room
+                              ? 'bg-gray-200 font-semibold'
+                              : 'hover:bg-gray-100'
+                          }`}
+                          data-testid={`roomtype-option-${room}`}
+                        >
+                          <span style={{ fontSize: '16px' }}>{ROOM_DISPLAY_NAMES[room]}</span>
+                          {currentRoomType === room && (
+                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#4A5849' }} />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
               
-              {/* Spacer wenn kein Zoom */}
-              {maxZoom === 1 && <div className="w-12" />}
-              
-              {/* Capture Button */}
+              {/* Capture Button - Sage Border */}
               <motion.button
                 onClick={handleCapture}
                 disabled={capturing || countdown !== null}
                 whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
                 className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
-                  hdrEnabled
-                    ? 'border-yellow-500'
-                    : 'border-white'
-                } ${(capturing || countdown !== null) ? 'opacity-50' : ''}`}
+                  (capturing || countdown !== null) ? 'opacity-50' : ''
+                }`}
+                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
                 data-testid="button-capture-photo"
               >
-                <div className={`w-16 h-16 rounded-full ${
-                  hdrEnabled
-                    ? 'bg-gradient-to-br from-yellow-400 to-orange-500'
-                    : 'bg-white'
-                }`} />
+                <div 
+                  className="w-16 h-16 rounded-full"
+                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
+                />
               </motion.button>
               
-              {/* Zoom In */}
-              {maxZoom > 1 && (
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => handleZoomChange(Math.min(maxZoom, zoom + 0.5))}
-                  disabled={zoom >= maxZoom}
-                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                  data-testid="button-zoom-in"
-                >
-                  <ZoomIn className="w-6 h-6" />
-                </HapticButton>
-              )}
-              
-              {/* Spacer wenn kein Zoom */}
-              {maxZoom === 1 && <div className="w-12" />}
+              {/* Spacer for symmetry */}
+              <div className="w-[100px]" />
             </div>
-            
-            {/* Zoom Level Indicator */}
-            {maxZoom > 1 && zoom > 1 && (
-              <div className="flex justify-center mt-3">
-                <div className="bg-black/80 backdrop-blur-md text-white px-3 py-1 rounded-full text-sm font-semibold">
-                  {zoom.toFixed(1)}×
-                </div>
-              </div>
-            )}
-          </div>
-          
-          {/* Camera Flip Button */}
-          <div className="absolute bottom-32 right-8 z-50">
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={handleFlipCamera}
-              className="bg-white/20 backdrop-blur-md text-white rounded-full w-12 h-12"
-              data-testid="button-flip-camera"
-            >
-              <SwitchCamera className="w-6 h-6" />
-            </HapticButton>
           </div>
         </>
       ) : (
