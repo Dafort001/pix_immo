@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { motion } from 'framer-motion';
-import { X, Camera as CameraIcon, Zap } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Camera as CameraIcon, Layers, Circle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -10,39 +10,24 @@ import { useLocation } from 'wouter';
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
   const [cameraStarted, setCameraStarted] = useState(false);
+  const [hdrEnabled, setHdrEnabled] = useState(true);
+  const [capturing, setCapturing] = useState(false);
+  const [captureProgress, setCaptureProgress] = useState({ current: 0, total: 0 });
   const [error, setError] = useState<string>('');
-  const [debugInfo, setDebugInfo] = useState<string[]>(['Ready - V2.0']);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { trigger } = useHaptic();
 
-  const log = (msg: string) => {
-    const time = new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    const entry = `${time}: ${msg}`;
-    console.log(entry);
-    setDebugInfo(prev => [...prev, entry]);
-  };
-
   const startCamera = async () => {
     try {
       trigger('medium');
       setError('');
-      setDebugInfo([]);
       
-      log('🔍 Starting...');
-      
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      log(`Safari: ${isSafari ? '✅' : '❌'}`);
-      log(`HTTPS: ${window.location.protocol === 'https:' ? '✅' : '❌'}`);
-      log(`Device: ${navigator.mediaDevices ? '✅' : '❌'}`);
-
       if (!navigator.mediaDevices) {
         throw new Error('Camera API not available');
       }
 
-      log('📸 Requesting...');
-      
       const constraints = {
         video: {
           facingMode: 'environment',
@@ -52,40 +37,29 @@ export default function CameraScreen() {
       };
 
       const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-      log('✅ Permission OK');
-      log(`Active: ${mediaStream.active}`);
-      log(`Tracks: ${mediaStream.getVideoTracks().length}`);
 
       if (!videoRef.current) {
-        log('❌ No video element');
         return;
       }
 
-      log('🎬 Setting srcObject...');
       videoRef.current.srcObject = mediaStream;
       streamRef.current = mediaStream;
       
       videoRef.current.onloadedmetadata = async () => {
-        log('📊 Metadata loaded');
-        
         if (videoRef.current) {
-          log(`Video size: ${videoRef.current.videoWidth}x${videoRef.current.videoHeight}`);
-          
           try {
             await new Promise(resolve => setTimeout(resolve, 100));
             await videoRef.current.play();
-            log('▶️ Playing!');
             setCameraStarted(true);
-            log(`State: cameraStarted=true`);
           } catch (err: any) {
-            log(`❌ Play error: ${err.message}`);
+            console.error('Play error:', err);
           }
         }
       };
       
     } catch (err: any) {
-      log(`❌ ERROR: ${err.name}: ${err.message}`);
       setError(err.message || 'Camera error');
+      console.error('Camera error:', err);
     }
   };
 
@@ -97,58 +71,107 @@ export default function CameraScreen() {
     };
   }, []);
 
-  const handleCapture = () => {
-    trigger('heavy');
-    log('📷 Capturing...');
-    
+  const captureWithEV = async (evCompensation: number): Promise<string> => {
     if (!videoRef.current || !canvasRef.current) {
-      log('❌ No video/canvas');
-      return;
+      throw new Error('No video/canvas');
     }
 
-    // Flash
-    const flash = document.getElementById('capture-flash');
-    if (flash) {
-      flash.classList.remove('hidden');
-      setTimeout(() => flash.classList.add('hidden'), 150);
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('No canvas context');
     }
+
+    // Apply exposure compensation via brightness filter
+    // EV to brightness: -2 EV = 25%, 0 EV = 100%, +2 EV = 400%
+    const brightness = Math.pow(2, evCompensation);
+    ctx.filter = `brightness(${brightness})`;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.filter = 'none';
+
+    return canvas.toDataURL('image/jpeg', 0.90);
+  };
+
+  const handleCapture = async () => {
+    if (capturing) return;
+    
+    setCapturing(true);
+    trigger('heavy');
 
     try {
-      // Set canvas size to video size
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      
-      log(`Canvas: ${canvas.width}x${canvas.height}`);
-
-      // Draw video frame to canvas
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        log('❌ No canvas context');
-        return;
-      }
-      
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
-      // Convert to Base64 JPEG (better compression)
-      const imageData = canvas.toDataURL('image/jpeg', 0.85);
-      log(`Data size: ${Math.round(imageData.length / 1024)}KB`);
-
-      // Save to sessionStorage
+      const stackId = Date.now();
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
-      photos.push({
-        id: Date.now(),
-        timestamp: new Date().toISOString(),
-        imageData: imageData,
-        width: canvas.width,
-        height: canvas.height
-      });
+
+      if (hdrEnabled) {
+        // 3-Shot HDR: -2 EV, 0 EV, +2 EV
+        const evStops = [-2, 0, 2];
+        
+        for (let i = 0; i < evStops.length; i++) {
+          setCaptureProgress({ current: i + 1, total: evStops.length });
+          
+          // Flash
+          const flash = document.getElementById('capture-flash');
+          if (flash) {
+            flash.classList.remove('hidden');
+            setTimeout(() => flash.classList.add('hidden'), 150);
+          }
+
+          // Haptic feedback per shot
+          if (i > 0) trigger('light');
+
+          const imageData = await captureWithEV(evStops[i]);
+          
+          photos.push({
+            id: Date.now() + i,
+            timestamp: new Date().toISOString(),
+            imageData: imageData,
+            width: canvasRef.current!.width,
+            height: canvasRef.current!.height,
+            stackId: stackId,
+            stackIndex: i,
+            stackTotal: evStops.length,
+            evCompensation: evStops[i]
+          });
+
+          // Delay between shots
+          if (i < evStops.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 500));
+          }
+        }
+      } else {
+        // Single shot
+        setCaptureProgress({ current: 1, total: 1 });
+        
+        const flash = document.getElementById('capture-flash');
+        if (flash) {
+          flash.classList.remove('hidden');
+          setTimeout(() => flash.classList.add('hidden'), 150);
+        }
+
+        const imageData = await captureWithEV(0);
+        
+        photos.push({
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          imageData: imageData,
+          width: canvasRef.current!.width,
+          height: canvasRef.current!.height
+        });
+      }
+
       sessionStorage.setItem('appPhotos', JSON.stringify(photos));
+      trigger('success');
       
-      log(`✅ Saved! Total: ${photos.length}`);
     } catch (err: any) {
-      log(`❌ Capture error: ${err.message}`);
+      console.error('Capture error:', err);
+      trigger('error');
+    } finally {
+      setCapturing(false);
+      setCaptureProgress({ current: 0, total: 0 });
     }
   };
 
@@ -157,72 +180,50 @@ export default function CameraScreen() {
       {/* Flash */}
       <div id="capture-flash" className="hidden fixed inset-0 bg-white z-[200]" />
 
-      {/* Hidden Canvas for capture */}
+      {/* Hidden Canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
       {/* Status Bar */}
       <StatusBar variant="light" />
 
-      {/* LAYOUT */}
-      <div className="flex-1 flex flex-col">
-        
-        {/* DEBUG BANNER - OBEN */}
-        <div className="relative z-50 p-3 pt-14">
-          <motion.div
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="bg-gradient-to-r from-lime-400 to-emerald-500 rounded-xl p-3 shadow-2xl"
-          >
-            <div className="flex items-center justify-center gap-2 mb-2">
-              <Zap className="w-4 h-4 text-white" strokeWidth={3} />
-              <p className="text-white font-bold text-sm">V2.0 - {cameraStarted ? 'RUNNING' : 'READY'}</p>
-              <Zap className="w-4 h-4 text-white" strokeWidth={3} />
-            </div>
+      {/* VIDEO - FULLSCREEN */}
+      <div className="absolute inset-0 bg-gray-900">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-full h-full object-cover"
+          data-testid="video-camera-preview"
+        />
+      </div>
 
-            <div className="bg-black/30 rounded-lg p-2 mb-2 max-h-28 overflow-y-auto">
-              <div className="space-y-0.5">
-                {debugInfo.map((info, i) => (
-                  <p key={i} className="text-white text-xs font-mono leading-tight">
-                    {info}
-                  </p>
-                ))}
-              </div>
-            </div>
+      {/* CONTROLS */}
+      {cameraStarted ? (
+        <>
+          {/* Top Bar */}
+          <div className="absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/50 to-transparent">
+            <div className="flex items-center justify-between">
+              {/* HDR Toggle */}
+              <HapticButton
+                onClick={() => {
+                  setHdrEnabled(!hdrEnabled);
+                  trigger('light');
+                }}
+                className={`px-4 py-2 rounded-full flex items-center gap-2 ${
+                  hdrEnabled 
+                    ? 'bg-yellow-500 text-black' 
+                    : 'bg-white/20 backdrop-blur-md text-white'
+                }`}
+                data-testid="button-toggle-hdr"
+              >
+                <Layers className="w-4 h-4" strokeWidth={2} />
+                <span className="text-sm font-semibold">
+                  {hdrEnabled ? 'HDR' : 'Normal'}
+                </span>
+              </HapticButton>
 
-            {!cameraStarted && (
-              <div>
-                {error && <p className="text-white text-sm mb-2">⚠️ {error}</p>}
-                <HapticButton
-                  onClick={startCamera}
-                  className="w-full bg-white text-lime-600 px-4 py-3 font-bold rounded-xl"
-                  hapticStyle="medium"
-                  data-testid="button-start-camera"
-                >
-                  <CameraIcon className="w-5 h-5 mr-2 inline" />
-                  START CAMERA
-                </HapticButton>
-              </div>
-            )}
-          </motion.div>
-        </div>
-
-        {/* VIDEO - FULLSCREEN */}
-        <div className="absolute inset-0 bg-gray-900">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full h-full object-cover"
-            data-testid="video-camera-preview"
-          />
-        </div>
-
-        {/* CONTROLS */}
-        {cameraStarted && (
-          <>
-            {/* Close Button */}
-            <div className="absolute top-4 right-4 z-50">
+              {/* Close Button */}
               <HapticButton
                 size="icon"
                 variant="ghost"
@@ -236,21 +237,80 @@ export default function CameraScreen() {
                 <X className="w-6 h-6" />
               </HapticButton>
             </div>
+          </div>
 
-            {/* Capture Button */}
-            <div className="absolute bottom-24 left-0 right-0 flex justify-center z-50">
-              <motion.button
-                onClick={handleCapture}
-                whileTap={{ scale: 0.9 }}
-                className="w-20 h-20 rounded-full border-4 border-lime-400 flex items-center justify-center"
-                data-testid="button-capture-photo"
+          {/* Capture Progress */}
+          <AnimatePresence>
+            {capturing && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="absolute top-32 left-0 right-0 z-50 flex justify-center"
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-lime-400 to-emerald-500 rounded-full" />
-              </motion.button>
-            </div>
-          </>
-        )}
-      </div>
+                <div className="bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-3">
+                  <div className="flex gap-1">
+                    {[...Array(captureProgress.total)].map((_, i) => (
+                      <Circle
+                        key={i}
+                        className={`w-2 h-2 ${
+                          i < captureProgress.current
+                            ? 'fill-yellow-500 text-yellow-500'
+                            : 'text-white/30'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {captureProgress.current}/{captureProgress.total}
+                  </span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Capture Button */}
+          <div className="absolute bottom-24 left-0 right-0 flex justify-center z-50">
+            <motion.button
+              onClick={handleCapture}
+              disabled={capturing}
+              whileTap={{ scale: capturing ? 1 : 0.9 }}
+              className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
+                hdrEnabled
+                  ? 'border-yellow-500'
+                  : 'border-white'
+              } ${capturing ? 'opacity-50' : ''}`}
+              data-testid="button-capture-photo"
+            >
+              <div className={`w-16 h-16 rounded-full ${
+                hdrEnabled
+                  ? 'bg-gradient-to-br from-yellow-400 to-orange-500'
+                  : 'bg-white'
+              }`} />
+            </motion.button>
+          </div>
+        </>
+      ) : (
+        /* Start Camera Screen */
+        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/90 px-6">
+          <div className="text-center">
+            {error && (
+              <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-xl">
+                <p className="text-white text-sm">⚠️ {error}</p>
+              </div>
+            )}
+            <HapticButton
+              onClick={startCamera}
+              className="w-full bg-white text-black px-8 py-4 font-bold rounded-xl text-lg"
+              hapticStyle="medium"
+              data-testid="button-start-camera"
+            >
+              <CameraIcon className="w-6 h-6 mr-3 inline" />
+              Kamera starten
+            </HapticButton>
+          </div>
+        </div>
+      )}
 
       <BottomNav variant="dark" />
     </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Upload, Home, ChevronRight, Layers, ImageIcon } from 'lucide-react';
+import { Check, Upload, Home, ChevronRight, Layers, ImageIcon, Trash2, X } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -13,6 +13,16 @@ import {
   DrawerDescription,
   DrawerTrigger,
 } from '@/components/ui/drawer';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useLocation } from 'wouter';
 
 interface Photo {
@@ -23,97 +33,99 @@ interface Photo {
   height: number;
   selected?: boolean;
   roomType?: string;
+  stackId?: number;
+  stackIndex?: number;
+  stackTotal?: number;
+  evCompensation?: number;
+}
+
+interface PhotoStack {
+  stackId: number;
+  photos: Photo[];
+  thumbnail: Photo;
+  selected?: boolean;
+  roomType?: string;
 }
 
 const ROOM_TYPES = [
-  // Wohnbereiche
-  'Wohnzimmer',
-  'Esszimmer',
-  'Küche',
-  'Offene Küche',
-  'Essbereich',
-  'Flur/Eingang',
-  'Diele',
-  'Galerie',
-  'Wintergarten',
-  
-  // Schlafbereiche
-  'Schlafzimmer',
-  'Hauptschlafzimmer',
-  'Kinderzimmer',
-  'Gästezimmer',
-  'Ankleidezimmer',
-  
-  // Sanitär
-  'Badezimmer',
-  'Gästebad',
-  'Hauptbad',
-  'En-Suite Bad',
-  'WC',
-  'Sauna',
-  'Wellness',
-  
-  // Arbeit/Hobby
-  'Arbeitszimmer',
-  'Homeoffice',
-  'Bibliothek',
-  'Hobbyraum',
-  'Atelier',
-  
-  // Außenbereiche
-  'Balkon',
-  'Terrasse',
-  'Loggia',
-  'Dachterrasse',
-  'Garten',
-  'Innenhof',
-  'Pool',
-  'Poolhaus',
-  
-  // Nebenräume
-  'Abstellraum',
-  'Hauswirtschaftsraum',
-  'Waschküche',
-  'Speisekammer',
-  'Garderobe',
-  
-  // Keller/Dach
-  'Keller',
-  'Weinkeller',
-  'Fitnessraum',
-  'Partyraum',
-  'Dachboden',
-  
-  // Außenansichten
-  'Außenansicht Vorne',
-  'Außenansicht Hinten',
-  'Außenansicht Seitlich',
-  'Fassade',
-  'Eingangsbereich',
-  'Carport',
-  'Garage',
-  
-  // Sonstiges
-  'Treppenhaus',
-  'Gemeinschaftsraum',
-  'Sonstiges'
+  'Wohnzimmer', 'Esszimmer', 'Küche', 'Offene Küche', 'Essbereich',
+  'Flur/Eingang', 'Diele', 'Galerie', 'Wintergarten',
+  'Schlafzimmer', 'Hauptschlafzimmer', 'Kinderzimmer', 'Gästezimmer', 'Ankleidezimmer',
+  'Badezimmer', 'Gästebad', 'Hauptbad', 'En-Suite Bad', 'WC', 'Sauna', 'Wellness',
+  'Arbeitszimmer', 'Homeoffice', 'Bibliothek', 'Hobbyraum', 'Atelier',
+  'Balkon', 'Terrasse', 'Loggia', 'Dachterrasse', 'Garten', 'Innenhof', 'Pool', 'Poolhaus',
+  'Abstellraum', 'Hauswirtschaftsraum', 'Waschküche', 'Speisekammer', 'Garderobe',
+  'Keller', 'Weinkeller', 'Fitnessraum', 'Partyraum', 'Dachboden',
+  'Außenansicht Vorne', 'Außenansicht Hinten', 'Außenansicht Seitlich', 
+  'Fassade', 'Eingangsbereich', 'Carport', 'Garage',
+  'Treppenhaus', 'Gemeinschaftsraum', 'Sonstiges'
 ];
 
 export default function GalleryScreen() {
   const [, setLocation] = useLocation();
-  const [photos, setPhotos] = useState<Photo[]>([]);
+  const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
+  const [selectedStack, setSelectedStack] = useState<PhotoStack | null>(null);
+  const [lightboxStack, setLightboxStack] = useState<PhotoStack | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const { trigger } = useHaptic();
 
-  // Load photos from sessionStorage
+  // Load and group photos into stacks
   useEffect(() => {
     const loadPhotos = () => {
       const stored = sessionStorage.getItem('appPhotos');
       if (stored) {
         try {
-          const parsed = JSON.parse(stored);
-          setPhotos(parsed.map((p: any) => ({ ...p, selected: false })));
+          const photos: Photo[] = JSON.parse(stored);
+          
+          // Group by stackId
+          const stackMap = new Map<number, Photo[]>();
+          const singles: Photo[] = [];
+          
+          photos.forEach(photo => {
+            if (photo.stackId) {
+              const existing = stackMap.get(photo.stackId) || [];
+              existing.push(photo);
+              stackMap.set(photo.stackId, existing);
+            } else {
+              singles.push(photo);
+            }
+          });
+          
+          // Create PhotoStacks
+          const newStacks: PhotoStack[] = [];
+          
+          // Add HDR stacks
+          stackMap.forEach((photos, stackId) => {
+            photos.sort((a, b) => (a.stackIndex || 0) - (b.stackIndex || 0));
+            const thumbnail = photos.find(p => p.evCompensation === 0) || photos[Math.floor(photos.length / 2)];
+            newStacks.push({
+              stackId,
+              photos,
+              thumbnail,
+              selected: false,
+              roomType: photos[0].roomType
+            });
+          });
+          
+          // Add single photos as 1-photo stacks
+          singles.forEach(photo => {
+            newStacks.push({
+              stackId: photo.id,
+              photos: [photo],
+              thumbnail: photo,
+              selected: false,
+              roomType: photo.roomType
+            });
+          });
+          
+          // Sort by timestamp (newest first)
+          newStacks.sort((a, b) => 
+            new Date(b.thumbnail.timestamp).getTime() - new Date(a.thumbnail.timestamp).getTime()
+          );
+          
+          setStacks(newStacks);
         } catch (err) {
           console.error('Failed to load photos:', err);
         }
@@ -121,18 +133,17 @@ export default function GalleryScreen() {
     };
     
     loadPhotos();
-    
-    // Reload when returning to page
     const interval = setInterval(loadPhotos, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const selectedCount = photos.filter(p => p.selected).length;
+  const selectedCount = stacks.filter(s => s.selected).length;
+  const totalPhotos = stacks.reduce((sum, s) => sum + s.photos.length, 0);
 
-  const toggleSelection = (id: number) => {
+  const toggleSelection = (stackId: number) => {
     trigger('light');
-    setPhotos(photos.map(p => 
-      p.id === id ? { ...p, selected: !p.selected } : p
+    setStacks(stacks.map(s => 
+      s.stackId === stackId ? { ...s, selected: !s.selected } : s
     ));
   };
 
@@ -140,36 +151,66 @@ export default function GalleryScreen() {
     trigger('medium');
     setSelectionMode(!selectionMode);
     if (selectionMode) {
-      setPhotos(photos.map(p => ({ ...p, selected: false })));
+      setStacks(stacks.map(s => ({ ...s, selected: false })));
     }
   };
 
-  const handlePhotoClick = (photo: Photo) => {
+  const handleStackClick = (stack: PhotoStack) => {
     if (selectionMode) {
-      toggleSelection(photo.id);
+      toggleSelection(stack.stackId);
     } else {
       trigger('light');
-      setSelectedPhoto(photo);
+      setLightboxStack(stack);
+      setLightboxIndex(0);
     }
   };
 
   const updateRoomType = (roomType: string) => {
-    if (selectedPhoto) {
-      const updated = photos.map(p => 
-        p.id === selectedPhoto.id ? { ...p, roomType } : p
+    if (selectedStack) {
+      const updatedStacks = stacks.map(s => 
+        s.stackId === selectedStack.stackId ? { ...s, roomType } : s
       );
-      setPhotos(updated);
-      sessionStorage.setItem('appPhotos', JSON.stringify(updated));
-      setSelectedPhoto(null);
+      setStacks(updatedStacks);
+      
+      // Update in sessionStorage
+      const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+      const updatedPhotos = photos.map((p: Photo) => 
+        p.stackId === selectedStack.stackId || p.id === selectedStack.stackId
+          ? { ...p, roomType }
+          : p
+      );
+      sessionStorage.setItem('appPhotos', JSON.stringify(updatedPhotos));
+      
+      setSelectedStack(null);
+    }
+  };
+
+  const handleDelete = () => {
+    if (lightboxStack) {
+      trigger('heavy');
+      
+      // Remove from sessionStorage
+      const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+      const filteredPhotos = photos.filter((p: Photo) => {
+        if (lightboxStack.photos.length > 1) {
+          return p.stackId !== lightboxStack.stackId;
+        } else {
+          return p.id !== lightboxStack.stackId;
+        }
+      });
+      sessionStorage.setItem('appPhotos', JSON.stringify(filteredPhotos));
+      
+      // Close lightbox and dialog
+      setLightboxStack(null);
+      setDeleteDialogOpen(false);
     }
   };
 
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* Status Bar */}
       <StatusBar />
 
-      {/* Header - Apple Style */}
+      {/* Header */}
       <div className="bg-white border-b border-gray-200/50 px-4 py-3">
         <div className="flex items-center justify-between">
           <div>
@@ -184,7 +225,7 @@ export default function GalleryScreen() {
                 style={{ fontSize: '14px', fontWeight: '400', marginTop: '2px' }}
                 data-testid="text-selection-count"
               >
-                {selectedCount} {selectedCount === 1 ? 'Foto' : 'Fotos'} ausgewählt
+                {selectedCount} {selectedCount === 1 ? 'Stack' : 'Stacks'} ausgewählt
               </motion.p>
             )}
           </div>
@@ -202,9 +243,9 @@ export default function GalleryScreen() {
         </div>
       </div>
 
-      {/* Photo Grid - Apple Photos Style */}
+      {/* Photo Grid */}
       <div className="flex-1 overflow-auto pb-20">
-        {photos.length === 0 ? (
+        {stacks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <ImageIcon className="w-20 h-20 text-gray-300 mb-4" strokeWidth={1} />
             <p className="text-gray-500 text-lg font-medium mb-2">Keine Fotos</p>
@@ -212,31 +253,42 @@ export default function GalleryScreen() {
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0.5 p-0.5 bg-white">
-            {photos.map((photo) => (
+            {stacks.map((stack) => (
               <motion.div
-                key={photo.id}
+                key={stack.stackId}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="relative aspect-square cursor-pointer"
-                onClick={() => handlePhotoClick(photo)}
-                data-testid={`photo-thumbnail-${photo.id}`}
+                onClick={() => handleStackClick(stack)}
+                data-testid={`photo-thumbnail-${stack.stackId}`}
               >
-                {/* Photo Image */}
                 <img 
-                  src={photo.imageData}
-                  alt={`Photo ${photo.id}`}
+                  src={stack.thumbnail.imageData}
+                  alt={`Photo ${stack.stackId}`}
                   className="w-full h-full object-cover"
                 />
 
-                {/* Selection Indicator */}
+                {/* HDR Badge */}
+                {stack.photos.length > 1 && !selectionMode && (
+                  <div className="absolute top-2 left-2">
+                    <div className="bg-yellow-500 backdrop-blur-sm rounded px-1.5 py-0.5 shadow-md flex items-center gap-0.5" data-testid={`photo-hdr-badge-${stack.stackId}`}>
+                      <Layers className="w-3 h-3 text-black" strokeWidth={2} />
+                      <span className="text-black" style={{ fontSize: '10px', fontWeight: '700' }}>
+                        {stack.photos.length}×
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Selection */}
                 {selectionMode && (
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute top-2 right-2"
                   >
-                    {photo.selected ? (
-                      <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4A5849' }} data-testid={`photo-selected-${photo.id}`}>
+                    {stack.selected ? (
+                      <div className="w-6 h-6 rounded-full flex items-center justify-center shadow-lg" style={{ backgroundColor: '#4A5849' }} data-testid={`photo-selected-${stack.stackId}`}>
                         <Check className="w-4 h-4 text-white" strokeWidth={1.5} />
                       </div>
                     ) : (
@@ -245,11 +297,11 @@ export default function GalleryScreen() {
                   </motion.div>
                 )}
 
-                {/* Room Type Badge */}
-                {!selectionMode && photo.roomType && (
+                {/* Room Type */}
+                {!selectionMode && stack.roomType && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
-                    <p className="text-white text-xs truncate" style={{ fontSize: '11px' }} data-testid={`photo-roomtype-${photo.id}`}>
-                      {photo.roomType}
+                    <p className="text-white text-xs truncate" style={{ fontSize: '11px' }} data-testid={`photo-roomtype-${stack.stackId}`}>
+                      {stack.roomType}
                     </p>
                   </div>
                 )}
@@ -259,7 +311,121 @@ export default function GalleryScreen() {
         )}
       </div>
 
-      {/* Floating Action Button */}
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxStack && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-[100] flex flex-col"
+            onClick={() => setLightboxStack(null)}
+          >
+            {/* Top Bar */}
+            <div className="absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/80 to-transparent">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {lightboxStack.photos.length > 1 && (
+                    <div className="bg-yellow-500 px-3 py-1.5 rounded-full flex items-center gap-2">
+                      <Layers className="w-4 h-4 text-black" strokeWidth={2} />
+                      <span className="text-black text-sm font-bold">
+                        {lightboxIndex + 1}/{lightboxStack.photos.length}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <HapticButton
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeleteDialogOpen(true);
+                    }}
+                    className="bg-white/20 backdrop-blur-md text-white rounded-full"
+                    data-testid="button-delete-photo"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </HapticButton>
+                  
+                  <HapticButton
+                    size="icon"
+                    variant="ghost"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxStack(null);
+                    }}
+                    className="bg-white/20 backdrop-blur-md text-white rounded-full"
+                    data-testid="button-close-lightbox"
+                  >
+                    <X className="w-6 h-6" />
+                  </HapticButton>
+                </div>
+              </div>
+            </div>
+
+            {/* Image */}
+            <div className="flex-1 flex items-center justify-center p-4">
+              <img
+                src={lightboxStack.photos[lightboxIndex].imageData}
+                alt="Full size"
+                className="max-w-full max-h-full object-contain"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+
+            {/* Navigation (for HDR stacks) */}
+            {lightboxStack.photos.length > 1 && (
+              <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 px-4">
+                {lightboxStack.photos.map((photo, i) => (
+                  <button
+                    key={i}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxIndex(i);
+                      trigger('light');
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                      i === lightboxIndex
+                        ? 'bg-yellow-500 text-black'
+                        : 'bg-white/20 backdrop-blur-md text-white'
+                    }`}
+                  >
+                    {photo.evCompensation !== undefined 
+                      ? `${photo.evCompensation > 0 ? '+' : ''}${photo.evCompensation} EV`
+                      : `${i + 1}`
+                    }
+                  </button>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Foto löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {lightboxStack && lightboxStack.photos.length > 1
+                ? `Diese Aktion löscht alle ${lightboxStack.photos.length} Fotos im HDR-Stack.`
+                : 'Diese Aktion kann nicht rückgängig gemacht werden.'
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* FAB */}
       <AnimatePresence>
         {!selectionMode && (
           <motion.div
@@ -284,7 +450,7 @@ export default function GalleryScreen() {
         )}
       </AnimatePresence>
 
-      {/* Selection Mode Toolbar */}
+      {/* Selection Toolbar */}
       <AnimatePresence>
         {selectionMode && selectedCount > 0 && (
           <motion.div
@@ -313,7 +479,7 @@ export default function GalleryScreen() {
                       <DrawerHeader className="p-0 mb-4">
                         <DrawerTitle>Raumtyp auswählen</DrawerTitle>
                         <DrawerDescription>
-                          Wählen Sie den Raumtyp für die ausgewählten Fotos aus.
+                          Für {selectedCount} {selectedCount === 1 ? 'Stack' : 'Stacks'}
                         </DrawerDescription>
                       </DrawerHeader>
                       <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>
@@ -321,11 +487,20 @@ export default function GalleryScreen() {
                           <button
                             key={room}
                             onClick={() => {
-                              const updated = photos.map(p => 
-                                p.selected ? { ...p, roomType: room } : p
+                              const updatedStacks = stacks.map(s => 
+                                s.selected ? { ...s, roomType: room } : s
                               );
-                              setPhotos(updated);
-                              sessionStorage.setItem('appPhotos', JSON.stringify(updated));
+                              setStacks(updatedStacks);
+                              
+                              const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+                              const selectedStackIds = stacks.filter(s => s.selected).map(s => s.stackId);
+                              const updatedPhotos = photos.map((p: Photo) => 
+                                (p.stackId && selectedStackIds.includes(p.stackId)) || selectedStackIds.includes(p.id)
+                                  ? { ...p, roomType: room }
+                                  : p
+                              );
+                              sessionStorage.setItem('appPhotos', JSON.stringify(updatedPhotos));
+                              
                               trigger('success');
                             }}
                             className="w-full text-left px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-between"
@@ -358,14 +533,13 @@ export default function GalleryScreen() {
         )}
       </AnimatePresence>
 
-      {/* Room Type Assignment Drawer (Single Photo) */}
-      <Drawer open={selectedPhoto !== null} onOpenChange={(open) => !open && setSelectedPhoto(null)}>
+      <Drawer open={selectedStack !== null} onOpenChange={(open) => !open && setSelectedStack(null)}>
         <DrawerContent className="max-h-[80vh]">
           <div className="mx-auto w-full max-w-md p-4">
             <DrawerHeader className="p-0 mb-4">
               <DrawerTitle>Raumtyp zuweisen</DrawerTitle>
               <DrawerDescription>
-                Wählen Sie den Raumtyp für das ausgewählte Foto aus.
+                Für das ausgewählte Foto
               </DrawerDescription>
             </DrawerHeader>
             <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>
@@ -388,7 +562,7 @@ export default function GalleryScreen() {
         </DrawerContent>
       </Drawer>
 
-      <BottomNav photoCount={photos.length} />
+      <BottomNav photoCount={totalPhotos} />
     </div>
   );
 }
