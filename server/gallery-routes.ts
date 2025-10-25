@@ -6,6 +6,12 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import multer from "multer";
 import { z } from "zod";
+import {
+  createGallerySchema,
+  updateGallerySettingsSchema,
+  updateFileSettingsSchema,
+  addAnnotationSchema,
+} from "@shared/schema";
 
 // Extend Express Request type to include user (set by session middleware)
 declare global {
@@ -43,37 +49,15 @@ const uploadMemory = multer({
   },
 });
 
-// Validation schemas
-const createGallerySchema = z.object({
-  galleryType: z.enum(["customer_upload", "photographer_upload", "editing"]),
-  title: z.string().min(1),
-  description: z.string().optional(),
-  shootId: z.string().optional(),
-  jobId: z.string().optional(),
-});
+// Validation schemas imported from shared/schema.ts
 
-const updateGallerySettingsSchema = z.object({
-  globalStylePreset: z.enum(["PURE", "EDITORIAL", "CLASSIC"]).optional(),
-  globalWindowPreset: z.enum(["CLEAR", "SCANDINAVIAN", "BRIGHT"]).optional(),
-  globalSkyPreset: z.enum(["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"]).optional(),
-  globalFireplace: z.enum(["true", "false"]).optional(),
-  globalRetouch: z.enum(["true", "false"]).optional(),
-  globalEnhancements: z.enum(["true", "false"]).optional(),
-});
-
-const updateFileSettingsSchema = z.object({
-  stylePreset: z.enum(["PURE", "EDITORIAL", "CLASSIC"]).optional(),
-  windowPreset: z.enum(["CLEAR", "SCANDINAVIAN", "BRIGHT"]).optional(),
-  skyPreset: z.enum(["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"]).optional(),
-  fireplaceEnabled: z.enum(["true", "false"]).optional(),
-  retouchEnabled: z.enum(["true", "false"]).optional(),
-  enhancementsEnabled: z.enum(["true", "false"]).optional(),
-});
-
-const addAnnotationSchema = z.object({
-  annotationType: z.enum(["comment", "mask"]),
-  comment: z.string().max(500).optional(),
-});
+/**
+ * Convert boolean values to string for database storage
+ */
+function boolToString(value: boolean | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  return value ? "true" : "false";
+}
 
 /**
  * Generate unique filename following naming convention
@@ -183,7 +167,12 @@ export function registerGalleryRoutes(app: Express): void {
       }
 
       const validatedSettings = updateGallerySettingsSchema.parse(req.body);
-      await storage.updateGalleryGlobalSettings(gallery.id, validatedSettings);
+      await storage.updateGalleryGlobalSettings(gallery.id, {
+        ...validatedSettings,
+        globalFireplace: boolToString(validatedSettings.globalFireplace),
+        globalRetouch: boolToString(validatedSettings.globalRetouch),
+        globalEnhancements: boolToString(validatedSettings.globalEnhancements),
+      });
 
       res.json({ success: true });
     } catch (error) {
@@ -393,7 +382,12 @@ export function registerGalleryRoutes(app: Express): void {
       }
 
       const validatedSettings = updateFileSettingsSchema.parse(req.body);
-      await storage.updateGalleryFileSettings(file.id, validatedSettings);
+      await storage.updateGalleryFileSettings(file.id, {
+        ...validatedSettings,
+        fireplaceEnabled: boolToString(validatedSettings.fireplaceEnabled),
+        retouchEnabled: boolToString(validatedSettings.retouchEnabled),
+        enhancementsEnabled: boolToString(validatedSettings.enhancementsEnabled),
+      });
 
       res.json({ success: true });
     } catch (error) {

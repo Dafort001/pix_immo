@@ -757,6 +757,44 @@ export type CreateStackInput = z.infer<typeof createStackSchema>;
 export type ClassifyImageInput = z.infer<typeof classifyImageSchema>;
 export type BulkClassifyImagesInput = z.infer<typeof bulkClassifyImagesSchema>;
 
+// Gallery System Validation Schemas
+export const createGallerySchema = z.object({
+  galleryType: z.enum(["customer_upload", "photographer_upload", "editing"]),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  shootId: z.string().optional(),
+  jobId: z.string().optional(),
+});
+
+export const updateGallerySettingsSchema = z.object({
+  globalStylePreset: z.enum(["PURE", "EDITORIAL", "CLASSIC"]).optional(),
+  globalWindowPreset: z.enum(["CLEAR", "SCANDINAVIAN", "BRIGHT"]).optional(),
+  globalSkyPreset: z.enum(["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"]).optional(),
+  globalFireplace: z.boolean().optional(),
+  globalRetouch: z.boolean().optional(),
+  globalEnhancements: z.boolean().optional(),
+});
+
+export const updateFileSettingsSchema = z.object({
+  stylePreset: z.enum(["PURE", "EDITORIAL", "CLASSIC"]).optional(),
+  windowPreset: z.enum(["CLEAR", "SCANDINAVIAN", "BRIGHT"]).optional(),
+  skyPreset: z.enum(["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"]).optional(),
+  fireplaceEnabled: z.boolean().optional(),
+  retouchEnabled: z.boolean().optional(),
+  enhancementsEnabled: z.boolean().optional(),
+  status: z.enum(["pending", "processing", "ready", "failed"]).optional(),
+});
+
+export const addAnnotationSchema = z.object({
+  annotationType: z.enum(["comment", "mask"]),
+  comment: z.string().max(500).optional(),
+});
+
+export type CreateGalleryInput = z.infer<typeof createGallerySchema>;
+export type UpdateGallerySettingsInput = z.infer<typeof updateGallerySettingsSchema>;
+export type UpdateFileSettingsInput = z.infer<typeof updateFileSettingsSchema>;
+export type AddAnnotationInput = z.infer<typeof addAnnotationSchema>;
+
 export interface PresignedUrlResponse {
   filename: string;
   uploadUrl: string;

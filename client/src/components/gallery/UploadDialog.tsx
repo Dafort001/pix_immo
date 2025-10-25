@@ -58,9 +58,9 @@ interface UploadDialogProps {
   };
 }
 
-const STYLE_PRESETS = ["natural", "warm", "bright", "dramatic", "minimal"];
-const WINDOW_PRESETS = ["clear", "enhance", "dramatic", "remove-glare"];
-const SKY_PRESETS = ["natural", "blue-sky", "sunset", "cloudy", "replace"];
+const STYLE_PRESETS = ["PURE", "EDITORIAL", "CLASSIC"];
+const WINDOW_PRESETS = ["CLEAR", "SCANDINAVIAN", "BRIGHT"];
+const SKY_PRESETS = ["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"];
 
 const ACCEPTED_TYPES = {
   "image/jpeg": [".jpg", ".jpeg"],
@@ -86,9 +86,9 @@ export function UploadDialog({
   const { toast } = useToast();
 
   // Global settings state
-  const [stylePreset, setStylePreset] = useState(globalSettings.stylePreset || "natural");
-  const [windowPreset, setWindowPreset] = useState(globalSettings.windowPreset || "clear");
-  const [skyPreset, setSkyPreset] = useState(globalSettings.skyPreset || "natural");
+  const [stylePreset, setStylePreset] = useState(globalSettings.stylePreset || "PURE");
+  const [windowPreset, setWindowPreset] = useState(globalSettings.windowPreset || "CLEAR");
+  const [skyPreset, setSkyPreset] = useState(globalSettings.skyPreset || "CLEAR BLUE");
   const [verticalCorrection, setVerticalCorrection] = useState(globalSettings.verticalCorrection ?? true);
   const [deNoiseFloor, setDeNoiseFloor] = useState(globalSettings.deNoiseFloor ?? false);
   const [deNoiseWall, setDeNoiseWall] = useState(globalSettings.deNoiseWall ?? false);

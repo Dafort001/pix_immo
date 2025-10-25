@@ -315,9 +315,9 @@ export default function PhotographerUploadGallery() {
           queryClient.invalidateQueries({ queryKey: ["/api/gallery", galleryId] });
         }}
         globalSettings={{
-          stylePreset: "natural",
-          windowPreset: "clear",
-          skyPreset: "natural",
+          stylePreset: "PURE",
+          windowPreset: "CLEAR",
+          skyPreset: "CLEAR BLUE",
           verticalCorrection: true,
         }}
       />

@@ -33,9 +33,9 @@ interface DetailSidebarProps {
   onOpenMaskEditor?: (file: GalleryFile) => void;
 }
 
-const STYLE_PRESETS = ["natural", "warm", "bright", "dramatic", "minimal"];
-const WINDOW_PRESETS = ["clear", "enhance", "dramatic", "remove-glare"];
-const SKY_PRESETS = ["natural", "blue-sky", "sunset", "cloudy", "replace"];
+const STYLE_PRESETS = ["PURE", "EDITORIAL", "CLASSIC"];
+const WINDOW_PRESETS = ["CLEAR", "SCANDINAVIAN", "BRIGHT"];
+const SKY_PRESETS = ["CLEAR BLUE", "PASTEL CLOUDS", "DAYLIGHT SOFT", "EVENING HAZE"];
 
 export function DetailSidebar({ file, onClose, onOpenMaskEditor }: DetailSidebarProps) {
   const { toast } = useToast();
@@ -43,9 +43,9 @@ export function DetailSidebar({ file, onClose, onOpenMaskEditor }: DetailSidebar
   const [isAddingComment, setIsAddingComment] = useState(false);
 
   // Settings state
-  const [stylePreset, setStylePreset] = useState(file?.stylePreset || "natural");
-  const [windowPreset, setWindowPreset] = useState(file?.windowPreset || "clear");
-  const [skyPreset, setSkyPreset] = useState(file?.skyPreset || "natural");
+  const [stylePreset, setStylePreset] = useState(file?.stylePreset || "PURE");
+  const [windowPreset, setWindowPreset] = useState(file?.windowPreset || "CLEAR");
+  const [skyPreset, setSkyPreset] = useState(file?.skyPreset || "CLEAR BLUE");
   const [verticalCorrection, setVerticalCorrection] = useState(file?.verticalCorrection ?? true);
   const [deNoiseFloor, setDeNoiseFloor] = useState(file?.deNoiseFloor ?? false);
   const [deNoiseWall, setDeNoiseWall] = useState(file?.deNoiseWall ?? false);
@@ -61,9 +61,9 @@ export function DetailSidebar({ file, onClose, onOpenMaskEditor }: DetailSidebar
   }
 
   const hasChanges =
-    stylePreset !== (file.stylePreset || "natural") ||
-    windowPreset !== (file.windowPreset || "clear") ||
-    skyPreset !== (file.skyPreset || "natural") ||
+    stylePreset !== (file.stylePreset || "PURE") ||
+    windowPreset !== (file.windowPreset || "CLEAR") ||
+    skyPreset !== (file.skyPreset || "CLEAR BLUE") ||
     verticalCorrection !== (file.verticalCorrection ?? true) ||
     deNoiseFloor !== (file.deNoiseFloor ?? false) ||
     deNoiseWall !== (file.deNoiseWall ?? false) ||
