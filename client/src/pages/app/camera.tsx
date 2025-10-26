@@ -538,7 +538,7 @@ export default function CameraScreen() {
       {!isLandscape && <StatusBar variant="light" />}
 
       {/* VIDEO - 2:3 Aspect Ratio Container */}
-      <div className={`absolute inset-0 bg-black flex items-center justify-center ${
+      <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
         isLandscape ? 'pl-20 pr-24' : ''
       }`}>
         <div 
