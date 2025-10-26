@@ -26,6 +26,7 @@ export default function CameraScreen() {
   const [debugLog, setDebugLog] = useState<string[]>([]);
   const [showDebug, setShowDebug] = useState(false);
   const [showHistogram, setShowHistogram] = useState(true);
+  const [photoCount, setPhotoCount] = useState(0);
   
   // Camera Controls
   const [gridEnabled, setGridEnabled] = useState(false);
@@ -47,6 +48,23 @@ export default function CameraScreen() {
     return () => {
       document.body.style.backgroundColor = '';
     };
+  }, []);
+
+  // Load photo count
+  useEffect(() => {
+    const updatePhotoCount = () => {
+      const stored = sessionStorage.getItem('appPhotos');
+      if (stored) {
+        const photos = JSON.parse(stored);
+        setPhotoCount(photos.length);
+      }
+    };
+    
+    updatePhotoCount();
+    
+    // Update on storage changes
+    window.addEventListener('storage', updatePhotoCount);
+    return () => window.removeEventListener('storage', updatePhotoCount);
   }, []);
 
   // Detect orientation changes
@@ -439,26 +457,142 @@ export default function CameraScreen() {
       {/* Hidden Canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Status Bar */}
-      <StatusBar variant="light" />
+      {/* Status Bar - Only in Portrait */}
+      {!isLandscape && <StatusBar variant="light" />}
 
-      {/* VIDEO - Fullscreen (Landscape primary, Portrait secondary) */}
-      <div className="absolute inset-0 bg-black">
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-contain"
-          data-testid="video-camera-preview"
-        />
+      {/* VIDEO - 2:3 Aspect Ratio Container */}
+      <div className={`absolute inset-0 bg-black flex items-center justify-center ${
+        isLandscape ? 'pl-20 pr-24' : ''
+      }`}>
+        <div 
+          className="relative bg-black flex items-center justify-center"
+          style={{
+            width: isLandscape ? 'auto' : '100%',
+            height: isLandscape ? '100%' : 'auto',
+            aspectRatio: '2/3',
+            maxWidth: '100%',
+            maxHeight: '100%'
+          }}
+        >
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            data-testid="video-camera-preview"
+          />
+        </div>
       </div>
+
+      {/* Landscape: Vertical StatusBar Left */}
+      {isLandscape && (
+        <div className="absolute left-0 top-0 bottom-0 z-40 w-20 bg-black/30 backdrop-blur-md flex flex-col items-center justify-start pt-6 gap-4">
+          <div className="text-white text-xs" data-testid="statusbar-time-landscape">
+            {new Date().getHours().toString().padStart(2, '0')}:{new Date().getMinutes().toString().padStart(2, '0')}
+          </div>
+          <div className="flex flex-col gap-1">
+            <div className="w-0.5 h-2 rounded-full bg-white" />
+            <div className="w-0.5 h-2.5 rounded-full bg-white" />
+            <div className="w-0.5 h-3 rounded-full bg-white" />
+            <div className="w-0.5 h-3.5 rounded-full bg-white" />
+          </div>
+        </div>
+      )}
+
+      {/* Landscape: Vertical Side Controls Right */}
+      {isLandscape && cameraStarted && (
+        <div className="absolute right-0 top-0 bottom-0 z-50 w-24 flex flex-col items-center justify-between py-6 bg-[#1C1C1E]/70 backdrop-blur-xl">
+          {/* Room Type Top */}
+          <Drawer>
+            <DrawerTrigger asChild>
+              <HapticButton
+                hapticStyle="medium"
+                className="flex flex-col items-center gap-1 text-white"
+                data-testid="button-select-roomtype-landscape"
+              >
+                <div className="text-xs opacity-75">#1</div>
+                <div className="text-sm font-semibold">{currentRoomType.substring(0, 6)}</div>
+              </HapticButton>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[80vh]">
+              <div className="mx-auto w-full max-w-md p-4">
+                <DrawerHeader className="p-0 mb-4">
+                  <DrawerTitle>Raumtyp auswählen</DrawerTitle>
+                  <DrawerDescription>
+                    Wähle den Raum für die nächsten Aufnahmen
+                  </DrawerDescription>
+                </DrawerHeader>
+                <div className="space-y-2 overflow-y-scroll pr-2" style={{ maxHeight: '50vh' }}>
+                  {ALL_ROOM_TYPES.map((room) => (
+                    <button
+                      key={room}
+                      onClick={() => {
+                        setCurrentRoomType(room);
+                        trigger('success');
+                      }}
+                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${
+                        currentRoomType === room
+                          ? 'bg-gray-200 font-semibold'
+                          : 'hover:bg-gray-100'
+                      }`}
+                      data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
+                    >
+                      <span style={{ fontSize: '16px' }}>{room}</span>
+                      {currentRoomType === room && (
+                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#4A5849' }} />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
+
+          {/* Center: Capture Button */}
+          <motion.button
+            onClick={handleCapture}
+            disabled={capturing || countdown !== null}
+            whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+            className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
+              (capturing || countdown !== null) ? 'opacity-50' : ''
+            }`}
+            style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
+            data-testid="button-capture-photo-landscape"
+          >
+            <div 
+              className="w-12 h-12 rounded-full"
+              style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
+            />
+          </motion.button>
+
+          {/* Bottom: Grid Toggle */}
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setGridEnabled(!gridEnabled);
+              trigger('light');
+            }}
+            className={`rounded-full ${
+              gridEnabled 
+                ? 'bg-white/30 text-white' 
+                : 'text-white/50'
+            }`}
+            data-testid="button-toggle-grid-landscape"
+          >
+            <Grid3x3 className="w-6 h-6" />
+          </HapticButton>
+        </div>
+      )}
 
       {/* CONTROLS */}
       {cameraStarted ? (
         <>
-          {/* Top Bar */}
-          <div className="absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent">
+          {/* Top Bar - Only in Portrait */}
+          <div className={`absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent ${
+            isLandscape ? 'hidden' : ''
+          }`}>
             <div className="flex items-center justify-between">
               {/* HDR Toggle - Sage Color */}
               <HapticButton
@@ -710,8 +844,10 @@ export default function CameraScreen() {
             )}
           </AnimatePresence>
 
-          {/* Bottom Controls */}
-          <div className="absolute bottom-0 left-0 right-0 z-50 pb-28 px-4">
+          {/* Bottom Controls - Only in Portrait */}
+          <div className={`absolute bottom-0 left-0 right-0 z-50 pb-28 px-4 ${
+            isLandscape ? 'hidden' : ''
+          }`}>
             {/* Zoom Buttons - Wie im Figma */}
             <div className="mb-4 flex justify-center gap-2">
               {[0.5, 1, 1.5, 2].map((zoomLevel) => (
@@ -841,7 +977,8 @@ export default function CameraScreen() {
         </div>
       )}
 
-      <BottomNav variant="dark" />
+      {/* BottomNav - Hidden in Landscape */}
+      {!isLandscape && <BottomNav photoCount={photoCount} variant="dark" />}
     </div>
   );
 }
