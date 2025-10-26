@@ -20,6 +20,7 @@ interface Photo {
   stackIndex?: number;
   stackTotal?: number;
   evCompensation?: number;
+  isManualMode?: boolean;
 }
 
 interface PhotoStack {
@@ -168,13 +169,16 @@ export default function UploadScreen() {
       try {
         // Create form data
         const formData = new FormData();
-        formData.append('photo', blob, `photo_${photo.id}.jpg`);
+        // Add "_M" suffix for manual mode photos
+        const filename = photo.isManualMode ? `photo_${photo.id}_M.jpg` : `photo_${photo.id}.jpg`;
+        formData.append('photo', blob, filename);
         formData.append('jobId', selectedJobId!);
         formData.append('roomType', photo.roomType || 'general');
         formData.append('capturedAt', photo.timestamp);
         if (photo.stackId) formData.append('stackId', photo.stackId.toString());
         if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());
         if (photo.evCompensation !== undefined) formData.append('evCompensation', photo.evCompensation.toString());
+        if (photo.isManualMode) formData.append('isManualMode', 'true');
         
         // Upload to server
         const response = await fetch('/api/mobile-uploads', {

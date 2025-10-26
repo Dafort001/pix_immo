@@ -37,6 +37,7 @@ interface Photo {
   stackIndex?: number;
   stackTotal?: number;
   evCompensation?: number;
+  isManualMode?: boolean;
 }
 
 interface PhotoStack {

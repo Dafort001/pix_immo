@@ -1,0 +1,125 @@
+/**
+ * Manual Mode Settings Store
+ * Persistent storage using localStorage with React integration
+ */
+
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { ManualModeSettings } from './types';
+import { DEFAULT_MANUAL_SETTINGS } from './types';
+
+const STORAGE_KEY = 'pix-immo-manual-settings';
+
+interface ManualModeStore extends ManualModeSettings {
+  // Actions
+  setEnabled: (enabled: boolean) => void;
+  setISO: (iso: number | 'auto') => void;
+  setShutterSpeed: (speed: number | 'auto') => void;
+  setWhiteBalanceKelvin: (kelvin: number) => void;
+  setWhiteBalancePreset: (preset: ManualModeSettings['whiteBalancePreset']) => void;
+  setFocusMode: (mode: ManualModeSettings['focusMode']) => void;
+  setFocusDistance: (distance: number | null) => void;
+  setFocusPeaking: (enabled: boolean) => void;
+  setExposureComp: (ev: number) => void;
+  setFileFormat: (format: ManualModeSettings['fileFormat']) => void;
+  setOIS: (enabled: boolean) => void;
+  setTripodMode: (enabled: boolean) => void;
+  setNightMode: (enabled: boolean) => void;
+  setGridType: (type: ManualModeSettings['gridType']) => void;
+  setHorizonLevel: (enabled: boolean) => void;
+  setMeteringMode: (mode: ManualModeSettings['meteringMode']) => void;
+  setHistogram: (enabled: boolean) => void;
+  resetToAuto: () => void;
+  updateSettings: (partial: Partial<ManualModeSettings>) => void;
+}
+
+/**
+ * Zustand Store with localStorage persistence
+ */
+export const useManualModeStore = create<ManualModeStore>()(
+  persist(
+    (set) => ({
+      // Initial state from defaults
+      ...DEFAULT_MANUAL_SETTINGS,
+
+      // Actions
+      setEnabled: (enabled) => set({ enabled }),
+      
+      setISO: (iso) => set({ iso }),
+      
+      setShutterSpeed: (shutterSpeed) => set({ shutterSpeed }),
+      
+      setWhiteBalanceKelvin: (whiteBalanceKelvin) => 
+        set({ whiteBalanceKelvin, whiteBalancePreset: 'custom' }),
+      
+      setWhiteBalancePreset: (whiteBalancePreset) => set({ whiteBalancePreset }),
+      
+      setFocusMode: (focusMode) => set({ focusMode }),
+      
+      setFocusDistance: (focusDistance) => set({ focusDistance }),
+      
+      setFocusPeaking: (focusPeakingEnabled) => set({ focusPeakingEnabled }),
+      
+      setExposureComp: (exposureCompensation) => set({ exposureCompensation }),
+      
+      setFileFormat: (fileFormat) => set({ fileFormat }),
+      
+      setOIS: (oisEnabled) => 
+        set((state) => ({
+          oisEnabled,
+          // Disable tripod mode if OIS is enabled
+          tripodMode: oisEnabled ? false : state.tripodMode,
+        })),
+      
+      setTripodMode: (tripodMode) =>
+        set((state) => ({
+          tripodMode,
+          // Disable OIS if tripod mode is enabled
+          oisEnabled: tripodMode ? false : state.oisEnabled,
+        })),
+      
+      setNightMode: (nightModeEnabled) => set({ nightModeEnabled }),
+      
+      setGridType: (gridType) => set({ gridType }),
+      
+      setHorizonLevel: (horizonLevelEnabled) => set({ horizonLevelEnabled }),
+      
+      setMeteringMode: (meteringMode) => set({ meteringMode }),
+      
+      setHistogram: (histogramEnabled) => set({ histogramEnabled }),
+      
+      resetToAuto: () => set(DEFAULT_MANUAL_SETTINGS),
+      
+      updateSettings: (partial) => set((state) => ({ ...state, ...partial })),
+    }),
+    {
+      name: STORAGE_KEY,
+    }
+  )
+);
+
+/**
+ * Helper: Get current settings as object
+ */
+export function getManualSettings(): ManualModeSettings {
+  const store = useManualModeStore.getState();
+  return {
+    enabled: store.enabled,
+    iso: store.iso,
+    shutterSpeed: store.shutterSpeed,
+    whiteBalanceKelvin: store.whiteBalanceKelvin,
+    whiteBalancePreset: store.whiteBalancePreset,
+    focusMode: store.focusMode,
+    focusDistance: store.focusDistance,
+    focusPeakingEnabled: store.focusPeakingEnabled,
+    exposureCompensation: store.exposureCompensation,
+    fileFormat: store.fileFormat,
+    oisEnabled: store.oisEnabled,
+    tripodMode: store.tripodMode,
+    nightModeEnabled: store.nightModeEnabled,
+    gridType: store.gridType,
+    horizonLevelEnabled: store.horizonLevelEnabled,
+    meteringMode: store.meteringMode,
+    histogramEnabled: store.histogramEnabled,
+  };
+}

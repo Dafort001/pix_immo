@@ -881,7 +881,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { jobId, roomType, capturedAt, stackId, stackIndex, evCompensation } = req.body;
+      const { jobId, roomType, capturedAt, stackId, stackIndex, evCompensation, isManualMode } = req.body;
       const file = req.file;
 
       if (!file) {
@@ -900,7 +900,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Upload to R2 when R2 integration is ready
       // For now, just log the upload details
-      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}`);
+      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}, Manual Mode: ${isManualMode === 'true' ? 'YES' : 'NO'}`);
       
       // TODO: Create image record in database when R2 is ready
       // await storage.createImage({ ... });

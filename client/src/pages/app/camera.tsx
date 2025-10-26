@@ -5,10 +5,14 @@ import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
 import { Histogram } from '@/components/mobile/Histogram';
+import { ManualControls } from '@/components/mobile/ManualControls';
+import { GridOverlay, HorizonLevelOverlay, MeteringModeOverlay, FocusPeakingOverlay } from '@/components/mobile/CameraOverlays';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
+import { useManualModeStore } from '@/lib/manual-mode/store';
+import { buildCameraConstraints, applySettingsToTrack, logCapabilities } from '@/lib/manual-mode/constraints';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -102,19 +106,25 @@ export default function CameraScreen() {
         throw new Error('Camera API not available');
       }
 
-      const constraints: any = {
-        video: {
-          facingMode: 'environment',
-          width: { ideal: 1920 },
-          height: { ideal: 1080 },
-          exposureMode: 'manual',
-          focusMode: 'manual',
-          whiteBalanceMode: 'manual'
-        }
-      };
+      // Use manual mode constraints if enabled, otherwise use basic constraints
+      const manualSettings = useManualModeStore.getState();
+      const constraints = manualSettings.enabled
+        ? buildCameraConstraints(manualSettings, 'environment')
+        : {
+            video: {
+              facingMode: 'environment',
+              width: { ideal: 1920 },
+              height: { ideal: 1080 },
+            }
+          };
 
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints as any);
       const videoTrack = mediaStream.getVideoTracks()[0];
+      
+      // Log capabilities for manual mode debugging
+      if (manualSettings.enabled) {
+        logCapabilities(videoTrack);
+      }
       
       const capabilities: any = videoTrack.getCapabilities();
       
@@ -208,6 +218,60 @@ export default function CameraScreen() {
       }
     };
   }, []);
+
+  // Apply manual mode settings when they change (debounced to avoid spamming camera)
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let lastSettings: string | null = null;
+
+    const applySettings = async () => {
+      if (!streamRef.current || !cameraStarted) return;
+      
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      if (!videoTrack) return;
+
+      const settings = useManualModeStore.getState();
+      
+      // Only apply if relevant camera settings changed (ignore UI-only state like histogramEnabled)
+      const relevantSettings = JSON.stringify({
+        enabled: settings.enabled,
+        iso: settings.iso,
+        shutterSpeed: settings.shutterSpeed,
+        whiteBalanceKelvin: settings.whiteBalanceKelvin,
+        focusMode: settings.focusMode,
+        focusDistance: settings.focusDistance,
+        exposureCompensation: settings.exposureCompensation,
+        oisEnabled: settings.oisEnabled,
+        tripodMode: settings.tripodMode,
+        nightModeEnabled: settings.nightModeEnabled,
+      });
+      
+      if (relevantSettings === lastSettings) {
+        return; // No camera-relevant changes
+      }
+      
+      lastSettings = relevantSettings;
+      
+      // Debounce to avoid rapid successive calls
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      timeoutId = setTimeout(async () => {
+        await applySettingsToTrack(videoTrack, settings);
+        timeoutId = null;
+      }, 300); // 300ms debounce
+    };
+
+    const unsubscribe = useManualModeStore.subscribe(applySettings);
+    
+    return () => {
+      unsubscribe();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [cameraStarted]);
 
   // Zoom Handler with Buttons
   const handleZoomChange = async (newZoom: number) => {
@@ -336,6 +400,7 @@ export default function CameraScreen() {
     try {
       const stackId = Date.now();
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+      const manualModeEnabled = useManualModeStore.getState().enabled;
 
       if (hdrEnabled) {
         log('🎬 HDR Start');
@@ -390,7 +455,8 @@ export default function CameraScreen() {
             stackIndex: i,
             stackTotal: evStops.length,
             evCompensation: evStops[i],
-            roomType: currentRoomType
+            roomType: currentRoomType,
+            isManualMode: manualModeEnabled
           });
 
           if (i < evStops.length - 1) {
@@ -429,7 +495,8 @@ export default function CameraScreen() {
               imageData: imageData,
               width: canvas.width,
               height: canvas.height,
-              roomType: currentRoomType
+              roomType: currentRoomType,
+              isManualMode: manualModeEnabled
             });
             
             log('✅ Photo saved');
@@ -729,24 +796,13 @@ export default function CameraScreen() {
             </div>
           </div>
 
-          {/* Grid Overlay */}
-          {gridEnabled && (
-            <div className="absolute inset-0 pointer-events-none z-40">
-              <svg className="w-full h-full">
-                <line x1="33.33%" y1="0" x2="33.33%" y2="100%" stroke="white" strokeWidth="1" opacity="0.5" />
-                <line x1="66.66%" y1="0" x2="66.66%" y2="100%" stroke="white" strokeWidth="1" opacity="0.5" />
-                <line x1="0" y1="33.33%" x2="100%" y2="33.33%" stroke="white" strokeWidth="1" opacity="0.5" />
-                <line x1="0" y1="66.66%" x2="100%" y2="66.66%" stroke="white" strokeWidth="1" opacity="0.5" />
-              </svg>
-            </div>
-          )}
-
-          {/* Horizontlinie */}
-          {horizonLineEnabled && (
-            <div className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center">
-              <div className="w-full h-px bg-yellow-400 opacity-70" style={{ boxShadow: '0 0 4px rgba(250, 204, 21, 0.8)' }} />
-            </div>
-          )}
+          {/* Professional Camera Overlays */}
+          <div className="absolute inset-0 pointer-events-none z-40">
+            <GridOverlay />
+            <HorizonLevelOverlay />
+            <MeteringModeOverlay />
+            <FocusPeakingOverlay />
+          </div>
 
           {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
           <AnimatePresence>
@@ -994,6 +1050,9 @@ export default function CameraScreen() {
           </div>
         </div>
       )}
+
+      {/* Manual Mode Controls */}
+      {cameraStarted && <ManualControls />}
 
       {/* BottomNav - Hidden in Landscape */}
       {!isLandscape && <BottomNav photoCount={photoCount} variant="dark" />}
