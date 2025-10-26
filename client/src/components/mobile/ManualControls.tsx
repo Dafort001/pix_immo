@@ -24,6 +24,8 @@ import {
   X,
   ChevronRight,
   Zap,
+  Eye,
+  Grid3x3,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HapticButton } from './HapticButton';
@@ -130,6 +132,26 @@ export function ManualControls({ onClose }: ManualControlsProps) {
               onClick={() => togglePanel('format')}
               testId="control-format"
             />
+
+            {/* Display & Level */}
+            <ControlRow
+              icon={<Grid3x3 className="w-4 h-4" />}
+              label="Anzeige"
+              value={settings.showLevelIndicator ? 'Level Ein' : 'Level Aus'}
+              isActive={expandedPanel === 'display'}
+              onClick={() => togglePanel('display')}
+              testId="control-display"
+            />
+
+            {/* Capture Thumbnail */}
+            <ControlRow
+              icon={<Eye className="w-4 h-4" />}
+              label="Vorschau"
+              value={settings.showCaptureThumb ? 'Thumb Ein' : 'Thumb Aus'}
+              isActive={expandedPanel === 'thumbnail'}
+              onClick={() => togglePanel('thumbnail')}
+              testId="control-thumbnail"
+            />
           </div>
         </div>
       </motion.div>
@@ -183,6 +205,28 @@ export function ManualControls({ onClose }: ManualControlsProps) {
           <FileFormatPanel
             format={settings.fileFormat}
             onChange={settings.setFileFormat}
+            onClose={() => setExpandedPanel(null)}
+          />
+        )}
+        {expandedPanel === 'display' && (
+          <DisplayPanel
+            showLevelIndicator={settings.showLevelIndicator}
+            showLevelDegrees={settings.showLevelDegrees}
+            levelSensitivity={settings.levelSensitivity}
+            onLevelIndicatorToggle={settings.setLevelIndicator}
+            onLevelDegreesToggle={settings.setLevelDegrees}
+            onSensitivityChange={settings.setLevelSensitivity}
+            onClose={() => setExpandedPanel(null)}
+          />
+        )}
+        {expandedPanel === 'thumbnail' && (
+          <ThumbnailPanel
+            showCaptureThumb={settings.showCaptureThumb}
+            autoHideThumb={settings.autoHideThumb}
+            showThumbProgress={settings.showThumbProgress}
+            onCaptureThumbToggle={settings.setCaptureThumb}
+            onAutoHideToggle={settings.setAutoHideThumb}
+            onProgressToggle={settings.setThumbProgress}
             onClose={() => setExpandedPanel(null)}
           />
         )}
@@ -946,6 +990,285 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
         <p className="mt-4 text-xs text-white/50 leading-relaxed">
           JPEG bietet die beste Balance zwischen Qualität und Dateigröße. RAW bietet maximale 
           Flexibilität bei der Nachbearbeitung.
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Display & Level Indicator Panel
+ */
+interface DisplayPanelProps {
+  showLevelIndicator: boolean;
+  showLevelDegrees: boolean;
+  levelSensitivity: 'standard' | 'strict' | 'loose';
+  onLevelIndicatorToggle: (enabled: boolean) => void;
+  onLevelDegreesToggle: (enabled: boolean) => void;
+  onSensitivityChange: (sensitivity: 'standard' | 'strict' | 'loose') => void;
+  onClose: () => void;
+}
+
+function DisplayPanel({
+  showLevelIndicator,
+  showLevelDegrees,
+  levelSensitivity,
+  onLevelIndicatorToggle,
+  onLevelDegreesToggle,
+  onSensitivityChange,
+  onClose,
+}: DisplayPanelProps) {
+  const sensitivityOptions = [
+    {
+      value: 'loose' as const,
+      label: 'Locker',
+      description: '±1.0° Roll / ±1.5° Pitch',
+    },
+    {
+      value: 'standard' as const,
+      label: 'Standard',
+      description: '±0.5° Roll / ±1.0° Pitch',
+    },
+    {
+      value: 'strict' as const,
+      label: 'Streng',
+      description: '±0.3° Roll / ±0.8° Pitch',
+    },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-black/90 backdrop-blur-xl rounded-2xl border border-white/20 p-6 mx-8 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-white text-lg font-semibold">Anzeige & Level</h3>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white"
+            data-testid="button-close-display-panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Level Indicator Toggle */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-white text-sm font-medium">Level-Indicator</label>
+            <button
+              onClick={() => onLevelIndicatorToggle(!showLevelIndicator)}
+              className={`relative w-12 h-7 rounded-full transition-colors ${
+                showLevelIndicator ? 'bg-[#4A5849]' : 'bg-gray-600'
+              }`}
+              data-testid="toggle-level-indicator"
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  showLevelIndicator ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-xs text-white/50">
+            Zeigt ein Fadenkreuz in der Bildmitte mit Sensor-basierter Level-Erkennung
+          </p>
+        </div>
+
+        {/* Level Degrees Toggle */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-white text-sm font-medium">Grad-Anzeige</label>
+            <button
+              onClick={() => onLevelDegreesToggle(!showLevelDegrees)}
+              disabled={!showLevelIndicator}
+              className={`relative w-12 h-7 rounded-full transition-colors ${
+                showLevelDegrees && showLevelIndicator ? 'bg-[#4A5849]' : 'bg-gray-600'
+              } ${!showLevelIndicator ? 'opacity-30 cursor-not-allowed' : ''}`}
+              data-testid="toggle-level-degrees"
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  showLevelDegrees ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-xs text-white/50">
+            Zeigt numerische Winkel-Werte unter dem Level-Indicator
+          </p>
+        </div>
+
+        {/* Sensitivity Presets */}
+        <div className="mb-4">
+          <label className="text-white text-sm font-medium block mb-3">Empfindlichkeit</label>
+          <div className="space-y-2">
+            {sensitivityOptions.map((option) => (
+              <HapticButton
+                key={option.value}
+                onClick={() => onSensitivityChange(option.value)}
+                disabled={!showLevelIndicator}
+                hapticStyle="light"
+                className={`w-full p-3 rounded-xl text-left transition-all ${
+                  levelSensitivity === option.value && showLevelIndicator
+                    ? 'bg-[#4A5849] text-white border-2 border-white/20'
+                    : 'bg-white/10 text-white/70 hover:bg-white/20 border-2 border-transparent'
+                } ${!showLevelIndicator ? 'opacity-30 cursor-not-allowed' : ''}`}
+                data-testid={`button-sensitivity-${option.value}`}
+              >
+                <div className="font-medium">{option.label}</div>
+                <div className={`text-xs mt-0.5 ${
+                  levelSensitivity === option.value ? 'text-white/80' : 'text-white/50'
+                }`}>
+                  {option.description}
+                </div>
+              </HapticButton>
+            ))}
+          </div>
+        </div>
+
+        {/* Info */}
+        <p className="mt-4 text-xs text-white/50 leading-relaxed">
+          Der Level-Indicator hilft bei präziser Kamera-Ausrichtung. 
+          Bei erfolgreicher Level-Erkennung erhalten Sie haptisches Feedback.
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Capture Thumbnail Settings Panel
+ */
+interface ThumbnailPanelProps {
+  showCaptureThumb: boolean;
+  autoHideThumb: boolean;
+  showThumbProgress: boolean;
+  onCaptureThumbToggle: (enabled: boolean) => void;
+  onAutoHideToggle: (enabled: boolean) => void;
+  onProgressToggle: (enabled: boolean) => void;
+  onClose: () => void;
+}
+
+function ThumbnailPanel({
+  showCaptureThumb,
+  autoHideThumb,
+  showThumbProgress,
+  onCaptureThumbToggle,
+  onAutoHideToggle,
+  onProgressToggle,
+  onClose,
+}: ThumbnailPanelProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-black/90 backdrop-blur-xl rounded-2xl border border-white/20 p-6 mx-8 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-white text-lg font-semibold">Aufnahme-Vorschau</h3>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white"
+            data-testid="button-close-thumbnail-panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Main Toggle */}
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-white text-sm font-medium">Aufnahmesatz-Thumbnail anzeigen</label>
+            <button
+              onClick={() => onCaptureThumbToggle(!showCaptureThumb)}
+              className={`relative w-12 h-7 rounded-full transition-colors ${
+                showCaptureThumb ? 'bg-[#4A5849]' : 'bg-gray-600'
+              }`}
+              data-testid="toggle-capture-thumb"
+            >
+              <div
+                className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                  showCaptureThumb ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+          <p className="text-xs text-white/50">
+            Zeigt nach jeder Aufnahme ein Vorschaubild unten links
+          </p>
+        </div>
+
+        {/* Sub-Options (only visible when main toggle is on) */}
+        {showCaptureThumb && (
+          <>
+            {/* Auto-Hide Toggle */}
+            <div className="mb-6 pl-4 border-l-2 border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-white text-sm font-medium">Automatisch ausblenden</label>
+                <button
+                  onClick={() => onAutoHideToggle(!autoHideThumb)}
+                  className={`relative w-12 h-7 rounded-full transition-colors ${
+                    autoHideThumb ? 'bg-[#4A5849]' : 'bg-gray-600'
+                  }`}
+                  data-testid="toggle-auto-hide-thumb"
+                >
+                  <div
+                    className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                      autoHideThumb ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-white/50">
+                Blendet das Vorschaubild nach 4 Sekunden automatisch aus
+              </p>
+            </div>
+
+            {/* Progress Toggle */}
+            <div className="mb-4 pl-4 border-l-2 border-white/10">
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-white text-sm font-medium">Fortschritt anzeigen</label>
+                <button
+                  onClick={() => onProgressToggle(!showThumbProgress)}
+                  className={`relative w-12 h-7 rounded-full transition-colors ${
+                    showThumbProgress ? 'bg-[#4A5849]' : 'bg-gray-600'
+                  }`}
+                  data-testid="toggle-thumb-progress"
+                >
+                  <div
+                    className={`absolute top-1 w-5 h-5 bg-white rounded-full transition-transform ${
+                      showThumbProgress ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+              <p className="text-xs text-white/50">
+                Zeigt bei Belichtungsreihen den Fortschritt (z.B. "3 / 5")
+              </p>
+            </div>
+          </>
+        )}
+
+        {/* Info */}
+        <p className="mt-4 text-xs text-white/50 leading-relaxed">
+          Das Vorschaubild bestätigt sofort, dass die Aufnahme erfolgreich gespeichert wurde. 
+          Bei Belichtungsreihen sehen Sie den Fortschritt in Echtzeit.
         </p>
       </div>
     </motion.div>

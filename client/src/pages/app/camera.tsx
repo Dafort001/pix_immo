@@ -7,6 +7,8 @@ import { BottomNav } from '@/components/mobile/BottomNav';
 import { Histogram } from '@/components/mobile/Histogram';
 import { ManualControls } from '@/components/mobile/ManualControls';
 import { GridOverlay, HorizonLevelOverlay, MeteringModeOverlay, FocusPeakingOverlay } from '@/components/mobile/CameraOverlays';
+import { LevelIndicator } from '@/components/mobile/LevelIndicator';
+import { CaptureThumb } from '@/components/mobile/CaptureThumb';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
@@ -40,6 +42,7 @@ export default function CameraScreen() {
   const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
   const [isLandscape, setIsLandscape] = useState(false);
   const [horizonLineEnabled, setHorizonLineEnabled] = useState(false);
+  const [lastCaptureUrl, setLastCaptureUrl] = useState<string | null>(null);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -507,6 +510,12 @@ export default function CameraScreen() {
       sessionStorage.setItem('appPhotos', JSON.stringify(photos));
       trigger('success');
       
+      // Update thumbnail with last captured photo
+      if (photos.length > 0) {
+        const lastPhoto = photos[photos.length - 1];
+        setLastCaptureUrl(lastPhoto.imageData);
+      }
+      
     } catch (err: any) {
       log(`❌ ${err.message}`);
       trigger('error');
@@ -802,7 +811,18 @@ export default function CameraScreen() {
             <HorizonLevelOverlay />
             <MeteringModeOverlay />
             <FocusPeakingOverlay />
+            <LevelIndicator />
           </div>
+
+          {/* Capture Thumbnail */}
+          <CaptureThumb
+            imageUrl={lastCaptureUrl}
+            progress={captureProgress.total > 1 ? {
+              current: captureProgress.current,
+              total: captureProgress.total
+            } : null}
+            onDismiss={() => setLastCaptureUrl(null)}
+          />
 
           {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
           <AnimatePresence>

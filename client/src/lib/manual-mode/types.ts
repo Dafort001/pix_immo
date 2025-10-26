@@ -8,6 +8,7 @@ export type MeteringMode = 'matrix' | 'center-weighted' | 'spot';
 export type FileFormat = 'heic' | 'jpg' | 'raw';
 export type GridType = 'none' | '3x3' | 'golden-ratio';
 export type WhiteBalancePreset = 'daylight' | 'cloudy' | 'tungsten' | 'fluorescent' | 'shade' | 'custom';
+export type LevelSensitivity = 'standard' | 'strict' | 'loose';
 
 /**
  * Complete Manual Mode Settings
@@ -48,6 +49,16 @@ export interface ManualModeSettings {
   gridType: GridType;
   horizonLevelEnabled: boolean;
   
+  // Level Indicator (Alignment)
+  showLevelIndicator: boolean;
+  showLevelDegrees: boolean;
+  levelSensitivity: LevelSensitivity;
+  
+  // Capture Thumbnail
+  showCaptureThumb: boolean;
+  autoHideThumb: boolean;
+  showThumbProgress: boolean;
+  
   // Metering
   meteringMode: MeteringMode;
   
@@ -74,6 +85,12 @@ export const DEFAULT_MANUAL_SETTINGS: ManualModeSettings = {
   nightModeEnabled: false,
   gridType: 'none',
   horizonLevelEnabled: false,
+  showLevelIndicator: true,
+  showLevelDegrees: false,
+  levelSensitivity: 'standard',
+  showCaptureThumb: true,
+  autoHideThumb: true,
+  showThumbProgress: true,
   meteringMode: 'matrix',
   histogramEnabled: false,
 };
@@ -115,6 +132,16 @@ export const SHUTTER_LIMITS = {
   MIN: 1 / 8000, // Fastest: 1/8000s
   MAX: 30, // Slowest: 30s
   HAND_HELD_WARNING: 1, // Warn for exposures >= 1s
+} as const;
+
+/**
+ * Level Indicator Sensitivity Presets
+ * Tolerance in degrees for roll and pitch
+ */
+export const LEVEL_SENSITIVITY_PRESETS = {
+  standard: { roll: 0.5, pitch: 1.0, hysteresis: 0.3 },
+  strict: { roll: 0.3, pitch: 0.8, hysteresis: 0.2 },
+  loose: { roll: 1.0, pitch: 1.5, hysteresis: 0.5 },
 } as const;
 
 /**

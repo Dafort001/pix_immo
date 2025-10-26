@@ -27,6 +27,12 @@ interface ManualModeStore extends ManualModeSettings {
   setNightMode: (enabled: boolean) => void;
   setGridType: (type: ManualModeSettings['gridType']) => void;
   setHorizonLevel: (enabled: boolean) => void;
+  setLevelIndicator: (enabled: boolean) => void;
+  setLevelDegrees: (enabled: boolean) => void;
+  setLevelSensitivity: (sensitivity: ManualModeSettings['levelSensitivity']) => void;
+  setCaptureThumb: (enabled: boolean) => void;
+  setAutoHideThumb: (enabled: boolean) => void;
+  setThumbProgress: (enabled: boolean) => void;
   setMeteringMode: (mode: ManualModeSettings['meteringMode']) => void;
   setHistogram: (enabled: boolean) => void;
   resetToAuto: () => void;
@@ -84,6 +90,18 @@ export const useManualModeStore = create<ManualModeStore>()(
       
       setHorizonLevel: (horizonLevelEnabled) => set({ horizonLevelEnabled }),
       
+      setLevelIndicator: (showLevelIndicator) => set({ showLevelIndicator }),
+      
+      setLevelDegrees: (showLevelDegrees) => set({ showLevelDegrees }),
+      
+      setLevelSensitivity: (levelSensitivity) => set({ levelSensitivity }),
+      
+      setCaptureThumb: (showCaptureThumb) => set({ showCaptureThumb }),
+      
+      setAutoHideThumb: (autoHideThumb) => set({ autoHideThumb }),
+      
+      setThumbProgress: (showThumbProgress) => set({ showThumbProgress }),
+      
       setMeteringMode: (meteringMode) => set({ meteringMode }),
       
       setHistogram: (histogramEnabled) => set({ histogramEnabled }),
@@ -119,6 +137,12 @@ export function getManualSettings(): ManualModeSettings {
     nightModeEnabled: store.nightModeEnabled,
     gridType: store.gridType,
     horizonLevelEnabled: store.horizonLevelEnabled,
+    showLevelIndicator: store.showLevelIndicator,
+    showLevelDegrees: store.showLevelDegrees,
+    levelSensitivity: store.levelSensitivity,
+    showCaptureThumb: store.showCaptureThumb,
+    autoHideThumb: store.autoHideThumb,
+    showThumbProgress: store.showThumbProgress,
     meteringMode: store.meteringMode,
     histogramEnabled: store.histogramEnabled,
   };
