@@ -39,7 +39,8 @@ export function CaptureThumb({ imageUrl, progress, onDismiss }: CaptureThumbProp
 
       return () => clearTimeout(timer);
     }
-  }, [imageUrl, showCaptureThumb, autoHideThumb, onDismiss]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageUrl, showCaptureThumb, autoHideThumb]);
 
   if (!showCaptureThumb || !imageUrl) return null;
 
