@@ -44,6 +44,7 @@ import AppSplash from "@/pages/app/splash";
 import AppCamera from "@/pages/app/camera";
 import AppGallery from "@/pages/app/gallery";
 import AppUpload from "@/pages/app/upload";
+import AppSettings from "@/pages/app/settings";
 import UploadsOverview from "@/pages/portal/uploads-overview";
 import GallerySelection from "@/pages/portal/gallery-selection";
 import Payment from "@/pages/portal/payment";
@@ -99,6 +100,7 @@ function Router() {
       <Route path="/app/camera" component={AppCamera} />
       <Route path="/app/gallery" component={AppGallery} />
       <Route path="/app/upload" component={AppUpload} />
+      <Route path="/app/settings" component={AppSettings} />
       <Route path="/portal/uploads" component={UploadsOverview} />
       <Route path="/portal/job/:jobId" component={GallerySelection} />
       <Route path="/portal/payment/:jobId" component={Payment} />
