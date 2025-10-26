@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Camera, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
@@ -14,6 +14,7 @@ export default function SplashScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [photoCount, setPhotoCount] = useState(0);
   const { trigger } = useHaptic();
 
   const handleLogin = async () => {
@@ -38,6 +39,22 @@ export default function SplashScreen() {
     
     setLocation('/app/camera');
   };
+
+  // Load photo count from sessionStorage
+  useEffect(() => {
+    const updatePhotoCount = () => {
+      const stored = sessionStorage.getItem('appPhotos');
+      if (stored) {
+        const photos = JSON.parse(stored);
+        setPhotoCount(photos.length);
+      }
+    };
+    
+    updatePhotoCount();
+    
+    window.addEventListener('storage', updatePhotoCount);
+    return () => window.removeEventListener('storage', updatePhotoCount);
+  }, []);
 
   return (
     <div className="h-full w-full bg-gradient-to-br from-[#EFF6FF] to-white flex flex-col">
@@ -145,13 +162,16 @@ export default function SplashScreen() {
             </button>
           </div>
 
-          {/* Login Button */}
+          {/* Login Button - UI-Sage Color */}
           <HapticButton
             onClick={handleLogin}
             disabled={isLoading || !email || !password}
             hapticStyle="medium"
-            className="w-full bg-[#4A5849] hover:bg-[#3A4839] text-white py-3 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ fontSize: '16px' }}
+            className="w-full text-white py-3 rounded-xl shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            style={{ 
+              fontSize: '16px',
+              backgroundColor: isLoading ? '#8A9989' : '#6E7E6B'
+            }}
             data-testid="button-login"
           >
             {isLoading ? 'Anmelden...' : 'Anmelden'}
@@ -202,7 +222,7 @@ export default function SplashScreen() {
         </p>
       </div>
 
-      <BottomNav />
+      <BottomNav photoCount={photoCount} />
       
       {/* A2HS Hint - Shows after 30s */}
       <A2HSHint delayMs={30000} />
