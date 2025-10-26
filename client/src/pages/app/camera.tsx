@@ -564,7 +564,7 @@ export default function CameraScreen() {
 
       {/* Landscape: Vertical StatusBar Left */}
       {isLandscape && (
-        <div className="absolute left-0 top-0 bottom-0 z-10 w-20 bg-black/30 backdrop-blur-md flex flex-col items-center justify-start pt-6 gap-4">
+        <div className="absolute left-0 top-0 bottom-0 z-10 w-20 bg-[#1C1C1E]/90 backdrop-blur-xl border-r border-white/10 flex flex-col items-center justify-start pt-6 gap-4">
           <div className="text-white text-xs" data-testid="statusbar-time-landscape">
             {new Date().getHours().toString().padStart(2, '0')}:{new Date().getMinutes().toString().padStart(2, '0')}
           </div>
@@ -851,7 +851,7 @@ export default function CameraScreen() {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
                 className={`absolute z-30 ${
-                  isLandscape ? 'top-6 right-28' : 'top-20 right-4'
+                  isLandscape ? 'top-6 right-28' : 'top-36 right-4'
                 }`}
               >
                 <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
