@@ -8,7 +8,7 @@ import { Histogram } from '@/components/mobile/Histogram';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
-import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType } from '@shared/room-types';
+import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -515,35 +515,44 @@ export default function CameraScreen() {
                 <div className="text-sm font-semibold">{currentRoomType.substring(0, 6)}</div>
               </HapticButton>
             </DrawerTrigger>
-            <DrawerContent className="max-h-[80vh]">
-              <div className="mx-auto w-full max-w-md p-4">
-                <DrawerHeader className="p-0 mb-4">
-                  <DrawerTitle>Raumtyp auswählen</DrawerTitle>
-                  <DrawerDescription>
-                    Wähle den Raum für die nächsten Aufnahmen
+            <DrawerContent className="max-h-[85vh] bg-white">
+              <div className="mx-auto w-full max-w-md">
+                <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200">
+                  <DrawerTitle className="text-lg font-semibold">Raumtyp wählen</DrawerTitle>
+                  <DrawerDescription className="text-sm text-gray-500">
+                    {ALL_ROOM_TYPES.length} Raumtypen verfügbar
                   </DrawerDescription>
                 </DrawerHeader>
-                <div className="space-y-2 overflow-y-scroll pr-2" style={{ maxHeight: '50vh' }}>
-                  {ALL_ROOM_TYPES.map((room) => (
-                    <button
-                      key={room}
-                      onClick={() => {
-                        setCurrentRoomType(room);
-                        trigger('success');
-                      }}
-                      className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${
-                        currentRoomType === room
-                          ? 'bg-gray-200 font-semibold'
-                          : 'hover:bg-gray-100'
-                      }`}
-                      data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
-                    >
-                      <span style={{ fontSize: '16px' }}>{room}</span>
-                      {currentRoomType === room && (
-                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#4A5849' }} />
-                      )}
-                    </button>
-                  ))}
+                <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+                  {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
+                    if (rooms.length === 0) return null;
+                    return (
+                      <div key={group} className="py-2">
+                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">
+                          {GROUP_DISPLAY_NAMES[group as keyof typeof GROUP_DISPLAY_NAMES]}
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {rooms.map((room) => (
+                            <button
+                              key={room}
+                              onClick={() => {
+                                setCurrentRoomType(room);
+                                trigger('success');
+                              }}
+                              className={`w-full text-left px-4 py-3 transition-colors ${
+                                currentRoomType === room
+                                  ? 'bg-blue-50 text-blue-700 font-medium'
+                                  : 'hover:bg-gray-50 text-gray-900'
+                              }`}
+                              data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
+                            >
+                              {room}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </DrawerContent>
@@ -883,35 +892,44 @@ export default function CameraScreen() {
                     </span>
                   </HapticButton>
                 </DrawerTrigger>
-                <DrawerContent className="max-h-[80vh]">
-                  <div className="mx-auto w-full max-w-md p-4">
-                    <DrawerHeader className="p-0 mb-4">
-                      <DrawerTitle>Raumtyp auswählen</DrawerTitle>
-                      <DrawerDescription>
-                        Wähle den Raum für die nächsten Aufnahmen ({ALL_ROOM_TYPES.length} verfügbar)
+                <DrawerContent className="max-h-[85vh] bg-white">
+                  <div className="mx-auto w-full max-w-md">
+                    <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200">
+                      <DrawerTitle className="text-lg font-semibold">Raumtyp wählen</DrawerTitle>
+                      <DrawerDescription className="text-sm text-gray-500">
+                        {ALL_ROOM_TYPES.length} Raumtypen verfügbar
                       </DrawerDescription>
                     </DrawerHeader>
-                    <div className="space-y-2 overflow-y-scroll pr-2" style={{ maxHeight: '50vh' }}>
-                      {ALL_ROOM_TYPES.map((room) => (
-                        <button
-                          key={room}
-                          onClick={() => {
-                            setCurrentRoomType(room);
-                            trigger('success');
-                          }}
-                          className={`w-full text-left px-4 py-3 rounded-lg transition-colors flex items-center justify-between ${
-                            currentRoomType === room
-                              ? 'bg-gray-200 font-semibold'
-                              : 'hover:bg-gray-100'
-                          }`}
-                          data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
-                        >
-                          <span style={{ fontSize: '16px' }}>{room}</span>
-                          {currentRoomType === room && (
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#4A5849' }} />
-                          )}
-                        </button>
-                      ))}
+                    <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+                      {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
+                        if (rooms.length === 0) return null;
+                        return (
+                          <div key={group} className="py-2">
+                            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">
+                              {GROUP_DISPLAY_NAMES[group as keyof typeof GROUP_DISPLAY_NAMES]}
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                              {rooms.map((room) => (
+                                <button
+                                  key={room}
+                                  onClick={() => {
+                                    setCurrentRoomType(room);
+                                    trigger('success');
+                                  }}
+                                  className={`w-full text-left px-4 py-3 transition-colors ${
+                                    currentRoomType === room
+                                      ? 'bg-blue-50 text-blue-700 font-medium'
+                                      : 'hover:bg-gray-50 text-gray-900'
+                                  }`}
+                                  data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
+                                >
+                                  {room}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </DrawerContent>
