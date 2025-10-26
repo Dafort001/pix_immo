@@ -6,7 +6,7 @@
 :root {
   /* === Sage & Clay v3 Brand Colors === */
   --sage-dark: 140 15% 29%;        /* #4A5849 - Haupttextfarbe, gedecktes Grün */
-  --ui-sage: 140 9% 46%;           /* #6E7E6B - Sekundäre UI, Linien/Rahmen */
+  --ui-sage: 140 9% 40%;           /* #606F5D - Sekundäre UI (WCAG AA-konform: 4.93:1) */
   --copper: 21 57% 42%;            /* #A85B2E - Akzent- und CTA-Farbe, warmes Kupfer */
   --copper-dark: 21 55% 36%;       /* #8F4C28 - Hover/Active-Zustände */
   --neutral-white: 0 0% 98%;       /* #FAFAFA - Seitenhintergrund */
@@ -45,7 +45,7 @@
 
   --sidebar-primary-foreground: 0 0% 100%;  /* Pure White #FFFFFF */
 
-  --sidebar-accent: 140 9% 46%;     /* UI-Sage #6E7E6B */
+  --sidebar-accent: 140 9% 40%;     /* UI-Sage (WCAG AA: 5.13:1) */
 
   --sidebar-accent-foreground: 0 0% 100%;  /* Pure White #FFFFFF */
 
@@ -67,7 +67,7 @@
 
   --muted: 0 0% 96%;                /* Sehr helles Grau */
 
-  --muted-foreground: 140 9% 46%;   /* UI-Sage #6E7E6B */
+  --muted-foreground: 140 9% 40%;   /* UI-Sage (WCAG AA: 5.13:1) */
 
   --accent: 21 57% 42%;             /* Copper #A85B2E - CTA/Akzent */
 
@@ -77,11 +77,11 @@
 
   --destructive-foreground: 0 0% 98%;
 
-  --input: 140 9% 46%;              /* UI-Sage #6E7E6B */
+  --input: 140 9% 40%;              /* UI-Sage (WCAG AA: 5.13:1) */
   --ring: 140 15% 29%;              /* Sage Dark #4A5849 */
   --chart-1: 140 15% 29%;           /* Sage Dark */
   --chart-2: 21 57% 42%;            /* Copper */
-  --chart-3: 140 9% 46%;            /* UI-Sage */
+  --chart-3: 140 9% 40%;            /* UI-Sage (WCAG AA: 5.13:1) */
   --chart-4: 21 55% 36%;            /* Copper Dark */
   --chart-5: 0 0% 70%;              /* Neutral Gray */
 
@@ -133,8 +133,8 @@
 
 .dark {
   /* === Sage & Clay v3 Dark Mode === */
-  --sage-dark: 140 15% 45%;        /* Aufgehellt für Dark Mode */
-  --ui-sage: 140 9% 52%;           /* Aufgehellt für Dark Mode */
+  --sage-dark: 140 15% 52%;        /* Aufgehellt für Dark Mode (WCAG AA: 5.24:1) */
+  --ui-sage: 140 9% 58%;           /* Aufgehellt für Dark Mode */
   --copper: 21 57% 52%;            /* Aufgehellt für Dark Mode */
   --copper-dark: 21 55% 46%;       /* Aufgehellt für Dark Mode */
   
@@ -165,7 +165,7 @@
 
   --sidebar-border: 140 8% 20%;     /* Sage Border */
 
-  --sidebar-primary: 140 15% 45%;   /* Sage Dark aufgehellt */
+  --sidebar-primary: 140 15% 52%;   /* Sage Dark aufgehellt (WCAG AA: 4.97:1) */
 
   --sidebar-primary-foreground: 0 0% 100%;  /* Pure White */
 
