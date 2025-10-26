@@ -12,7 +12,7 @@ export function StatusBar({ variant = 'dark' }: StatusBarProps) {
   const minutes = now.getMinutes().toString().padStart(2, '0');
   
   return (
-    <div className={`w-full h-11 flex items-center justify-between px-6 ${textColor}`} data-testid="statusbar-container">
+    <div className={`w-full flex items-center justify-between px-6 safe-top-header touch-target ${textColor}`} data-testid="statusbar-container">
       {/* Zeit */}
       <div className="flex-1" data-testid="statusbar-time">
         <span className="text-sm">{hours}:{minutes}</span>

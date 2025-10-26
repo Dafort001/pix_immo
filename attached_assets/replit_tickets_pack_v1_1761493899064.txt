@@ -1,0 +1,49 @@
+Replit Ticket-Pack v1 — PWA stabil auf iOS
+
+R1 — index.html / HEAD
+Was: iOS-PWA-Meta; viewport-fit=cover; Apple Web-App; Statusbar-Stil; theme-color.
+Fertig: A2HS-Start ohne Notch/Home-Indicator-Kollision, Statusbar korrekt.
+
+R2 — manifest.json
+Was: iOS-Icon-Größen (57/60/76/120/152/167/180), display=standalone, start_url prüfen.
+Fertig: Homescreen-Icon scharf, Standalone-Start klappt.
+
+R3 — Service Worker + /offline.html
+Was: Offline-Fallback mit kurzer Info + "Erneut versuchen".
+Fertig: Flugmodus zeigt Offline-Seite zuverlässig.
+
+R4 — Globales Safe-Area-Layout
+Was: top/bottom Padding mit env(safe-area-inset-*); keine festen Höhen für Header/Tabbar.
+Fertig: Nichts klebt oben/unten; Portrait & Landscape sauber.
+
+R5 — Header / Top-Leiste
+Was: +8–12px plus Safe-Area-Top; Titel mittig; Sekundär-Action rechts; ≥44px.
+Fertig: Beim Scrollen nichts unter Dynamic Island.
+
+R6 — Bottom-Bar / Navigation
+Was: +12–16px plus Safe-Area-Bottom; ≥44px; keine Inhalte hinter Home-Indicator.
+Fertig: Landscape geprüft, keine Fehleingaben.
+
+R7 — Kamera/Datei-Import & Upload
+Was: Kamera via Dateidialog; HEIC+JPG akzeptieren; Progress/Retry/Abbruch; Limits (Größe/Anzahl).
+Fertig: 1 Kamera-Foto + 1 Mediathek-Foto stabil; Drosselnetz bleibt verständlich.
+
+R8 — Fehlermeldungen
+Was: Einzeilige Texte für zu groß / Timeout / abgebrochen / Speicher voll + Aktion (Retry/neu wählen).
+Fertig: Kein stummes Scheitern.
+
+R9 — A2HS-Hint
+Was: Erst nach Interaktion dezent anbieten; nicht auf Startsektion.
+Fertig: Overlay nicht aufdringlich, aber auffindbar.
+
+R10 — Farben & Typo (Sage & Clay v3)
+Was: Sage für Flächen; Clay nur für CTAs/Icons; iOS-Systemschrift Fallback; AA-Kontraste.
+Fertig: Buttons/Text AA-konform; keine ungewollten Rundungen.
+
+R11 — Landscape-Verhalten
+Was: Entweder voll unterstützt oder gesperrt (außer Report/Viewer).
+Fertig: Kein zerrissenes UI im Landscape.
+
+R12 — E2E-MVP-Abnahme
+Was: Start → Aufnahme/Import → Upload → Bestätigung; dann A2HS und wiederholen.
+Fertig: Flow 2× stabil; keine Safe-Area-Kollisionen.

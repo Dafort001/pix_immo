@@ -1,0 +1,22 @@
+Titel: iOS Orientation & Safe-Area Implementation v1
+Ziel: Layout stabil bei Hoch- und Querformat; keine Elemente außerhalb der Safe Areas.
+
+Pflicht:
+1) Portrait-Standard, Landscape nur für "Report" & "Viewer".
+2) Header/Footer nicht fix in px, sondern Flex-Layout (row/column je nach Orientation).
+3) Globales Padding:
+   - top = env(safe-area-inset-top) + 8–12px
+   - bottom = env(safe-area-inset-bottom) + 12–16px
+4) Touch-Ziele ≥ 44px, Abstand ≥ 8px.
+5) Header:
+   - Portrait: Titel zentriert, Sekundär-Action rechts
+   - Landscape: Titel links, Sekundär-Action daneben, Primär-CTA rechts
+6) Tabbar:
+   - Portrait: unten (mit Safe-Area)
+   - Landscape: oben oder seitlich (kein Home-Indicator-Konflikt)
+7) Overflow: Bei wenig Breite Sekundäraktionen ins "…" Menü verlagern.
+8) Dev-Overlay (nur Debug): Log bei Orientation-Change, wenn Overflow / <44px / fehlende Safe-Insets.
+
+Abnahme:
+- Kein Element berührt Dynamic Island oder Home-Indicator (Portrait & Landscape).
+- Report/Viewer funktionieren in Landscape; übrige Screens bleiben Portrait.

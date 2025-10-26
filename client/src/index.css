@@ -424,14 +424,15 @@
   display: flex;
 }
 
-/* iOS Safe Area Support for PWA */
+/* ==================== R4: iOS Safe Area Support for PWA ==================== */
 @layer utilities {
-  .safe-area-bottom {
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
+  /* Basic Safe-Area Padding */
   .safe-area-top {
     padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 
   .safe-area-left {
@@ -440,6 +441,67 @@
 
   .safe-area-right {
     padding-right: env(safe-area-inset-right);
+  }
+
+  .safe-area-all {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+
+  /* R4: Safe-Area + Additional Padding (per spec: +8-12px top, +12-16px bottom) */
+  .safe-top-header {
+    padding-top: calc(env(safe-area-inset-top) + 12px);
+  }
+
+  .safe-bottom-nav {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 16px);
+  }
+
+  /* Minimum Touch Target: >=44px (per spec) */
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Safe-Area aware margins */
+  .mt-safe {
+    margin-top: env(safe-area-inset-top);
+  }
+
+  .mb-safe {
+    margin-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ml-safe {
+    margin-left: env(safe-area-inset-left);
+  }
+
+  .mr-safe {
+    margin-right: env(safe-area-inset-right);
+  }
+
+  /* Full-screen container with safe areas */
+  .safe-container {
+    padding-top: calc(env(safe-area-inset-top) + 0.75rem);
+    padding-bottom: calc(env(safe-area-inset-bottom) + 1rem);
+    padding-left: calc(env(safe-area-inset-left) + 1rem);
+    padding-right: calc(env(safe-area-inset-right) + 1rem);
+  }
+
+  /* R11: Landscape Support - Hide on Landscape */
+  @media (orientation: landscape) {
+    .portrait-only {
+      display: none !important;
+    }
+  }
+
+  /* R11: Landscape Support - Hide on Portrait */
+  @media (orientation: portrait) {
+    .landscape-only {
+      display: none !important;
+    }
   }
 }
 

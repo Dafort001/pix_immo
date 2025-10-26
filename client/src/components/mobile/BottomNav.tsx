@@ -21,12 +21,12 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
   const isDark = variant === 'dark' || location === '/app/camera';
 
   return (
-    <div className={`fixed bottom-0 left-0 right-0 z-30 border-t shadow-lg safe-area-bottom ${
+    <div className={`fixed bottom-0 left-0 right-0 z-30 border-t shadow-lg safe-bottom-nav ${
       isDark 
         ? 'bg-black/95 backdrop-blur-lg border-white/10' 
         : 'bg-white/95 backdrop-blur-lg border-gray-200/50'
     }`} data-testid="bottom-nav">
-      <div className="flex items-center justify-around px-4 py-2">
+      <div className="flex items-center justify-around px-4 py-1 touch-target">
         {navItems.map((item) => {
           const isActive = location === item.path;
           const Icon = item.icon;
@@ -35,10 +35,9 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
             <HapticButton
               key={item.path}
               variant="ghost"
-              size="sm"
               onClick={() => setLocation(item.path)}
               hapticStyle="light"
-              className={`flex flex-col items-center gap-1 relative px-4 py-2 rounded-lg transition-all ${
+              className={`flex flex-col items-center gap-1 relative px-4 py-3 rounded-lg transition-all touch-target ${
                 isDark
                   ? isActive
                     ? 'bg-[#4A5849]/20 text-[#6B8268]'

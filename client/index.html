@@ -2,6 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
+    <!-- R1: iOS-PWA viewport-fit=cover für Safe-Area Support -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5, user-scalable=yes, viewport-fit=cover" />
     <title>pix.immo - Professional Real Estate Photography</title>
     <meta name="description" content="Professional real estate photography platform with mobile capture app" />
@@ -9,13 +10,21 @@
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json" />
     
-    <!-- PWA Theme Color -->
-    <meta name="theme-color" content="#000000" />
-    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#ffffff" />
-    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000000" />
+    <!-- R1: PWA Theme Color - Sage Dark #4A5849 -->
+    <meta name="theme-color" content="#4A5849" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#4A5849" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#2A3329" />
     
-    <!-- Apple Touch Icon -->
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <!-- R2: Apple Touch Icons - Multiple iOS sizes -->
+    <link rel="apple-touch-icon" sizes="57x57" href="/icons/icon-72.png" />
+    <link rel="apple-touch-icon" sizes="60x60" href="/icons/icon-72.png" />
+    <link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-96.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-128.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
+    
+    <!-- R1: Apple Web App Settings -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="pix.immo" />

@@ -1,0 +1,88 @@
+{
+  "rooms": [
+    {
+      "id": "wohnzimmer",
+      "label": "Wohnzimmer",
+      "icon": "sofa",
+      "group": "innen"
+    },
+    {
+      "id": "küche",
+      "label": "Küche",
+      "icon": "utensils",
+      "group": "innen"
+    },
+    {
+      "id": "bad",
+      "label": "Bad",
+      "icon": "bath",
+      "group": "innen"
+    },
+    {
+      "id": "schlafzimmer",
+      "label": "Schlafzimmer",
+      "icon": "bed",
+      "group": "innen"
+    },
+    {
+      "id": "flur",
+      "label": "Flur",
+      "icon": "door",
+      "group": "innen"
+    },
+    {
+      "id": "arbeitszimmer",
+      "label": "Arbeitszimmer",
+      "icon": "briefcase",
+      "group": "innen"
+    },
+    {
+      "id": "balkon_terrasse",
+      "label": "Balkon/Terrasse",
+      "icon": "sun",
+      "group": "außen"
+    },
+    {
+      "id": "garten",
+      "label": "Garten",
+      "icon": "leaf",
+      "group": "außen"
+    },
+    {
+      "id": "fassade",
+      "label": "Fassade",
+      "icon": "building",
+      "group": "außen"
+    },
+    {
+      "id": "treppenhaus",
+      "label": "Treppenhaus",
+      "icon": "stairs",
+      "group": "allgemein"
+    },
+    {
+      "id": "keller",
+      "label": "Keller",
+      "icon": "box",
+      "group": "allgemein"
+    },
+    {
+      "id": "abstellraum",
+      "label": "Abstellraum",
+      "icon": "archive",
+      "group": "allgemein"
+    },
+    {
+      "id": "technikraum",
+      "label": "Technikraum",
+      "icon": "cog",
+      "group": "allgemein"
+    },
+    {
+      "id": "undefined_space",
+      "label": "Raum (unbestimmt)",
+      "icon": "square",
+      "group": "fallback"
+    }
+  ]
+}
