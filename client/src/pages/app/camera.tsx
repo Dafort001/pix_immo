@@ -813,8 +813,8 @@ export default function CameraScreen() {
         </>
       ) : (
         /* Start Camera Screen */
-        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/90 px-6">
-          <div className="text-center">
+        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/90 px-6 pointer-events-none">
+          <div className="text-center pointer-events-auto">
             {error ? (
               <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-xl">
                 <div className="flex items-start gap-2 mb-3">
