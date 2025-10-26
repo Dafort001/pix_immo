@@ -537,7 +537,7 @@ export default function CameraScreen() {
       {/* Status Bar - Only in Portrait */}
       {!isLandscape && <StatusBar variant="light" />}
 
-      {/* VIDEO - 2:3 Aspect Ratio Container */}
+      {/* VIDEO - Responsive Aspect Ratio Container */}
       <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
         isLandscape ? 'pl-20 pr-24' : ''
       }`}>
@@ -546,7 +546,7 @@ export default function CameraScreen() {
           style={{
             width: isLandscape ? 'auto' : '100%',
             height: isLandscape ? '100%' : 'auto',
-            aspectRatio: '2/3',
+            aspectRatio: isLandscape ? '3/2' : '2/3',
             maxWidth: '100%',
             maxHeight: '100%'
           }}
