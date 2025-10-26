@@ -41,6 +41,14 @@ export default function CameraScreen() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const { trigger } = useHaptic();
 
+  // R4: Set black background for Safe-Area (Notch)
+  useEffect(() => {
+    document.body.style.backgroundColor = '#000000';
+    return () => {
+      document.body.style.backgroundColor = '';
+    };
+  }, []);
+
   // Detect orientation changes
   useEffect(() => {
     const checkOrientation = () => {
