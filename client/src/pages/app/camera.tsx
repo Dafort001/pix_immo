@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle, Sliders } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -534,32 +534,6 @@ export default function CameraScreen() {
       {/* Hidden Canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
-      {/* Portrait Mode: Rotate Device Hint */}
-      {!isLandscape && cameraStarted && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="fixed inset-0 z-[70] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center px-8"
-          data-testid="rotate-device-hint"
-        >
-          <motion.div
-            animate={{ rotate: [0, -90, -90, -90] }}
-            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
-            className="mb-8"
-          >
-            <svg className="w-20 h-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          </motion.div>
-          <h2 className="text-white text-2xl font-bold mb-3 text-center">
-            Bitte Gerät drehen
-          </h2>
-          <p className="text-white/70 text-center text-sm max-w-sm">
-            Die Kamera-App ist für Querformat optimiert. Bitte drehen Sie Ihr Gerät um 90°.
-          </p>
-        </motion.div>
-      )}
-
       {/* Status Bar - Only in Portrait */}
       {!isLandscape && <StatusBar variant="light" />}
 
@@ -590,7 +564,7 @@ export default function CameraScreen() {
 
       {/* Landscape: Vertical StatusBar Left */}
       {isLandscape && (
-        <div className="absolute left-0 top-0 bottom-0 z-40 w-20 bg-black/30 backdrop-blur-md flex flex-col items-center justify-start pt-6 gap-4">
+        <div className="absolute left-0 top-0 bottom-0 z-10 w-20 bg-black/30 backdrop-blur-md flex flex-col items-center justify-start pt-6 gap-4">
           <div className="text-white text-xs" data-testid="statusbar-time-landscape">
             {new Date().getHours().toString().padStart(2, '0')}:{new Date().getMinutes().toString().padStart(2, '0')}
           </div>
@@ -605,7 +579,7 @@ export default function CameraScreen() {
 
       {/* Landscape: Vertical Side Controls Right */}
       {isLandscape && cameraStarted && (
-        <div className="absolute right-0 top-0 bottom-0 z-50 w-24 flex flex-col items-center justify-between py-6 bg-[#1C1C1E]/70 backdrop-blur-xl">
+        <div className="absolute right-0 top-0 bottom-0 z-20 w-24 flex flex-col items-center justify-between py-6 bg-[#1C1C1E]/70 backdrop-blur-xl">
           {/* Room Type Top */}
           <Drawer>
             <DrawerTrigger asChild>
@@ -720,7 +694,7 @@ export default function CameraScreen() {
       {cameraStarted ? (
         <>
           {/* Top Bar - Only in Portrait */}
-          <div className={`absolute top-0 left-0 right-0 z-50 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent ${
+          <div className={`absolute top-0 left-0 right-0 z-20 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent ${
             isLandscape ? 'hidden' : ''
           }`}>
             <div className="flex items-center justify-between">
@@ -869,14 +843,16 @@ export default function CameraScreen() {
             onDismiss={() => setLastCaptureUrl(null)}
           />
 
-          {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
+          {/* Histogram - Top right, responsive positioning */}
           <AnimatePresence>
             {showHistogram && (
               <motion.div
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                className="absolute bottom-40 right-4 z-50"
+                className={`absolute z-30 ${
+                  isLandscape ? 'top-6 right-28' : 'top-20 right-4'
+                }`}
               >
                 <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
                   <HapticButton
@@ -908,7 +884,7 @@ export default function CameraScreen() {
                 initial={{ opacity: 0, x: 100 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 100 }}
-                className="absolute top-32 right-4 z-50"
+                className="absolute top-32 right-4 z-30"
               >
                 <div className="bg-black/90 backdrop-blur-md rounded-xl p-3 shadow-2xl border border-green-500/30 min-w-[220px]">
                   <div className="text-xs text-green-400 font-mono space-y-1 leading-tight">
@@ -951,7 +927,7 @@ export default function CameraScreen() {
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="absolute top-32 left-0 right-0 z-50 flex justify-center"
+                className="absolute top-32 left-0 right-0 z-60 flex justify-center"
               >
                 <div className="bg-black/80 backdrop-blur-md text-white px-6 py-3 rounded-full flex items-center gap-3">
                   <div className="flex gap-1">
@@ -975,7 +951,7 @@ export default function CameraScreen() {
           </AnimatePresence>
 
           {/* Bottom Controls - Only in Portrait */}
-          <div className={`absolute bottom-0 left-0 right-0 z-50 pb-28 px-4 ${
+          <div className={`absolute bottom-0 left-0 right-0 z-20 pb-28 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
             {/* Zoom Buttons - Wie im Figma */}
@@ -1080,7 +1056,7 @@ export default function CameraScreen() {
         </>
       ) : (
         /* Start Camera Screen */
-        <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/90 px-6 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center z-60 bg-black/90 px-6 pointer-events-none">
           <div className="text-center pointer-events-auto">
             {error ? (
               <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-xl">
@@ -1116,8 +1092,10 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Manual Mode Controls */}
-      {cameraStarted && <ManualControls />}
+      {/* Manual Mode Controls - Landscape Only, When Open */}
+      {cameraStarted && isLandscape && isManualControlsOpen && (
+        <ManualControls onClose={() => setIsManualControlsOpen(false)} />
+      )}
 
       {/* BottomNav - Hidden in Landscape */}
       {!isLandscape && <BottomNav photoCount={photoCount} variant="dark" />}

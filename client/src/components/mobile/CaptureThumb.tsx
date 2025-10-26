@@ -20,6 +20,22 @@ export function CaptureThumb({ imageUrl, progress, onDismiss }: CaptureThumbProp
   const showThumbProgress = useManualModeStore((state) => state.showThumbProgress);
   
   const [visible, setVisible] = useState(false);
+  const [isLandscape, setIsLandscape] = useState(window.innerWidth > window.innerHeight);
+
+  // Detect orientation changes
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+    
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
 
   useEffect(() => {
     if (!showCaptureThumb || !imageUrl) {
@@ -52,7 +68,9 @@ export function CaptureThumb({ imageUrl, progress, onDismiss }: CaptureThumbProp
           animate={{ opacity: 1, x: 0, scale: 1 }}
           exit={{ opacity: 0, x: -50, scale: 0.8 }}
           transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-          className="fixed bottom-24 left-4 z-30 pointer-events-auto"
+          className={`fixed bottom-24 z-30 pointer-events-auto ${
+            isLandscape ? 'left-24' : 'left-4'
+          }`}
           data-testid="capture-thumb"
         >
           <div className="relative">
