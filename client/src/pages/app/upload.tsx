@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon, ChevronDown, MapPin, Loader2 } from 'lucide-react';
+import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon, ChevronDown, MapPin, Loader2, AlertCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -37,6 +37,8 @@ export default function UploadScreen() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ current: 0, total: 0 });
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [uploadError, setUploadError] = useState<string>('');
+  const [failedCount, setFailedCount] = useState(0);
   const { trigger } = useHaptic();
   const hasAutoSelectedRef = useRef(false);
 
@@ -205,7 +207,18 @@ export default function UploadScreen() {
   };
 
   const handleUpload = async () => {
-    if (uploadSelection.length === 0 || !selectedJobId) return;
+    // R8: Clear all state at start to avoid contradictory UI
+    setUploadError('');
+    setFailedCount(0);
+    setUploadSuccess(false);
+    
+    if (uploadSelection.length === 0 || !selectedJobId) {
+      const msg = !selectedJobId 
+        ? 'Bitte wählen Sie zuerst einen Auftrag aus.'
+        : 'Bitte wählen Sie mindestens ein Foto aus.';
+      setUploadError(msg);
+      return;
+    }
     
     // R7: Calculate total photos to upload
     const totalPhotos = uploadSelection.reduce((sum, stackId) => {
@@ -318,29 +331,46 @@ export default function UploadScreen() {
           }
         }
         
-        // Show success state
+        // Show success state (errors already cleared at upload start)
         setUploadSuccess(true);
       } else {
-        // Some uploads failed
+        // R8: Some uploads failed - Show inline error with retry button
         trigger('error');
         
-        // uploadedCount already tracks successful uploads only
         const successCount = uploadedCount;
         const failureCount = failedPhotos.length;
+        setFailedCount(failureCount);
         
+        // Single-line message (R8 spec)
         const message = successCount > 0
-          ? `${successCount} ${successCount === 1 ? 'Foto' : 'Fotos'} erfolgreich hochgeladen.\n${failureCount} ${failureCount === 1 ? 'Foto' : 'Fotos'} fehlgeschlagen.\n\nBitte versuchen Sie es erneut.`
-          : `Upload fehlgeschlagen (${failureCount} ${failureCount === 1 ? 'Foto' : 'Fotos'}).\n\nBitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut.`;
+          ? `${successCount} erfolgreich, ${failureCount} fehlgeschlagen`
+          : `Upload fehlgeschlagen (${failureCount} Foto${failureCount !== 1 ? 's' : ''})`;
         
-        alert(message);
+        setUploadError(message);
+        
+        // Auto-select only failed photos for retry
+        const failedStackIds = new Set(
+          failedPhotos.map(f => {
+            const allPhotos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+            const failedPhoto = allPhotos.find((p: Photo) => p.id === f.id);
+            return failedPhoto?.stackId || f.id;
+          })
+        );
+        setUploadSelection(Array.from(failedStackIds));
+        
         console.error('[Upload] Failed photos:', failedPhotos);
       }
       
     } catch (error) {
+      // R8: Single-line error with inline retry button
       console.error('Upload error:', error);
       setIsUploading(false);
+      setUploadSuccess(false); // R8: Reset success state on error
       trigger('error');
-      alert('Upload fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      
+      const errorMsg = error instanceof Error ? error.message : 'Unbekannter Fehler';
+      setUploadError(`Upload fehlgeschlagen: ${errorMsg}`);
+      setFailedCount(totalPhotos);
     }
   };
 
@@ -369,6 +399,41 @@ export default function UploadScreen() {
 
       <div className="flex-1 overflow-y-scroll help-scrollbar pb-20">
         <div className="max-w-md mx-auto p-4 space-y-4">
+          
+          {/* R8: Error Message with Retry Button */}
+          {uploadError && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-50 border border-red-200 rounded-lg p-4"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-2 flex-1">
+                  <AlertCircle className="w-4 h-4 text-red-700 flex-shrink-0 mt-0.5" />
+                  <p className="text-red-700 font-medium" style={{ fontSize: '14px' }}>
+                    {uploadError}
+                  </p>
+                </div>
+                <HapticButton
+                  onClick={() => {
+                    setUploadError('');
+                    setFailedCount(0);
+                    handleUpload();
+                  }}
+                  hapticStyle="medium"
+                  className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex-shrink-0"
+                  data-testid="button-retry-upload"
+                >
+                  Erneut versuchen
+                </HapticButton>
+              </div>
+              {failedCount > 0 && (
+                <p className="text-red-600 text-xs mt-2">
+                  {failedCount} {failedCount === 1 ? 'Foto' : 'Fotos'} neu ausgewählt
+                </p>
+              )}
+            </motion.div>
+          )}
           
           {/* Job Selection */}
           <div className="space-y-3">

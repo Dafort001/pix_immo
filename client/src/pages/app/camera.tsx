@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -799,20 +799,36 @@ export default function CameraScreen() {
         /* Start Camera Screen */
         <div className="absolute inset-0 flex items-center justify-center z-50 bg-black/90 px-6">
           <div className="text-center">
-            {error && (
+            {error ? (
               <div className="mb-4 p-4 bg-red-500/20 border border-red-500 rounded-xl">
-                <p className="text-white text-sm">⚠️ {error}</p>
+                <div className="flex items-start gap-2 mb-3">
+                  <AlertCircle className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                  <p className="text-white text-sm">{error}</p>
+                </div>
+                {/* R8: Explicit Retry Button */}
+                <HapticButton
+                  onClick={() => {
+                    setError('');
+                    startCamera();
+                  }}
+                  className="w-full bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium"
+                  hapticStyle="medium"
+                  data-testid="button-retry-camera"
+                >
+                  Erneut versuchen
+                </HapticButton>
               </div>
+            ) : (
+              <HapticButton
+                onClick={() => startCamera()}
+                className="w-full bg-white text-black px-8 py-4 font-bold rounded-xl text-lg"
+                hapticStyle="medium"
+                data-testid="button-start-camera"
+              >
+                <CameraIcon className="w-6 h-6 mr-3 inline" />
+                Kamera starten
+              </HapticButton>
             )}
-            <HapticButton
-              onClick={() => startCamera()}
-              className="w-full bg-white text-black px-8 py-4 font-bold rounded-xl text-lg"
-              hapticStyle="medium"
-              data-testid="button-start-camera"
-            >
-              <CameraIcon className="w-6 h-6 mr-3 inline" />
-              Kamera starten
-            </HapticButton>
           </div>
         </div>
       )}
