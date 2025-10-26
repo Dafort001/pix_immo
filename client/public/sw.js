@@ -11,6 +11,7 @@ const STATIC_ASSETS = [
   '/app/upload',
   '/',
   '/manifest.json',
+  '/offline.html',
 ];
 
 // Install event - cache static assets
@@ -98,6 +99,8 @@ self.addEventListener('fetch', (event) => {
               cache.put(request, response);
             });
           }
+        }).catch(() => {
+          // Network failed, but we have cache - do nothing
         });
         return cachedResponse;
       }
@@ -112,6 +115,17 @@ self.addEventListener('fetch', (event) => {
           });
         }
         return response;
+      }).catch(() => {
+        // Network failed and no cache - show offline page for navigation requests
+        if (request.mode === 'navigate') {
+          return caches.match('/offline.html');
+        }
+        // For other resources, return a minimal error response
+        return new Response('Offline', {
+          status: 503,
+          statusText: 'Service Unavailable',
+          headers: new Headers({ 'Content-Type': 'text/plain' })
+        });
       });
     })
   );
