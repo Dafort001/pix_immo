@@ -4,6 +4,7 @@ import { Camera, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
+import { A2HSHint } from '@/components/mobile/A2HSHint';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 
@@ -19,6 +20,9 @@ export default function SplashScreen() {
     trigger('medium');
     setIsLoading(true);
     
+    // Mark user interaction for A2HS hint (sessionStorage = per-session)
+    sessionStorage.setItem('user-has-interacted', 'true');
+    
     // Mock Login (2 Sekunden Verzögerung)
     setTimeout(() => {
       setIsLoading(false);
@@ -28,6 +32,10 @@ export default function SplashScreen() {
 
   const handleQuickStart = () => {
     trigger('medium');
+    
+    // Mark user interaction for A2HS hint (sessionStorage = per-session)
+    sessionStorage.setItem('user-has-interacted', 'true');
+    
     setLocation('/app/camera');
   };
 
@@ -195,6 +203,9 @@ export default function SplashScreen() {
       </div>
 
       <BottomNav />
+      
+      {/* A2HS Hint - Shows after 30s */}
+      <A2HSHint delayMs={30000} />
     </div>
   );
 }
