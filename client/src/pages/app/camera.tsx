@@ -597,6 +597,22 @@ export default function CameraScreen() {
             </div>
           )}
 
+          {/* R9: Portrait Warning (Landscape = 90% Standard) */}
+          {cameraStarted && !isLandscape && (
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="absolute top-20 left-1/2 -translate-x-1/2 z-50"
+            >
+              <div className="bg-yellow-500/90 backdrop-blur-md rounded-lg px-4 py-2 shadow-lg border border-yellow-400/50 flex items-center gap-2">
+                <RotateCw className="w-4 h-4 text-yellow-900" />
+                <p className="text-yellow-900 text-sm font-medium">
+                  Querformat empfohlen
+                </p>
+              </div>
+            </motion.div>
+          )}
+
           {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
           <AnimatePresence>
             {showHistogram && (
