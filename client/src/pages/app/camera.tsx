@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle, RotateCw } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -441,7 +441,7 @@ export default function CameraScreen() {
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="w-full h-full object-contain"
           data-testid="video-camera-preview"
         />
       </div>
@@ -595,22 +595,6 @@ export default function CameraScreen() {
             <div className="absolute inset-0 pointer-events-none z-40 flex items-center justify-center">
               <div className="w-full h-px bg-yellow-400 opacity-70" style={{ boxShadow: '0 0 4px rgba(250, 204, 21, 0.8)' }} />
             </div>
-          )}
-
-          {/* R9: Portrait Warning (Landscape = 90% Standard) */}
-          {cameraStarted && !isLandscape && (
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="absolute top-20 left-1/2 -translate-x-1/2 z-50"
-            >
-              <div className="bg-yellow-500/90 backdrop-blur-md rounded-lg px-4 py-2 shadow-lg border border-yellow-400/50 flex items-center gap-2">
-                <RotateCw className="w-4 h-4 text-yellow-900" />
-                <p className="text-yellow-900 text-sm font-medium">
-                  Querformat empfohlen
-                </p>
-              </div>
-            </motion.div>
           )}
 
           {/* Histogram - Rechts unten, wegklickbar, kein Konflikt mit Raumtypwähler */}
