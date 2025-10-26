@@ -284,7 +284,8 @@ export default function CameraScreen() {
       log(`💻 Software: ${evStops} EV`);
     }
 
-    return canvas.toDataURL('image/jpeg', 0.90);
+    // Higher quality for professional real estate photography
+    return canvas.toDataURL('image/jpeg', 0.95);
   };
 
   const handleCapture = async () => {
@@ -393,7 +394,8 @@ export default function CameraScreen() {
           const ctx = canvas.getContext('2d');
           if (ctx) {
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const imageData = canvas.toDataURL('image/jpeg', 0.90);
+            // Higher quality for professional real estate photography
+            const imageData = canvas.toDataURL('image/jpeg', 0.95);
             
             photos.push({
               id: Date.now(),

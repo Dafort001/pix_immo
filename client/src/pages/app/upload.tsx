@@ -146,12 +146,22 @@ export default function UploadScreen() {
     }
   };
 
+  // File size limits (R7 spec)
+  const MAX_FILE_SIZE_MB = 25; // 25 MB max per photo
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
   // Helper: Upload single photo with retry logic
   const uploadPhotoWithRetry = async (
     blob: Blob, 
     photo: Photo, 
     maxRetries = 3
   ): Promise<void> => {
+    // R7: Validate file size
+    if (blob.size > MAX_FILE_SIZE_BYTES) {
+      const sizeMB = (blob.size / 1024 / 1024).toFixed(1);
+      throw new Error(`Foto zu groß (${sizeMB} MB). Max: ${MAX_FILE_SIZE_MB} MB`);
+    }
+    
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         // Create form data
@@ -197,15 +207,21 @@ export default function UploadScreen() {
   const handleUpload = async () => {
     if (uploadSelection.length === 0 || !selectedJobId) return;
     
-    setIsUploading(true);
-    trigger('success');
-    
-    // Calculate total photos to upload
+    // R7: Calculate total photos to upload
     const totalPhotos = uploadSelection.reduce((sum, stackId) => {
       const stack = stacks.find(s => s.stackId === stackId);
       return sum + (stack?.photos.length || 0);
     }, 0);
     
+    // R7: Validate count limit (max 100 photos per upload)
+    const MAX_PHOTOS_PER_UPLOAD = 100;
+    if (totalPhotos > MAX_PHOTOS_PER_UPLOAD) {
+      alert(`Zu viele Fotos ausgewählt (${totalPhotos}). Max: ${MAX_PHOTOS_PER_UPLOAD} Fotos pro Upload.\n\nBitte wähle weniger Fotos aus oder lade in mehreren Durchgängen hoch.`);
+      return;
+    }
+    
+    setIsUploading(true);
+    trigger('success');
     setUploadProgress({ current: 0, total: totalPhotos });
     
     const failedPhotos: { id: number; error: string }[] = [];
