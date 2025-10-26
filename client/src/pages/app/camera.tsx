@@ -43,6 +43,7 @@ export default function CameraScreen() {
   const [isLandscape, setIsLandscape] = useState(false);
   const [horizonLineEnabled, setHorizonLineEnabled] = useState(false);
   const [lastCaptureUrl, setLastCaptureUrl] = useState<string | null>(null);
+  const [isManualControlsOpen, setIsManualControlsOpen] = useState(false);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -533,6 +534,32 @@ export default function CameraScreen() {
       {/* Hidden Canvas */}
       <canvas ref={canvasRef} className="hidden" />
 
+      {/* Portrait Mode: Rotate Device Hint */}
+      {!isLandscape && cameraStarted && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-[70] bg-black/95 backdrop-blur-lg flex flex-col items-center justify-center px-8"
+          data-testid="rotate-device-hint"
+        >
+          <motion.div
+            animate={{ rotate: [0, -90, -90, -90] }}
+            transition={{ duration: 2, repeat: Infinity, repeatDelay: 1 }}
+            className="mb-8"
+          >
+            <svg className="w-20 h-20 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
+          </motion.div>
+          <h2 className="text-white text-2xl font-bold mb-3 text-center">
+            Bitte Gerät drehen
+          </h2>
+          <p className="text-white/70 text-center text-sm max-w-sm">
+            Die Kamera-App ist für Querformat optimiert. Bitte drehen Sie Ihr Gerät um 90°.
+          </p>
+        </motion.div>
+      )}
+
       {/* Status Bar - Only in Portrait */}
       {!isLandscape && <StatusBar variant="light" />}
 
@@ -633,6 +660,24 @@ export default function CameraScreen() {
               </div>
             </DrawerContent>
           </Drawer>
+
+          {/* Manual Controls Toggle */}
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setIsManualControlsOpen(!isManualControlsOpen);
+              trigger('light');
+            }}
+            className={`rounded-full ${
+              isManualControlsOpen 
+                ? 'bg-white/30 text-white' 
+                : 'text-white/50'
+            }`}
+            data-testid="button-toggle-manual-controls"
+          >
+            <Sliders className="w-6 h-6" />
+          </HapticButton>
 
           {/* Center: Capture Button */}
           <motion.button
