@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { Camera, Mail, Lock, Eye, EyeOff, Globe } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
 import { A2HSHint } from '@/components/mobile/A2HSHint';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
+import { useI18n, useTranslation } from '@/lib/i18n';
 
 export default function SplashScreen() {
   const [, setLocation] = useLocation();
@@ -16,6 +17,8 @@ export default function SplashScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
   const { trigger } = useHaptic();
+  const { language, setLanguage } = useI18n();
+  const t = useTranslation();
 
   const handleLogin = async () => {
     trigger('medium');
@@ -59,6 +62,23 @@ export default function SplashScreen() {
   return (
     <div className="h-full w-full bg-gradient-to-br from-[#EFF6FF] to-white flex flex-col">
       <StatusBar />
+
+      {/* Language Toggle Button */}
+      <div className="absolute top-safe-top right-4 z-10 pt-3">
+        <button
+          onClick={() => {
+            trigger('light');
+            setLanguage(language === 'de' ? 'en' : 'de');
+          }}
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/80 backdrop-blur-sm border border-gray-200 hover:bg-white transition-all shadow-sm"
+          data-testid="button-language-toggle"
+        >
+          <Globe className="w-4 h-4 text-gray-600" strokeWidth={1.5} />
+          <span className="text-gray-700 font-medium" style={{ fontSize: '14px' }}>
+            {language.toUpperCase()}
+          </span>
+        </button>
+      </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 pb-20">
         {/* Logo Section */}
