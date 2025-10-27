@@ -24,10 +24,10 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
-  // Landscape: Horizontal Navigation (left of camera controls, centered vertically)
+  // Landscape: Horizontal Navigation (left side, leftmost position)
   if (isLandscape) {
     return (
-      <div className={`fixed right-28 top-1/2 -translate-y-1/2 z-20 ${
+      <div className={`fixed left-4 top-1/2 -translate-y-1/2 z-20 ${
         isDark 
           ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
           : 'bg-white/95 backdrop-blur-lg'
@@ -80,7 +80,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 {isActive && (
                   <motion.div
                     layoutId="activeTabLandscape"
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full ${
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full ${
                       isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
                     }`}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
