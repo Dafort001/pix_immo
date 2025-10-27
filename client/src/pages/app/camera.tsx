@@ -757,34 +757,19 @@ export default function CameraScreen() {
             isLandscape ? 'hidden' : ''
           }`}>
             <div className="flex items-center justify-between">
-              {/* HDR Toggle - Sage Color with Flash Icon */}
+              {/* Format Selection - Links */}
               <HapticButton
                 onClick={() => {
-                  setHdrEnabled(!hdrEnabled);
+                  const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+                  const currentIndex = formats.indexOf(aspectRatio);
+                  const nextIndex = (currentIndex + 1) % formats.length;
+                  setAspectRatio(formats[nextIndex]);
                   trigger('light');
                 }}
-                className={`px-4 py-2 rounded-full flex items-center gap-2 ${
-                  hdrEnabled 
-                    ? 'text-white' 
-                    : 'bg-white/20 backdrop-blur-md text-white'
-                }`}
-                style={hdrEnabled ? { backgroundColor: '#4A5849' } : {}}
-                data-testid="button-toggle-hdr"
+                className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
+                data-testid="button-format-toggle"
               >
-                <Zap className="w-4 h-4" strokeWidth={2} fill={hdrEnabled ? 'currentColor' : 'none'} />
-                <span className="text-sm font-semibold">
-                  {hdrEnabled ? t('camera.hdr_on') : t('camera.hdr_off')}
-                </span>
-                {exposureControl && hdrEnabled && (
-                  <span className="text-xs opacity-75">
-                    {exposureControl.type === 'exposureTime' 
-                      ? `${exposureControl.baseValue.toFixed(0)}ms`
-                      : exposureControl.type === 'exposureCompensation'
-                      ? `${exposureControl.baseValue} EV`
-                      : `ISO${exposureControl.baseValue.toFixed(0)}`
-                    }
-                  </span>
-                )}
+                {aspectRatio}
               </HapticButton>
 
               {/* Debug Toggle (nur wenn showDebug aktiv) */}
