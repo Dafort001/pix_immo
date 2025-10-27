@@ -177,11 +177,11 @@ export function MeteringModeOverlay() {
           {/* Center Dot */}
           <circle cx="50" cy="50" r="2" fill="white" opacity="0.9" />
           
-          {/* Crosshair */}
-          <line x1="50" y1="10" x2="50" y2="30" stroke="white" strokeWidth="1" opacity="0.7" />
-          <line x1="50" y1="70" x2="50" y2="90" stroke="white" strokeWidth="1" opacity="0.7" />
-          <line x1="10" y1="50" x2="30" y2="50" stroke="white" strokeWidth="1" opacity="0.7" />
-          <line x1="70" y1="50" x2="90" y2="50" stroke="white" strokeWidth="1" opacity="0.7" />
+          {/* Crosshair - 5x größer */}
+          <line x1="50" y1="0" x2="50" y2="40" stroke="white" strokeWidth="1.5" opacity="0.7" />
+          <line x1="50" y1="60" x2="50" y2="100" stroke="white" strokeWidth="1.5" opacity="0.7" />
+          <line x1="0" y1="50" x2="40" y2="50" stroke="white" strokeWidth="1.5" opacity="0.7" />
+          <line x1="60" y1="50" x2="100" y2="50" stroke="white" strokeWidth="1.5" opacity="0.7" />
         </svg>
         
         {/* Label */}
