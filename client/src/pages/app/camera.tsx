@@ -787,39 +787,17 @@ export default function CameraScreen() {
                 )}
               </HapticButton>
 
-              <div className="flex items-center gap-2">
-                {/* Horizon Line Toggle */}
+              {/* Debug Toggle (nur wenn showDebug aktiv) */}
+              {showDebug && (
                 <HapticButton
                   size="icon"
                   variant="ghost"
-                  onClick={() => {
-                    setHorizonLineEnabled(!horizonLineEnabled);
-                    trigger('light');
-                  }}
-                  className={`backdrop-blur-md rounded-full ${
-                    horizonLineEnabled 
-                      ? 'bg-yellow-500/50 text-white' 
-                      : 'bg-white/20 text-white'
-                  }`}
-                  data-testid="button-toggle-horizon"
+                  onClick={() => setShowDebug(!showDebug)}
+                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="2" y1="12" x2="22" y2="12" />
-                  </svg>
+                  <Info className="w-5 h-5" />
                 </HapticButton>
-                
-                {/* Debug Toggle */}
-                {showDebug && (
-                  <HapticButton
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setShowDebug(!showDebug)}
-                    className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                  >
-                    <Info className="w-5 h-5" />
-                  </HapticButton>
-                )}
-              </div>
+              )}
             </div>
           </div>
 
@@ -1017,16 +995,22 @@ export default function CameraScreen() {
 
             {/* Control Buttons Row - Mit großem Capture-Button in der Mitte */}
             <div className="flex items-center justify-center gap-3">
-              {/* Left: Gallery Thumb */}
-              {lastCaptureUrl && (
-                <CaptureThumb 
-                  imageUrl={lastCaptureUrl}
-                  onClick={() => setLocation('/app/gallery')}
-                />
-              )}
-              {!lastCaptureUrl && (
-                <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-md" />
-              )}
+              {/* Left: Gallery Button */}
+              <button
+                onClick={() => setLocation('/app/gallery')}
+                className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-md flex items-center justify-center text-white/80 hover:bg-white/30 transition-colors"
+                data-testid="button-gallery-nav"
+              >
+                {lastCaptureUrl ? (
+                  <img src={lastCaptureUrl} alt="Gallery" className="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="M21 15l-5-5L5 21" />
+                  </svg>
+                )}
+              </button>
 
               {/* HDR Toggle */}
               <HapticButton
