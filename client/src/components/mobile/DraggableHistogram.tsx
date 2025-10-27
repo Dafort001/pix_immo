@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Histogram } from './Histogram';
 import { useHaptic } from '@/hooks/useHaptic';
@@ -11,6 +11,34 @@ interface DraggableHistogramProps {
   isLandscape?: boolean;
 }
 
+const STORAGE_KEY = 'histogram-position';
+
+function getDefaultPosition(isLandscape: boolean) {
+  return {
+    x: isLandscape ? window.innerWidth - 180 : window.innerWidth - 164,
+    y: isLandscape ? 24 : 144
+  };
+}
+
+function loadSavedPosition(isLandscape: boolean) {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Validate position is still within bounds
+      const maxX = window.innerWidth - 164;
+      const maxY = window.innerHeight - 80;
+      
+      if (parsed.x >= 0 && parsed.x <= maxX && parsed.y >= 0 && parsed.y <= maxY) {
+        return { x: parsed.x, y: parsed.y };
+      }
+    }
+  } catch (e) {
+    // Fall back to default if parsing fails
+  }
+  return getDefaultPosition(isLandscape);
+}
+
 export function DraggableHistogram({ 
   videoElement, 
   onClose, 
@@ -20,10 +48,7 @@ export function DraggableHistogram({
 }: DraggableHistogramProps) {
   const { trigger } = useHaptic();
   const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState({ 
-    x: isLandscape ? window.innerWidth - 180 : window.innerWidth - 164,
-    y: isLandscape ? 24 : 144
-  });
+  const [position, setPosition] = useState(() => loadSavedPosition(isLandscape));
   const dragStartRef = useRef({ x: 0, y: 0 });
   const initialPosRef = useRef({ x: 0, y: 0 });
 
@@ -50,6 +75,12 @@ export function DraggableHistogram({
     if (isDragging) {
       setIsDragging(false);
       trigger('light');
+      // Save position to localStorage
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(position));
+      } catch (e) {
+        // Ignore storage errors
+      }
     }
   };
 
