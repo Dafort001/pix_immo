@@ -610,7 +610,7 @@ export default function CameraScreen() {
           className="relative bg-black flex items-center justify-center"
           style={{
             width: isLandscape ? 'auto' : '100%',
-            height: isLandscape ? '100%' : 'auto',
+            height: 'auto',
             aspectRatio: (() => {
               const ratios = {
                 '2:3': isLandscape ? '3/2' : '2/3',
