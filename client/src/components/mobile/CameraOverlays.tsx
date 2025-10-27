@@ -151,8 +151,8 @@ export function MeteringModeOverlay() {
 
   return (
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center" data-testid="metering-spot-overlay">
-      {/* Spot Metering Circle */}
-      <div className="relative w-24 h-24">
+      {/* Spot Metering Circle - vergrößert auf w-40 h-40 */}
+      <div className="relative w-40 h-40">
         <svg className="w-full h-full" viewBox="0 0 100 100">
           {/* Outer Circle */}
           <circle
@@ -161,7 +161,7 @@ export function MeteringModeOverlay() {
             r="45"
             fill="none"
             stroke="white"
-            strokeWidth="1.5"
+            strokeWidth="2"
             opacity="0.7"
           />
           {/* Inner Circle */}
@@ -171,17 +171,17 @@ export function MeteringModeOverlay() {
             r="35"
             fill="none"
             stroke="white"
-            strokeWidth="1"
+            strokeWidth="1.5"
             opacity="0.5"
           />
-          {/* Center Dot */}
-          <circle cx="50" cy="50" r="2" fill="white" opacity="0.9" />
+          {/* Center Dot - vergrößert */}
+          <circle cx="50" cy="50" r="3.5" fill="white" opacity="0.9" />
           
-          {/* Crosshair - deutlich vergrößert */}
-          <line x1="50" y1="5" x2="50" y2="45" stroke="white" strokeWidth="2" opacity="0.8" />
-          <line x1="50" y1="55" x2="50" y2="95" stroke="white" strokeWidth="2" opacity="0.8" />
-          <line x1="5" y1="50" x2="45" y2="50" stroke="white" strokeWidth="2" opacity="0.8" />
-          <line x1="55" y1="50" x2="95" y2="50" stroke="white" strokeWidth="2" opacity="0.8" />
+          {/* Crosshair - deutlich vergrößert mit strokeWidth 4 und längeren Linien */}
+          <line x1="50" y1="0" x2="50" y2="42" stroke="white" strokeWidth="4" opacity="0.9" />
+          <line x1="50" y1="58" x2="50" y2="100" stroke="white" strokeWidth="4" opacity="0.9" />
+          <line x1="0" y1="50" x2="42" y2="50" stroke="white" strokeWidth="4" opacity="0.9" />
+          <line x1="58" y1="50" x2="100" y2="50" stroke="white" strokeWidth="4" opacity="0.9" />
         </svg>
         
         {/* Label */}

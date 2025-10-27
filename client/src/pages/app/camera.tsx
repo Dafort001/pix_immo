@@ -906,21 +906,22 @@ export default function CameraScreen() {
             )}
           </AnimatePresence>
 
-          {/* Bottom Controls - Like Screenshot */}
+          {/* Bottom Controls - Portrait Mode */}
           <div className={`absolute bottom-0 left-0 right-0 z-20 pb-36 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
-            {/* Room Type Label - Top Left (wie im Screenshot) */}
-            <div className="mb-6 flex items-center justify-start">
+            {/* Control Buttons Row - Raumwähler links vom Auslöser */}
+            <div className="flex items-center justify-center gap-2">
+              {/* Room Type Selector - Links vom Auslöser */}
               <Drawer>
                 <DrawerTrigger asChild>
                   <button
                     onClick={() => trigger('light')}
-                    className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 border border-white/20"
+                    className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md text-white flex flex-col items-center justify-center border border-white/20 flex-shrink-0"
                     data-testid="button-select-roomtype"
                   >
-                    <span>{currentRoomType}</span>
-                    <span className="text-white/60">#1</span>
+                    <span className="text-[9px] opacity-60">#1</span>
+                    <span className="text-[10px] font-semibold leading-tight">{currentRoomType.substring(0, 4)}</span>
                   </button>
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[85vh] bg-white">
@@ -974,41 +975,13 @@ export default function CameraScreen() {
                   </div>
                 </DrawerContent>
               </Drawer>
-            </div>
-
-            {/* Control Buttons Row - Mit großem Capture-Button in der Mitte */}
-            <div className="flex items-center justify-center gap-3">
-              {/* Timer Mode */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  const modes: Array<0 | 3 | 10> = [0, 3, 10];
-                  const currentIndex = modes.indexOf(timerMode);
-                  const nextIndex = (currentIndex + 1) % modes.length;
-                  setTimerMode(modes[nextIndex]);
-                  trigger('light');
-                }}
-                className={`w-12 h-12 rounded-full backdrop-blur-md ${
-                  timerMode > 0
-                    ? 'bg-white/30 text-white' 
-                    : 'bg-white/20 text-white/60'
-                }`}
-                data-testid="button-toggle-timer"
-              >
-                {timerMode > 0 ? (
-                  <span className="text-sm font-bold">{timerMode}s</span>
-                ) : (
-                  <Timer className="w-5 h-5" />
-                )}
-              </HapticButton>
 
               {/* BIG CAPTURE BUTTON - Center */}
               <motion.button
                 onClick={handleCapture}
                 disabled={capturing || countdown !== null}
                 whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-                className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center ${
+                className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 ${
                   (capturing || countdown !== null) ? 'opacity-50' : ''
                 }`}
                 data-testid="button-capture"
@@ -1024,7 +997,7 @@ export default function CameraScreen() {
                   setGridType(gridType === 'none' ? '3x3' : 'none');
                   trigger('light');
                 }}
-                className={`w-12 h-12 rounded-full backdrop-blur-md ${
+                className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
                   gridType !== 'none'
                     ? 'bg-white/30 text-white' 
                     : 'bg-white/20 text-white/60'
@@ -1034,12 +1007,12 @@ export default function CameraScreen() {
                 <Grid3x3 className="w-5 h-5" />
               </HapticButton>
 
-              {/* Stats/Chart Button (rechts) */}
+              {/* Histogram Button */}
               <HapticButton
                 size="icon"
                 variant="ghost"
                 onClick={() => setShowHistogram(!showHistogram)}
-                className={`w-12 h-12 rounded-full backdrop-blur-md ${
+                className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
                   showHistogram 
                     ? 'bg-white/30 text-white' 
                     : 'bg-white/20 text-white/60'
@@ -1051,6 +1024,31 @@ export default function CameraScreen() {
                   <rect x="10" y="8" width="4" height="13" />
                   <rect x="17" y="4" width="4" height="17" />
                 </svg>
+              </HapticButton>
+
+              {/* Timer Mode - Ganz rechts */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const modes: Array<0 | 3 | 10> = [0, 3, 10];
+                  const currentIndex = modes.indexOf(timerMode);
+                  const nextIndex = (currentIndex + 1) % modes.length;
+                  setTimerMode(modes[nextIndex]);
+                  trigger('light');
+                }}
+                className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
+                  timerMode > 0
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white/60'
+                }`}
+                data-testid="button-toggle-timer"
+              >
+                {timerMode > 0 ? (
+                  <span className="text-sm font-bold">{timerMode}s</span>
+                ) : (
+                  <Timer className="w-5 h-5" />
+                )}
               </HapticButton>
             </div>
           </div>
