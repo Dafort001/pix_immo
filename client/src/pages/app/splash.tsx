@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Camera, Mail, Lock, Eye, EyeOff, Globe } from 'lucide-react';
+import { Camera, Mail, Lock, Eye, EyeOff, Globe, Image as ImageIcon, Upload as UploadIcon } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -9,6 +9,7 @@ import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import { Checkbox } from '@/components/ui/checkbox';
+import { useQuery } from '@tanstack/react-query';
 
 export default function SplashScreen() {
   const [, setLocation] = useLocation();
@@ -19,8 +20,17 @@ export default function SplashScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
   const { trigger } = useHaptic();
-  const { language, setLanguage } = useI18n();
+  const { language, setLanguage} = useI18n();
   const { t } = useTranslation();
+
+  // Check authentication status
+  const { data: authData, isLoading: isAuthLoading } = useQuery({
+    queryKey: ['/api/auth/me'],
+    retry: false, // Don't retry if not authenticated
+    staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
+  });
+
+  const isAuthenticated = !!authData?.user;
 
   const handleLogin = async () => {
     trigger('medium');
@@ -157,14 +167,99 @@ export default function SplashScreen() {
           </p>
         </motion.div>
 
-        {/* Login Form */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.6 }}
-          className="w-full max-w-sm space-y-4"
-        >
-          {/* Email Input */}
+        {/* Show loading state while checking auth */}
+        {isAuthLoading && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-gray-600"
+            style={{ fontSize: '16px' }}
+          >
+            {t('splash.checking_auth') || 'Checking authentication...'}
+          </motion.div>
+        )}
+
+        {/* Show navigation buttons if authenticated */}
+        {!isAuthLoading && isAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="w-full max-w-sm space-y-4"
+          >
+            <p className="text-center text-gray-700 mb-6" style={{ fontSize: '16px' }}>
+              {t('splash.welcome_back') || 'Welcome back!'} {authData?.user?.email}
+            </p>
+
+            <HapticButton
+              onClick={() => {
+                trigger('medium');
+                setLocation('/app/camera');
+              }}
+              className="w-full bg-[#6E7E6B] text-white py-4 rounded-xl shadow-md hover:bg-[#5A6A59] transition-colors flex items-center justify-center gap-3"
+              style={{ fontSize: '16px' }}
+              data-testid="button-go-camera"
+            >
+              <Camera className="w-5 h-5" strokeWidth={1.5} />
+              {t('splash.go_camera') || 'Open Camera'}
+            </HapticButton>
+
+            <HapticButton
+              onClick={() => {
+                trigger('light');
+                setLocation('/app/gallery');
+              }}
+              variant="outline"
+              className="w-full border-gray-300 text-gray-700 py-4 rounded-xl flex items-center justify-center gap-3"
+              style={{ fontSize: '16px' }}
+              data-testid="button-go-gallery"
+            >
+              <ImageIcon className="w-5 h-5" strokeWidth={1.5} />
+              {t('splash.go_gallery') || 'View Gallery'}
+            </HapticButton>
+
+            <HapticButton
+              onClick={() => {
+                trigger('light');
+                setLocation('/app/upload');
+              }}
+              variant="outline"
+              className="w-full border-gray-300 text-gray-700 py-4 rounded-xl flex items-center justify-center gap-3"
+              style={{ fontSize: '16px' }}
+              data-testid="button-go-upload"
+            >
+              <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
+              {t('splash.go_upload') || 'Upload Photos'}
+            </HapticButton>
+
+            {/* Logout Button */}
+            <button
+              onClick={async () => {
+                trigger('medium');
+                await fetch('/api/auth/logout', {
+                  method: 'POST',
+                  credentials: 'include',
+                });
+                window.location.reload();
+              }}
+              className="w-full text-[#A85B2E] hover:underline mt-4"
+              style={{ fontSize: '14px' }}
+              data-testid="button-logout"
+            >
+              {t('splash.logout') || 'Logout'}
+            </button>
+          </motion.div>
+        )}
+
+        {/* Show login form if not authenticated */}
+        {!isAuthLoading && !isAuthenticated && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3, duration: 0.6 }}
+            className="w-full max-w-sm space-y-4"
+          >
+            {/* Email Input */}
           <div className="space-y-2">
             <label className="text-gray-700" style={{ fontSize: '14px' }}>
               {t('splash.email_label')}
@@ -294,6 +389,7 @@ export default function SplashScreen() {
             </button>
           </p>
         </motion.div>
+        )}
       </div>
 
       {/* Footer */}

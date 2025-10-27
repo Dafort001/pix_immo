@@ -24,6 +24,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { useLocation } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
 
 interface Photo {
   id: number;
@@ -64,6 +65,24 @@ const ROOM_TYPES = [
 
 export default function GalleryScreen() {
   const [, setLocation] = useLocation();
+  
+  // Route protection - redirect to login if not authenticated
+  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!isAuthLoading && !authData?.user) {
+      setLocation('/app');
+    }
+  }, [isAuthLoading, authData, setLocation]);
+
+  // Show nothing while checking auth
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
+  
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedStack, setSelectedStack] = useState<PhotoStack | null>(null);

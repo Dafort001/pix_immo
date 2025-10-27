@@ -15,9 +15,27 @@ import { useLocation } from 'wouter';
 import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
 import { useManualModeStore } from '@/lib/manual-mode/store';
 import { buildCameraConstraints, applySettingsToTrack, logCapabilities } from '@/lib/manual-mode/constraints';
+import { useQuery } from '@tanstack/react-query';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
+  
+  // Route protection - redirect to login if not authenticated
+  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!isAuthLoading && !authData?.user) {
+      setLocation('/app');
+    }
+  }, [isAuthLoading, authData, setLocation]);
+
+  // Show nothing while checking auth
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
   const [cameraStarted, setCameraStarted] = useState(false);
   const [hdrEnabled, setHdrEnabled] = useState(true);
   const [capturing, setCapturing] = useState(false);

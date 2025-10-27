@@ -16,7 +16,13 @@
     "no_account": "Noch kein Account?",
     "register_link": "Jetzt registrieren",
     "stay_signed_in": "Angemeldet bleiben",
-    "device_notice": "Nur für iPhone Pro Modelle (13/14/15 Pro/Max)"
+    "device_notice": "Nur für iPhone Pro Modelle (13/14/15 Pro/Max)",
+    "checking_auth": "Authentifizierung wird geprüft...",
+    "welcome_back": "Willkommen zurück!",
+    "go_camera": "Kamera öffnen",
+    "go_gallery": "Galerie ansehen",
+    "go_upload": "Fotos hochladen",
+    "logout": "Abmelden"
   },
   
   "login": {

@@ -6,6 +6,7 @@ import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useQuery } from '@tanstack/react-query';
+import { useLocation } from 'wouter';
 import type { Job } from '@shared/schema';
 
 interface Photo {
@@ -31,6 +32,25 @@ interface PhotoStack {
 }
 
 export default function UploadScreen() {
+  const [, setLocation] = useLocation();
+  
+  // Route protection - redirect to login if not authenticated
+  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+  });
+
+  useEffect(() => {
+    if (!isAuthLoading && !authData?.user) {
+      setLocation('/app');
+    }
+  }, [isAuthLoading, authData, setLocation]);
+
+  // Show nothing while checking auth
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
+  
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [uploadSelection, setUploadSelection] = useState<number[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);

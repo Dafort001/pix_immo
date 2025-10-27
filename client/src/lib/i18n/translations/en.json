@@ -16,7 +16,13 @@
     "no_account": "No account yet?",
     "register_link": "Sign up now",
     "stay_signed_in": "Stay signed in",
-    "device_notice": "iPhone Pro models only (13/14/15 Pro/Max)"
+    "device_notice": "iPhone Pro models only (13/14/15 Pro/Max)",
+    "checking_auth": "Checking authentication...",
+    "welcome_back": "Welcome back!",
+    "go_camera": "Open Camera",
+    "go_gallery": "View Gallery",
+    "go_upload": "Upload Photos",
+    "logout": "Logout"
   },
   
   "login": {
