@@ -403,7 +403,8 @@ export default function SplashScreen() {
         </p>
       </div>
 
-      <BottomNav photoCount={photoCount} />
+      {/* BottomNav - Only show when authenticated */}
+      {isAuthenticated && <BottomNav photoCount={photoCount} />}
       
       {/* A2HS Hint - Shows after 30s */}
       <A2HSHint delayMs={30000} />

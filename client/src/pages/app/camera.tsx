@@ -4,7 +4,7 @@ import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, Ch
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
-import { Histogram } from '@/components/mobile/Histogram';
+import { DraggableHistogram } from '@/components/mobile/DraggableHistogram';
 import { ManualControls } from '@/components/mobile/ManualControls';
 import { GridOverlay, HorizonLevelOverlay, MeteringModeOverlay, FocusPeakingOverlay } from '@/components/mobile/CameraOverlays';
 import { LevelIndicator } from '@/components/mobile/LevelIndicator';
@@ -748,22 +748,73 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Format Selection Button - Top Center */}
-      {cameraStarted && (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
-          <HapticButton
-            onClick={() => {
-              const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
-              const currentIndex = formats.indexOf(aspectRatio);
-              const nextIndex = (currentIndex + 1) % formats.length;
-              setAspectRatio(formats[nextIndex]);
-              trigger('light');
-            }}
-            className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
-            data-testid="button-format-toggle"
-          >
-            {aspectRatio}
-          </HapticButton>
+      {/* Top Controls Row - Only in Portrait */}
+      {cameraStarted && !isLandscape && (
+        <div className="absolute top-20 left-0 right-0 z-30 px-4">
+          <div className="flex items-center justify-between">
+            {/* Format Selection - Left */}
+            <HapticButton
+              onClick={() => {
+                const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+                const currentIndex = formats.indexOf(aspectRatio);
+                const nextIndex = (currentIndex + 1) % formats.length;
+                setAspectRatio(formats[nextIndex]);
+                trigger('light');
+              }}
+              className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
+              data-testid="button-format-toggle"
+            >
+              {aspectRatio}
+            </HapticButton>
+
+            {/* Capture & Timer - Right */}
+            <div className="flex items-center gap-3">
+              {/* Timer Toggle */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const modes: (0 | 3 | 10)[] = [0, 3, 10];
+                  const currentIndex = modes.indexOf(timerMode);
+                  const nextIndex = (currentIndex + 1) % modes.length;
+                  setTimerMode(modes[nextIndex]);
+                  trigger('light');
+                }}
+                className={`backdrop-blur-md rounded-full ${
+                  timerMode > 0 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white'
+                }`}
+                data-testid="button-toggle-timer"
+              >
+                <div className="relative">
+                  <Timer className="w-5 h-5" />
+                  {timerMode > 0 && (
+                    <div className="absolute -bottom-1 -right-1 bg-black rounded-full w-3 h-3 flex items-center justify-center">
+                      <span className="text-[8px] font-bold">{timerMode}</span>
+                    </div>
+                  )}
+                </div>
+              </HapticButton>
+
+              {/* Capture Button */}
+              <motion.button
+                onClick={handleCapture}
+                disabled={capturing || countdown !== null}
+                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+                className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
+                  (capturing || countdown !== null) ? 'opacity-50' : ''
+                }`}
+                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
+                data-testid="button-capture-photo"
+              >
+                <div 
+                  className="w-12 h-12 rounded-full"
+                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
+                />
+              </motion.button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -860,39 +911,19 @@ export default function CameraScreen() {
             onDismiss={() => setLastCaptureUrl(null)}
           />
 
-          {/* Histogram - Top right, responsive positioning */}
+          {/* Histogram - Draggable */}
           <AnimatePresence>
             {showHistogram && (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className={`absolute z-30 ${
-                  isLandscape ? 'top-6 right-28' : 'top-36 right-4'
-                }`}
-              >
-                <div className="bg-black/90 backdrop-blur-md rounded-lg p-2 border border-white/20 relative">
-                  <HapticButton
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowHistogram(false);
-                      trigger('light');
-                    }}
-                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 rounded-full flex items-center justify-center text-white hover:bg-red-600 z-10"
-                    data-testid="button-close-histogram"
-                  >
-                    <X className="w-4 h-4" />
-                  </HapticButton>
-                  <Histogram 
-                    videoElement={videoRef.current} 
-                    width={140}
-                    height={40}
-                    onBrightnessChange={handleBrightnessChange}
-                    currentBrightness={brightness}
-                  />
-                </div>
-              </motion.div>
+              <DraggableHistogram
+                videoElement={videoRef.current}
+                onClose={() => {
+                  setShowHistogram(false);
+                  trigger('light');
+                }}
+                onBrightnessChange={handleBrightnessChange}
+                currentBrightness={brightness}
+                isLandscape={isLandscape}
+              />
             )}
           </AnimatePresence>
 
@@ -973,9 +1004,9 @@ export default function CameraScreen() {
           <div className={`absolute bottom-0 left-0 right-0 z-20 pb-28 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
-            {/* Zoom Buttons - Wie im Figma */}
+            {/* Zoom Buttons - Ohne 0.5× (Minus-Button entfernt) */}
             <div className="mb-4 flex justify-center gap-2">
-              {[0.5, 1, 1.5, 2].map((zoomLevel) => (
+              {[1, 1.5, 2].map((zoomLevel) => (
                 <button
                   key={zoomLevel}
                   onClick={() => handleZoomChange(zoomLevel)}
@@ -992,7 +1023,7 @@ export default function CameraScreen() {
               ))}
             </div>
             
-            {/* Bottom Button Bar - Centered Controls */}
+            {/* Bottom Button Bar - Nur Grid Toggle */}
             <div className="flex items-center justify-center gap-6">
               {/* Grid Toggle */}
               <HapticButton
@@ -1010,51 +1041,6 @@ export default function CameraScreen() {
                 data-testid="button-toggle-grid"
               >
                 <Grid3x3 className="w-5 h-5" />
-              </HapticButton>
-
-              {/* Capture Button - Sage Border */}
-              <motion.button
-                onClick={handleCapture}
-                disabled={capturing || countdown !== null}
-                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
-                  (capturing || countdown !== null) ? 'opacity-50' : ''
-                }`}
-                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
-                data-testid="button-capture-photo"
-              >
-                <div 
-                  className="w-16 h-16 rounded-full"
-                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
-                />
-              </motion.button>
-
-              {/* Timer Toggle */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  const modes: (0 | 3 | 10)[] = [0, 3, 10];
-                  const currentIndex = modes.indexOf(timerMode);
-                  const nextIndex = (currentIndex + 1) % modes.length;
-                  setTimerMode(modes[nextIndex]);
-                  trigger('light');
-                }}
-                className={`backdrop-blur-md rounded-full ${
-                  timerMode > 0 
-                    ? 'bg-white/30 text-white' 
-                    : 'bg-white/20 text-white'
-                }`}
-                data-testid="button-toggle-timer"
-              >
-                <div className="relative">
-                  <Timer className="w-5 h-5" />
-                  {timerMode > 0 && (
-                    <div className="absolute -bottom-1 -right-1 bg-black rounded-full w-3 h-3 flex items-center justify-center">
-                      <span className="text-[8px] font-bold">{timerMode}</span>
-                    </div>
-                  )}
-                </div>
               </HapticButton>
             </div>
 
