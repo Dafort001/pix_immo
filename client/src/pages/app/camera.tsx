@@ -47,7 +47,6 @@ export default function CameraScreen() {
   const [photoCount, setPhotoCount] = useState(0);
   
   // Camera Controls
-  const [gridEnabled, setGridEnabled] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -58,6 +57,10 @@ export default function CameraScreen() {
   const [isManualControlsOpen, setIsManualControlsOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'2:3' | '4:3' | '16:9'>('2:3');
   const [brightness, setBrightness] = useState(0);
+  
+  // Manual Mode Store - Grid Type
+  const gridType = useManualModeStore((state) => state.gridType);
+  const setGridType = useManualModeStore((state) => state.setGridType);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -733,11 +736,11 @@ export default function CameraScreen() {
             size="icon"
             variant="ghost"
             onClick={() => {
-              setGridEnabled(!gridEnabled);
+              setGridType(gridType === 'none' ? '3x3' : 'none');
               trigger('light');
             }}
             className={`rounded-full ${
-              gridEnabled 
+              gridType !== 'none'
                 ? 'bg-white/30 text-white' 
                 : 'text-white/50'
             }`}
@@ -1033,11 +1036,11 @@ export default function CameraScreen() {
                 size="icon"
                 variant="ghost"
                 onClick={() => {
-                  setGridEnabled(!gridEnabled);
+                  setGridType(gridType === 'none' ? '3x3' : 'none');
                   trigger('light');
                 }}
                 className={`w-12 h-12 rounded-full backdrop-blur-md ${
-                  gridEnabled 
+                  gridType !== 'none'
                     ? 'bg-white/30 text-white' 
                     : 'bg-white/20 text-white/60'
                 }`}
