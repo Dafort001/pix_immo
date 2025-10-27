@@ -450,6 +450,147 @@ app.get("/api/me", async (c) => {
   }
 });
 
+// ========== Auth Aliases for /api/auth/* paths (used by mobile app) ==========
+
+// GET /api/auth/me - Alias for /api/me
+app.get("/api/auth/me", async (c) => {
+  try {
+    const authUser = await getAuthUser(c);
+
+    if (!authUser) {
+      return c.json({ error: "Not authenticated" }, 401);
+    }
+
+    const userResponse: UserResponse = {
+      id: authUser.user.id,
+      email: authUser.user.email,
+      role: authUser.user.role,
+      createdAt: authUser.user.createdAt,
+    };
+
+    // If session exists, include it
+    if ("session" in authUser) {
+      const sessionAuth = authUser as { user: any; session: any };
+      return c.json({
+        user: userResponse,
+        session: {
+          id: sessionAuth.session.id,
+          expiresAt: sessionAuth.session.expiresAt,
+        },
+      });
+    }
+
+    // Bearer token auth - no session
+    return c.json({
+      user: userResponse,
+    });
+  } catch (error) {
+    console.error("Get user error:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/auth/login - Alias for /api/login
+app.post("/api/auth/login", loginLimiter, async (c) => {
+  try {
+    const body = await c.req.json();
+    const validation = loginSchema.safeParse(body);
+
+    if (!validation.success) {
+      return c.json(
+        { error: validation.error.errors[0].message },
+        400,
+      );
+    }
+
+    const { email, password, staySignedIn } = validation.data;
+    const user = await storage.getUserByEmail(email);
+
+    if (!user || !(await verifyPassword(password, user.hashedPassword))) {
+      return c.json({ error: "Invalid credentials" }, 401);
+    }
+
+    // Determine session expiry based on staySignedIn
+    const expiryDuration = staySignedIn
+      ? 30 * 24 * 60 * 60 * 1000 // 30 days
+      : 24 * 60 * 60 * 1000; // 24 hours
+    const expiresAt = Date.now() + expiryDuration;
+
+    const session = await storage.createSession(user.id, expiresAt);
+
+    setCookie(c, SESSION_CONFIG.cookieName, session.id, {
+      ...SESSION_CONFIG.cookieOptions,
+      maxAge: Math.floor(expiryDuration / 1000), // maxAge in seconds
+    });
+
+    return c.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+      },
+      session: {
+        id: session.id,
+        expiresAt: session.expiresAt,
+      },
+    });
+  } catch (error) {
+    console.error("Login error:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/auth/logout - Alias for /api/logout
+app.post("/api/auth/logout", async (c) => {
+  try {
+    const sessionId = getCookie(c, SESSION_CONFIG.cookieName);
+
+    if (sessionId) {
+      await storage.deleteSession(sessionId);
+    }
+
+    deleteCookie(c, SESSION_CONFIG.cookieName);
+
+    return c.json({ success: true });
+  } catch (error) {
+    console.error("Logout error:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
+// POST /api/auth/demo - Demo mode login (24h expiry)
+app.post("/api/auth/demo", loginLimiter, async (c) => {
+  try {
+    const demoUser = await ensureDemoUser();
+    
+    // Create session with 24h expiry for demo mode
+    const expiresAt = Date.now() + (24 * 60 * 60 * 1000); // 24 hours
+    const session = await storage.createSession(demoUser.id, expiresAt);
+    
+    setCookie(c, SESSION_CONFIG.cookieName, session.id, {
+      ...SESSION_CONFIG.cookieOptions,
+      maxAge: 24 * 60 * 60, // 24 hours in seconds
+    });
+    
+    return c.json({
+      user: {
+        id: demoUser.id,
+        email: demoUser.email,
+        role: demoUser.role,
+        createdAt: demoUser.createdAt,
+      },
+      session: {
+        id: session.id,
+        expiresAt: session.expiresAt,
+      },
+    });
+  } catch (error) {
+    console.error("Demo login error:", error);
+    return c.json({ error: "Internal server error" }, 500);
+  }
+});
+
 // GET /api/credits/balance - Get user credit balance
 app.get("/api/credits/balance", async (c) => {
   try {
@@ -1019,7 +1160,6 @@ app.get("/api/roomtypes", async (c) => {
       ALL_ROOM_TYPES, 
       getRoomsByCategory, 
       getAllRoomsWithMeta,
-      ROOM_SYNONYMS,
       ROOM_CATEGORIES,
       KEYBOARD_SHORTCUTS,
     } = await import("../shared/room-types");
@@ -1028,7 +1168,6 @@ app.get("/api/roomtypes", async (c) => {
       roomTypes: ALL_ROOM_TYPES,
       byCategory: getRoomsByCategory(),
       withMeta: getAllRoomsWithMeta(),
-      synonyms: ROOM_SYNONYMS,
       categories: ROOM_CATEGORIES,
       shortcuts: KEYBOARD_SHORTCUTS,
       version: "v3.1",
