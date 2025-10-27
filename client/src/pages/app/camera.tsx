@@ -649,12 +649,12 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Landscape: Right Side Controls */}
+      {/* Landscape: Right Side Controls (2 Columns) */}
       {isLandscape && cameraStarted && (
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
-          {/* Left Column: Flip + Auslöser + Manual */}
-          <div className="flex flex-col items-center gap-6">
-            {/* Kamera-Flip - Über Auslöser */}
+        <div className="absolute right-20 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
+          {/* Column 1: All 8 Buttons */}
+          <div className="flex flex-col items-center gap-3">
+            {/* Kamera-Flip */}
             <HapticButton
               size="icon"
               variant="ghost"
@@ -665,7 +665,7 @@ export default function CameraScreen() {
               <RefreshCw className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
             </HapticButton>
 
-            {/* BIG CAPTURE BUTTON - Center */}
+            {/* BIG CAPTURE BUTTON */}
             <motion.button
               onClick={handleCapture}
               disabled={capturing || countdown !== null}
@@ -678,7 +678,7 @@ export default function CameraScreen() {
               <div className="w-16 h-16 rounded-full bg-white" />
             </motion.button>
 
-            {/* Manual Controls - Unter Auslöser */}
+            {/* Manual Controls */}
             <HapticButton
               size="icon"
               variant="ghost"
@@ -695,10 +695,10 @@ export default function CameraScreen() {
             >
               <Sliders className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
             </HapticButton>
-          </div>
 
-          {/* Right Column: 5 Buttons (90° gedreht) */}
-          <div className="flex flex-col items-center gap-3">
+            {/* Separator */}
+            <div className="w-8 h-[1px] bg-white/20 my-1" />
+
             {/* Format Button */}
             <HapticButton
               size="icon"
