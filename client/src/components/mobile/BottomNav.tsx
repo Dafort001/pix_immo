@@ -24,14 +24,14 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
-  // Landscape: Vertical Right Side Navigation (bottom position, avoids camera controls)
+  // Landscape: Horizontal Navigation (left of camera controls, centered vertically)
   if (isLandscape) {
     return (
-      <div className={`fixed right-0 bottom-4 z-30 ${
+      <div className={`fixed right-28 top-1/2 -translate-y-1/2 z-20 ${
         isDark 
           ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
           : 'bg-white/95 backdrop-blur-lg'
-      } rounded-l-2xl border-l border-t border-b ${
+      } rounded-2xl border ${
         isDark ? 'border-white/5' : 'border-gray-200/50'
       }`} data-testid="bottom-nav">
         <div className="flex flex-col items-center py-2 px-1 gap-1">
@@ -45,7 +45,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 variant="ghost"
                 onClick={() => setLocation(item.path)}
                 hapticStyle="light"
-                className={`flex items-center justify-center relative w-12 h-12 rounded-lg transition-all ${
+                className={`flex items-center justify-center relative w-11 h-11 rounded-lg transition-all ${
                   isDark
                     ? isActive
                       ? 'bg-[#4A5849]/20 text-[#6B8268]'
@@ -80,7 +80,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 {isActive && (
                   <motion.div
                     layoutId="activeTabLandscape"
-                    className={`absolute right-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-l-full ${
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full ${
                       isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
                     }`}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
