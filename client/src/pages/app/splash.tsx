@@ -24,7 +24,7 @@ export default function SplashScreen() {
   const { t } = useTranslation();
 
   // Check authentication status
-  const { data: authData, isLoading: isAuthLoading } = useQuery({
+  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user: { id: number; email: string; role: string } }>({
     queryKey: ['/api/auth/me'],
     retry: false, // Don't retry if not authenticated
     staleTime: 5 * 60 * 1000, // Consider fresh for 5 minutes
