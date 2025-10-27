@@ -895,7 +895,7 @@ export default function CameraScreen() {
           </AnimatePresence>
 
           {/* Bottom Controls - Like Screenshot */}
-          <div className={`absolute bottom-0 left-0 right-0 z-20 pb-28 px-4 ${
+          <div className={`absolute bottom-0 left-0 right-0 z-20 pb-36 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
             {/* Room Type Label - Top Left (wie im Screenshot) */}
