@@ -8,17 +8,19 @@ import { A2HSHint } from '@/components/mobile/A2HSHint';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function SplashScreen() {
   const [, setLocation] = useLocation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [staySignedIn, setStaySignedIn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [photoCount, setPhotoCount] = useState(0);
   const { trigger } = useHaptic();
   const { language, setLanguage } = useI18n();
-  const t = useTranslation();
+  const { t } = useTranslation();
 
   const handleLogin = async () => {
     trigger('medium');
@@ -101,13 +103,13 @@ export default function SplashScreen() {
 
           {/* Brand Name */}
           <h1 className="text-gray-900 mb-2" style={{ fontSize: '36px' }}>
-            PIX.IMMO
+            {t('app_name')}
           </h1>
           <p className="text-gray-600" style={{ fontSize: '18px' }}>
-            Capture
+            {t('splash.subtitle')}
           </p>
           <p className="text-gray-500 mt-2" style={{ fontSize: '14px' }}>
-            Professionelle Immobilienfotografie
+            {t('splash.tagline')}
           </p>
         </motion.div>
 
@@ -121,7 +123,7 @@ export default function SplashScreen() {
           {/* Email Input */}
           <div className="space-y-2">
             <label className="text-gray-700" style={{ fontSize: '14px' }}>
-              E-Mail
+              {t('splash.email_label')}
             </label>
             <div className="relative">
               <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
@@ -129,7 +131,7 @@ export default function SplashScreen() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="max.mustermann@pix-immo.de"
+                placeholder={t('splash.email_placeholder')}
                 className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5849] focus:border-transparent transition-all"
                 style={{ fontSize: '16px' }}
                 data-testid="input-email"
@@ -140,7 +142,7 @@ export default function SplashScreen() {
           {/* Password Input */}
           <div className="space-y-2">
             <label className="text-gray-700" style={{ fontSize: '14px' }}>
-              Passwort
+              {t('splash.password_label')}
             </label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" strokeWidth={1.5} />
@@ -148,7 +150,7 @@ export default function SplashScreen() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t('splash.password_placeholder')}
                 className="w-full pl-10 pr-12 py-3 rounded-xl border border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-[#4A5849] focus:border-transparent transition-all"
                 style={{ fontSize: '16px' }}
                 data-testid="input-password"
@@ -170,6 +172,21 @@ export default function SplashScreen() {
             </div>
           </div>
 
+          {/* Stay Signed In Checkbox */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              checked={staySignedIn}
+              onCheckedChange={(checked) => {
+                trigger('light');
+                setStaySignedIn(checked as boolean);
+              }}
+              data-testid="checkbox-stay-signed-in"
+            />
+            <label className="text-gray-700 cursor-pointer" style={{ fontSize: '14px' }} data-testid="label-stay-signed-in">
+              {t('splash.stay_signed_in')}
+            </label>
+          </div>
+
           {/* Forgot Password */}
           <div className="text-right">
             <button
@@ -178,7 +195,7 @@ export default function SplashScreen() {
               style={{ fontSize: '14px' }}
               data-testid="button-forgot-password"
             >
-              Passwort vergessen?
+              {t('splash.forgot_password')}
             </button>
           </div>
 
@@ -194,7 +211,7 @@ export default function SplashScreen() {
             }}
             data-testid="button-login"
           >
-            {isLoading ? 'Anmelden...' : 'Anmelden'}
+            {isLoading ? t('splash.login_loading') : t('splash.login_button')}
           </HapticButton>
 
           {/* Divider */}
@@ -204,7 +221,7 @@ export default function SplashScreen() {
             </div>
             <div className="relative flex justify-center">
               <span className="bg-white px-4 text-gray-500" style={{ fontSize: '14px' }}>
-                oder
+                {t('splash.or')}
               </span>
             </div>
           </div>
@@ -218,18 +235,18 @@ export default function SplashScreen() {
             style={{ fontSize: '16px' }}
             data-testid="button-quick-start"
           >
-            Demo starten (ohne Login)
+            {t('splash.demo_button')}
           </HapticButton>
 
           {/* Register Link */}
           <p className="text-center text-gray-600 mt-6" style={{ fontSize: '14px' }}>
-            Noch kein Account?{' '}
+            {t('splash.no_account')}{' '}
             <button
               onClick={() => trigger('light')}
               className="text-[#4A5849] hover:underline"
               data-testid="button-register"
             >
-              Jetzt registrieren
+              {t('splash.register_link')}
             </button>
           </p>
         </motion.div>
@@ -238,7 +255,7 @@ export default function SplashScreen() {
       {/* Footer */}
       <div className="pb-8 text-center px-8">
         <p className="text-gray-500" style={{ fontSize: '12px' }}>
-          Nur für iPhone Pro Modelle (13/14/15 Pro/Max)
+          {t('splash.device_notice')}
         </p>
       </div>
 

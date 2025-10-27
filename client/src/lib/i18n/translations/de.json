@@ -1,6 +1,24 @@
 {
   "app_name": "PIX.IMMO",
   
+  "splash": {
+    "subtitle": "Aufnahme",
+    "tagline": "Professionelle Immobilienfotografie",
+    "email_label": "E-Mail",
+    "email_placeholder": "max.mustermann@pix-immo.de",
+    "password_label": "Passwort",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Passwort vergessen?",
+    "login_button": "Anmelden",
+    "login_loading": "Anmelden...",
+    "or": "oder",
+    "demo_button": "Demo starten (ohne Login)",
+    "no_account": "Noch kein Account?",
+    "register_link": "Jetzt registrieren",
+    "stay_signed_in": "Angemeldet bleiben",
+    "device_notice": "Nur für iPhone Pro Modelle (13/14/15 Pro/Max)"
+  },
+  
   "login": {
     "title": "Anmeldung",
     "username": "Benutzername",

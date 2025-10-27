@@ -1,6 +1,24 @@
 {
   "app_name": "PIX.IMMO",
   
+  "splash": {
+    "subtitle": "Capture",
+    "tagline": "Professional Real Estate Photography",
+    "email_label": "Email",
+    "email_placeholder": "john.doe@pix-immo.de",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Forgot password?",
+    "login_button": "Sign in",
+    "login_loading": "Signing in...",
+    "or": "or",
+    "demo_button": "Start Demo (no login)",
+    "no_account": "No account yet?",
+    "register_link": "Sign up now",
+    "stay_signed_in": "Stay signed in",
+    "device_notice": "iPhone Pro models only (13/14/15 Pro/Max)"
+  },
+  
   "login": {
     "title": "Login",
     "username": "Username",
