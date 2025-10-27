@@ -44,6 +44,7 @@ export default function CameraScreen() {
   const [horizonLineEnabled, setHorizonLineEnabled] = useState(false);
   const [lastCaptureUrl, setLastCaptureUrl] = useState<string | null>(null);
   const [isManualControlsOpen, setIsManualControlsOpen] = useState(false);
+  const [aspectRatio, setAspectRatio] = useState<'2:3' | '4:3' | '16:9'>('2:3');
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -546,7 +547,14 @@ export default function CameraScreen() {
           style={{
             width: isLandscape ? 'auto' : '100%',
             height: isLandscape ? '100%' : 'auto',
-            aspectRatio: isLandscape ? '3/2' : '2/3',
+            aspectRatio: (() => {
+              const ratios = {
+                '2:3': isLandscape ? '3/2' : '2/3',
+                '4:3': isLandscape ? '4/3' : '3/4',
+                '16:9': isLandscape ? '16/9' : '9/16'
+              };
+              return ratios[aspectRatio];
+            })(),
             maxWidth: '100%',
             maxHeight: '100%'
           }}
@@ -690,6 +698,25 @@ export default function CameraScreen() {
         </div>
       )}
 
+      {/* Format Selection Button - Top Center */}
+      {cameraStarted && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30">
+          <HapticButton
+            onClick={() => {
+              const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+              const currentIndex = formats.indexOf(aspectRatio);
+              const nextIndex = (currentIndex + 1) % formats.length;
+              setAspectRatio(formats[nextIndex]);
+              trigger('light');
+            }}
+            className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
+            data-testid="button-format-toggle"
+          >
+            {aspectRatio}
+          </HapticButton>
+        </div>
+      )}
+
       {/* CONTROLS */}
       {cameraStarted ? (
         <>
@@ -806,20 +833,6 @@ export default function CameraScreen() {
                     <Info className="w-5 h-5" />
                   </HapticButton>
                 )}
-                
-                {/* Close Button */}
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => {
-                    trigger('light');
-                    setLocation('/app');
-                  }}
-                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                  data-testid="button-close-camera"
-                >
-                  <X className="w-6 h-6" />
-                </HapticButton>
               </div>
             </div>
           </div>

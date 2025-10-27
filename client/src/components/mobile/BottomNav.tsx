@@ -14,8 +14,8 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
   const navItems = [
     { path: '/app', icon: Home, label: 'Start', testId: 'nav-splash' },
     { path: '/app/camera', icon: Camera, label: 'Kamera', testId: 'nav-camera' },
-    { path: '/app/upload', icon: Upload, label: 'Upload', testId: 'nav-upload' },
     { path: '/app/gallery', icon: Image, label: 'Galerie', badge: photoCount, testId: 'nav-gallery' },
+    { path: '/app/upload', icon: Upload, label: 'Upload', testId: 'nav-upload' },
     { path: '/app/settings', icon: Settings, label: 'Manuell', testId: 'nav-settings' },
   ];
 

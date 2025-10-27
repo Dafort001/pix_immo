@@ -203,15 +203,16 @@ export function LevelIndicator() {
       data-testid="level-indicator"
     >
       <div className="flex flex-col items-center gap-2">
-        {/* Square with crosshair */}
+        {/* Square with crosshair - 2x larger with shadow */}
         <div 
-          className={`w-10 h-10 border-2 rounded-sm flex items-center justify-center transition-all duration-200 ${indicatorColor}`}
+          className={`w-20 h-20 border-2 rounded-sm flex items-center justify-center transition-all duration-200 drop-shadow-2xl ${indicatorColor}`}
           data-testid="level-square"
+          style={{ filter: 'drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5))' }}
         >
-          {/* Horizontal line */}
-          <div className={`w-6 h-0.5 ${crossColor} transition-colors duration-200`} />
-          {/* Vertical line */}
-          <div className={`w-0.5 h-6 ${crossColor} absolute transition-colors duration-200`} />
+          {/* Horizontal line - 2x larger */}
+          <div className={`w-12 h-1 ${crossColor} transition-colors duration-200`} />
+          {/* Vertical line - 2x larger */}
+          <div className={`w-1 h-12 ${crossColor} absolute transition-colors duration-200`} />
         </div>
 
         {/* Level confirmation text */}
