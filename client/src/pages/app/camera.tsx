@@ -1115,26 +1115,6 @@ export default function CameraScreen() {
                   </div>
                 </DrawerContent>
               </Drawer>
-              
-              {/* Capture Button - Sage Border */}
-              <motion.button
-                onClick={handleCapture}
-                disabled={capturing || countdown !== null}
-                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
-                  (capturing || countdown !== null) ? 'opacity-50' : ''
-                }`}
-                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
-                data-testid="button-capture-photo"
-              >
-                <div 
-                  className="w-16 h-16 rounded-full"
-                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
-                />
-              </motion.button>
-              
-              {/* Spacer for symmetry */}
-              <div className="w-[100px]" />
             </div>
           </div>
         </>
