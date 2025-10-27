@@ -1,0 +1,12 @@
+export type Language = 'de' | 'en';
+
+export interface TranslationData {
+  [key: string]: string | TranslationData;
+}
+
+export interface I18nContextValue {
+  language: Language;
+  setLanguage: (lang: Language) => void;
+  t: (key: string, params?: Record<string, string | number>) => string;
+  translations: TranslationData;
+}
