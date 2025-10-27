@@ -653,7 +653,7 @@ export default function CameraScreen() {
       {isLandscape && cameraStarted && (
         <div className="absolute right-20 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
           {/* Column 1: All 8 Buttons */}
-          <div className="flex flex-col items-center gap-3">
+          <div className="flex flex-col items-center gap-2">
             {/* Kamera-Flip */}
             <HapticButton
               size="icon"
@@ -697,7 +697,7 @@ export default function CameraScreen() {
             </HapticButton>
 
             {/* Separator */}
-            <div className="w-8 h-[1px] bg-white/20 my-1" />
+            <div className="w-8 h-[1px] bg-white/20" />
 
             {/* Format Button */}
             <HapticButton
