@@ -647,10 +647,10 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Landscape: Center Controls - Auslöser mittig, Buttons vertikal darüber/darunter */}
+      {/* Landscape: Right Side Controls - Auslöser rechts auf schwarzer Fläche, vertikal mittig */}
       {isLandscape && cameraStarted && (
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5">
-          {/* Buttons ÜBER dem Auslöser */}
+        <div className="absolute right-24 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5">
+          {/* 2 Buttons ÜBER dem Auslöser */}
           <HapticButton
             size="icon"
             variant="ghost"
@@ -676,24 +676,6 @@ export default function CameraScreen() {
             data-testid="button-toggle-manual-controls-landscape"
           >
             <Sliders className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-          </HapticButton>
-
-          <HapticButton
-            size="icon"
-            variant="ghost"
-            onClick={() => {
-              const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
-              const currentIndex = formats.indexOf(aspectRatio);
-              const nextIndex = (currentIndex + 1) % formats.length;
-              setAspectRatio(formats[nextIndex]);
-              trigger('light');
-            }}
-            className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
-            data-testid="button-format-toggle-landscape"
-          >
-            <span className="text-xs font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
-              {aspectRatio}
-            </span>
           </HapticButton>
 
           {/* AUSLÖSER - Mittig */}
