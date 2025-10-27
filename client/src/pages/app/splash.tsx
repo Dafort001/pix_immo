@@ -60,7 +60,9 @@ export default function SplashScreen() {
       
       const data = await response.json();
       console.log('Login successful:', data.user);
-      setLocation('/app/camera'); // Nach Login → Kamera
+      
+      // Force full page navigation to ensure auth state is refreshed
+      window.location.href = '/app/camera';
     } catch (error) {
       console.error('Login error:', error);
       alert('Login failed. Please try again.');
@@ -91,7 +93,9 @@ export default function SplashScreen() {
       
       const data = await response.json();
       console.log('Demo login successful:', data.user);
-      setLocation('/app/camera');
+      
+      // Force full page navigation to ensure auth state is refreshed
+      window.location.href = '/app/camera';
     } catch (error) {
       console.error('Demo login error:', error);
       alert('Demo login failed. Please try again.');

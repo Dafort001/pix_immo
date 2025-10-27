@@ -20,6 +20,8 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
+  const { trigger } = useHaptic();
   
   // Route protection - redirect to login if not authenticated
   const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
@@ -27,18 +29,7 @@ export default function CameraScreen() {
     retry: false,
   });
 
-  useEffect(() => {
-    if (!isAuthLoading && !authData?.user) {
-      setLocation('/app');
-    }
-  }, [isAuthLoading, authData, setLocation]);
-
-  // Show nothing while checking auth
-  if (isAuthLoading || !authData?.user) {
-    return null;
-  }
-  
-  const { t } = useTranslation();
+  // All hooks must be declared before any conditional returns
   const [cameraStarted, setCameraStarted] = useState(false);
   const [hdrEnabled, setHdrEnabled] = useState(true);
   const [capturing, setCapturing] = useState(false);
@@ -71,7 +62,13 @@ export default function CameraScreen() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const { trigger } = useHaptic();
+
+  // Auth redirect effect
+  useEffect(() => {
+    if (!isAuthLoading && !authData?.user) {
+      setLocation('/app');
+    }
+  }, [isAuthLoading, authData, setLocation]);
 
   // R4: Set black background for Safe-Area (Notch)
   useEffect(() => {
@@ -113,6 +110,81 @@ export default function CameraScreen() {
       window.removeEventListener('orientationchange', checkOrientation);
     };
   }, []);
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  // Apply manual mode settings when they change (debounced to avoid spamming camera)
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+    let lastSettings: string | null = null;
+
+    const applySettings = async () => {
+      if (!streamRef.current || !cameraStarted) return;
+      
+      const videoTrack = streamRef.current.getVideoTracks()[0];
+      if (!videoTrack) return;
+
+      const settings = useManualModeStore.getState();
+      
+      const relevantSettings = JSON.stringify({
+        enabled: settings.enabled,
+        iso: settings.iso,
+        shutterSpeed: settings.shutterSpeed,
+        whiteBalanceKelvin: settings.whiteBalanceKelvin,
+        focusMode: settings.focusMode,
+        focusDistance: settings.focusDistance,
+        exposureCompensation: settings.exposureCompensation,
+        oisEnabled: settings.oisEnabled,
+        tripodMode: settings.tripodMode,
+        nightModeEnabled: settings.nightModeEnabled,
+      });
+      
+      if (relevantSettings === lastSettings) {
+        return;
+      }
+      
+      lastSettings = relevantSettings;
+      
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      
+      timeoutId = setTimeout(async () => {
+        await applySettingsToTrack(videoTrack, settings);
+        timeoutId = null;
+      }, 300);
+    };
+
+    const unsubscribe = useManualModeStore.subscribe(applySettings);
+    
+    return () => {
+      unsubscribe();
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [cameraStarted]);
+
+  // Sync brightness with exposure control
+  useEffect(() => {
+    if (exposureControl?.type === 'exposureCompensation') {
+      setBrightness(exposureControl.baseValue);
+    } else {
+      setBrightness(0);
+    }
+  }, [exposureControl]);
+
+  // Show nothing while checking auth or if not authenticated
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
 
   const log = (msg: string) => {
     console.log(msg);
@@ -238,68 +310,6 @@ export default function CameraScreen() {
     }
   };
 
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  // Apply manual mode settings when they change (debounced to avoid spamming camera)
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-    let lastSettings: string | null = null;
-
-    const applySettings = async () => {
-      if (!streamRef.current || !cameraStarted) return;
-      
-      const videoTrack = streamRef.current.getVideoTracks()[0];
-      if (!videoTrack) return;
-
-      const settings = useManualModeStore.getState();
-      
-      // Only apply if relevant camera settings changed (ignore UI-only state like histogramEnabled)
-      const relevantSettings = JSON.stringify({
-        enabled: settings.enabled,
-        iso: settings.iso,
-        shutterSpeed: settings.shutterSpeed,
-        whiteBalanceKelvin: settings.whiteBalanceKelvin,
-        focusMode: settings.focusMode,
-        focusDistance: settings.focusDistance,
-        exposureCompensation: settings.exposureCompensation,
-        oisEnabled: settings.oisEnabled,
-        tripodMode: settings.tripodMode,
-        nightModeEnabled: settings.nightModeEnabled,
-      });
-      
-      if (relevantSettings === lastSettings) {
-        return; // No camera-relevant changes
-      }
-      
-      lastSettings = relevantSettings;
-      
-      // Debounce to avoid rapid successive calls
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      
-      timeoutId = setTimeout(async () => {
-        await applySettingsToTrack(videoTrack, settings);
-        timeoutId = null;
-      }, 300); // 300ms debounce
-    };
-
-    const unsubscribe = useManualModeStore.subscribe(applySettings);
-    
-    return () => {
-      unsubscribe();
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [cameraStarted]);
-
   // Zoom Handler with Buttons
   const handleZoomChange = async (newZoom: number) => {
     if (!streamRef.current) return;
@@ -326,14 +336,6 @@ export default function CameraScreen() {
       log('⚠️ Zoom failed');
     }
   };
-
-  useEffect(() => {
-    if (exposureControl?.type === 'exposureCompensation') {
-      setBrightness(exposureControl.baseValue);
-    } else {
-      setBrightness(0);
-    }
-  }, [exposureControl]);
 
   const handleBrightnessChange = async (value: number) => {
     setBrightness(value);
