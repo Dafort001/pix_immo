@@ -9,7 +9,7 @@ import { ManualControls } from '@/components/mobile/ManualControls';
 import { GridOverlay, HorizonLevelOverlay, MeteringModeOverlay, FocusPeakingOverlay } from '@/components/mobile/CameraOverlays';
 import { LevelIndicator } from '@/components/mobile/LevelIndicator';
 import { CaptureThumb } from '@/components/mobile/CaptureThumb';
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger } from '@/components/ui/drawer';
+import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
 import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
@@ -655,11 +655,20 @@ export default function CameraScreen() {
             </DrawerTrigger>
             <DrawerContent className="max-h-[85vh] bg-white">
               <div className="mx-auto w-full max-w-md">
-                <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200">
+                <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
                   <DrawerTitle className="text-lg font-semibold">{t('camera.room_title')}</DrawerTitle>
                   <DrawerDescription className="text-sm text-gray-500">
                     {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
                   </DrawerDescription>
+                  <DrawerClose asChild>
+                    <button
+                      onClick={() => trigger('light')}
+                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      data-testid="button-close-roomtype-drawer-landscape"
+                    >
+                      <X className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </DrawerClose>
                 </DrawerHeader>
                 <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
                   {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
@@ -921,18 +930,15 @@ export default function CameraScreen() {
                       <DrawerDescription className="text-sm text-gray-500">
                         {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
                       </DrawerDescription>
-                      {currentRoomType !== DEFAULT_ROOM_TYPE && (
+                      <DrawerClose asChild>
                         <button
-                          onClick={() => {
-                            setCurrentRoomType(DEFAULT_ROOM_TYPE);
-                            trigger('light');
-                          }}
+                          onClick={() => trigger('light')}
                           className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                          data-testid="button-reset-roomtype"
+                          data-testid="button-close-roomtype-drawer"
                         >
                           <X className="w-4 h-4 text-gray-600" />
                         </button>
-                      )}
+                      </DrawerClose>
                     </DrawerHeader>
                     <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
                       {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
