@@ -24,17 +24,17 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
-  // Landscape: Right Bottom Navigation (avoids Dynamic Island on left)
+  // Landscape: Rightmost Column (3rd column after Auslöser and Controls)
   if (isLandscape) {
     return (
-      <div className={`fixed right-4 bottom-6 z-20 ${
+      <div className={`fixed right-4 top-1/2 -translate-y-1/2 z-20 ${
         isDark 
           ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
           : 'bg-white/95 backdrop-blur-lg'
       } rounded-2xl border ${
         isDark ? 'border-white/5' : 'border-gray-200/50'
       }`} data-testid="bottom-nav">
-        <div className="flex flex-row items-center px-2 py-1 gap-1">
+        <div className="flex flex-col items-center py-2 px-1 gap-1">
           {navItems.map((item) => {
             const isActive = location === item.path;
             const Icon = item.icon;
@@ -80,7 +80,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 {isActive && (
                   <motion.div
                     layoutId="activeTabLandscape"
-                    className={`absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-1 rounded-t-full ${
+                    className={`absolute right-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-l-full ${
                       isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
                     }`}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}

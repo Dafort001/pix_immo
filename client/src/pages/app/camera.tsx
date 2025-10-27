@@ -604,7 +604,7 @@ export default function CameraScreen() {
 
       {/* VIDEO - Responsive Aspect Ratio Container */}
       <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
-        isLandscape ? 'pl-16 pr-40 pb-20' : ''
+        isLandscape ? 'pl-16 pr-44' : ''
       }`}>
         <div 
           className="relative bg-black flex items-center justify-center"
