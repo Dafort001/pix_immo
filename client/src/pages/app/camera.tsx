@@ -654,44 +654,21 @@ export default function CameraScreen() {
           <HapticButton
             size="icon"
             variant="ghost"
-            onClick={toggleCamera}
-            className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
-            data-testid="button-flip-camera-landscape"
-          >
-            <RefreshCw className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-          </HapticButton>
-
-          <HapticButton
-            size="icon"
-            variant="ghost"
             onClick={() => {
-              setIsManualControlsOpen(!isManualControlsOpen);
+              const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+              const currentIndex = formats.indexOf(aspectRatio);
+              const nextIndex = (currentIndex + 1) % formats.length;
+              setAspectRatio(formats[nextIndex]);
               trigger('light');
             }}
-            className={`w-11 h-11 rounded-full backdrop-blur-md flex-shrink-0 ${
-              isManualControlsOpen 
-                ? 'bg-white/30 text-white' 
-                : 'bg-white/20 text-white/60'
-            }`}
-            data-testid="button-toggle-manual-controls-landscape"
+            className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
+            data-testid="button-format-toggle-landscape"
           >
-            <Sliders className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+            <span className="text-xs font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
+              {aspectRatio}
+            </span>
           </HapticButton>
 
-          {/* AUSLÖSER - Mittig */}
-          <motion.button
-            onClick={handleCapture}
-            disabled={capturing || countdown !== null}
-            whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-            className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 ${
-              (capturing || countdown !== null) ? 'opacity-50' : ''
-            }`}
-            data-testid="button-capture-photo-landscape"
-          >
-            <div className="w-16 h-16 rounded-full bg-white" />
-          </motion.button>
-
-          {/* Buttons UNTER dem Auslöser */}
           <Drawer>
             <DrawerTrigger asChild>
               <button
@@ -756,6 +733,20 @@ export default function CameraScreen() {
             </DrawerContent>
           </Drawer>
 
+          {/* AUSLÖSER - Mittig */}
+          <motion.button
+            onClick={handleCapture}
+            disabled={capturing || countdown !== null}
+            whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+            className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 ${
+              (capturing || countdown !== null) ? 'opacity-50' : ''
+            }`}
+            data-testid="button-capture-photo-landscape"
+          >
+            <div className="w-16 h-16 rounded-full bg-white" />
+          </motion.button>
+
+          {/* 3 Buttons UNTER dem Auslöser */}
           <HapticButton
             size="icon"
             variant="ghost"
