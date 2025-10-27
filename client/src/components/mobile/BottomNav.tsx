@@ -24,10 +24,10 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
-  // Landscape: Vertical Right Side Navigation (plenty of space, avoids Dynamic Island)
+  // Landscape: Vertical Right Side Navigation (bottom position, avoids camera controls)
   if (isLandscape) {
     return (
-      <div className={`fixed right-0 top-1/2 -translate-y-1/2 z-30 ${
+      <div className={`fixed right-0 bottom-4 z-30 ${
         isDark 
           ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
           : 'bg-white/95 backdrop-blur-lg'
