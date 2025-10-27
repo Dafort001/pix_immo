@@ -603,9 +603,7 @@ export default function CameraScreen() {
       {!isLandscape && <StatusBar variant="light" />}
 
       {/* VIDEO - Responsive Aspect Ratio Container */}
-      <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
-        isLandscape ? 'pl-16 pr-44' : ''
-      }`}>
+      <div className="absolute inset-0 z-0 bg-black flex items-center justify-center">
         <div 
           className="relative bg-black flex items-center justify-center"
           style={{
@@ -649,211 +647,200 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Landscape: Right Side Controls (2 Columns) */}
+      {/* Landscape: Center Controls - Auslöser mittig, Buttons vertikal darüber/darunter */}
       {isLandscape && cameraStarted && (
-        <div className="absolute right-20 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
-          {/* Column 1: All 8 Buttons */}
-          <div className="flex flex-col items-center gap-2">
-            {/* Kamera-Flip */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={toggleCamera}
-              className="w-12 h-12 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
-              data-testid="button-flip-camera-landscape"
-            >
-              <RefreshCw className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-            </HapticButton>
+        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 z-20 flex flex-col items-center gap-1.5">
+          {/* Buttons ÜBER dem Auslöser */}
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={toggleCamera}
+            className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
+            data-testid="button-flip-camera-landscape"
+          >
+            <RefreshCw className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+          </HapticButton>
 
-            {/* BIG CAPTURE BUTTON */}
-            <motion.button
-              onClick={handleCapture}
-              disabled={capturing || countdown !== null}
-              whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-              className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 ${
-                (capturing || countdown !== null) ? 'opacity-50' : ''
-              }`}
-              data-testid="button-capture-photo-landscape"
-            >
-              <div className="w-16 h-16 rounded-full bg-white" />
-            </motion.button>
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setIsManualControlsOpen(!isManualControlsOpen);
+              trigger('light');
+            }}
+            className={`w-11 h-11 rounded-full backdrop-blur-md flex-shrink-0 ${
+              isManualControlsOpen 
+                ? 'bg-white/30 text-white' 
+                : 'bg-white/20 text-white/60'
+            }`}
+            data-testid="button-toggle-manual-controls-landscape"
+          >
+            <Sliders className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+          </HapticButton>
 
-            {/* Manual Controls */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                setIsManualControlsOpen(!isManualControlsOpen);
-                trigger('light');
-              }}
-              className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
-                isManualControlsOpen 
-                  ? 'bg-white/30 text-white' 
-                  : 'bg-white/20 text-white/60'
-              }`}
-              data-testid="button-toggle-manual-controls-landscape"
-            >
-              <Sliders className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-            </HapticButton>
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+              const currentIndex = formats.indexOf(aspectRatio);
+              const nextIndex = (currentIndex + 1) % formats.length;
+              setAspectRatio(formats[nextIndex]);
+              trigger('light');
+            }}
+            className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
+            data-testid="button-format-toggle-landscape"
+          >
+            <span className="text-xs font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
+              {aspectRatio}
+            </span>
+          </HapticButton>
 
-            {/* Separator */}
-            <div className="w-8 h-[1px] bg-white/20" />
+          {/* AUSLÖSER - Mittig */}
+          <motion.button
+            onClick={handleCapture}
+            disabled={capturing || countdown !== null}
+            whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+            className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center flex-shrink-0 ${
+              (capturing || countdown !== null) ? 'opacity-50' : ''
+            }`}
+            data-testid="button-capture-photo-landscape"
+          >
+            <div className="w-16 h-16 rounded-full bg-white" />
+          </motion.button>
 
-            {/* Format Button */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
-                const currentIndex = formats.indexOf(aspectRatio);
-                const nextIndex = (currentIndex + 1) % formats.length;
-                setAspectRatio(formats[nextIndex]);
-                trigger('light');
-              }}
-              className="w-12 h-12 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
-              data-testid="button-format-toggle-landscape"
-            >
-              <span className="text-xs font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
-                {aspectRatio}
-              </span>
-            </HapticButton>
-
-            {/* Room Type Selector */}
-            <Drawer>
-              <DrawerTrigger asChild>
-                <button
-                  onClick={() => trigger('light')}
-                  className="w-12 h-12 rounded-full backdrop-blur-md bg-white/20 text-white flex flex-col items-center justify-center flex-shrink-0"
-                  style={{ transform: 'rotate(90deg)' }}
-                  data-testid="button-select-roomtype-landscape"
-                >
-                  <span className="text-[9px] opacity-60">#1</span>
-                  <span className="text-[10px] font-semibold leading-tight">{currentRoomType.substring(0, 4)}</span>
-                </button>
-              </DrawerTrigger>
-              <DrawerContent className="max-h-[85vh] bg-white">
-                <div className="mx-auto w-full max-w-md">
-                  <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
-                    <DrawerTitle className="text-lg font-semibold">{t('camera.room_title')}</DrawerTitle>
-                    <DrawerDescription className="text-sm text-gray-500">
-                      {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
-                    </DrawerDescription>
-                    <DrawerClose asChild>
-                      <button
-                        onClick={() => trigger('light')}
-                        className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
-                        data-testid="button-close-roomtype-drawer-landscape"
-                      >
-                        <X className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </DrawerClose>
-                  </DrawerHeader>
-                  <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
-                    {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
-                      if (rooms.length === 0) return null;
-                      return (
-                        <div key={group} className="py-2">
-                          <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">
-                            {GROUP_DISPLAY_NAMES[group as keyof typeof GROUP_DISPLAY_NAMES]}
-                          </div>
-                          <div className="divide-y divide-gray-100">
-                            {rooms.map((room) => (
-                              <button
-                                key={room}
-                                onClick={() => {
-                                  setCurrentRoomType(room);
-                                  trigger('success');
-                                }}
-                                className={`w-full text-left px-4 py-3 transition-colors ${
-                                  currentRoomType === room
-                                    ? 'bg-blue-50 text-blue-700 font-medium'
-                                    : 'hover:bg-gray-50 text-gray-900'
-                                }`}
-                                data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
-                              >
-                                {room}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </DrawerContent>
-            </Drawer>
-
-            {/* Grid Toggle */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                setGridType(gridType === 'none' ? '3x3' : 'none');
-                trigger('light');
-              }}
-              className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
-                gridType !== 'none'
-                  ? 'bg-white/30 text-white' 
-                  : 'bg-white/20 text-white/60'
-              }`}
-              data-testid="button-toggle-grid-landscape"
-            >
-              <Grid3x3 className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-            </HapticButton>
-
-            {/* Histogram Button */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={() => setShowHistogram(!showHistogram)}
-              className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
-                showHistogram 
-                  ? 'bg-white/30 text-white' 
-                  : 'bg-white/20 text-white/60'
-              }`}
-              data-testid="button-toggle-histogram-landscape"
-            >
-              <svg 
-                className="w-5 h-5" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2"
+          {/* Buttons UNTER dem Auslöser */}
+          <Drawer>
+            <DrawerTrigger asChild>
+              <button
+                onClick={() => trigger('light')}
+                className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex flex-col items-center justify-center flex-shrink-0"
                 style={{ transform: 'rotate(90deg)' }}
+                data-testid="button-select-roomtype-landscape"
               >
-                <rect x="3" y="12" width="4" height="9" />
-                <rect x="10" y="8" width="4" height="13" />
-                <rect x="17" y="4" width="4" height="17" />
-              </svg>
-            </HapticButton>
+                <span className="text-[9px] opacity-60">#1</span>
+                <span className="text-[10px] font-semibold leading-tight">{currentRoomType.substring(0, 4)}</span>
+              </button>
+            </DrawerTrigger>
+            <DrawerContent className="max-h-[85vh] bg-white">
+              <div className="mx-auto w-full max-w-md">
+                <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
+                  <DrawerTitle className="text-lg font-semibold">{t('camera.room_title')}</DrawerTitle>
+                  <DrawerDescription className="text-sm text-gray-500">
+                    {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
+                  </DrawerDescription>
+                  <DrawerClose asChild>
+                    <button
+                      onClick={() => trigger('light')}
+                      className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                      data-testid="button-close-roomtype-drawer-landscape"
+                    >
+                      <X className="w-4 h-4 text-gray-600" />
+                    </button>
+                  </DrawerClose>
+                </DrawerHeader>
+                <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
+                  {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
+                    if (rooms.length === 0) return null;
+                    return (
+                      <div key={group} className="py-2">
+                        <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider bg-gray-50">
+                          {GROUP_DISPLAY_NAMES[group as keyof typeof GROUP_DISPLAY_NAMES]}
+                        </div>
+                        <div className="divide-y divide-gray-100">
+                          {rooms.map((room) => (
+                            <button
+                              key={room}
+                              onClick={() => {
+                                setCurrentRoomType(room);
+                                trigger('success');
+                              }}
+                              className={`w-full text-left px-4 py-3 transition-colors ${
+                                currentRoomType === room
+                                  ? 'bg-blue-50 text-blue-700 font-medium'
+                                  : 'hover:bg-gray-50 text-gray-900'
+                              }`}
+                              data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
+                            >
+                              {room}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </DrawerContent>
+          </Drawer>
 
-            {/* Timer Mode */}
-            <HapticButton
-              size="icon"
-              variant="ghost"
-              onClick={() => {
-                const modes: Array<0 | 3 | 10> = [0, 3, 10];
-                const currentIndex = modes.indexOf(timerMode);
-                const nextIndex = (currentIndex + 1) % modes.length;
-                setTimerMode(modes[nextIndex]);
-                trigger('light');
-              }}
-              className={`w-12 h-12 rounded-full backdrop-blur-md flex-shrink-0 ${
-                timerMode > 0
-                  ? 'bg-white/30 text-white' 
-                  : 'bg-white/20 text-white/60'
-              }`}
-              data-testid="button-toggle-timer-landscape"
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              setGridType(gridType === 'none' ? '3x3' : 'none');
+              trigger('light');
+            }}
+            className={`w-11 h-11 rounded-full backdrop-blur-md flex-shrink-0 ${
+              gridType !== 'none'
+                ? 'bg-white/30 text-white' 
+                : 'bg-white/20 text-white/60'
+            }`}
+            data-testid="button-toggle-grid-landscape"
+          >
+            <Grid3x3 className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+          </HapticButton>
+
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => setShowHistogram(!showHistogram)}
+            className={`w-11 h-11 rounded-full backdrop-blur-md flex-shrink-0 ${
+              showHistogram 
+                ? 'bg-white/30 text-white' 
+                : 'bg-white/20 text-white/60'
+            }`}
+            data-testid="button-toggle-histogram-landscape"
+          >
+            <svg 
+              className="w-5 h-5" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2"
+              style={{ transform: 'rotate(90deg)' }}
             >
-              {timerMode > 0 ? (
-                <span className="text-sm font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
-                  {timerMode}s
-                </span>
-              ) : (
-                <Timer className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
-              )}
-            </HapticButton>
-          </div>
+              <rect x="3" y="12" width="4" height="9" />
+              <rect x="10" y="8" width="4" height="13" />
+              <rect x="17" y="4" width="4" height="17" />
+            </svg>
+          </HapticButton>
+
+          <HapticButton
+            size="icon"
+            variant="ghost"
+            onClick={() => {
+              const modes: Array<0 | 3 | 10> = [0, 3, 10];
+              const currentIndex = modes.indexOf(timerMode);
+              const nextIndex = (currentIndex + 1) % modes.length;
+              setTimerMode(modes[nextIndex]);
+              trigger('light');
+            }}
+            className={`w-11 h-11 rounded-full backdrop-blur-md flex-shrink-0 ${
+              timerMode > 0
+                ? 'bg-white/30 text-white' 
+                : 'bg-white/20 text-white/60'
+            }`}
+            data-testid="button-toggle-timer-landscape"
+          >
+            {timerMode > 0 ? (
+              <span className="text-sm font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
+                {timerMode}s
+              </span>
+            ) : (
+              <Timer className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+            )}
+          </HapticButton>
         </div>
       )}
 
