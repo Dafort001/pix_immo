@@ -29,20 +29,64 @@ export default function SplashScreen() {
     // Mark user interaction for A2HS hint (sessionStorage = per-session)
     sessionStorage.setItem('user-has-interacted', 'true');
     
-    // Mock Login (2 Sekunden Verzögerung)
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          email,
+          password,
+          staySignedIn,
+        }),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Login failed');
+        setIsLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('Login successful:', data.user);
       setLocation('/app/camera'); // Nach Login → Kamera
-    }, 2000);
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('Login failed. Please try again.');
+      setIsLoading(false);
+    }
   };
 
-  const handleQuickStart = () => {
+  const handleQuickStart = async () => {
     trigger('medium');
+    setIsLoading(true);
     
     // Mark user interaction for A2HS hint (sessionStorage = per-session)
     sessionStorage.setItem('user-has-interacted', 'true');
     
-    setLocation('/app/camera');
+    try {
+      const response = await fetch('/api/auth/demo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Demo login failed');
+        setIsLoading(false);
+        return;
+      }
+      
+      const data = await response.json();
+      console.log('Demo login successful:', data.user);
+      setLocation('/app/camera');
+    } catch (error) {
+      console.error('Demo login error:', error);
+      alert('Demo login failed. Please try again.');
+      setIsLoading(false);
+    }
   };
 
   // Load photo count from sessionStorage

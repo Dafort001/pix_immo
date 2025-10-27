@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
 import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
@@ -24,6 +25,7 @@ import { generatePresignedPutUrl, generateObjectPath } from "./objectStorage";
 import { isValidFilenameV31 } from "./fileNaming";
 import { processJobDemo } from "./demo-processing";
 import { registerGalleryRoutes } from "./gallery-routes";
+import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 
 // Middleware to validate request body with Zod
 function validateBody(schema: z.ZodSchema) {
@@ -93,6 +95,14 @@ const handoffLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 10, // 10 handoff generation requests per minute per IP
   message: { error: "Too many handoff requests, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // 5 login attempts per 15 minutes per IP
+  message: { error: "Too many login attempts, please try again later" },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -185,6 +195,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
   
+  // Cookie parser middleware - Must come before authMiddleware
+  app.use(cookieParser());
+  
   // Ensure demo user exists for development
   async function ensureDemoUser() {
     const demoEmail = "demo@pix.immo";
@@ -198,6 +211,161 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     return demoUser;
   }
+
+  // Auth middleware - Attach user to request if authenticated
+  async function authMiddleware(req: Request, res: Response, next: any) {
+    try {
+      const sessionId = req.cookies?.[SESSION_CONFIG.cookieName];
+      
+      if (!sessionId) {
+        return next();
+      }
+      
+      const session = await storage.getSession(sessionId);
+      if (!session) {
+        res.clearCookie(SESSION_CONFIG.cookieName);
+        return next();
+      }
+      
+      const user = await storage.getUser(session.userId);
+      if (!user) {
+        await storage.deleteSession(sessionId);
+        res.clearCookie(SESSION_CONFIG.cookieName);
+        return next();
+      }
+      
+      (req as any).user = user;
+      (req as any).sessionId = sessionId;
+    } catch (error) {
+      console.error("Auth middleware error:", error);
+    }
+    next();
+  }
+
+  // Require authentication middleware
+  function requireAuth(req: Request, res: Response, next: any) {
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    next();
+  }
+
+  // Apply auth middleware to all routes
+  app.use(authMiddleware);
+
+  // Authentication Routes
+  
+  // POST /api/auth/login - Email/password login
+  app.post("/api/auth/login", authLimiter, async (req: Request, res: Response) => {
+    try {
+      const { email, password, staySignedIn } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ error: "Email and password required" });
+      }
+      
+      const user = await storage.getUserByEmail(email);
+      if (!user) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      const isValidPassword = await verifyPassword(password, user.hashedPassword);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Invalid credentials" });
+      }
+      
+      // Create session with appropriate expiry
+      const expiryDuration = staySignedIn 
+        ? SESSION_CONFIG.expiresIn // 30 days
+        : 1000 * 60 * 60 * 24; // 24 hours
+      
+      const expiresAt = Date.now() + expiryDuration;
+      const session = await storage.createSession(user.id, expiresAt);
+      
+      // Set cookie with appropriate maxAge (in milliseconds)
+      const cookieMaxAge = staySignedIn
+        ? SESSION_CONFIG.cookieOptions.maxAge * 1000 // Convert to ms
+        : 60 * 60 * 24 * 1000; // 24 hours in milliseconds
+      
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        ...SESSION_CONFIG.cookieOptions,
+        maxAge: cookieMaxAge,
+      });
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login failed" });
+    }
+  });
+
+  // POST /api/auth/demo - Demo mode login (24h expiry)
+  app.post("/api/auth/demo", authLimiter, async (req: Request, res: Response) => {
+    try {
+      const demoUser = await ensureDemoUser();
+      
+      // Create session with 24h expiry for demo mode
+      const expiresAt = Date.now() + (1000 * 60 * 60 * 24); // 24 hours
+      const session = await storage.createSession(demoUser.id, expiresAt);
+      
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        ...SESSION_CONFIG.cookieOptions,
+        maxAge: 60 * 60 * 24 * 1000, // 24 hours in milliseconds
+      });
+      
+      res.json({
+        user: {
+          id: demoUser.id,
+          email: demoUser.email,
+          role: demoUser.role,
+        },
+      });
+    } catch (error) {
+      console.error("Demo login error:", error);
+      res.status(500).json({ error: "Demo login failed" });
+    }
+  });
+
+  // POST /api/auth/logout - Logout
+  app.post("/api/auth/logout", async (req: Request, res: Response) => {
+    try {
+      const sessionId = (req as any).sessionId;
+      
+      if (sessionId) {
+        await storage.deleteSession(sessionId);
+      }
+      
+      res.clearCookie(SESSION_CONFIG.cookieName);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Logout error:", error);
+      res.status(500).json({ error: "Logout failed" });
+    }
+  });
+
+  // GET /api/auth/me - Get current user
+  app.get("/api/auth/me", async (req: Request, res: Response) => {
+    const user = (req as any).user;
+    
+    if (!user) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  });
 
   // Workflow API Routes
   
