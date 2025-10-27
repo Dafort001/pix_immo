@@ -662,9 +662,10 @@ export default function CameraScreen() {
               trigger('light');
             }}
             className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
+            style={{ transform: 'rotate(-90deg)' }}
             data-testid="button-format-toggle-landscape"
           >
-            <span className="text-xs font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
+            <span className="text-xs font-bold">
               {aspectRatio}
             </span>
           </HapticButton>
@@ -674,7 +675,7 @@ export default function CameraScreen() {
               <button
                 onClick={() => trigger('light')}
                 className="w-11 h-11 rounded-full backdrop-blur-md bg-white/20 text-white flex flex-col items-center justify-center flex-shrink-0"
-                style={{ transform: 'rotate(90deg)' }}
+                style={{ transform: 'rotate(-90deg)' }}
                 data-testid="button-select-roomtype-landscape"
               >
                 <span className="text-[9px] opacity-60">#1</span>
@@ -759,9 +760,10 @@ export default function CameraScreen() {
                 ? 'bg-white/30 text-white' 
                 : 'bg-white/20 text-white/60'
             }`}
+            style={{ transform: 'rotate(-90deg)' }}
             data-testid="button-toggle-grid-landscape"
           >
-            <Grid3x3 className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+            <Grid3x3 className="w-5 h-5" />
           </HapticButton>
 
           <HapticButton
@@ -773,6 +775,7 @@ export default function CameraScreen() {
                 ? 'bg-white/30 text-white' 
                 : 'bg-white/20 text-white/60'
             }`}
+            style={{ transform: 'rotate(-90deg)' }}
             data-testid="button-toggle-histogram-landscape"
           >
             <svg 
@@ -781,7 +784,6 @@ export default function CameraScreen() {
               fill="none" 
               stroke="currentColor" 
               strokeWidth="2"
-              style={{ transform: 'rotate(90deg)' }}
             >
               <rect x="3" y="12" width="4" height="9" />
               <rect x="10" y="8" width="4" height="13" />
@@ -804,14 +806,15 @@ export default function CameraScreen() {
                 ? 'bg-white/30 text-white' 
                 : 'bg-white/20 text-white/60'
             }`}
+            style={{ transform: 'rotate(-90deg)' }}
             data-testid="button-toggle-timer-landscape"
           >
             {timerMode > 0 ? (
-              <span className="text-sm font-bold" style={{ transform: 'rotate(90deg)', display: 'inline-block' }}>
+              <span className="text-sm font-bold">
                 {timerMode}s
               </span>
             ) : (
-              <Timer className="w-5 h-5" style={{ transform: 'rotate(90deg)' }} />
+              <Timer className="w-5 h-5" />
             )}
           </HapticButton>
         </div>
