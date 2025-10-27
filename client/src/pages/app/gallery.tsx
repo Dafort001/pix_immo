@@ -513,24 +513,24 @@ export default function GalleryScreen() {
         )}
       </AnimatePresence>
 
-      {/* Selection Toolbar */}
+      {/* Selection Toolbar - Fixed to Bottom with BottomNav */}
       <AnimatePresence>
         {selectionMode && selectedCount > 0 && (
           <motion.div
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="absolute bottom-16 left-0 right-0 z-20 px-4"
+            className="absolute bottom-0 left-0 right-0 z-50 pb-safe"
           >
-            <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 p-4">
-              <div className="flex items-center gap-3">
+            <div className="bg-white/95 backdrop-blur-lg border-t border-gray-200/50 p-3">
+              <div className="flex items-center gap-2">
                 <Drawer>
                   <DrawerTrigger asChild>
                     <HapticButton
                       variant="default"
                       hapticStyle="medium"
-                      className="flex-1 text-white rounded-xl py-3"
-                      style={{ backgroundColor: '#4A5849', gap: '8px' }}
+                      className="flex-1 text-white rounded-xl py-2.5 text-sm"
+                      style={{ backgroundColor: '#4A5849', gap: '6px' }}
                       data-testid="button-assign-roomtype"
                     >
                       <Home className="w-4 h-4" strokeWidth={1.5} />
@@ -582,7 +582,7 @@ export default function GalleryScreen() {
                   variant="default"
                   hapticStyle="heavy"
                   onClick={() => setDeleteDialogOpen(true)}
-                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-6 py-3"
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl px-5 py-2.5"
                   data-testid="button-bulk-delete"
                 >
                   <Trash2 className="w-4 h-4" strokeWidth={1.5} />
@@ -595,7 +595,7 @@ export default function GalleryScreen() {
                     trigger('medium');
                     setLocation('/app/upload');
                   }}
-                  className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-6 py-3"
+                  className="bg-green-600 hover:bg-green-700 text-white rounded-xl px-5 py-2.5"
                   data-testid="button-upload-selected"
                 >
                   <Upload className="w-4 h-4" strokeWidth={1.5} />
@@ -635,7 +635,8 @@ export default function GalleryScreen() {
         </DrawerContent>
       </Drawer>
 
-      <BottomNav photoCount={totalPhotos} />
+      {/* BottomNav - Hide when selection mode is active */}
+      {!selectionMode && <BottomNav photoCount={totalPhotos} />}
     </div>
   );
 }
