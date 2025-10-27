@@ -965,17 +965,6 @@ export default function CameraScreen() {
                   </div>
                 </DrawerContent>
               </Drawer>
-              
-              {/* Info Button neben Room Label */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => trigger('light')}
-                className="ml-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white/80"
-                data-testid="button-room-info"
-              >
-                <Info className="w-4 h-4" />
-              </HapticButton>
             </div>
 
             {/* Control Buttons Row - Mit großem Capture-Button in der Mitte */}
