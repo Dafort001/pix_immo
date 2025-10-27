@@ -748,75 +748,6 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Top Controls Row - Only in Portrait */}
-      {cameraStarted && !isLandscape && (
-        <div className="absolute top-20 left-0 right-0 z-30 px-4">
-          <div className="flex items-center justify-between">
-            {/* Format Selection - Left */}
-            <HapticButton
-              onClick={() => {
-                const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
-                const currentIndex = formats.indexOf(aspectRatio);
-                const nextIndex = (currentIndex + 1) % formats.length;
-                setAspectRatio(formats[nextIndex]);
-                trigger('light');
-              }}
-              className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
-              data-testid="button-format-toggle"
-            >
-              {aspectRatio}
-            </HapticButton>
-
-            {/* Capture & Timer - Right */}
-            <div className="flex items-center gap-3">
-              {/* Timer Toggle */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  const modes: (0 | 3 | 10)[] = [0, 3, 10];
-                  const currentIndex = modes.indexOf(timerMode);
-                  const nextIndex = (currentIndex + 1) % modes.length;
-                  setTimerMode(modes[nextIndex]);
-                  trigger('light');
-                }}
-                className={`backdrop-blur-md rounded-full ${
-                  timerMode > 0 
-                    ? 'bg-white/30 text-white' 
-                    : 'bg-white/20 text-white'
-                }`}
-                data-testid="button-toggle-timer"
-              >
-                <div className="relative">
-                  <Timer className="w-5 h-5" />
-                  {timerMode > 0 && (
-                    <div className="absolute -bottom-1 -right-1 bg-black rounded-full w-3 h-3 flex items-center justify-center">
-                      <span className="text-[8px] font-bold">{timerMode}</span>
-                    </div>
-                  )}
-                </div>
-              </HapticButton>
-
-              {/* Capture Button */}
-              <motion.button
-                onClick={handleCapture}
-                disabled={capturing || countdown !== null}
-                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
-                className={`w-16 h-16 rounded-full border-4 flex items-center justify-center ${
-                  (capturing || countdown !== null) ? 'opacity-50' : ''
-                }`}
-                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
-                data-testid="button-capture-photo"
-              >
-                <div 
-                  className="w-12 h-12 rounded-full"
-                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
-                />
-              </motion.button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* CONTROLS */}
       {cameraStarted ? (
@@ -1000,65 +931,22 @@ export default function CameraScreen() {
             )}
           </AnimatePresence>
 
-          {/* Bottom Controls - Only in Portrait */}
+          {/* Bottom Controls - Like Screenshot */}
           <div className={`absolute bottom-0 left-0 right-0 z-20 pb-28 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
-            {/* Zoom Buttons - Ohne 0.5× (Minus-Button entfernt) */}
-            <div className="mb-4 flex justify-center gap-2">
-              {[1, 1.5, 2].map((zoomLevel) => (
-                <button
-                  key={zoomLevel}
-                  onClick={() => handleZoomChange(zoomLevel)}
-                  className={`px-4 py-2 rounded-full font-semibold transition-colors ${
-                    zoom === zoomLevel
-                      ? 'text-white'
-                      : 'bg-white/20 backdrop-blur-md text-white/70'
-                  }`}
-                  style={zoom === zoomLevel ? { backgroundColor: '#4A5849' } : {}}
-                  data-testid={`button-zoom-${zoomLevel}x`}
-                >
-                  {zoomLevel}×
-                </button>
-              ))}
-            </div>
-            
-            {/* Bottom Button Bar - Nur Grid Toggle */}
-            <div className="flex items-center justify-center gap-6">
-              {/* Grid Toggle */}
-              <HapticButton
-                size="icon"
-                variant="ghost"
-                onClick={() => {
-                  setGridEnabled(!gridEnabled);
-                  trigger('light');
-                }}
-                className={`backdrop-blur-md rounded-full ${
-                  gridEnabled 
-                    ? 'bg-white/30 text-white' 
-                    : 'bg-white/20 text-white'
-                }`}
-                data-testid="button-toggle-grid"
-              >
-                <Grid3x3 className="w-5 h-5" />
-              </HapticButton>
-            </div>
-
-            {/* Room Type Row - Moved below */}
-            <div className="mt-4 flex justify-center">
-              {/* Room Type Button */}
+            {/* Room Type Label - Top Left (wie im Screenshot) */}
+            <div className="mb-6 flex items-center justify-start">
               <Drawer>
                 <DrawerTrigger asChild>
-                  <HapticButton
-                    hapticStyle="medium"
-                    className="bg-white/20 backdrop-blur-md text-white rounded-full px-4 py-3 flex items-center gap-2"
+                  <button
+                    onClick={() => trigger('light')}
+                    className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 border border-white/20"
                     data-testid="button-select-roomtype"
                   >
-                    <Home className="w-4 h-4" strokeWidth={1.5} />
-                    <span className="text-sm font-semibold">
-                      {currentRoomType}
-                    </span>
-                  </HapticButton>
+                    <span>{currentRoomType}</span>
+                    <span className="text-white/60">#1</span>
+                  </button>
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[85vh] bg-white">
                   <div className="mx-auto w-full max-w-md">
@@ -1067,7 +955,6 @@ export default function CameraScreen() {
                       <DrawerDescription className="text-sm text-gray-500">
                         {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
                       </DrawerDescription>
-                      {/* X-Button to Reset Selection */}
                       {currentRoomType !== DEFAULT_ROOM_TYPE && (
                         <button
                           onClick={() => {
@@ -1115,6 +1002,110 @@ export default function CameraScreen() {
                   </div>
                 </DrawerContent>
               </Drawer>
+              
+              {/* Info Button neben Room Label */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => trigger('light')}
+                className="ml-2 w-8 h-8 rounded-full bg-black/40 backdrop-blur-md text-white/80"
+                data-testid="button-room-info"
+              >
+                <Info className="w-4 h-4" />
+              </HapticButton>
+            </div>
+
+            {/* Control Buttons Row - Mit großem Capture-Button in der Mitte */}
+            <div className="flex items-center justify-center gap-3">
+              {/* Left: Gallery Thumb */}
+              {lastCaptureUrl && (
+                <CaptureThumb 
+                  imageUrl={lastCaptureUrl}
+                  onClick={() => setLocation('/app/gallery')}
+                />
+              )}
+              {!lastCaptureUrl && (
+                <div className="w-12 h-12 rounded-lg bg-white/20 backdrop-blur-md" />
+              )}
+
+              {/* HDR Toggle */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setHdrEnabled(!hdrEnabled);
+                  trigger('light');
+                }}
+                className={`w-12 h-12 rounded-full backdrop-blur-md ${
+                  hdrEnabled 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white/60'
+                }`}
+                data-testid="button-toggle-hdr-bottom"
+              >
+                <Zap className="w-5 h-5" fill={hdrEnabled ? 'currentColor' : 'none'} />
+              </HapticButton>
+
+              {/* Layers/Stacking */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => trigger('light')}
+                className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md text-white/60"
+                data-testid="button-layers"
+              >
+                <Layers className="w-5 h-5" />
+              </HapticButton>
+
+              {/* BIG CAPTURE BUTTON - Center */}
+              <motion.button
+                onClick={handleCapture}
+                disabled={capturing || countdown !== null}
+                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+                className={`w-20 h-20 rounded-full border-4 border-white flex items-center justify-center ${
+                  (capturing || countdown !== null) ? 'opacity-50' : ''
+                }`}
+                data-testid="button-capture"
+              >
+                <div className="w-16 h-16 rounded-full bg-white" />
+              </motion.button>
+
+              {/* Grid Toggle */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setGridEnabled(!gridEnabled);
+                  trigger('light');
+                }}
+                className={`w-12 h-12 rounded-full backdrop-blur-md ${
+                  gridEnabled 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white/60'
+                }`}
+                data-testid="button-toggle-grid"
+              >
+                <Grid3x3 className="w-5 h-5" />
+              </HapticButton>
+
+              {/* Stats/Chart Button (rechts) */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => setShowHistogram(!showHistogram)}
+                className={`w-12 h-12 rounded-full backdrop-blur-md ${
+                  showHistogram 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white/60'
+                }`}
+                data-testid="button-toggle-histogram"
+              >
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="12" width="4" height="9" />
+                  <rect x="10" y="8" width="4" height="13" />
+                  <rect x="17" y="4" width="4" height="17" />
+                </svg>
+              </HapticButton>
             </div>
           </div>
         </>
