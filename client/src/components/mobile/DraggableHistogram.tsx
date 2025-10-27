@@ -1,8 +1,6 @@
 import { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
 import { Histogram } from './Histogram';
-import { HapticButton } from './HapticButton';
 import { useHaptic } from '@/hooks/useHaptic';
 
 interface DraggableHistogramProps {
@@ -101,21 +99,9 @@ export function DraggableHistogram({
         handleDragEnd();
       }}
     >
-      <div className={`bg-white/10 backdrop-blur-md rounded-lg p-2 border relative ${
+      <div className={`rounded-lg p-2 border relative ${
         isDragging ? 'border-blue-400 shadow-lg shadow-blue-500/50' : 'border-white/20'
       }`}>
-        <HapticButton
-          size="icon"
-          variant="ghost"
-          onClick={(e) => {
-            e.stopPropagation();
-            onClose();
-          }}
-          className="absolute -top-2 -right-2 w-6 h-6 bg-red-500/80 rounded-full flex items-center justify-center text-white hover:bg-red-600 z-10"
-          data-testid="button-close-histogram"
-        >
-          <X className="w-4 h-4" />
-        </HapticButton>
         <Histogram 
           videoElement={videoElement} 
           width={140}
