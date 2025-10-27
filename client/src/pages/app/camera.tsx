@@ -604,7 +604,7 @@ export default function CameraScreen() {
 
       {/* VIDEO - Responsive Aspect Ratio Container */}
       <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
-        isLandscape ? 'pl-20 pr-24' : ''
+        isLandscape ? 'pl-16 pr-24' : ''
       }`}>
         <div 
           className="relative bg-black flex items-center justify-center"
@@ -1192,8 +1192,8 @@ export default function CameraScreen() {
         <ManualControls onClose={() => setIsManualControlsOpen(false)} />
       )}
 
-      {/* BottomNav - Hidden in Landscape */}
-      {!isLandscape && <BottomNav photoCount={photoCount} variant="dark" />}
+      {/* BottomNav - Always Visible */}
+      <BottomNav photoCount={photoCount} variant="dark" isLandscape={isLandscape} />
     </div>
   );
 }

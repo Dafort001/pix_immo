@@ -7,9 +7,10 @@ import { useTranslation } from '@/lib/i18n/useTranslation';
 interface BottomNavProps {
   photoCount?: number;
   variant?: 'light' | 'dark';
+  isLandscape?: boolean;
 }
 
-export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps) {
+export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = false }: BottomNavProps) {
   const [location, setLocation] = useLocation();
   const { t } = useTranslation();
 
@@ -23,6 +24,77 @@ export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps)
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
+  // Landscape: Vertical Left Side Navigation
+  if (isLandscape) {
+    return (
+      <div className={`fixed left-0 top-1/2 -translate-y-1/2 z-30 ${
+        isDark 
+          ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
+          : 'bg-white/95 backdrop-blur-lg'
+      } rounded-r-2xl border-r border-t border-b ${
+        isDark ? 'border-white/5' : 'border-gray-200/50'
+      }`} data-testid="bottom-nav">
+        <div className="flex flex-col items-center py-2 px-1 gap-1">
+          {navItems.map((item) => {
+            const isActive = location === item.path;
+            const Icon = item.icon;
+            
+            return (
+              <HapticButton
+                key={item.path}
+                variant="ghost"
+                onClick={() => setLocation(item.path)}
+                hapticStyle="light"
+                className={`flex items-center justify-center relative w-12 h-12 rounded-lg transition-all ${
+                  isDark
+                    ? isActive
+                      ? 'bg-[#4A5849]/20 text-[#6B8268]'
+                      : 'text-gray-400 hover:bg-white/10'
+                    : isActive
+                      ? 'bg-[#4A5849]/10 text-[#4A5849]'
+                      : 'text-gray-600 hover:bg-gray-50'
+                }`}
+                data-testid={item.testId}
+              >
+                <div className="relative">
+                  <Icon 
+                    className={`w-5 h-5 ${
+                      isDark
+                        ? isActive ? 'text-[#6B8268]' : 'text-gray-400'
+                        : isActive ? 'text-[#4A5849]' : 'text-gray-600'
+                    }`} 
+                    strokeWidth={1.5} 
+                  />
+                  {item.badge !== undefined && item.badge > 0 && (
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      className="absolute -top-2 -right-2 bg-[#4A5849] text-white rounded-full min-w-5 h-5 flex items-center justify-center px-1"
+                      style={{ fontSize: '10px' }}
+                      data-testid={`${item.testId}-badge`}
+                    >
+                      {item.badge}
+                    </motion.div>
+                  )}
+                </div>
+                {isActive && (
+                  <motion.div
+                    layoutId="activeTabLandscape"
+                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${
+                      isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
+                    }`}
+                    transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+                  />
+                )}
+              </HapticButton>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  // Portrait: Bottom Navigation (original)
   return (
     <div className={`fixed bottom-0 left-0 right-0 z-30 border-t safe-bottom-nav ${
       isDark 
