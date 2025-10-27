@@ -101,7 +101,7 @@ export function DraggableHistogram({
         handleDragEnd();
       }}
     >
-      <div className={`bg-black/90 backdrop-blur-md rounded-lg p-2 border relative ${
+      <div className={`bg-white/10 backdrop-blur-md rounded-lg p-2 border relative ${
         isDragging ? 'border-blue-400 shadow-lg shadow-blue-500/50' : 'border-white/20'
       }`}>
         <HapticButton

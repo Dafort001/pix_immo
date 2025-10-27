@@ -167,20 +167,6 @@ export function Histogram({
         }}
       />
       
-      {/* Brightness Indicator Line */}
-      {onBrightnessChange && (
-        <div
-          className="absolute left-0 right-0 h-0.5 bg-yellow-400 shadow-lg pointer-events-none"
-          style={{
-            top: `${((1 - (currentBrightness + 2) / 4) * 100)}%`,
-            boxShadow: '0 0 8px rgba(250, 204, 21, 0.8)'
-          }}
-        >
-          <div className="absolute left-0 w-2 h-2 -mt-0.5 bg-yellow-400 rounded-full" />
-          <div className="absolute right-0 w-2 h-2 -mt-0.5 bg-yellow-400 rounded-full" />
-        </div>
-      )}
-      
       {/* Visual Feedback when dragging */}
       {isDragging && (
         <div className="absolute inset-0 bg-blue-500/10 pointer-events-none border-2 border-blue-400" />
