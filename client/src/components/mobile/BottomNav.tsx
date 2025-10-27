@@ -2,6 +2,7 @@ import { Camera, Image, Upload, Home, Settings } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { HapticButton } from './HapticButton';
 import { useLocation } from 'wouter';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface BottomNavProps {
   photoCount?: number;
@@ -10,13 +11,14 @@ interface BottomNavProps {
 
 export function BottomNav({ photoCount = 0, variant = 'light' }: BottomNavProps) {
   const [location, setLocation] = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
-    { path: '/app', icon: Home, label: 'Start', testId: 'nav-splash' },
-    { path: '/app/camera', icon: Camera, label: 'Kamera', testId: 'nav-camera' },
-    { path: '/app/gallery', icon: Image, label: 'Galerie', badge: photoCount, testId: 'nav-gallery' },
-    { path: '/app/upload', icon: Upload, label: 'Upload', testId: 'nav-upload' },
-    { path: '/app/settings', icon: Settings, label: 'Manuell', testId: 'nav-settings' },
+    { path: '/app', icon: Home, label: t('bottomNav.start'), testId: 'nav-splash' },
+    { path: '/app/camera', icon: Camera, label: t('bottomNav.camera'), testId: 'nav-camera' },
+    { path: '/app/gallery', icon: Image, label: t('bottomNav.gallery'), badge: photoCount, testId: 'nav-gallery' },
+    { path: '/app/upload', icon: Upload, label: t('bottomNav.upload'), testId: 'nav-upload' },
+    { path: '/app/settings', icon: Settings, label: t('bottomNav.manual'), testId: 'nav-settings' },
   ];
 
   const isDark = variant === 'dark' || location === '/app/camera';

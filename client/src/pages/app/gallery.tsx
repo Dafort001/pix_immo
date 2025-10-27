@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 interface Photo {
   id: number;
@@ -83,6 +84,7 @@ export default function GalleryScreen() {
     return null;
   }
   
+  const { t } = useTranslation();
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedStack, setSelectedStack] = useState<PhotoStack | null>(null);
@@ -255,7 +257,7 @@ export default function GalleryScreen() {
         <div className="flex items-center justify-between">
           <div className="flex-1">
             <h1 className="text-gray-900" style={{ fontSize: '28px', fontWeight: '700' }}>
-              Galerie
+              {t('gallery.title')}
             </h1>
             {selectionMode && selectedCount > 0 && (
               <motion.p
@@ -265,7 +267,7 @@ export default function GalleryScreen() {
                 style={{ fontSize: '14px', fontWeight: '400', marginTop: '2px' }}
                 data-testid="text-selection-count"
               >
-                {selectedCount} {selectedCount === 1 ? 'Stack' : 'Stacks'} ausgewählt
+                {selectedCount === 1 ? t('gallery.selected_count_singular', { count: selectedCount }) : t('gallery.selected_count_plural', { count: selectedCount })}
               </motion.p>
             )}
           </div>
@@ -292,7 +294,7 @@ export default function GalleryScreen() {
               style={{ fontSize: '16px' }}
               data-testid="button-toggle-selection-mode"
             >
-              {selectionMode ? 'Fertig' : 'Auswählen'}
+              {selectionMode ? t('gallery.selection_mode_done') : t('gallery.selection_mode_select')}
             </HapticButton>
           </div>
         </div>
@@ -303,8 +305,8 @@ export default function GalleryScreen() {
         {stacks.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center p-8">
             <ImageIcon className="w-20 h-20 text-gray-300 mb-4" strokeWidth={1} />
-            <p className="text-gray-500 text-lg font-medium mb-2">Keine Fotos</p>
-            <p className="text-gray-400 text-sm">Nutze die Kamera um Fotos aufzunehmen</p>
+            <p className="text-gray-500 text-lg font-medium mb-2">{t('gallery.no_photos')}</p>
+            <p className="text-gray-400 text-sm">{t('gallery.empty_hint')}</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0.5 p-0.5 bg-white">
@@ -465,22 +467,22 @@ export default function GalleryScreen() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {selectionMode && !lightboxStack
-                ? `${selectedCount} ${selectedCount === 1 ? 'Stack' : 'Stacks'} löschen?`
-                : 'Foto löschen?'}
+                ? (selectedCount === 1 ? t('gallery.stack_delete_title_singular') : t('gallery.stack_delete_title_plural', { count: selectedCount }))
+                : t('gallery.photo_delete_title')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {selectionMode && !lightboxStack
-                ? `Diese Aktion löscht ${stacks.filter(s => s.selected).reduce((sum, s) => sum + s.photos.length, 0)} Fotos.`
+                ? t('gallery.delete_description', { count: stacks.filter(s => s.selected).reduce((sum, s) => sum + s.photos.length, 0) })
                 : lightboxStack && lightboxStack.photos.length > 1
-                  ? `Diese Aktion löscht alle ${lightboxStack.photos.length} Fotos im HDR-Stack.`
-                  : 'Diese Aktion kann nicht rückgängig gemacht werden.'
+                  ? t('gallery.hdr_stack_description', { count: lightboxStack.photos.length })
+                  : t('gallery.delete_permanent')
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-              Löschen
+              {t('common.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -532,15 +534,15 @@ export default function GalleryScreen() {
                       data-testid="button-assign-roomtype"
                     >
                       <Home className="w-4 h-4" strokeWidth={1.5} />
-                      Raumtyp
+                      {t('gallery.room_type_label')}
                     </HapticButton>
                   </DrawerTrigger>
                   <DrawerContent className="max-h-[80vh]">
                     <div className="mx-auto w-full max-w-md p-4">
                       <DrawerHeader className="p-0 mb-4">
-                        <DrawerTitle>Raumtyp auswählen</DrawerTitle>
+                        <DrawerTitle>{t('gallery.room_select_drawer_title')}</DrawerTitle>
                         <DrawerDescription>
-                          Für {selectedCount} {selectedCount === 1 ? 'Stack' : 'Stacks'}
+                          {selectedCount === 1 ? t('gallery.room_select_drawer_desc_singular', { count: selectedCount }) : t('gallery.room_select_drawer_desc_plural', { count: selectedCount })}
                         </DrawerDescription>
                       </DrawerHeader>
                       <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>
@@ -608,9 +610,9 @@ export default function GalleryScreen() {
         <DrawerContent className="max-h-[80vh]">
           <div className="mx-auto w-full max-w-md p-4">
             <DrawerHeader className="p-0 mb-4">
-              <DrawerTitle>Raumtyp zuweisen</DrawerTitle>
+              <DrawerTitle>{t('gallery.room_assign_drawer_title')}</DrawerTitle>
               <DrawerDescription>
-                Für das ausgewählte Foto
+                {t('gallery.room_assign_drawer_desc')}
               </DrawerDescription>
             </DrawerHeader>
             <div className="space-y-2 overflow-y-scroll help-scrollbar pr-2" style={{ maxHeight: '50vh' }}>

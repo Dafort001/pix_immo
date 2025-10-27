@@ -16,6 +16,7 @@ import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROU
 import { useManualModeStore } from '@/lib/manual-mode/store';
 import { buildCameraConstraints, applySettingsToTrack, logCapabilities } from '@/lib/manual-mode/constraints';
 import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -36,6 +37,8 @@ export default function CameraScreen() {
   if (isAuthLoading || !authData?.user) {
     return null;
   }
+  
+  const { t } = useTranslation();
   const [cameraStarted, setCameraStarted] = useState(false);
   const [hdrEnabled, setHdrEnabled] = useState(true);
   const [capturing, setCapturing] = useState(false);
@@ -209,7 +212,7 @@ export default function CameraScreen() {
       else {
         log('❌ NO exposure controls!');
         log('Software HDR only');
-        setError('Software-HDR Modus (keine Hardware-Kontrolle)');
+        setError(t('camera.software_hdr_fallback'));
       }
 
       if (!videoRef.current) return;
@@ -648,9 +651,9 @@ export default function CameraScreen() {
             <DrawerContent className="max-h-[85vh] bg-white">
               <div className="mx-auto w-full max-w-md">
                 <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200">
-                  <DrawerTitle className="text-lg font-semibold">Raumtyp wählen</DrawerTitle>
+                  <DrawerTitle className="text-lg font-semibold">{t('camera.room_title')}</DrawerTitle>
                   <DrawerDescription className="text-sm text-gray-500">
-                    {ALL_ROOM_TYPES.length} Raumtypen verfügbar
+                    {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
                   </DrawerDescription>
                 </DrawerHeader>
                 <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
@@ -786,7 +789,7 @@ export default function CameraScreen() {
               >
                 <Zap className="w-4 h-4" strokeWidth={2} fill={hdrEnabled ? 'currentColor' : 'none'} />
                 <span className="text-sm font-semibold">
-                  {hdrEnabled ? 'HDR' : 'Normal'}
+                  {hdrEnabled ? t('camera.hdr_on') : t('camera.hdr_off')}
                 </span>
                 {exposureControl && hdrEnabled && (
                   <span className="text-xs opacity-75">
@@ -1072,9 +1075,9 @@ export default function CameraScreen() {
                 <DrawerContent className="max-h-[85vh] bg-white">
                   <div className="mx-auto w-full max-w-md">
                     <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
-                      <DrawerTitle className="text-lg font-semibold">Raumtyp wählen</DrawerTitle>
+                      <DrawerTitle className="text-lg font-semibold">{t('camera.room_title')}</DrawerTitle>
                       <DrawerDescription className="text-sm text-gray-500">
-                        {ALL_ROOM_TYPES.length} Raumtypen verfügbar
+                        {t('camera.room_types_available', { count: ALL_ROOM_TYPES.length })}
                       </DrawerDescription>
                       {/* X-Button to Reset Selection */}
                       {currentRoomType !== DEFAULT_ROOM_TYPE && (
@@ -1167,7 +1170,7 @@ export default function CameraScreen() {
                   hapticStyle="medium"
                   data-testid="button-retry-camera"
                 >
-                  Erneut versuchen
+                  {t('camera.camera_retry')}
                 </HapticButton>
               </div>
             ) : (
@@ -1178,7 +1181,7 @@ export default function CameraScreen() {
                 data-testid="button-start-camera"
               >
                 <CameraIcon className="w-6 h-6 mr-3 inline" />
-                Kamera starten
+                {t('camera.start_camera')}
               </HapticButton>
             )}
           </div>

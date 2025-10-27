@@ -7,6 +7,7 @@ import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
+import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Job } from '@shared/schema';
 
 interface Photo {
@@ -51,6 +52,7 @@ export default function UploadScreen() {
     return null;
   }
   
+  const { t } = useTranslation();
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [uploadSelection, setUploadSelection] = useState<number[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -415,7 +417,7 @@ export default function UploadScreen() {
               style={{ fontSize: '14px', marginTop: '2px' }}
               data-testid="text-upload-count"
             >
-              {uploadSelection.length} von {stacks.length} Stacks ausgewählt
+              {t('upload.stacks_selected', { selected: uploadSelection.length, total: stacks.length })}
             </motion.p>
           </div>
         </div>
@@ -462,7 +464,7 @@ export default function UploadScreen() {
           {/* Job Selection */}
           <div className="space-y-3">
             <h3 className="text-gray-900" style={{ fontSize: '16px', fontWeight: '600' }}>
-              Auftrag auswählen
+              {t('upload.select_job_title')}
             </h3>
             
             {jobsLoading ? (
@@ -472,13 +474,13 @@ export default function UploadScreen() {
             ) : jobsError ? (
               <div className="bg-red-50 rounded-lg p-4 text-center">
                 <p className="text-red-600" style={{ fontSize: '14px' }}>
-                  Fehler beim Laden der Aufträge
+                  {t('upload.jobs_error')}
                 </p>
               </div>
             ) : !jobs || jobs.length === 0 ? (
               <div className="bg-gray-50 rounded-lg p-4 text-center">
                 <p className="text-gray-500" style={{ fontSize: '14px' }}>
-                  Keine Aufträge verfügbar
+                  {t('upload.no_jobs')}
                 </p>
               </div>
             ) : (
@@ -502,7 +504,7 @@ export default function UploadScreen() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <span className="text-gray-900 font-medium truncate" style={{ fontSize: '14px' }}>
-                            {job.propertyName || 'Unbenannt'}
+                            {job.propertyName || t('upload.unnamed_job')}
                           </span>
                           <span className="text-gray-400 flex-shrink-0" style={{ fontSize: '12px' }}>
                             #{job.jobNumber}
@@ -532,7 +534,7 @@ export default function UploadScreen() {
           {stacks.length > 0 && (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
               <span style={{ fontSize: '14px' }} className="text-gray-900">
-                Alle {stacks.length} Stacks
+                {t('upload.all_stacks', { count: stacks.length })}
               </span>
               <HapticButton
                 variant="ghost"
@@ -543,7 +545,7 @@ export default function UploadScreen() {
                 style={{ fontSize: '14px' }}
                 data-testid="button-toggle-all"
               >
-                {uploadSelection.length === stacks.length ? 'Keine auswählen' : 'Alle auswählen'}
+                {uploadSelection.length === stacks.length ? t('upload.select_none') : t('upload.select_all')}
               </HapticButton>
             </div>
           )}
@@ -551,8 +553,8 @@ export default function UploadScreen() {
           {stacks.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <ImageIcon className="w-20 h-20 text-gray-300 mb-4" strokeWidth={1} />
-              <p className="text-gray-500 text-lg font-medium mb-2">Keine Fotos</p>
-              <p className="text-gray-400 text-sm">Nutze die Kamera um Fotos aufzunehmen</p>
+              <p className="text-gray-500 text-lg font-medium mb-2">{t('upload.no_photos_title')}</p>
+              <p className="text-gray-400 text-sm">{t('upload.use_camera_hint')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -616,11 +618,11 @@ export default function UploadScreen() {
 
           <div className="bg-gray-50 rounded-lg p-4 space-y-3">
             <div className="flex justify-between" style={{ fontSize: '14px' }}>
-              <span className="text-gray-600">Ausgewählte Dateien:</span>
+              <span className="text-gray-600">{t('upload.selected_files')}</span>
               <span className="text-gray-900" data-testid="text-selected-count">{uploadSelection.length}</span>
             </div>
             <div className="flex justify-between" style={{ fontSize: '14px' }}>
-              <span className="text-gray-600">Gesamtgröße:</span>
+              <span className="text-gray-600">{t('upload.total_size')}</span>
               <span className="text-gray-900" data-testid="text-total-size">{(uploadSelection.length * 8.5).toFixed(1)} MB</span>
             </div>
           </div>
@@ -636,10 +638,10 @@ export default function UploadScreen() {
               </div>
               <div>
                 <p style={{ fontSize: '14px' }} className="text-gray-900">
-                  {wifiOnly ? 'Nur WLAN' : 'Mobil erlaubt'}
+                  {wifiOnly ? t('upload.wifi_only') : t('upload.mobile_allowed')}
                 </p>
                 <p style={{ fontSize: '12px' }} className="text-gray-500">
-                  {wifiOnly ? 'Upload nur bei WLAN-Verbindung' : 'Upload auch über mobile Daten'}
+                  {wifiOnly ? t('upload.wifi_only_desc') : t('upload.mobile_allowed_desc')}
                 </p>
               </div>
             </div>
@@ -658,14 +660,14 @@ export default function UploadScreen() {
               style={!wifiOnly ? { backgroundColor: '#4A5849' } : {}}
               data-testid="button-toggle-wifi"
             >
-              {wifiOnly ? 'Ändern' : 'Ändern'}
+              {t('upload.change')}
             </HapticButton>
           </div>
 
           {isUploading && uploadProgress.total > 0 && (
             <div className="bg-gray-50 rounded-lg p-4 space-y-2">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Upload läuft...</span>
+                <span className="text-gray-600">{t('upload.uploading')}</span>
                 <span className="text-gray-900 font-medium">
                   {uploadProgress.current} / {uploadProgress.total}
                 </span>
@@ -682,7 +684,7 @@ export default function UploadScreen() {
                 />
               </div>
               <p className="text-xs text-gray-500 text-center">
-                {Math.round((uploadProgress.current / uploadProgress.total) * 100)}% abgeschlossen
+                {t('upload.percent_complete', { percent: Math.round((uploadProgress.current / uploadProgress.total) * 100) })}
               </p>
             </div>
           )}
@@ -707,17 +709,17 @@ export default function UploadScreen() {
             ) : uploadSelection.length === 0 ? (
               <>
                 <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
-                <span>Keine Fotos ausgewählt</span>
+                <span>{t('upload.no_photos_title')}</span>
               </>
             ) : !selectedJobId ? (
               <>
                 <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
-                <span>Auftrag auswählen</span>
+                <span>{t('upload.select_job_title')}</span>
               </>
             ) : (
               <>
                 <UploadIcon className="w-5 h-5" strokeWidth={1.5} />
-                <span>{uploadSelection.length} {uploadSelection.length === 1 ? 'Foto' : 'Fotos'} hochladen</span>
+                <span>{uploadSelection.length === 1 ? t('upload.upload_photos_singular', { count: uploadSelection.length }) : t('upload.upload_photos_plural', { count: uploadSelection.length })}</span>
               </>
             )}
           </HapticButton>
@@ -769,7 +771,7 @@ export default function UploadScreen() {
             style={{ fontSize: '24px' }}
             data-testid="text-success-headline"
           >
-            Upload erfolgreich!
+            {t('upload.upload_success')}
           </motion.h2>
 
           <motion.p
@@ -780,7 +782,7 @@ export default function UploadScreen() {
             style={{ fontSize: '16px' }}
             data-testid="text-success-count"
           >
-            {uploadProgress.total} {uploadProgress.total === 1 ? 'Foto wurde' : 'Fotos wurden'} erfolgreich hochgeladen
+            {uploadProgress.total === 1 ? t('upload.photos_uploaded_singular', { total: uploadProgress.total }) : t('upload.photos_uploaded_plural', { total: uploadProgress.total })}
           </motion.p>
 
           {/* Done Button */}
@@ -800,7 +802,7 @@ export default function UploadScreen() {
               style={{ backgroundColor: '#4A5849', fontSize: '16px' }}
               data-testid="button-success-done"
             >
-              Fertig
+              {t('common.done')}
             </HapticButton>
           </motion.div>
         </motion.div>
