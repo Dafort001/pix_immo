@@ -24,17 +24,15 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
 
   const isDark = variant === 'dark' || location === '/app/camera';
 
-  // Landscape: Vertical Left Side Navigation
+  // Landscape: Compact Bottom Navigation (avoid Dynamic Island on left)
   if (isLandscape) {
     return (
-      <div className={`fixed left-0 top-1/2 -translate-y-1/2 z-30 ${
+      <div className={`fixed bottom-0 left-0 right-0 z-30 border-t ${
         isDark 
-          ? 'bg-[#1C1C1E]/70 backdrop-blur-xl' 
-          : 'bg-white/95 backdrop-blur-lg'
-      } rounded-r-2xl border-r border-t border-b ${
-        isDark ? 'border-white/5' : 'border-gray-200/50'
+          ? 'bg-[#1C1C1E]/70 backdrop-blur-xl border-white/5' 
+          : 'bg-white/95 backdrop-blur-lg border-gray-200/50'
       }`} data-testid="bottom-nav">
-        <div className="flex flex-col items-center py-2 px-1 gap-1">
+        <div className="flex items-center justify-center gap-2 px-4 py-2">
           {navItems.map((item) => {
             const isActive = location === item.path;
             const Icon = item.icon;
@@ -45,7 +43,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 variant="ghost"
                 onClick={() => setLocation(item.path)}
                 hapticStyle="light"
-                className={`flex items-center justify-center relative w-12 h-12 rounded-lg transition-all ${
+                className={`flex items-center justify-center relative w-11 h-11 rounded-lg transition-all ${
                   isDark
                     ? isActive
                       ? 'bg-[#4A5849]/20 text-[#6B8268]'
@@ -80,7 +78,7 @@ export function BottomNav({ photoCount = 0, variant = 'light', isLandscape = fal
                 {isActive && (
                   <motion.div
                     layoutId="activeTabLandscape"
-                    className={`absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full ${
+                    className={`absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full ${
                       isDark ? 'bg-[#6B8268]' : 'bg-[#4A5849]'
                     }`}
                     transition={{ type: 'spring', stiffness: 300, damping: 30 }}
