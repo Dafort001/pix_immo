@@ -764,39 +764,21 @@ export default function CameraScreen() {
       {/* CONTROLS */}
       {cameraStarted ? (
         <>
-          {/* Top Bar - Only in Portrait */}
-          <div className={`absolute top-0 left-0 right-0 z-20 pt-14 px-4 pb-4 bg-gradient-to-b from-black/60 to-transparent ${
-            isLandscape ? 'hidden' : ''
-          }`}>
-            <div className="flex items-center justify-between">
-              {/* Format Selection - Links */}
+          {/* Top Bar - Only Debug Toggle if needed */}
+          {showDebug && (
+            <div className={`absolute top-0 right-0 z-20 pt-14 px-4 pb-4 ${
+              isLandscape ? 'hidden' : ''
+            }`}>
               <HapticButton
-                onClick={() => {
-                  const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
-                  const currentIndex = formats.indexOf(aspectRatio);
-                  const nextIndex = (currentIndex + 1) % formats.length;
-                  setAspectRatio(formats[nextIndex]);
-                  trigger('light');
-                }}
-                className="bg-black/60 backdrop-blur-md text-white px-4 py-2 rounded-full text-sm font-semibold border border-white/20"
-                data-testid="button-format-toggle"
+                size="icon"
+                variant="ghost"
+                onClick={() => setShowDebug(!showDebug)}
+                className="bg-white/20 backdrop-blur-md text-white rounded-full"
               >
-                {aspectRatio}
+                <Info className="w-5 h-5" />
               </HapticButton>
-
-              {/* Debug Toggle (nur wenn showDebug aktiv) */}
-              {showDebug && (
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => setShowDebug(!showDebug)}
-                  className="bg-white/20 backdrop-blur-md text-white rounded-full"
-                >
-                  <Info className="w-5 h-5" />
-                </HapticButton>
-              )}
             </div>
-          </div>
+          )}
 
           {/* Professional Camera Overlays */}
           <div className="absolute inset-0 pointer-events-none z-40">
@@ -910,14 +892,31 @@ export default function CameraScreen() {
           <div className={`absolute bottom-0 left-0 right-0 z-20 pb-36 px-4 ${
             isLandscape ? 'hidden' : ''
           }`}>
-            {/* Control Buttons Row - Raumwähler links vom Auslöser */}
+            {/* Control Buttons Row */}
             <div className="flex items-center justify-center gap-2">
-              {/* Room Type Selector - Links vom Auslöser */}
+              {/* Format Button - Ganz links */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const formats: Array<'2:3' | '4:3' | '16:9'> = ['2:3', '4:3', '16:9'];
+                  const currentIndex = formats.indexOf(aspectRatio);
+                  const nextIndex = (currentIndex + 1) % formats.length;
+                  setAspectRatio(formats[nextIndex]);
+                  trigger('light');
+                }}
+                className="w-12 h-12 rounded-full backdrop-blur-md bg-white/20 text-white flex-shrink-0"
+                data-testid="button-format-toggle"
+              >
+                <span className="text-xs font-bold">{aspectRatio}</span>
+              </HapticButton>
+
+              {/* Room Type Selector */}
               <Drawer>
                 <DrawerTrigger asChild>
                   <button
                     onClick={() => trigger('light')}
-                    className="w-12 h-12 rounded-full bg-black/60 backdrop-blur-md text-white flex flex-col items-center justify-center border border-white/20 flex-shrink-0"
+                    className="w-12 h-12 rounded-full backdrop-blur-md bg-white/20 text-white flex flex-col items-center justify-center flex-shrink-0"
                     data-testid="button-select-roomtype"
                   >
                     <span className="text-[9px] opacity-60">#1</span>
