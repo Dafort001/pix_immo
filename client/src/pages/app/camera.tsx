@@ -604,7 +604,7 @@ export default function CameraScreen() {
 
       {/* VIDEO - Responsive Aspect Ratio Container */}
       <div className={`absolute inset-0 z-0 bg-black flex items-center justify-center ${
-        isLandscape ? 'pl-40' : ''
+        isLandscape ? 'pl-16 pr-40 pb-20' : ''
       }`}>
         <div 
           className="relative bg-black flex items-center justify-center"
@@ -634,9 +634,9 @@ export default function CameraScreen() {
         </div>
       </div>
 
-      {/* Landscape: Vertical StatusBar Right */}
+      {/* Landscape: Vertical StatusBar Left (Dynamic Island is left, so this is fine as thin strip) */}
       {isLandscape && (
-        <div className="absolute right-0 top-0 bottom-0 z-10 w-20 bg-[#1C1C1E]/90 backdrop-blur-xl border-l border-white/10 flex flex-col items-center justify-start pt-6 gap-4">
+        <div className="absolute left-0 top-0 bottom-0 z-10 w-16 bg-[#1C1C1E]/90 backdrop-blur-xl border-r border-white/10 flex flex-col items-center justify-start pt-6 gap-4">
           <div className="text-white text-xs" data-testid="statusbar-time-landscape">
             {new Date().getHours().toString().padStart(2, '0')}:{new Date().getMinutes().toString().padStart(2, '0')}
           </div>
@@ -649,9 +649,9 @@ export default function CameraScreen() {
         </div>
       )}
 
-      {/* Landscape: Left Side Controls (180° rotated) */}
+      {/* Landscape: Right Side Controls */}
       {isLandscape && cameraStarted && (
-        <div className="absolute left-20 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 z-20 flex flex-row items-center gap-4">
           {/* Left Column: Flip + Auslöser + Manual */}
           <div className="flex flex-col items-center gap-6">
             {/* Kamera-Flip - Über Auslöser */}
