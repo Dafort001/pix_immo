@@ -66,6 +66,14 @@ const ROOM_TYPES = [
 
 export default function GalleryScreen() {
   const [, setLocation] = useLocation();
+  const { t } = useTranslation();
+  const [stacks, setStacks] = useState<PhotoStack[]>([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedStack, setSelectedStack] = useState<PhotoStack | null>(null);
+  const [lightboxStack, setLightboxStack] = useState<PhotoStack | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { trigger } = useHaptic();
   
   // Route protection - redirect to login if not authenticated
   const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
@@ -78,20 +86,6 @@ export default function GalleryScreen() {
       setLocation('/app');
     }
   }, [isAuthLoading, authData, setLocation]);
-
-  // Show nothing while checking auth
-  if (isAuthLoading || !authData?.user) {
-    return null;
-  }
-  
-  const { t } = useTranslation();
-  const [stacks, setStacks] = useState<PhotoStack[]>([]);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedStack, setSelectedStack] = useState<PhotoStack | null>(null);
-  const [lightboxStack, setLightboxStack] = useState<PhotoStack | null>(null);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { trigger } = useHaptic();
 
   // Load and group photos into stacks
   useEffect(() => {
@@ -158,6 +152,11 @@ export default function GalleryScreen() {
     const interval = setInterval(loadPhotos, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // Show nothing while checking auth (after all hooks!)
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
 
   const selectedCount = stacks.filter(s => s.selected).length;
   const totalPhotos = stacks.reduce((sum, s) => sum + s.photos.length, 0);
