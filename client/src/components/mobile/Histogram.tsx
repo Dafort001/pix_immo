@@ -1,15 +1,62 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface HistogramProps {
   videoElement: HTMLVideoElement | null;
   className?: string;
   width?: number;
   height?: number;
+  onBrightnessChange?: (value: number) => void;
+  currentBrightness?: number;
 }
 
-export function Histogram({ videoElement, className = '', width = 256, height = 80 }: HistogramProps) {
+export function Histogram({ 
+  videoElement, 
+  className = '', 
+  width = 256, 
+  height = 80,
+  onBrightnessChange,
+  currentBrightness = 0
+}: HistogramProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number>();
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleInteraction = (clientY: number) => {
+    if (!containerRef.current || !onBrightnessChange) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const y = clientY - rect.top;
+    const percentage = 1 - (y / rect.height);
+    const brightness = (percentage - 0.5) * 4;
+    
+    onBrightnessChange(Math.max(-2, Math.min(2, brightness)));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setIsDragging(true);
+    handleInteraction(e.touches[0].clientY);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+    handleInteraction(e.touches[0].clientY);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    handleInteraction(e.clientY);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    handleInteraction(e.clientY);
+  };
+
+  const handleEnd = () => {
+    setIsDragging(false);
+  };
 
   useEffect(() => {
     if (!videoElement || !canvasRef.current) return;
@@ -98,14 +145,46 @@ export function Histogram({ videoElement, className = '', width = 256, height = 
   }, [videoElement]);
 
   return (
-    <canvas
-      ref={canvasRef}
-      width={width}
-      height={height}
-      className={className}
-      style={{
-        imageRendering: 'crisp-edges',
-      }}
-    />
+    <div
+      ref={containerRef}
+      className={`relative ${className} cursor-ns-resize select-none touch-none`}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleEnd}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleEnd}
+      onMouseLeave={handleEnd}
+      style={{ width, height }}
+    >
+      <canvas
+        ref={canvasRef}
+        width={width}
+        height={height}
+        className="pointer-events-none"
+        style={{
+          imageRendering: 'crisp-edges',
+        }}
+      />
+      
+      {/* Brightness Indicator Line */}
+      {onBrightnessChange && (
+        <div
+          className="absolute left-0 right-0 h-0.5 bg-yellow-400 shadow-lg pointer-events-none"
+          style={{
+            top: `${((1 - (currentBrightness + 2) / 4) * 100)}%`,
+            boxShadow: '0 0 8px rgba(250, 204, 21, 0.8)'
+          }}
+        >
+          <div className="absolute left-0 w-2 h-2 -mt-0.5 bg-yellow-400 rounded-full" />
+          <div className="absolute right-0 w-2 h-2 -mt-0.5 bg-yellow-400 rounded-full" />
+        </div>
+      )}
+      
+      {/* Visual Feedback when dragging */}
+      {isDragging && (
+        <div className="absolute inset-0 bg-blue-500/10 pointer-events-none border-2 border-blue-400" />
+      )}
+    </div>
   );
 }

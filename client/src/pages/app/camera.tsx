@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle, Sliders } from 'lucide-react';
+import { X, Camera as CameraIcon, Layers, Circle, Info, Grid3x3, Timer, Home, ChevronRight, AlertCircle, Sliders, Zap } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
@@ -45,6 +45,7 @@ export default function CameraScreen() {
   const [lastCaptureUrl, setLastCaptureUrl] = useState<string | null>(null);
   const [isManualControlsOpen, setIsManualControlsOpen] = useState(false);
   const [aspectRatio, setAspectRatio] = useState<'2:3' | '4:3' | '16:9'>('2:3');
+  const [brightness, setBrightness] = useState(0);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -302,6 +303,32 @@ export default function CameraScreen() {
       log(`🔍 Zoom: ${clampedZoom.toFixed(1)}×`);
     } catch (e) {
       log('⚠️ Zoom failed');
+    }
+  };
+
+  useEffect(() => {
+    if (exposureControl?.type === 'exposureCompensation') {
+      setBrightness(exposureControl.baseValue);
+    } else {
+      setBrightness(0);
+    }
+  }, [exposureControl]);
+
+  const handleBrightnessChange = async (value: number) => {
+    setBrightness(value);
+    
+    if (!exposureControl) return;
+    
+    if (exposureControl.type === 'exposureCompensation') {
+      await setExposure(value);
+    } else if (exposureControl.type === 'exposureTime') {
+      const factor = Math.pow(2, value);
+      const newExposure = exposureControl.baseValue * factor;
+      await setExposure(newExposure);
+    } else if (exposureControl.type === 'iso') {
+      const factor = Math.pow(2, value);
+      const newISO = exposureControl.baseValue * factor;
+      await setExposure(newISO);
     }
   };
 
@@ -725,7 +752,7 @@ export default function CameraScreen() {
             isLandscape ? 'hidden' : ''
           }`}>
             <div className="flex items-center justify-between">
-              {/* HDR Toggle - Sage Color */}
+              {/* HDR Toggle - Sage Color with Flash Icon */}
               <HapticButton
                 onClick={() => {
                   setHdrEnabled(!hdrEnabled);
@@ -739,7 +766,7 @@ export default function CameraScreen() {
                 style={hdrEnabled ? { backgroundColor: '#4A5849' } : {}}
                 data-testid="button-toggle-hdr"
               >
-                <Layers className="w-4 h-4" strokeWidth={2} />
+                <Zap className="w-4 h-4" strokeWidth={2} fill={hdrEnabled ? 'currentColor' : 'none'} />
                 <span className="text-sm font-semibold">
                   {hdrEnabled ? 'HDR' : 'Normal'}
                 </span>
@@ -756,24 +783,6 @@ export default function CameraScreen() {
               </HapticButton>
 
               <div className="flex items-center gap-2">
-                {/* Grid Toggle */}
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => {
-                    setGridEnabled(!gridEnabled);
-                    trigger('light');
-                  }}
-                  className={`backdrop-blur-md rounded-full ${
-                    gridEnabled 
-                      ? 'bg-white/30 text-white' 
-                      : 'bg-white/20 text-white'
-                  }`}
-                  data-testid="button-toggle-grid"
-                >
-                  <Grid3x3 className="w-5 h-5" />
-                </HapticButton>
-                
                 {/* Horizon Line Toggle */}
                 <HapticButton
                   size="icon"
@@ -792,34 +801,6 @@ export default function CameraScreen() {
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <line x1="2" y1="12" x2="22" y2="12" />
                   </svg>
-                </HapticButton>
-                
-                {/* Timer Toggle */}
-                <HapticButton
-                  size="icon"
-                  variant="ghost"
-                  onClick={() => {
-                    const modes: (0 | 3 | 10)[] = [0, 3, 10];
-                    const currentIndex = modes.indexOf(timerMode);
-                    const nextIndex = (currentIndex + 1) % modes.length;
-                    setTimerMode(modes[nextIndex]);
-                    trigger('light');
-                  }}
-                  className={`backdrop-blur-md rounded-full ${
-                    timerMode > 0 
-                      ? 'bg-white/30 text-white' 
-                      : 'bg-white/20 text-white'
-                  }`}
-                  data-testid="button-toggle-timer"
-                >
-                  <div className="relative">
-                    <Timer className="w-5 h-5" />
-                    {timerMode > 0 && (
-                      <div className="absolute -bottom-1 -right-1 bg-black rounded-full w-3 h-3 flex items-center justify-center">
-                        <span className="text-[8px] font-bold">{timerMode}</span>
-                      </div>
-                    )}
-                  </div>
                 </HapticButton>
                 
                 {/* Debug Toggle */}
@@ -884,6 +865,8 @@ export default function CameraScreen() {
                     videoElement={videoRef.current} 
                     width={140}
                     height={40}
+                    onBrightnessChange={handleBrightnessChange}
+                    currentBrightness={brightness}
                   />
                 </div>
               </motion.div>
@@ -986,8 +969,74 @@ export default function CameraScreen() {
               ))}
             </div>
             
-            {/* Capture & Room Type Row */}
-            <div className="flex items-center justify-between">
+            {/* Bottom Button Bar - Centered Controls */}
+            <div className="flex items-center justify-center gap-6">
+              {/* Grid Toggle */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  setGridEnabled(!gridEnabled);
+                  trigger('light');
+                }}
+                className={`backdrop-blur-md rounded-full ${
+                  gridEnabled 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white'
+                }`}
+                data-testid="button-toggle-grid"
+              >
+                <Grid3x3 className="w-5 h-5" />
+              </HapticButton>
+
+              {/* Capture Button - Sage Border */}
+              <motion.button
+                onClick={handleCapture}
+                disabled={capturing || countdown !== null}
+                whileTap={{ scale: (capturing || countdown !== null) ? 1 : 0.9 }}
+                className={`w-20 h-20 rounded-full border-4 flex items-center justify-center ${
+                  (capturing || countdown !== null) ? 'opacity-50' : ''
+                }`}
+                style={{ borderColor: hdrEnabled ? '#4A5849' : 'white' }}
+                data-testid="button-capture-photo"
+              >
+                <div 
+                  className="w-16 h-16 rounded-full"
+                  style={{ backgroundColor: hdrEnabled ? '#4A5849' : 'white' }}
+                />
+              </motion.button>
+
+              {/* Timer Toggle */}
+              <HapticButton
+                size="icon"
+                variant="ghost"
+                onClick={() => {
+                  const modes: (0 | 3 | 10)[] = [0, 3, 10];
+                  const currentIndex = modes.indexOf(timerMode);
+                  const nextIndex = (currentIndex + 1) % modes.length;
+                  setTimerMode(modes[nextIndex]);
+                  trigger('light');
+                }}
+                className={`backdrop-blur-md rounded-full ${
+                  timerMode > 0 
+                    ? 'bg-white/30 text-white' 
+                    : 'bg-white/20 text-white'
+                }`}
+                data-testid="button-toggle-timer"
+              >
+                <div className="relative">
+                  <Timer className="w-5 h-5" />
+                  {timerMode > 0 && (
+                    <div className="absolute -bottom-1 -right-1 bg-black rounded-full w-3 h-3 flex items-center justify-center">
+                      <span className="text-[8px] font-bold">{timerMode}</span>
+                    </div>
+                  )}
+                </div>
+              </HapticButton>
+            </div>
+
+            {/* Room Type Row - Moved below */}
+            <div className="mt-4 flex justify-center">
               {/* Room Type Button */}
               <Drawer>
                 <DrawerTrigger asChild>
@@ -1004,11 +1053,24 @@ export default function CameraScreen() {
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[85vh] bg-white">
                   <div className="mx-auto w-full max-w-md">
-                    <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200">
+                    <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
                       <DrawerTitle className="text-lg font-semibold">Raumtyp wählen</DrawerTitle>
                       <DrawerDescription className="text-sm text-gray-500">
                         {ALL_ROOM_TYPES.length} Raumtypen verfügbar
                       </DrawerDescription>
+                      {/* X-Button to Reset Selection */}
+                      {currentRoomType !== DEFAULT_ROOM_TYPE && (
+                        <button
+                          onClick={() => {
+                            setCurrentRoomType(DEFAULT_ROOM_TYPE);
+                            trigger('light');
+                          }}
+                          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                          data-testid="button-reset-roomtype"
+                        >
+                          <X className="w-4 h-4 text-gray-600" />
+                        </button>
+                      )}
                     </DrawerHeader>
                     <div className="overflow-y-auto" style={{ maxHeight: '60vh' }}>
                       {Object.entries(getRoomsByGroup()).map(([group, rooms]) => {
