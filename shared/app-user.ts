@@ -18,7 +18,7 @@ export interface AppUser {
  * Beispiele:
  * - "Daniel Fischer" → "DF"
  * - "Anna-Maria" → "AM"
- * - "von der Heide" → "VH"
+ * - "von der Heide" → "VH" (erster Token + letzter signifikanter Token)
  */
 export function generateInitials(name: string): string {
   const cleaned = name.trim();
@@ -33,12 +33,34 @@ export function generateInitials(name: string): string {
     return parts[0].substring(0, 2).toUpperCase();
   }
   
-  // Mehrere Wörter: Nimm ersten Buchstaben von jedem Wort (max 2)
-  return parts
-    .slice(0, 2)
-    .map(part => part[0])
-    .join('')
-    .toUpperCase();
+  // Partikel (von, der, de, van, etc.)
+  const particles = ['von', 'der', 'de', 'van', 'den', 'dem', 'zu', 'zur', 'am', 'la', 'und'];
+  const significantParts = parts.filter(
+    part => !particles.includes(part.toLowerCase())
+  );
+  
+  // Strategie: Erster Token (egal ob Partikel) + Letzter signifikanter Token
+  // Falls nur Partikel: Erste 2 Partikel
+  // Falls nur 1 signifikanter Teil: Erste 2 Buchstaben
+  
+  if (significantParts.length === 0) {
+    // Nur Partikel: Nimm erste 2
+    return parts
+      .slice(0, 2)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase();
+  }
+  
+  if (significantParts.length === 1 && parts.length === 1) {
+    // Nur ein Wort insgesamt: Nimm erste 2 Buchstaben
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  
+  // Nimm ersten Token (egal ob Partikel) + letzten signifikanten Token
+  const first = parts[0][0];
+  const last = significantParts[significantParts.length - 1][0];
+  return (first + last).toUpperCase();
 }
 
 /**
