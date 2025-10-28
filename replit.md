@@ -1,7 +1,15 @@
 # pix.immo - Real Estate Media Platform
 
 ## Recent Changes
-**Last Updated: October 25, 2025**
+**Last Updated: October 28, 2025**
+
+### Room Type System Consolidation V2.0 ✅
+- **Simplified Taxonomy**: Reduced from 57 to 20 room types for improved usability and AI caption accuracy
+- **Centralized Types**: New `shared/room-types.ts` with type-safe exports (`RoomType`, `Orientation`)
+- **AI Integration**: Each room type includes optimized German caption prompts for AI image analysis
+- **Orientation Support**: Optional orientation field (Vorne/Hinten/Seitlich) for exterior rooms (Fassade, Eingang, Terrasse, Garten)
+- **Migration Complete**: Updated all components (Camera, Gallery, Demo Data) to use centralized `ALL_ROOM_TYPES`
+- **Status**: Production-ready, architect-reviewed ✅
 
 ### Mobile PWA Upload Workflow V1.0 - Production Ready ✅
 - **Upload Infrastructure**: Complete sessionStorage → Blob → FormData → R2 pipeline with progress tracking
