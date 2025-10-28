@@ -24,12 +24,13 @@ import type { RoomType } from './room-types';
 export function normalizeRoomTypeForFilename(roomType: RoomType): string {
   return roomType
     .toLowerCase()
-    .normalize('NFD') // Decompose umlauts
-    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+    // Replace German umlauts BEFORE normalizing
     .replace(/ä/g, 'ae')
     .replace(/ö/g, 'oe')
     .replace(/ü/g, 'ue')
     .replace(/ß/g, 'ss')
+    .normalize('NFD') // Decompose any remaining diacritics
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
     .replace(/\s+/g, '-'); // Replace spaces with hyphens
 }
 
