@@ -9,9 +9,14 @@ import type { ManualModeSettings } from './types';
 import { DEFAULT_MANUAL_SETTINGS } from './types';
 
 const STORAGE_KEY = 'pix-immo-manual-settings';
+const EXPERT_MODE_KEY = 'pix-immo-expert-mode';
 
 interface ManualModeStore extends ManualModeSettings {
+  // Expert Mode State
+  expertMode: boolean;
+  
   // Actions
+  setExpertMode: (enabled: boolean) => void;
   setEnabled: (enabled: boolean) => void;
   setISO: (iso: number | 'auto') => void;
   setShutterSpeed: (speed: number | 'auto') => void;
@@ -49,8 +54,26 @@ export const useManualModeStore = create<ManualModeStore>()(
     (set) => ({
       // Initial state from defaults
       ...DEFAULT_MANUAL_SETTINGS,
+      expertMode: false,
 
       // Actions
+      setExpertMode: (expertMode) => 
+        set((state) => {
+          // If disabling expert mode, reset expert-only values to defaults
+          if (!expertMode) {
+            return {
+              expertMode,
+              iso: 'auto',
+              shutterSpeed: 'auto',
+              whiteBalanceKelvin: DEFAULT_MANUAL_SETTINGS.whiteBalanceKelvin,
+              whiteBalancePreset: DEFAULT_MANUAL_SETTINGS.whiteBalancePreset,
+              histogramEnabled: false,
+              fileFormat: 'jpg',
+            };
+          }
+          return { expertMode };
+        }),
+      
       setEnabled: (enabled) => set({ enabled }),
       
       setISO: (iso) => set({ iso }),
