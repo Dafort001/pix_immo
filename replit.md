@@ -11,6 +11,22 @@ pix.immo is a professional real estate media platform built with Node.js 22, Typ
 - Clean, modern developer-focused interfaces
 - Secure environment variable management (no hardcoded secrets)
 
+## Audit & Documentation Tooling
+
+**Complete Suite (8 Tools)**:
+1. **Page Inventory** (`tools/page-inventory.ts`) - 52 routes inventoried
+2. **Wireframe Export** (`tools/wireframe-export.ts`) - 50 SVG wireframes + site map
+3. **Auto-Screenshots** (`tools/page-screenshots.ts`) - Puppeteer-based (local only, Replit: mock version)
+4. **Component Map** (`tools/component-map.ts`) - 27 components, 50 routes, bidirectional mapping
+5. **Content Dump** (`tools/content-dump.ts`) - 3195 text entries extracted (i18n migration ready)
+6. **Routes Manifest** (`tools/routes-manifest.ts`) - 51 routes with guards/params/orphans
+7. **Figma Bundle** (`tools/figma-bundle.ts`) - Complete design asset package
+8. **Audit ZIP** (`tools/audit-zip.ts`) - 296 KB complete audit package
+
+**Outputs**: `/export/` (JSON, SVG, PNG), `/docs/` (MD reports), `site_audit_package.zip` (complete bundle)
+
+**Shell Scripts**: `audit-*.sh`, `export-*.sh`, `bundle-*.sh`, `create-audit-zip.sh`
+
 ## System Architecture
 
 ### UI/UX Decisions

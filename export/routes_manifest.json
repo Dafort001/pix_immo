@@ -1,10 +1,10 @@
 {
-  "generated": "2025-10-28T12:51:00.479Z",
+  "generated": "2025-10-28T12:56:12.761Z",
   "totalRoutes": 51,
   "stats": {
     "publicRoutes": 51,
     "authRoutes": 0,
-    "guardedRoutes": 0,
+    "guardedRoutes": 1,
     "orphanRoutes": 48,
     "dynamicRoutes": 8
   },
@@ -12,7 +12,7 @@
     {
       "path": "/",
       "layout": "web",
-      "file": "pages/Home.tsx",
+      "file": "pages/home.tsx",
       "component": "Home",
       "isOrphan": false,
       "linkedFrom": []
@@ -20,77 +20,77 @@
     {
       "path": "/about",
       "layout": "web",
-      "file": "pages/About.tsx",
+      "file": "pages/about.tsx",
       "component": "About",
       "isOrphan": true
     },
     {
       "path": "/admin/editorial",
       "layout": "web",
-      "file": "pages/AdminEditorial.tsx",
+      "file": "pages/admin-editorial.tsx",
       "component": "AdminEditorial",
       "isOrphan": true
     },
     {
       "path": "/admin/seo",
       "layout": "web",
-      "file": "pages/AdminSeo.tsx",
+      "file": "pages/admin-seo.tsx",
       "component": "AdminSeo",
       "isOrphan": true
     },
     {
       "path": "/agb",
       "layout": "web",
-      "file": "pages/AGB.tsx",
+      "file": "pages/agb.tsx",
       "component": "AGB",
       "isOrphan": true
     },
     {
       "path": "/ai-lab",
       "layout": "web",
-      "file": "pages/AILab.tsx",
+      "file": "pages/ai-lab.tsx",
       "component": "AILab",
       "isOrphan": true
     },
     {
       "path": "/app",
       "layout": "app",
-      "file": "pages/AppSplash.tsx",
+      "file": "pages/app/splash.tsx",
       "component": "AppSplash",
       "isOrphan": true
     },
     {
       "path": "/app/camera",
       "layout": "app",
-      "file": "pages/AppCamera.tsx",
+      "file": "pages/app/camera.tsx",
       "component": "AppCamera",
       "isOrphan": true
     },
     {
       "path": "/app/gallery",
       "layout": "app",
-      "file": "pages/AppGallery.tsx",
+      "file": "pages/app/gallery.tsx",
       "component": "AppGallery",
       "isOrphan": true
     },
     {
       "path": "/app/settings",
       "layout": "app",
-      "file": "pages/AppSettings.tsx",
+      "file": "pages/app/settings.tsx",
       "component": "AppSettings",
       "isOrphan": true
     },
     {
       "path": "/app/upload",
       "layout": "app",
-      "file": "pages/AppUpload.tsx",
+      "file": "pages/app/upload.tsx",
       "component": "AppUpload",
       "isOrphan": true
     },
     {
       "path": "/blog",
       "layout": "web",
-      "file": "pages/Blog.tsx",
+      "file": "pages/blog.tsx",
       "component": "Blog",
       "isOrphan": true
     },
@@ -100,112 +100,113 @@
         "slug"
       ],
       "layout": "web",
-      "file": "pages/BlogPost.tsx",
+      "file": "pages/blog-post.tsx",
       "component": "BlogPost",
       "isOrphan": true
     },
     {
       "path": "/booking-confirmation",
       "layout": "web",
-      "file": "pages/BookingConfirmation.tsx",
+      "file": "pages/booking-confirmation.tsx",
       "component": "BookingConfirmation",
       "isOrphan": true
     },
     {
       "path": "/buchen",
       "layout": "web",
-      "file": "pages/Booking.tsx",
+      "file": "pages/booking.tsx",
       "component": "Booking",
       "isOrphan": true
     },
     {
       "path": "/capture",
       "layout": "web",
-      "file": "pages/CaptureIndex.tsx",
+      "file": "pages/capture/index.tsx",
       "component": "CaptureIndex",
       "isOrphan": true
     },
     {
       "path": "/capture/camera",
       "layout": "web",
-      "file": "pages/CaptureCamera.tsx",
+      "file": "pages/capture/camera.tsx",
       "component": "CaptureCamera",
       "isOrphan": true
     },
     {
       "path": "/capture/review",
       "layout": "web",
-      "file": "pages/CaptureReview.tsx",
+      "file": "pages/capture/review.tsx",
       "component": "CaptureReview",
       "isOrphan": true
     },
     {
       "path": "/capture/upload",
       "layout": "web",
-      "file": "pages/CaptureUpload.tsx",
+      "file": "pages/capture/upload.tsx",
       "component": "CaptureUpload",
       "isOrphan": true
     },
     {
       "path": "/dashboard",
       "layout": "web",
-      "file": "pages/Dashboard.tsx",
+      "file": "pages/dashboard.tsx",
       "component": "Dashboard",
+      "requiresRole": "admin",
       "isOrphan": true
     },
     {
       "path": "/datenschutz",
       "layout": "web",
-      "file": "pages/Datenschutz.tsx",
+      "file": "pages/datenschutz.tsx",
       "component": "Datenschutz",
       "isOrphan": true
     },
     {
       "path": "/demo-jobs",
       "layout": "web",
-      "file": "pages/DemoJobs.tsx",
+      "file": "pages/demo-jobs.tsx",
       "component": "DemoJobs",
       "isOrphan": true
     },
     {
       "path": "/demo-upload",
       "layout": "web",
-      "file": "pages/DemoUpload.tsx",
+      "file": "pages/demo-upload.tsx",
       "component": "DemoUpload",
       "isOrphan": true
     },
     {
       "path": "/docs/rooms-spec",
       "layout": "web",
-      "file": "pages/DocsRoomsSpec.tsx",
+      "file": "pages/docs-rooms-spec.tsx",
       "component": "DocsRoomsSpec",
       "isOrphan": true
     },
     {
       "path": "/downloads",
       "layout": "web",
-      "file": "pages/Downloads.tsx",
+      "file": "pages/downloads.tsx",
       "component": "Downloads",
       "isOrphan": true
     },
     {
       "path": "/faq",
       "layout": "web",
-      "file": "pages/FAQ.tsx",
+      "file": "pages/faq.tsx",
       "component": "FAQ",
       "isOrphan": true
     },
     {
       "path": "/galerie",
       "layout": "web",
-      "file": "pages/Galerie.tsx",
+      "file": "pages/galerie.tsx",
       "component": "Galerie",
       "isOrphan": true
     },
     {
       "path": "/gallery",
       "layout": "web",
-      "file": "pages/Gallery.tsx",
+      "file": "pages/gallery.tsx",
       "component": "Gallery",
       "isOrphan": true
     },
@@ -215,21 +216,21 @@
         "shootId"
       ],
       "layout": "web",
-      "file": "pages/GalleryClassify.tsx",
+      "file": "pages/gallery-classify.tsx",
       "component": "GalleryClassify",
       "isOrphan": true
     },
     {
       "path": "/impressum",
       "layout": "web",
-      "file": "pages/Imprint.tsx",
+      "file": "pages/imprint.tsx",
       "component": "Imprint",
       "isOrphan": true
     },
     {
       "path": "/intake",
       "layout": "web",
-      "file": "pages/Intake.tsx",
+      "file": "pages/intake.tsx",
       "component": "Intake",
       "isOrphan": true
     },
@@ -239,35 +240,35 @@
         "id"
       ],
       "layout": "web",
-      "file": "pages/DemoJobDetail.tsx",
+      "file": "pages/demo-job-detail.tsx",
       "component": "DemoJobDetail",
       "isOrphan": true
     },
     {
       "path": "/jobs",
       "layout": "web",
-      "file": "pages/Jobs.tsx",
+      "file": "pages/jobs.tsx",
       "component": "Jobs",
       "isOrphan": true
     },
     {
       "path": "/kontakt",
       "layout": "web",
-      "file": "pages/Contact.tsx",
+      "file": "pages/contact.tsx",
       "component": "Contact",
       "isOrphan": true
     },
     {
       "path": "/kontakt-formular",
       "layout": "web",
-      "file": "pages/KontaktFormular.tsx",
+      "file": "pages/kontakt-formular.tsx",
       "component": "KontaktFormular",
       "isOrphan": true
     },
     {
       "path": "/login",
       "layout": "web",
-      "file": "pages/Login.tsx",
+      "file": "pages/login.tsx",
       "component": "Login",
       "isOrphan": false,
       "linkedFrom": []
@@ -275,7 +276,7 @@
     {
       "path": "/order",
       "layout": "web",
-      "file": "pages/OrderForm.tsx",
+      "file": "pages/order-form.tsx",
       "component": "OrderForm",
       "isOrphan": true
     },
@@ -285,28 +286,28 @@
         "jobId"
       ],
       "layout": "portal",
-      "file": "pages/Delivery.tsx",
+      "file": "pages/portal/delivery.tsx",
       "component": "Delivery",
       "isOrphan": true
     },
     {
       "path": "/portal/gallery-editing",
       "layout": "portal",
-      "file": "pages/EditingGallery.tsx",
+      "file": "pages/portal/gallery-editing.tsx",
       "component": "EditingGallery",
       "isOrphan": true
     },
     {
       "path": "/portal/gallery-photographer",
       "layout": "portal",
-      "file": "pages/PhotographerUploadGallery.tsx",
+      "file": "pages/portal/gallery-photographer.tsx",
       "component": "PhotographerUploadGallery",
       "isOrphan": true
     },
     {
       "path": "/portal/gallery-upload",
       "layout": "portal",
-      "file": "pages/CustomerUploadGallery.tsx",
+      "file": "pages/portal/gallery-upload.tsx",
       "component": "CustomerUploadGallery",
       "isOrphan": true
     },
@@ -316,7 +317,7 @@
         "jobId"
       ],
       "layout": "portal",
-      "file": "pages/GallerySelection.tsx",
+      "file": "pages/portal/gallery-selection.tsx",
       "component": "GallerySelection",
       "isOrphan": true
     },
@@ -326,7 +327,7 @@
         "jobId"
       ],
       "layout": "portal",
-      "file": "pages/Payment.tsx",
+      "file": "pages/portal/payment.tsx",
       "component": "Payment",
       "isOrphan": true
     },
@@ -336,35 +337,35 @@
         "jobId"
       ],
       "layout": "portal",
-      "file": "pages/StatusTimeline.tsx",
+      "file": "pages/portal/status-timeline.tsx",
       "component": "StatusTimeline",
       "isOrphan": true
     },
     {
       "path": "/portal/uploads",
       "layout": "portal",
-      "file": "pages/UploadsOverview.tsx",
+      "file": "pages/portal/uploads-overview.tsx",
       "component": "UploadsOverview",
       "isOrphan": true
     },
     {
       "path": "/preise",
       "layout": "web",
-      "file": "pages/Pricing.tsx",
+      "file": "pages/pricing.tsx",
       "component": "Pricing",
       "isOrphan": true
     },
     {
       "path": "/preisliste",
       "layout": "web",
-      "file": "pages/Preisliste.tsx",
+      "file": "pages/preisliste.tsx",
       "component": "Preisliste",
       "isOrphan": true
     },
     {
       "path": "/register",
       "layout": "web",
-      "file": "pages/Register.tsx",
+      "file": "pages/register.tsx",
       "component": "Register",
       "isOrphan": false,
       "linkedFrom": []
@@ -376,21 +377,21 @@
         "shootId"
       ],
       "layout": "web",
-      "file": "pages/Review.tsx",
+      "file": "pages/review.tsx",
       "component": "Review",
       "isOrphan": true
     },
     {
       "path": "/test",
       "layout": "web",
-      "file": "pages/TestDebug.tsx",
+      "file": "pages/test-debug.tsx",
       "component": "TestDebug",
       "isOrphan": true
     },
     {
       "path": "/upload-raw",
       "layout": "web",
-      "file": "pages/UploadRaw.tsx",
+      "file": "pages/upload-raw.tsx",
       "component": "UploadRaw",
       "isOrphan": true
     }

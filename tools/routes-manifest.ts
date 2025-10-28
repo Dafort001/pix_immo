@@ -50,7 +50,7 @@ interface ManifestOutput {
 }
 
 /**
- * Parse App.tsx to extract routes
+ * Parse App.tsx to extract routes with actual import paths
  */
 function parseAppRoutes(): RouteManifest[] {
   const appPath = path.join(CLIENT_SRC, 'App.tsx');
@@ -62,6 +62,18 @@ function parseAppRoutes(): RouteManifest[] {
   
   const content = fs.readFileSync(appPath, 'utf-8');
   const routes: RouteManifest[] = [];
+  
+  // First, extract imports to map component names to file paths
+  // Match: import Component from '@/pages/filename' or './pages/filename'
+  const importMap = new Map<string, string>();
+  const importPattern = /import\s+(\w+)\s+from\s+["'](?:@\/|\.\/)?pages\/([^"']+)["']/g;
+  const importMatches = [...content.matchAll(importPattern)];
+  
+  importMatches.forEach(match => {
+    const componentName = match[1];
+    const filePath = match[2]; // e.g., 'home' or 'portal/gallery-upload'
+    importMap.set(componentName, `pages/${filePath}.tsx`);
+  });
   
   // Match: <Route path="/path" component={Component} />
   const routePattern = /<Route\s+path=["']([^"']+)["'][^/>]*component=\{(\w+)\}/g;
@@ -83,11 +95,14 @@ function parseAppRoutes(): RouteManifest[] {
       params.push(pm[1]);
     }
     
+    // Get actual file path from import map (fallback to lowercase conversion)
+    const filePath = importMap.get(component) || `pages/${component.toLowerCase()}.tsx`;
+    
     routes.push({
       path: routePath,
       params: params.length > 0 ? params : undefined,
       layout,
-      file: `pages/${component}.tsx`,
+      file: filePath,
       component,
     });
   });
@@ -214,11 +229,11 @@ function generateManifest(): ManifestOutput {
   
   // Calculate stats
   const stats = {
-    publicRoutes: routes.filter(r => !r.requiresAuth).length,
-    authRoutes: routes.filter(r => r.requiresAuth).length,
-    guardedRoutes: routes.filter(r => r.requiresRole || r.requiresFlag).length,
-    orphanRoutes: routes.filter(r => r.isOrphan).length,
-    dynamicRoutes: routes.filter(r => r.params && r.params.length > 0).length,
+    publicRoutes: routes.filter((r: RouteManifest) => !r.requiresAuth).length,
+    authRoutes: routes.filter((r: RouteManifest) => r.requiresAuth).length,
+    guardedRoutes: routes.filter((r: RouteManifest) => r.requiresRole || r.requiresFlag).length,
+    orphanRoutes: routes.filter((r: RouteManifest) => r.isOrphan).length,
+    dynamicRoutes: routes.filter((r: RouteManifest) => r.params && r.params.length > 0).length,
   };
   
   return {
