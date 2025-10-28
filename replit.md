@@ -34,6 +34,7 @@ The frontend is a React 18 SPA utilizing Wouter for routing, Shadcn UI component
 - **Room Type System**: Consolidated into 20 types with AI-optimized German caption prompts.
 - **Manual Camera Controls**: Expert mode with extended EV range, HDR brackets, zoom levels, ISO, shutter speed, Kelvin WB, and file format selection with Pro-gating for RAW/DNG.
 - **Tripod & Motion Warnings V1.0**: Pre-capture stability check (700ms DeviceMotionEvent sampling) for HDR/Night modes with "Stativ empfohlen" dialog. Post-capture bracket alignment validation with congruency scoring (<70%/80% triggers "Bewegung erkannt" warning). Long exposure tip (>1/30s) with auto-dismiss. Feature flags: tripodCheck, congruencyCheck, longShutterTip (config-toggleable).
+- **Live Recommendations (Heuristic MVP)**: Real-time scene analysis with intelligent shooting suggestions. Histogram-based clipping detection (both highlights & shadows >10% triggers HDR 5 + EV −0.3 suggestion). Window detection heuristic using edge brightness analysis. Gray-world white balance estimation for neutral scenes. Max 1 recommendation per 8-10 seconds with 1-tap apply. Optional toggle in expert settings (liveRecommendations flag).
 
 ### Feature Specifications
 - **Authentication**: Signup, login, logout, password reset, session management.
