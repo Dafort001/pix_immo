@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HapticButton } from './HapticButton';
+import { Switch } from '@/components/ui/switch';
 
 interface ManualControlsProps {
   onClose?: () => void;
@@ -57,53 +58,80 @@ export function ManualControls({ onClose }: ManualControlsProps) {
       >
         <div className="bg-black/80 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
           {/* Header */}
-          <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Sliders className="w-4 h-4 text-white" />
-              <span className="text-white text-sm font-medium">Manuelle Kontrolle</span>
+          <div className="px-4 py-3 border-b border-white/10">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Sliders className="w-4 h-4 text-white" />
+                <span className="text-white text-sm font-medium">Manuelle Kontrolle</span>
+              </div>
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="text-white/60 hover:text-white"
+                  data-testid="button-close-manual"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="text-white/60 hover:text-white"
-                data-testid="button-close-manual"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            
+            {/* Expert Mode Toggle */}
+            <div className="flex items-center justify-between py-2 px-3 bg-white/5 rounded-lg">
+              <span className="text-white/70 text-xs font-medium">Expertenmodus</span>
+              <Switch
+                checked={settings.expertMode}
+                onCheckedChange={settings.setExpertMode}
+                data-testid="switch-expert-mode"
+              />
+            </div>
           </div>
 
           {/* Quick Settings */}
           <div className="p-3 space-y-2">
-            {/* ISO Control */}
-            <ControlRow
-              icon={<Zap className="w-4 h-4" />}
-              label="ISO"
-              value={formatISO(settings.iso)}
-              isActive={expandedPanel === 'iso'}
-              onClick={() => togglePanel('iso')}
-              testId="control-iso"
-            />
+            {/* Expert Mode Only Controls */}
+            {settings.expertMode && (
+              <>
+                {/* ISO Control */}
+                <ControlRow
+                  icon={<Zap className="w-4 h-4" />}
+                  label="ISO"
+                  value={formatISO(settings.iso)}
+                  isActive={expandedPanel === 'iso'}
+                  onClick={() => togglePanel('iso')}
+                  testId="control-iso"
+                />
 
-            {/* Shutter Speed */}
-            <ControlRow
-              icon={<Sliders className="w-4 h-4" />}
-              label="Verschluss"
-              value={formatShutterSpeed(settings.shutterSpeed)}
-              isActive={expandedPanel === 'shutter'}
-              onClick={() => togglePanel('shutter')}
-              testId="control-shutter"
-            />
+                {/* Shutter Speed */}
+                <ControlRow
+                  icon={<Sliders className="w-4 h-4" />}
+                  label="Verschluss"
+                  value={formatShutterSpeed(settings.shutterSpeed)}
+                  isActive={expandedPanel === 'shutter'}
+                  onClick={() => togglePanel('shutter')}
+                  testId="control-shutter"
+                />
 
-            {/* White Balance */}
-            <ControlRow
-              icon={<Sun className="w-4 h-4" />}
-              label="Weißabgleich"
-              value={formatWhiteBalance(settings.whiteBalanceKelvin)}
-              isActive={expandedPanel === 'wb'}
-              onClick={() => togglePanel('wb')}
-              testId="control-wb"
-            />
+                {/* White Balance (Kelvin) */}
+                <ControlRow
+                  icon={<Sun className="w-4 h-4" />}
+                  label="Weißabgleich"
+                  value={formatWhiteBalance(settings.whiteBalanceKelvin)}
+                  isActive={expandedPanel === 'wb'}
+                  onClick={() => togglePanel('wb')}
+                  testId="control-wb"
+                />
+
+                {/* File Format */}
+                <ControlRow
+                  icon={<FileImage className="w-4 h-4" />}
+                  label="Format"
+                  value={settings.fileFormat.toUpperCase()}
+                  isActive={expandedPanel === 'format'}
+                  onClick={() => togglePanel('format')}
+                  testId="control-format"
+                />
+              </>
+            )}
 
             {/* Exposure Compensation */}
             <ControlRow
@@ -143,16 +171,6 @@ export function ManualControls({ onClose }: ManualControlsProps) {
               isActive={expandedPanel === 'focus'}
               onClick={() => togglePanel('focus')}
               testId="control-focus"
-            />
-
-            {/* File Format */}
-            <ControlRow
-              icon={<FileImage className="w-4 h-4" />}
-              label="Format"
-              value={settings.fileFormat.toUpperCase()}
-              isActive={expandedPanel === 'format'}
-              onClick={() => togglePanel('format')}
-              testId="control-format"
             />
 
             {/* Display & Level */}
@@ -938,6 +956,17 @@ interface FileFormatPanelProps {
 }
 
 function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
+  // Device capability check (ProRAW support)
+  // TODO: Replace with actual MediaDevices capability check
+  const hasProRAWCapability = false; // Mock: Check navigator.mediaDevices constraints
+  
+  // Office-Pro registration check
+  // TODO: Replace with actual user account type from backend
+  const isOfficePro = false; // Mock: Check user.accountType === 'office-pro'
+  
+  // RAW is only available if BOTH conditions are met
+  const canUseRAW = hasProRAWCapability && isOfficePro;
+  
   const formats = [
     {
       value: 'jpg' as const,
@@ -951,14 +980,17 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
       description: 'Apple Format, beste Kompression',
       size: '~2 MB',
     },
-    {
+  ];
+  
+  // Only add RAW option if device and account support it
+  if (canUseRAW) {
+    formats.push({
       value: 'raw' as const,
       label: 'RAW (DNG)',
       description: 'Unkomprimiert, maximale Qualität',
       size: '~25 MB',
-      warning: true,
-    },
-  ];
+    });
+  }
 
   return (
     <motion.div
@@ -1012,6 +1044,25 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
             </HapticButton>
           ))}
         </div>
+        
+        {/* RAW Not Available Info */}
+        {!canUseRAW && (
+          <div className="mt-4 p-3 bg-white/10 border border-white/20 rounded-lg">
+            <p className="text-white/70 text-xs leading-relaxed">
+              ℹ️ <span className="font-semibold">RAW nur auf Office-Pro Geräten</span>
+              <br />
+              {!hasProRAWCapability && !isOfficePro && (
+                <>ProRAW-fähiges Gerät und Office-Pro Account erforderlich.</>
+              )}
+              {!hasProRAWCapability && isOfficePro && (
+                <>Dieses Gerät unterstützt kein ProRAW.</>
+              )}
+              {hasProRAWCapability && !isOfficePro && (
+                <>Office-Pro Account erforderlich. Bitte upgraden Sie Ihren Account.</>
+              )}
+            </p>
+          </div>
+        )}
 
         {/* RAW Warning */}
         {format === 'raw' && (
