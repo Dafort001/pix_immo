@@ -10,7 +10,7 @@ import { useLocation } from 'wouter';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Job } from '@shared/schema';
 import { normalizeOrientation, type RoomType, type Orientation } from '@shared/room-types';
-import { getActiveUser } from '@/lib/app-users';
+import { getActiveAppUser } from '@/lib/app-users';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 
 interface Photo {
@@ -55,7 +55,7 @@ export default function UploadScreen() {
   const hasAutoSelectedRef = useRef(false);
   
   // Load active app user
-  const activeUser = getActiveUser();
+  const activeUser = getActiveAppUser();
   
   // Route protection - redirect to login if not authenticated
   const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
@@ -77,7 +77,7 @@ export default function UploadScreen() {
   const activeShoot = jobs?.find(job => 
     job.status === 'in_aufnahme' && 
     activeUser && 
-    job.selectedUserId === activeUser.id
+    job.selectedUserId === activeUser.userId
   );
   
   // Mutation to update job status
