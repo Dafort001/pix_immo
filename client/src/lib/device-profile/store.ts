@@ -17,6 +17,7 @@ interface DeviceProfileStore extends DeviceProfile {
   
   // Actions
   setCapProRAW: (capable: boolean) => void;
+  setOfficePro: (enabled: boolean) => void;
   markDetectionComplete: () => void;
   
   // Debug override (development only)
@@ -42,6 +43,9 @@ export const useDeviceProfileStore = create<DeviceProfileStore>()(
           lastDetected: Date.now(),
         }),
 
+      setOfficePro: (office_pro) =>
+        set({ office_pro }),
+
       markDetectionComplete: () =>
         set({
           _detectionRunThisSession: true,
@@ -55,6 +59,7 @@ export const useDeviceProfileStore = create<DeviceProfileStore>()(
       partialize: (state) => ({
         // Only persist these fields
         cap_proraw: state.cap_proraw,
+        office_pro: state.office_pro,
         lastDetected: state.lastDetected,
         _debugOverride: state._debugOverride,
         // _detectionRunThisSession is session-only, not persisted

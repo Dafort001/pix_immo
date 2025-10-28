@@ -11,6 +11,12 @@ export interface DeviceProfile {
   cap_proraw: boolean;
   
   /**
+   * Whether device is registered as Office-Pro
+   * Unlocks RAW/DNG features for Pro-capable devices
+   */
+  office_pro: boolean;
+  
+  /**
    * Last detection timestamp
    */
   lastDetected: number | null;
@@ -18,5 +24,6 @@ export interface DeviceProfile {
 
 export const DEFAULT_DEVICE_PROFILE: DeviceProfile = {
   cap_proraw: false,
+  office_pro: false,
   lastDetected: null,
 };

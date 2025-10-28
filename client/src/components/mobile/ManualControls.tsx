@@ -15,7 +15,8 @@ import {
   SHUTTER_PRESETS,
   WHITE_BALANCE_PRESETS,
 } from '@/lib/manual-mode/types';
-import { isProCapable } from '@/lib/device-profile/store';
+import { isProCapable, useDeviceProfileStore } from '@/lib/device-profile/store';
+import { registerAsOfficePro } from '@/lib/device-profile/detection';
 import { 
   Sliders,
   Sun,
@@ -959,23 +960,33 @@ interface FileFormatPanelProps {
 function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
   // Device capability check (ProRAW support)
   const hasProRAWCapability = isProCapable();
-  
-  // Office-Pro registration check
-  // TODO: Replace with actual user account type from backend
-  const isOfficePro = false; // Mock: Check user.accountType === 'office-pro'
+  const isOfficePro = useDeviceProfileStore((state) => state.office_pro);
   
   // RAW is only available if BOTH conditions are met
   const canUseRAW = hasProRAWCapability && isOfficePro;
+  const needsRegistration = hasProRAWCapability && !isOfficePro;
   
-  const formats = [
+  const handleRegister = async () => {
+    await registerAsOfficePro();
+    // Note: Sync queue integration for backend sync will be added in next task
+  };
+  
+  type FormatOption = {
+    value: 'heic' | 'jpg' | 'raw';
+    label: string;
+    description: string;
+    size: string;
+  };
+  
+  const formats: FormatOption[] = [
     {
-      value: 'jpg' as const,
+      value: 'jpg',
       label: 'JPEG',
       description: 'Komprimiert, kleine Dateigröße',
       size: '~3 MB',
     },
     {
-      value: 'heic' as const,
+      value: 'heic',
       label: 'HEIC',
       description: 'Apple Format, beste Kompression',
       size: '~2 MB',
@@ -985,7 +996,7 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
   // Only add RAW option if device and account support it
   if (canUseRAW) {
     formats.push({
-      value: 'raw' as const,
+      value: 'raw',
       label: 'RAW (DNG)',
       description: 'Unkomprimiert, maximale Qualität',
       size: '~25 MB',
@@ -1045,21 +1056,32 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
           ))}
         </div>
         
-        {/* RAW Not Available Info */}
-        {!canUseRAW && (
+        {/* Office-Pro Registration Button */}
+        {needsRegistration && (
+          <div className="mt-4 p-4 bg-[#A85B2E]/20 border border-[#A85B2E]/40 rounded-lg">
+            <p className="text-[#A85B2E] text-xs leading-relaxed mb-3">
+              <span className="font-semibold">ProRAW-fähiges Gerät erkannt!</span>
+              <br />
+              Registrieren Sie dieses Gerät als Office-Pro, um RAW/DNG-Funktionen freizuschalten.
+            </p>
+            <HapticButton
+              onClick={handleRegister}
+              hapticStyle="medium"
+              className="w-full py-2.5 px-4 bg-[#A85B2E] hover:bg-[#A85B2E]/90 text-white font-semibold rounded-lg transition-colors"
+              data-testid="button-register-office-pro"
+            >
+              Dieses Gerät als Office-Pro registrieren
+            </HapticButton>
+          </div>
+        )}
+        
+        {/* RAW Not Available Info (Non-Pro Device) */}
+        {!hasProRAWCapability && (
           <div className="mt-4 p-3 bg-white/10 border border-white/20 rounded-lg">
             <p className="text-white/70 text-xs leading-relaxed">
-              ℹ️ <span className="font-semibold">RAW nur auf Office-Pro Geräten</span>
+              ℹ️ <span className="font-semibold">RAW nur auf Pro-Geräten verfügbar</span>
               <br />
-              {!hasProRAWCapability && !isOfficePro && (
-                <>ProRAW-fähiges Gerät und Office-Pro Account erforderlich.</>
-              )}
-              {!hasProRAWCapability && isOfficePro && (
-                <>Dieses Gerät unterstützt kein ProRAW.</>
-              )}
-              {hasProRAWCapability && !isOfficePro && (
-                <>Office-Pro Account erforderlich. Bitte upgraden Sie Ihren Account.</>
-              )}
+              Dieses Gerät unterstützt kein ProRAW. Verwenden Sie ein iPhone Pro-Modell für RAW-Aufnahmen.
             </p>
           </div>
         )}
