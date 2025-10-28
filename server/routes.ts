@@ -1041,8 +1041,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Mobile photo upload endpoint (simplified for PWA)
-  app.post("/api/mobile-uploads", upload.single('photo'), async (req: Request, res: Response) => {
+  // Mobile photo upload endpoint with sidecar support (object_meta.json + alt_text.txt)
+  app.post("/api/mobile-uploads", upload.fields([
+    { name: 'photo', maxCount: 1 },
+    { name: 'metadata', maxCount: 1 },  // object_meta.json
+    { name: 'alt_text', maxCount: 1 },  // alt_text.txt
+  ]), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {
@@ -1050,10 +1054,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const { jobId, roomType, orientation, capturedAt, stackId, stackIndex, evCompensation, isManualMode } = req.body;
-      const file = req.file;
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      const file = files?.photo?.[0];
+      const metadataFile = files?.metadata?.[0];
+      const altTextFile = files?.alt_text?.[0];
 
       if (!file) {
-        return res.status(400).json({ error: "No file uploaded" });
+        return res.status(400).json({ error: "No photo file uploaded" });
       }
 
       if (!jobId) {
@@ -1134,14 +1141,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sequenceIndex: nextIndex, // Track subject index
       };
 
+      // Process sidecar files if present
+      const { validateObjectMeta, parseObjectMeta } = await import('../shared/sidecar-export.js');
+      const warnings: string[] = [];
+      let parsedMetadata = null;
+      let altTextContent = null;
+
+      if (metadataFile) {
+        try {
+          const metadataJson = metadataFile.buffer.toString('utf-8');
+          parsedMetadata = parseObjectMeta(metadataJson);
+          
+          // Validate metadata (warnings, nicht blockierend)
+          const validation = validateObjectMeta(parsedMetadata);
+          if (validation.warnings.length > 0) {
+            warnings.push(...validation.warnings.map(w => `[Metadata] ${w}`));
+          }
+          if (!validation.isValid) {
+            warnings.push(`[Metadata] Schwere Fehler: ${validation.errors.join(', ')}`);
+          }
+          
+          console.log(`[Sidecar] object_meta.json received, Warnings: ${validation.warnings.length}`);
+        } catch (err) {
+          warnings.push(`[Metadata] JSON Parse-Fehler: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
+        }
+      } else {
+        warnings.push('[Metadata] object_meta.json nicht hochgeladen (optional)');
+      }
+
+      if (altTextFile) {
+        try {
+          altTextContent = altTextFile.buffer.toString('utf-8');
+          const lineCount = altTextContent.split('\n').filter(l => l.trim()).length;
+          console.log(`[Sidecar] alt_text.txt received, ${lineCount} Zeilen`);
+        } catch (err) {
+          warnings.push(`[Alt-Text] Fehler beim Lesen: ${err instanceof Error ? err.message : 'Unbekannter Fehler'}`);
+        }
+      } else {
+        warnings.push('[Alt-Text] alt_text.txt nicht hochgeladen (optional)');
+      }
+
       console.log(`[Mobile Upload v3.1] User ${user.id}, Shoot ${shoot.shootCode}, Room ${roomType}, Index ${nextIndex}`);
       console.log(`  Generated filename: ${generatedFilename}`);
       console.log(`  Original: ${file.originalname}, Size: ${file.size}, Manual: ${isManualMode === 'true' ? 'YES' : 'NO'}`);
       console.log(`  Object meta:`, objectMeta);
+      console.log(`  Sidecars: JSON=${!!metadataFile}, TXT=${!!altTextFile}`);
+      if (warnings.length > 0) {
+        console.warn(`  Warnings (${warnings.length}):`, warnings);
+      }
       
-      // TODO: Upload to R2 with generatedFilename
+      // TODO: Upload to R2 with generatedFilename + sidecars
       // const r2Key = `shoots/${shoot.shootCode}/${generatedFilename}`;
       // await uploadToR2(file.buffer, r2Key, objectMeta);
+      // if (metadataFile) await uploadToR2(metadataFile.buffer, `${r2Key}.meta.json`, {});
+      // if (altTextFile) await uploadToR2(altTextFile.buffer, `${r2Key}.alt.txt`, {});
 
       // TODO: Create image record in database
       // await storage.createImage({
@@ -1158,14 +1211,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({
         success: true,
-        message: "Upload prepared with v3.1 filename (R2 integration pending)",
+        message: "Upload prepared with v3.1 filename + sidecars (R2 integration pending)",
         filename: generatedFilename,
         originalFilename: file.originalname,
         size: file.size,
         shootCode: shoot.shootCode,
         roomType,
         sequenceIndex: nextIndex,
-        objectMeta
+        objectMeta,
+        sidecars: {
+          metadata: !!metadataFile,
+          altText: !!altTextFile,
+        },
+        warnings: warnings.length > 0 ? warnings : undefined,
       });
     } catch (error) {
       console.error("Error in mobile upload:", error);
