@@ -58,6 +58,7 @@ export const orders = pgTable("orders", {
 
 export const jobs = pgTable("jobs", {
   id: varchar("id").primaryKey(),
+  localId: varchar("local_id", { length: 50 }).unique(), // Client-generated ULID for offline deduplication
   jobNumber: varchar("job_number", { length: 50 }).notNull().unique(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   customerName: varchar("customer_name", { length: 255 }), // Name of the ordering customer/agency
