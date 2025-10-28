@@ -18,6 +18,7 @@ interface Photo {
   height: number;
   selected?: boolean;
   roomType?: string;
+  orientation?: string | null;
   stackId?: number;
   stackIndex?: number;
   stackTotal?: number;
@@ -30,6 +31,7 @@ interface PhotoStack {
   photos: Photo[];
   thumbnail: Photo;
   roomType?: string;
+  orientation?: string | null;
 }
 
 export default function UploadScreen() {
@@ -196,6 +198,7 @@ export default function UploadScreen() {
         formData.append('photo', blob, filename);
         formData.append('jobId', selectedJobId!);
         formData.append('roomType', photo.roomType || 'general');
+        if (photo.orientation) formData.append('orientation', photo.orientation);
         formData.append('capturedAt', photo.timestamp);
         if (photo.stackId) formData.append('stackId', photo.stackId.toString());
         if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());

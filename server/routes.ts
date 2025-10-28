@@ -1049,7 +1049,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { jobId, roomType, capturedAt, stackId, stackIndex, evCompensation, isManualMode } = req.body;
+      const { jobId, roomType, orientation, capturedAt, stackId, stackIndex, evCompensation, isManualMode } = req.body;
       const file = req.file;
 
       if (!file) {
@@ -1066,12 +1066,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Job not found" });
       }
 
+      // Build object_meta for future R2 integration
+      const objectMeta = {
+        roomType: roomType || null,
+        orientation: orientation || null,
+        stackId: stackId ? parseInt(stackId) : null,
+        stackIndex: stackIndex ? parseInt(stackIndex) : null,
+        evCompensation: evCompensation ? parseFloat(evCompensation) : null,
+        isManualMode: isManualMode === 'true',
+        capturedAt: capturedAt || new Date().toISOString(),
+      };
+
       // TODO: Upload to R2 when R2 integration is ready
       // For now, just log the upload details
-      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}, Manual Mode: ${isManualMode === 'true' ? 'YES' : 'NO'}`);
+      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}, Manual Mode: ${isManualMode === 'true' ? 'YES' : 'NO'}, Meta:`, objectMeta);
       
       // TODO: Create image record in database when R2 is ready
-      // await storage.createImage({ ... });
+      // await storage.createImage({ ..., objectMeta: JSON.stringify(objectMeta) });
 
       res.json({
         success: true,
@@ -1079,7 +1090,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filename: file.originalname,
         size: file.size,
         jobId,
-        roomType
+        roomType,
+        objectMeta
       });
     } catch (error) {
       console.error("Error in mobile upload:", error);

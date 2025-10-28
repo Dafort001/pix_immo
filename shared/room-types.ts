@@ -371,6 +371,47 @@ export function getShortcutForRoom(roomType: RoomType): string | undefined {
   return SHORTCUTS_REVERSE[roomType];
 }
 
+// ==================== UI DISPLAY HELPERS ====================
+
+/**
+ * Orientierungs-Anzeigenamen für UI
+ */
+export const ORIENTATION_DISPLAY_NAMES: Record<Orientation, string> = {
+  front: 'Vorne',
+  back: 'Hinten',
+  side: 'Seitlich',
+};
+
+/**
+ * Formatiert Raum + Orientierung für UI-Labels
+ * Format: "Fassade • Vorne" (Interior ohne Punkt: "Wohnzimmer")
+ */
+export function formatRoomLabel(roomType: RoomType, orientation?: Orientation | null): string {
+  const hasOrientation = orientation && ROOMS_WITH_ORIENTATION.includes(roomType);
+  
+  if (hasOrientation) {
+    const orientationLabel = ORIENTATION_DISPLAY_NAMES[orientation];
+    return `${roomType} • ${orientationLabel}`;
+  }
+  
+  return roomType;
+}
+
+/**
+ * Backfill/Migration: Setzt Default-Orientierung für Exterior-Räume
+ * Exterior ohne Orientierung → "front"
+ * Interior → null
+ */
+export function normalizeOrientation(roomType: RoomType, orientation?: Orientation | null): Orientation | null {
+  // Interior rooms never have orientation
+  if (!ROOMS_WITH_ORIENTATION.includes(roomType)) {
+    return null;
+  }
+  
+  // Exterior rooms: use provided orientation or default to "front"
+  return orientation ?? 'front';
+}
+
 // ==================== LEGACY COMPATIBILITY ====================
 
 /**

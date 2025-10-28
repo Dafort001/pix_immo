@@ -26,7 +26,7 @@ import {
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n/useTranslation';
-import { ALL_ROOM_TYPES } from '@shared/room-types';
+import { ALL_ROOM_TYPES, formatRoomLabel, normalizeOrientation, type Orientation } from '@shared/room-types';
 
 interface Photo {
   id: number;
@@ -36,6 +36,7 @@ interface Photo {
   height: number;
   selected?: boolean;
   roomType?: string;
+  orientation?: Orientation | null;
   stackId?: number;
   stackIndex?: number;
   stackTotal?: number;
@@ -49,6 +50,7 @@ interface PhotoStack {
   thumbnail: Photo;
   selected?: boolean;
   roomType?: string;
+  orientation?: Orientation | null;
 }
 
 const ROOM_TYPES = ALL_ROOM_TYPES;
@@ -89,6 +91,15 @@ export default function GalleryScreen() {
           const singles: Photo[] = [];
           
           photos.forEach(photo => {
+            // Backfill/Migration: Normalize orientation for all photos
+            if (photo.roomType) {
+              const normalizedOrientation = normalizeOrientation(
+                photo.roomType as any, 
+                photo.orientation
+              );
+              photo.orientation = normalizedOrientation;
+            }
+            
             if (photo.stackId) {
               const existing = stackMap.get(photo.stackId) || [];
               existing.push(photo);
@@ -110,7 +121,8 @@ export default function GalleryScreen() {
               photos,
               thumbnail,
               selected: false,
-              roomType: photos[0].roomType
+              roomType: photos[0].roomType,
+              orientation: photos[0].orientation
             });
           });
           
@@ -121,7 +133,8 @@ export default function GalleryScreen() {
               photos: [photo],
               thumbnail: photo,
               selected: false,
-              roomType: photo.roomType
+              roomType: photo.roomType,
+              orientation: photo.orientation
             });
           });
           
@@ -342,11 +355,11 @@ export default function GalleryScreen() {
                   </motion.div>
                 )}
 
-                {/* Room Type */}
+                {/* Room Type + Orientation */}
                 {!selectionMode && stack.roomType && (
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2">
                     <p className="text-white text-xs truncate" style={{ fontSize: '11px' }} data-testid={`photo-roomtype-${stack.stackId}`}>
-                      {stack.roomType}
+                      {formatRoomLabel(stack.roomType as any, stack.orientation)}
                     </p>
                   </div>
                 )}
