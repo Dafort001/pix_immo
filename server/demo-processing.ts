@@ -104,7 +104,7 @@ async function createDemoShoot(jobId: string, storage: IStorage): Promise<string
 
   // Create 8-12 demo images with different room types
   const imageCount = Math.floor(Math.random() * 5) + 8; // 8-12 images
-  const roomTypes = ["kitchen", "living_room", "bedroom", "bathroom", "hallway", "exterior"];
+  const roomTypes = ["Wohnzimmer", "Küche", "Schlafzimmer", "Bad", "Flur", "Balkon", "Garten", "Fassade"];
 
   for (let i = 0; i < imageCount; i++) {
     const roomType = roomTypes[i % roomTypes.length];
