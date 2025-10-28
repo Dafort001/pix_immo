@@ -1060,37 +1060,111 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: "jobId is required" });
       }
 
+      if (!roomType) {
+        return res.status(400).json({ error: "roomType is required" });
+      }
+
       // Validate job exists and user has access
       const job = await storage.getJob(jobId);
       if (!job) {
         return res.status(404).json({ error: "Job not found" });
       }
 
-      // Build object_meta for future R2 integration
+      // Get or create active shoot for this job
+      let shoot = await storage.getActiveShootForJob(jobId);
+      if (!shoot) {
+        shoot = await storage.createShoot(jobId);
+        console.log(`[Mobile Upload] Created new shoot ${shoot.shootCode} for job ${jobId}`);
+      }
+
+      // Get next index for this room type within the shoot
+      const nextIndex = await storage.getNextSequenceIndexForRoom(shoot.id, roomType);
+
+      // Import v3.1 filename generator
+      const { 
+        generateFinalJpegFilename, 
+        generateRawFrameFilename,
+        formatDateForFilename,
+      } = await import('../shared/filename-v31.js');
+
+      // Determine capture date
+      const captureDate = capturedAt ? new Date(capturedAt) : new Date();
+      const dateStr = formatDateForFilename(captureDate);
+
+      // Detect if this is a RAW/HDR frame or final JPEG
+      const isRawFrame = stackId && evCompensation !== undefined;
+      const fileExtension = file.originalname.split('.').pop()?.toLowerCase() || 'jpg';
+      const isRawFile = ['dng', 'cr2', 'cr3', 'nef', 'arw', 'raf'].includes(fileExtension);
+
+      let generatedFilename: string;
+
+      if (isRawFrame || isRawFile) {
+        // RAW/HDR frame: {date}-{shootcode}_{room_type}_{index}_g{stack}_e{ev}.{ext}
+        generatedFilename = generateRawFrameFilename({
+          date: dateStr,
+          shootCode: shoot.shootCode.toUpperCase(),
+          roomType: roomType,
+          index: nextIndex,
+          stackNumber: stackId ? parseInt(stackId) : 1,
+          evValue: evCompensation ? parseFloat(evCompensation) : 0,
+          extension: fileExtension,
+          version: 1, // Not used for RAW frames
+        });
+      } else {
+        // Final JPEG: {date}-{shootcode}_{room_type}_{index}_v{ver}.jpg
+        generatedFilename = generateFinalJpegFilename({
+          date: dateStr,
+          shootCode: shoot.shootCode.toUpperCase(),
+          roomType: roomType,
+          index: nextIndex,
+          version: 1, // First version
+        });
+      }
+
+      // Build object_meta for R2 storage
+      // IMPORTANT: Orientation ONLY in JSON metadata, NOT in filename
       const objectMeta = {
         roomType: roomType || null,
-        orientation: orientation || null,
+        orientation: orientation || null, // Stays in JSON only
         stackId: stackId ? parseInt(stackId) : null,
         stackIndex: stackIndex ? parseInt(stackIndex) : null,
         evCompensation: evCompensation ? parseFloat(evCompensation) : null,
         isManualMode: isManualMode === 'true',
-        capturedAt: capturedAt || new Date().toISOString(),
+        capturedAt: captureDate.toISOString(),
+        sequenceIndex: nextIndex, // Track subject index
       };
 
-      // TODO: Upload to R2 when R2 integration is ready
-      // For now, just log the upload details
-      console.log(`[Mobile Upload] User ${user.id}, Job ${jobId}, File ${file.originalname}, Size ${file.size}, Manual Mode: ${isManualMode === 'true' ? 'YES' : 'NO'}, Meta:`, objectMeta);
+      console.log(`[Mobile Upload v3.1] User ${user.id}, Shoot ${shoot.shootCode}, Room ${roomType}, Index ${nextIndex}`);
+      console.log(`  Generated filename: ${generatedFilename}`);
+      console.log(`  Original: ${file.originalname}, Size: ${file.size}, Manual: ${isManualMode === 'true' ? 'YES' : 'NO'}`);
+      console.log(`  Object meta:`, objectMeta);
       
-      // TODO: Create image record in database when R2 is ready
-      // await storage.createImage({ ..., objectMeta: JSON.stringify(objectMeta) });
+      // TODO: Upload to R2 with generatedFilename
+      // const r2Key = `shoots/${shoot.shootCode}/${generatedFilename}`;
+      // await uploadToR2(file.buffer, r2Key, objectMeta);
+
+      // TODO: Create image record in database
+      // await storage.createImage({
+      //   shootId: shoot.id,
+      //   stackId: stackId || undefined,
+      //   originalFilename: file.originalname,
+      //   renamedFilename: generatedFilename,
+      //   filePath: r2Key,
+      //   fileSize: file.size,
+      //   mimeType: file.mimetype,
+      //   exposureValue: evCompensation,
+      //   positionInStack: stackIndex ? parseInt(stackIndex) : undefined,
+      // });
 
       res.json({
         success: true,
-        message: "Upload prepared (R2 integration pending)",
-        filename: file.originalname,
+        message: "Upload prepared with v3.1 filename (R2 integration pending)",
+        filename: generatedFilename,
+        originalFilename: file.originalname,
         size: file.size,
-        jobId,
+        shootCode: shoot.shootCode,
         roomType,
+        sequenceIndex: nextIndex,
         objectMeta
       });
     } catch (error) {
