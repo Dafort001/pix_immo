@@ -12,6 +12,7 @@ import type { Job } from '@shared/schema';
 import { normalizeOrientation, type RoomType, type Orientation } from '@shared/room-types';
 import { getActiveAppUser } from '@/lib/app-users';
 import { queryClient, apiRequest } from '@/lib/queryClient';
+import { SyncStatusBadge } from '@/components/mobile/SyncStatusBadge';
 
 interface Photo {
   id: number;
@@ -624,6 +625,11 @@ export default function UploadScreen() {
               </div>
             </motion.div>
           )}
+
+          {/* Sync-Queue Status Badge */}
+          <div className="flex items-center justify-between">
+            <SyncStatusBadge />
+          </div>
 
           {stacks.length > 0 && (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
