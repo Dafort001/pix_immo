@@ -472,6 +472,12 @@ export default function CameraScreen() {
       const stackId = Date.now();
       const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
       const manualModeEnabled = useManualModeStore.getState().enabled;
+      
+      // Auto-set orientation to "front" for exterior rooms without explicit selection
+      // CRITICAL: Check room type FIRST to prevent stale orientation leaking into interior rooms
+      const finalOrientation = ROOMS_WITH_ORIENTATION.includes(currentRoomType)
+        ? (roomOrientation ?? 'front')
+        : undefined;
 
       if (hdrEnabled) {
         log('🎬 HDR Start');
@@ -527,7 +533,7 @@ export default function CameraScreen() {
             stackTotal: evStops.length,
             evCompensation: evStops[i],
             roomType: currentRoomType,
-            orientation: roomOrientation || undefined,
+            orientation: finalOrientation,
             isManualMode: manualModeEnabled
           });
 
@@ -568,7 +574,7 @@ export default function CameraScreen() {
               width: canvas.width,
               height: canvas.height,
               roomType: currentRoomType,
-              orientation: roomOrientation || undefined,
+              orientation: finalOrientation,
               isManualMode: manualModeEnabled
             });
             

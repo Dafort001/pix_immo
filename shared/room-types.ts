@@ -90,9 +90,12 @@ export const DEFAULT_ROOM_TYPE: RoomType = 'Wohnzimmer';
 export const ROOMS_WITH_ORIENTATION: RoomType[] = [
   'Fassade',
   'Eingang',
-  'Terrasse',
+  'Garage',
+  'Stellplatz',
   'Balkon',
+  'Terrasse',
   'Garten',
+  'Wintergarten',
 ];
 
 // ==================== GRUPPENZUORDNUNG ====================
