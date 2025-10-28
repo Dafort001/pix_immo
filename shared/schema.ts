@@ -68,11 +68,15 @@ export const jobs = pgTable("jobs", {
   addressLng: varchar("address_lng", { length: 50 }), // Longitude from Google Geocoding
   addressPlaceId: varchar("address_place_id", { length: 255 }), // Google Place ID for verified address
   addressFormatted: text("address_formatted"), // Formatted address from Google
-  status: varchar("status", { length: 50 }).notNull().default("created"), // Demo: 'uploaded', 'processing', 'captioned', 'expose_ready', 'delivered'
+  status: varchar("status", { length: 50 }).notNull().default("created"), // 'created', 'in_aufnahme', 'abgeschlossen', 'abgebrochen', 'uploaded', 'processing', 'captioned', 'expose_ready', 'delivered'
   deadlineAt: bigint("deadline_at", { mode: "number" }), // Optional deadline
   deliverGallery: varchar("deliver_gallery", { length: 10 }).notNull().default("true"),
   deliverAlttext: varchar("deliver_alttext", { length: 10 }).notNull().default("true"),
   deliverExpose: varchar("deliver_expose", { length: 10 }).notNull().default("false"),
+  // Local App User (Photographer) Assignment
+  selectedUserId: varchar("selected_user_id", { length: 50 }), // App-User UUID (localStorage, not DB foreign key)
+  selectedUserInitials: varchar("selected_user_initials", { length: 10 }), // e.g. "DF"
+  selectedUserCode: varchar("selected_user_code", { length: 20 }), // e.g. "K9M2P"
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
@@ -707,6 +711,10 @@ export const createJobSchema = z.object({
   deliverGallery: z.boolean().optional().default(true),
   deliverAlttext: z.boolean().optional().default(true),
   deliverExpose: z.boolean().optional().default(false),
+  // Local App User Assignment
+  selectedUserId: z.string().optional(),
+  selectedUserInitials: z.string().optional(),
+  selectedUserCode: z.string().optional(),
 });
 
 export const initUploadSchema = z.object({

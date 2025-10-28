@@ -376,7 +376,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For now, use demo user
       const demoUser = await ensureDemoUser();
       
-      const { customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose } = req.body;
+      const { customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose, selectedUserId, selectedUserInitials, selectedUserCode } = req.body;
       const job = await storage.createJob(demoUser.id, {
         customerName,
         propertyName,
@@ -385,6 +385,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         deliverGallery,
         deliverAlttext,
         deliverExpose,
+        selectedUserId,
+        selectedUserInitials,
+        selectedUserCode,
       });
       
       res.status(201).json(job);

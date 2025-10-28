@@ -66,6 +66,10 @@ export interface IStorage {
     deliverGallery?: boolean;
     deliverAlttext?: boolean;
     deliverExpose?: boolean;
+    // Local App User Assignment
+    selectedUserId?: string;
+    selectedUserInitials?: string;
+    selectedUserCode?: string;
   }): Promise<Job>;
   getJob(id: string): Promise<Job | undefined>;
   getJobByNumber(jobNumber: string): Promise<Job | undefined>;
@@ -546,6 +550,10 @@ export class DatabaseStorage implements IStorage {
     deliverGallery?: boolean;
     deliverAlttext?: boolean;
     deliverExpose?: boolean;
+    // Local App User Assignment
+    selectedUserId?: string;
+    selectedUserInitials?: string;
+    selectedUserCode?: string;
   }): Promise<Job> {
     const id = randomUUID();
     const jobNumber = `PIX-${Date.now()}-${Math.random().toString(36).substring(2, 7).toUpperCase()}`;
@@ -567,6 +575,10 @@ export class DatabaseStorage implements IStorage {
         deliverGallery: data.deliverGallery !== undefined ? (data.deliverGallery ? "true" : "false") : "true",
         deliverAlttext: data.deliverAlttext !== undefined ? (data.deliverAlttext ? "true" : "false") : "true",
         deliverExpose: data.deliverExpose !== undefined ? (data.deliverExpose ? "true" : "false") : "false",
+        // Local App User Assignment
+        selectedUserId: data.selectedUserId || null,
+        selectedUserInitials: data.selectedUserInitials || null,
+        selectedUserCode: data.selectedUserCode || null,
         createdAt: Date.now(),
       })
       .returning();
