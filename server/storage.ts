@@ -706,6 +706,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getNextSequenceIndexForRoom(shootId: string, roomType: string): Promise<number> {
+    // NOTE: Potential race condition if simultaneous uploads for same room type occur.
+    // For MVP: unlikely scenario (single photographer uploads sequentially).
+    // Future: Add database-level locking or unique constraints if needed.
     const existingStacks = await db
       .select()
       .from(stacks)
