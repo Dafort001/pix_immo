@@ -709,11 +709,13 @@ export class DatabaseStorage implements IStorage {
     // NOTE: Potential race condition if simultaneous uploads for same room type occur.
     // For MVP: unlikely scenario (single photographer uploads sequentially).
     // Future: Add database-level locking or unique constraints if needed.
-    const existingStacks = await db
+    
+    // Count existing images (not stacks!) for this room type in this shoot
+    const existingImages = await db
       .select()
-      .from(stacks)
-      .where(and(eq(stacks.shootId, shootId), eq(stacks.roomType, roomType)));
-    return existingStacks.length + 1;
+      .from(images)
+      .where(and(eq(images.shootId, shootId), eq(images.roomType, roomType)));
+    return existingImages.length + 1;
   }
 
   // Image operations
@@ -728,6 +730,10 @@ export class DatabaseStorage implements IStorage {
     exifDate?: number;
     exposureValue?: string;
     positionInStack?: number;
+    roomType?: string;
+    filenamePatternVersion?: string;
+    validatedAt?: number;
+    classifiedAt?: number;
   }): Promise<Image> {
     const id = randomUUID();
     const [image] = await db
@@ -744,6 +750,10 @@ export class DatabaseStorage implements IStorage {
         exifDate: data.exifDate,
         exposureValue: data.exposureValue,
         positionInStack: data.positionInStack,
+        roomType: data.roomType,
+        filenamePatternVersion: data.filenamePatternVersion || 'v3.1',
+        validatedAt: data.validatedAt,
+        classifiedAt: data.classifiedAt,
         createdAt: Date.now(),
       })
       .returning();

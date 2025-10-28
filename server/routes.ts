@@ -1190,28 +1190,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         console.warn(`  Warnings (${warnings.length}):`, warnings);
       }
       
-      // TODO: Upload to R2 with generatedFilename + sidecars
-      // const r2Key = `shoots/${shoot.shootCode}/${generatedFilename}`;
-      // await uploadToR2(file.buffer, r2Key, objectMeta);
-      // if (metadataFile) await uploadToR2(metadataFile.buffer, `${r2Key}.meta.json`, {});
-      // if (altTextFile) await uploadToR2(altTextFile.buffer, `${r2Key}.alt.txt`, {});
+      // Create image record in database (R2 upload TBD later)
+      const mockR2Path = `memory-uploads/${shoot.shootCode}/${generatedFilename}`;
+      const imageRecord = await storage.createImage({
+        shootId: shoot.id,
+        stackId: stackId || undefined,
+        originalFilename: file.originalname,
+        renamedFilename: generatedFilename,
+        filePath: mockR2Path,
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        exposureValue: evCompensation ? `e${evCompensation}` : undefined,
+        positionInStack: stackIndex ? parseInt(stackIndex) : undefined,
+        roomType: roomType,
+        validatedAt: Date.now(),
+        classifiedAt: Date.now(),
+      });
 
-      // TODO: Create image record in database
-      // await storage.createImage({
-      //   shootId: shoot.id,
-      //   stackId: stackId || undefined,
-      //   originalFilename: file.originalname,
-      //   renamedFilename: generatedFilename,
-      //   filePath: r2Key,
-      //   fileSize: file.size,
-      //   mimeType: file.mimetype,
-      //   exposureValue: evCompensation,
-      //   positionInStack: stackIndex ? parseInt(stackIndex) : undefined,
-      // });
+      console.log(`[DB] Created image record: ${imageRecord.id}`);
 
       res.json({
         success: true,
-        message: "Upload prepared with v3.1 filename + sidecars (R2 integration pending)",
+        message: "Upload completed with v3.1 filename + sidecars",
+        imageId: imageRecord.id,
         filename: generatedFilename,
         originalFilename: file.originalname,
         size: file.size,

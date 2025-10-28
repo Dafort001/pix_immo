@@ -37,25 +37,10 @@ interface PhotoStack {
 
 export default function UploadScreen() {
   const [, setLocation] = useLocation();
-  
-  // Route protection - redirect to login if not authenticated
-  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
-    queryKey: ['/api/auth/me'],
-    retry: false,
-  });
-
-  useEffect(() => {
-    if (!isAuthLoading && !authData?.user) {
-      setLocation('/app');
-    }
-  }, [isAuthLoading, authData, setLocation]);
-
-  // Show nothing while checking auth
-  if (isAuthLoading || !authData?.user) {
-    return null;
-  }
-  
   const { t } = useTranslation();
+  const { trigger } = useHaptic();
+  
+  // All hooks must be called before any conditional returns
   const [stacks, setStacks] = useState<PhotoStack[]>([]);
   const [uploadSelection, setUploadSelection] = useState<number[]>([]);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
@@ -65,8 +50,13 @@ export default function UploadScreen() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState<string>('');
   const [failedCount, setFailedCount] = useState(0);
-  const { trigger } = useHaptic();
   const hasAutoSelectedRef = useRef(false);
+  
+  // Route protection - redirect to login if not authenticated
+  const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+  });
 
   // Fetch available jobs
   const { data: jobs, isLoading: jobsLoading, isError: jobsError } = useQuery<Job[]>({
@@ -155,6 +145,17 @@ export default function UploadScreen() {
     const interval = setInterval(loadPhotos, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (!isAuthLoading && !authData?.user) {
+      setLocation('/app');
+    }
+  }, [isAuthLoading, authData, setLocation]);
+
+  // Show nothing while checking auth (after ALL hooks are declared)
+  if (isAuthLoading || !authData?.user) {
+    return null;
+  }
 
   const toggleUploadPhoto = (id: number) => {
     trigger('light');
