@@ -12,7 +12,7 @@ import { CaptureThumb } from '@/components/mobile/CaptureThumb';
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle, DrawerDescription, DrawerTrigger, DrawerClose } from '@/components/ui/drawer';
 import { useHaptic } from '@/hooks/useHaptic';
 import { useLocation } from 'wouter';
-import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
+import { ALL_ROOM_TYPES, DEFAULT_ROOM_TYPE, type RoomType, type Orientation, ROOMS_WITH_ORIENTATION, getRoomsByGroup, GROUP_DISPLAY_NAMES } from '@shared/room-types';
 import { useManualModeStore } from '@/lib/manual-mode/store';
 import { buildCameraConstraints, applySettingsToTrack, logCapabilities } from '@/lib/manual-mode/constraints';
 import { useQuery } from '@tanstack/react-query';
@@ -51,6 +51,8 @@ export default function CameraScreen() {
   const [timerMode, setTimerMode] = useState<0 | 3 | 10>(0);
   const [countdown, setCountdown] = useState<number | null>(null);
   const [currentRoomType, setCurrentRoomType] = useState<RoomType>(DEFAULT_ROOM_TYPE);
+  const [roomOrientation, setRoomOrientation] = useState<Orientation | null>(null);
+  const [isOrientationDrawerOpen, setIsOrientationDrawerOpen] = useState(false);
   const [isLandscape, setIsLandscape] = useState(false);
   const [horizonLineEnabled, setHorizonLineEnabled] = useState(false);
   const [lastCaptureUrl, setLastCaptureUrl] = useState<string | null>(null);
@@ -525,6 +527,7 @@ export default function CameraScreen() {
             stackTotal: evStops.length,
             evCompensation: evStops[i],
             roomType: currentRoomType,
+            orientation: roomOrientation || undefined,
             isManualMode: manualModeEnabled
           });
 
@@ -565,6 +568,7 @@ export default function CameraScreen() {
               width: canvas.width,
               height: canvas.height,
               roomType: currentRoomType,
+              orientation: roomOrientation || undefined,
               isManualMode: manualModeEnabled
             });
             
@@ -679,7 +683,12 @@ export default function CameraScreen() {
                 data-testid="button-select-roomtype-landscape"
               >
                 <span className="text-[9px] opacity-60">#1</span>
-                <span className="text-[10px] font-semibold leading-tight">{currentRoomType.substring(0, 4)}</span>
+                <span className="text-[10px] font-semibold leading-tight">
+                  {roomOrientation 
+                    ? `${currentRoomType.substring(0, 4)} (${roomOrientation === 'front' ? 'V' : roomOrientation === 'back' ? 'H' : 'S'})`
+                    : currentRoomType.substring(0, 4)
+                  }
+                </span>
               </button>
             </DrawerTrigger>
             <DrawerContent className="max-h-[85vh] bg-white">
@@ -709,21 +718,28 @@ export default function CameraScreen() {
                         </div>
                         <div className="divide-y divide-gray-100">
                           {rooms.map((room) => (
-                            <button
-                              key={room}
-                              onClick={() => {
-                                setCurrentRoomType(room);
-                                trigger('success');
-                              }}
-                              className={`w-full text-left px-4 py-3 transition-colors ${
-                                currentRoomType === room
-                                  ? 'bg-blue-50 text-blue-700 font-medium'
-                                  : 'hover:bg-gray-50 text-gray-900'
-                              }`}
-                              data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
-                            >
-                              {room}
-                            </button>
+                            <DrawerClose key={room} asChild>
+                              <button
+                                onClick={() => {
+                                  setCurrentRoomType(room);
+                                  // Always reset orientation first
+                                  setRoomOrientation(null);
+                                  trigger('success');
+                                  // If room requires orientation, open orientation drawer
+                                  if (ROOMS_WITH_ORIENTATION.includes(room)) {
+                                    setTimeout(() => setIsOrientationDrawerOpen(true), 300);
+                                  }
+                                }}
+                                className={`w-full text-left px-4 py-3 transition-colors ${
+                                  currentRoomType === room
+                                    ? 'bg-blue-50 text-blue-700 font-medium'
+                                    : 'hover:bg-gray-50 text-gray-900'
+                                }`}
+                                data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}-landscape`}
+                              >
+                                {room}
+                              </button>
+                            </DrawerClose>
                           ))}
                         </div>
                       </div>
@@ -980,7 +996,12 @@ export default function CameraScreen() {
                     data-testid="button-select-roomtype"
                   >
                     <span className="text-[9px] opacity-60">#1</span>
-                    <span className="text-[10px] font-semibold leading-tight">{currentRoomType.substring(0, 4)}</span>
+                    <span className="text-[10px] font-semibold leading-tight">
+                      {roomOrientation 
+                        ? `${currentRoomType.substring(0, 4)} (${roomOrientation === 'front' ? 'V' : roomOrientation === 'back' ? 'H' : 'S'})`
+                        : currentRoomType.substring(0, 4)
+                      }
+                    </span>
                   </button>
                 </DrawerTrigger>
                 <DrawerContent className="max-h-[85vh] bg-white">
@@ -1010,26 +1031,92 @@ export default function CameraScreen() {
                             </div>
                             <div className="divide-y divide-gray-100">
                               {rooms.map((room) => (
-                                <button
-                                  key={room}
-                                  onClick={() => {
-                                    setCurrentRoomType(room);
-                                    trigger('success');
-                                  }}
-                                  className={`w-full text-left px-4 py-3 transition-colors ${
-                                    currentRoomType === room
-                                      ? 'bg-blue-50 text-blue-700 font-medium'
-                                      : 'hover:bg-gray-50 text-gray-900'
-                                  }`}
-                                  data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
-                                >
-                                  {room}
-                                </button>
+                                <DrawerClose key={room} asChild>
+                                  <button
+                                    onClick={() => {
+                                      setCurrentRoomType(room);
+                                      // Always reset orientation first
+                                      setRoomOrientation(null);
+                                      trigger('success');
+                                      // If room requires orientation, open orientation drawer
+                                      if (ROOMS_WITH_ORIENTATION.includes(room)) {
+                                        setTimeout(() => setIsOrientationDrawerOpen(true), 300);
+                                      }
+                                    }}
+                                    className={`w-full text-left px-4 py-3 transition-colors ${
+                                      currentRoomType === room
+                                        ? 'bg-blue-50 text-blue-700 font-medium'
+                                        : 'hover:bg-gray-50 text-gray-900'
+                                    }`}
+                                    data-testid={`roomtype-option-${room.replace(/\s+/g, '-').toLowerCase()}`}
+                                  >
+                                    {room}
+                                  </button>
+                                </DrawerClose>
                               ))}
                             </div>
                           </div>
                         );
                       })}
+                    </div>
+                  </div>
+                </DrawerContent>
+              </Drawer>
+
+              {/* Orientation Drawer - Opens after selecting room with orientation */}
+              <Drawer open={isOrientationDrawerOpen} onOpenChange={setIsOrientationDrawerOpen}>
+                <DrawerContent className="max-h-[60vh] bg-white">
+                  <div className="mx-auto w-full max-w-md">
+                    <DrawerHeader className="px-4 pt-4 pb-2 border-b border-gray-200 relative">
+                      <DrawerTitle className="text-lg font-semibold">Orientierung wählen</DrawerTitle>
+                      <DrawerDescription className="text-sm text-gray-500">
+                        Wähle die Perspektive für "{currentRoomType}"
+                      </DrawerDescription>
+                      <DrawerClose asChild>
+                        <button
+                          onClick={() => trigger('light')}
+                          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 transition-colors"
+                          data-testid="button-close-orientation-drawer"
+                        >
+                          <X className="w-4 h-4 text-gray-600" />
+                        </button>
+                      </DrawerClose>
+                    </DrawerHeader>
+                    <div className="p-4">
+                      <div className="space-y-2">
+                        {(['front', 'back', 'side'] as const).map((orientation) => {
+                          const labels = {
+                            front: 'Vorne',
+                            back: 'Hinten',
+                            side: 'Seitlich'
+                          };
+                          return (
+                            <DrawerClose key={orientation} asChild>
+                              <button
+                                onClick={() => {
+                                  setRoomOrientation(orientation);
+                                  trigger('success');
+                                }}
+                                className={`w-full text-left px-4 py-3 rounded-lg transition-colors ${
+                                  roomOrientation === orientation
+                                    ? 'bg-blue-50 text-blue-700 font-medium border-2 border-blue-200'
+                                    : 'bg-gray-50 hover:bg-gray-100 text-gray-900 border-2 border-transparent'
+                                }`}
+                                data-testid={`orientation-option-${orientation}`}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-base">{labels[orientation]}</span>
+                                  {roomOrientation === orientation && (
+                                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                  )}
+                                </div>
+                              </button>
+                            </DrawerClose>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </DrawerContent>
