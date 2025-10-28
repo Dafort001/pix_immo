@@ -26,6 +26,8 @@ import {
   Zap,
   Eye,
   Grid3x3,
+  Camera,
+  ZoomIn,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HapticButton } from './HapticButton';
@@ -113,6 +115,26 @@ export function ManualControls({ onClose }: ManualControlsProps) {
               testId="control-ev"
             />
 
+            {/* HDR Brackets */}
+            <ControlRow
+              icon={<Camera className="w-4 h-4" />}
+              label="HDR"
+              value={`${settings.hdrBrackets} Brackets`}
+              isActive={expandedPanel === 'hdr'}
+              onClick={() => togglePanel('hdr')}
+              testId="control-hdr"
+            />
+
+            {/* Zoom/Lens */}
+            <ControlRow
+              icon={<ZoomIn className="w-4 h-4" />}
+              label="Objektiv"
+              value={`${settings.zoomLevel}×`}
+              isActive={expandedPanel === 'zoom'}
+              onClick={() => togglePanel('zoom')}
+              testId="control-zoom"
+            />
+
             {/* Focus */}
             <ControlRow
               icon={<Focus className="w-4 h-4" />}
@@ -187,6 +209,20 @@ export function ManualControls({ onClose }: ManualControlsProps) {
             onChange={settings.setExposureComp}
             histogramEnabled={settings.histogramEnabled}
             onHistogramToggle={settings.setHistogram}
+            onClose={() => setExpandedPanel(null)}
+          />
+        )}
+        {expandedPanel === 'hdr' && (
+          <HDRPanel
+            brackets={settings.hdrBrackets}
+            onChange={settings.setHdrBrackets}
+            onClose={() => setExpandedPanel(null)}
+          />
+        )}
+        {expandedPanel === 'zoom' && (
+          <ZoomPanel
+            zoom={settings.zoomLevel}
+            onChange={settings.setZoomLevel}
             onClose={() => setExpandedPanel(null)}
           />
         )}
@@ -1269,6 +1305,159 @@ function ThumbnailPanel({
         <p className="mt-4 text-xs text-white/50 leading-relaxed">
           Das Vorschaubild bestätigt sofort, dass die Aufnahme erfolgreich gespeichert wurde. 
           Bei Belichtungsreihen sehen Sie den Fortschritt in Echtzeit.
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * HDR Bracket Selection Panel
+ */
+interface HDRPanelProps {
+  brackets: 3 | 5;
+  onChange: (brackets: 3 | 5) => void;
+  onClose: () => void;
+}
+
+function HDRPanel({ brackets, onChange, onClose }: HDRPanelProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-black/90 backdrop-blur-xl rounded-2xl border border-white/20 p-6 mx-8 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-white text-lg font-semibold">HDR Belichtungsreihe</h3>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white"
+            data-testid="button-close-hdr-panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Bracket Options */}
+        <div className="space-y-3">
+          <HapticButton
+            onClick={() => onChange(3)}
+            hapticStyle="light"
+            className={`w-full py-4 rounded-xl font-medium transition-all ${
+              brackets === 3
+                ? 'bg-[#4A5849] text-white'
+                : 'bg-white/10 text-white/70 hover:bg-white/20'
+            }`}
+            data-testid="button-hdr-3"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg">3 Brackets</span>
+              <span className="text-xs text-white/50">-2 EV, 0 EV, +2 EV</span>
+            </div>
+          </HapticButton>
+
+          <HapticButton
+            onClick={() => onChange(5)}
+            hapticStyle="light"
+            className={`w-full py-4 rounded-xl font-medium transition-all ${
+              brackets === 5
+                ? 'bg-[#4A5849] text-white'
+                : 'bg-white/10 text-white/70 hover:bg-white/20'
+            }`}
+            data-testid="button-hdr-5"
+          >
+            <div className="flex flex-col items-center gap-1">
+              <span className="text-lg">5 Brackets</span>
+              <span className="text-xs text-white/50">-4, -2, 0, +2, +4 EV</span>
+            </div>
+          </HapticButton>
+        </div>
+
+        {/* Info */}
+        <p className="mt-6 text-xs text-white/50 leading-relaxed">
+          HDR-Belichtungsreihen erfassen mehrere Aufnahmen mit unterschiedlichen Belichtungsstufen 
+          für optimale Ergebnisse bei schwierigen Lichtverhältnissen. 5 Brackets bieten einen 
+          größeren Dynamikumfang für extreme Kontraste.
+        </p>
+      </div>
+    </motion.div>
+  );
+}
+
+/**
+ * Zoom/Lens Selection Panel
+ */
+interface ZoomPanelProps {
+  zoom: 0.5 | 1 | 2 | 3;
+  onChange: (zoom: 0.5 | 1 | 2 | 3) => void;
+  onClose: () => void;
+}
+
+function ZoomPanel({ zoom, onChange, onClose }: ZoomPanelProps) {
+  const zoomOptions: Array<{ value: 0.5 | 1 | 2 | 3; label: string; description: string }> = [
+    { value: 0.5, label: '0.5× Weitwinkel', description: 'Ultra-Weitwinkel für große Räume' },
+    { value: 1, label: '1× Standard', description: 'Standard-Brennweite' },
+    { value: 2, label: '2× Tele', description: 'Telephoto für Details' },
+    { value: 3, label: '3× Tele+', description: 'Starke Vergrößerung' },
+  ];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm pointer-events-auto"
+      onClick={onClose}
+    >
+      <div
+        className="bg-black/90 backdrop-blur-xl rounded-2xl border border-white/20 p-6 mx-8 max-w-md w-full"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-white text-lg font-semibold">Objektiv / Zoom</h3>
+          <button
+            onClick={onClose}
+            className="text-white/60 hover:text-white"
+            data-testid="button-close-zoom-panel"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Zoom Options */}
+        <div className="space-y-3">
+          {zoomOptions.map((option) => (
+            <HapticButton
+              key={option.value}
+              onClick={() => onChange(option.value)}
+              hapticStyle="light"
+              className={`w-full py-4 rounded-xl font-medium transition-all ${
+                zoom === option.value
+                  ? 'bg-[#4A5849] text-white'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20'
+              }`}
+              data-testid={`button-zoom-${option.value}`}
+            >
+              <div className="flex flex-col items-center gap-1">
+                <span className="text-lg">{option.label}</span>
+                <span className="text-xs text-white/50">{option.description}</span>
+              </div>
+            </HapticButton>
+          ))}
+        </div>
+
+        {/* Info */}
+        <p className="mt-6 text-xs text-white/50 leading-relaxed">
+          Wählen Sie die passende Brennweite für Ihre Aufnahme. Weitwinkel (0.5×) eignet sich 
+          für große Räume, Standard (1×) für normale Aufnahmen, Tele (2×/3×) für Detailaufnahmen.
         </p>
       </div>
     </motion.div>
