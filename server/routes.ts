@@ -367,6 +367,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // PATCH /api/device-profile - Update device profile (Office-Pro registration)
+  app.patch("/api/device-profile", async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { office_pro, cap_proraw, timestamp } = req.body;
+      
+      // Log device registration for analytics/audit trail
+      console.log(`[Device Profile] User ${user.id} registered device:`, {
+        office_pro,
+        cap_proraw,
+        timestamp,
+      });
+      
+      // In production, this would save to database
+      // For now, just acknowledge the registration
+      res.json({ 
+        success: true,
+        id: `device-${user.id}`,
+        message: "Device profile updated successfully"
+      });
+    } catch (error) {
+      console.error("Device profile update error:", error);
+      res.status(500).json({ error: "Failed to update device profile" });
+    }
+  });
+
   // Workflow API Routes
   
   // POST /api/jobs - Create a new job with job_number generation and offline deduplication

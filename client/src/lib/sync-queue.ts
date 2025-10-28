@@ -185,6 +185,8 @@ export function startAutoSync() {
         await syncAsset(item);
       } else if (item.type === 'event') {
         await syncEvent(item);
+      } else if (item.type === 'deviceRegistration') {
+        await syncDeviceRegistration(item);
       }
     } catch (error) {
       console.error('[SyncQueue] Sync error:', error);
@@ -271,6 +273,31 @@ async function syncEvent(item: SyncQueueItem): Promise<void> {
 
     const result = await response.json();
     markSynced(item.localId, result.id);
+  } catch (error) {
+    markFailed(item.localId, String(error), true);
+  }
+}
+
+/**
+ * Synchronisiert Device Registration mit Server
+ */
+async function syncDeviceRegistration(item: SyncQueueItem): Promise<void> {
+  try {
+    const response = await fetch('/api/device-profile', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(item.payload),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      const retry = shouldRetryError(response.status);
+      markFailed(item.localId, `HTTP ${response.status}: ${error}`, retry);
+      return;
+    }
+
+    const result = await response.json();
+    markSynced(item.localId, result.id || 'device-profile-updated');
   } catch (error) {
     markFailed(item.localId, String(error), true);
   }

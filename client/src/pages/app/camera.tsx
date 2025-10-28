@@ -27,7 +27,8 @@ import {
   detectWindows, 
   estimateWhiteBalance 
 } from '@/lib/manual-mode/scene-analysis';
-import { runDeviceDetection } from '@/lib/device-profile/detection';
+import { runDeviceDetection, registerAsOfficePro } from '@/lib/device-profile/detection';
+import { useDeviceProfileStore, isProCapable } from '@/lib/device-profile/store';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -98,6 +99,17 @@ export default function CameraScreen() {
   const iso = useManualModeStore((state) => state.iso);
   const shutterSpeed = useManualModeStore((state) => state.shutterSpeed);
   const exposureCompensation = useManualModeStore((state) => state.exposureCompensation);
+  
+  // Device Profile - Office-Pro Status (MUST subscribe to state for reactivity!)
+  const cap_proraw = useDeviceProfileStore((state) => state.cap_proraw);
+  const isOfficePro = useDeviceProfileStore((state) => state.office_pro);
+  const showOfficeProBadge = isOfficePro;
+  const showRegistrationChip = cap_proraw && !isOfficePro;
+  
+  const handleRegisterOfficePro = async () => {
+    await registerAsOfficePro();
+    trigger('success');
+  };
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -889,6 +901,39 @@ export default function CameraScreen() {
 
       {/* Status Bar - Only in Portrait */}
       {!isLandscape && <StatusBar variant="light" />}
+
+      {/* Office-Pro Badge - Top Right */}
+      {showOfficeProBadge && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-12 right-4 z-30"
+        >
+          <div className="px-3 py-1.5 rounded-full bg-[#A85B2E]/90 backdrop-blur-xl border border-[#A85B2E]/40 flex items-center gap-1.5" data-testid="badge-office-pro">
+            <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+            <span className="text-white text-xs font-semibold">Office-Pro</span>
+          </div>
+        </motion.div>
+      )}
+
+      {/* RAW Registration Chip - Top Center */}
+      {showRegistrationChip && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="absolute top-12 left-4 right-4 z-30 flex justify-center"
+        >
+          <HapticButton
+            onClick={handleRegisterOfficePro}
+            hapticStyle="medium"
+            className="px-4 py-2 rounded-full bg-[#A85B2E]/90 backdrop-blur-xl border border-[#A85B2E]/40 text-white text-xs font-medium flex items-center gap-2 shadow-lg"
+            data-testid="chip-register-raw"
+          >
+            <span>RAW nur auf Office-Pro – jetzt registrieren</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </HapticButton>
+        </motion.div>
+      )}
 
       {/* VIDEO - Responsive Aspect Ratio Container */}
       <div className="absolute inset-0 z-0 bg-black flex items-center justify-center">

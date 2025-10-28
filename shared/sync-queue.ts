@@ -3,7 +3,7 @@
  * Speichert Jobs/Assets/Events lokal und synchronisiert bei Netzverbindung
  */
 
-export type QueueItemType = 'job' | 'asset' | 'event';
+export type QueueItemType = 'job' | 'asset' | 'event' | 'deviceRegistration';
 
 export type QueueItemStatus = 'pending' | 'syncing' | 'synced' | 'failed';
 

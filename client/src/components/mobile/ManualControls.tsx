@@ -1095,6 +1095,14 @@ function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
           </div>
         )}
 
+        {/* Office-Pro Vorteile Info */}
+        <div className="mt-4 p-3 bg-[#4A5849]/20 border border-[#4A5849]/30 rounded-lg">
+          <p className="text-[#A85B2E] text-xs font-semibold mb-1">Office-Pro Vorteile</p>
+          <p className="text-white/70 text-xs leading-relaxed">
+            RAW (DNG) • Bessere Retusche • Premium-Exposé
+          </p>
+        </div>
+
         {/* Info */}
         <p className="mt-4 text-xs text-white/50 leading-relaxed">
           JPEG bietet die beste Balance zwischen Qualität und Dateigröße. RAW bietet maximale 

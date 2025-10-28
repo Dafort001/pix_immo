@@ -154,8 +154,17 @@ export async function registerAsOfficePro(): Promise<void> {
   console.log('[Device Profile] Device registered as Office-Pro');
   
   // Queue sync to backend
-  // Note: Sync queue integration will be handled by caller
-  // This just sets the local state
+  try {
+    const { enqueue } = await import('@/lib/sync-queue');
+    enqueue('deviceRegistration', {
+      office_pro: true,
+      cap_proraw: true,
+      timestamp: Date.now(),
+    });
+    console.log('[Device Profile] Device registration queued for sync');
+  } catch (error) {
+    console.error('[Device Profile] Failed to queue device registration:', error);
+  }
 }
 
 /**
