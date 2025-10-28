@@ -1,6 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import rateLimit from "express-rate-limit";
+import helmet from "helmet";
+import cors from "cors";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
@@ -107,31 +109,123 @@ const authLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Global rate limiter: 60 requests/min per IP with burst of 10
+const globalLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 60, // 60 requests per minute
+  skipSuccessfulRequests: false,
+  handler: (req: Request, res: Response) => {
+    // Log abuse after 5 rate limit hits in 10 minutes
+    logAbuse(req.ip || 'unknown', req.path);
+    res.status(429).json({ error: "Too Many Requests" });
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Abuse logging tracker (in-memory for now, will save to R2)
+const abuseTracker = new Map<string, { count: number; firstHit: number }>();
+
+async function logAbuse(ip: string, path: string) {
+  const key = ip;
+  const now = Date.now();
+  const entry = abuseTracker.get(key);
+  
+  if (!entry || now - entry.firstHit > 10 * 60 * 1000) {
+    // New window or expired - reset
+    abuseTracker.set(key, { count: 1, firstHit: now });
+    return;
+  }
+  
+  entry.count++;
+  
+  if (entry.count >= 5) {
+    // Log to R2 after 5 rate limit hits in 10 minutes
+    const logEntry = {
+      ip,
+      path,
+      timestamp: new Date().toISOString(),
+      count: entry.count,
+    };
+    
+    console.warn('[ABUSE] Rate limit abuse detected:', logEntry);
+    
+    // TODO: Save to R2 LogWorker
+    // await saveAbuseLogToR2(logEntry);
+    
+    // Reset counter
+    abuseTracker.delete(key);
+  }
+}
+
+// Content-Type validation middleware for upload routes
+function validateUploadContentType(req: Request, res: Response, next: any) {
+  // Skip GET/DELETE requests
+  if (req.method !== 'POST' && req.method !== 'PUT' && req.method !== 'PATCH') {
+    return next();
+  }
+  
+  const contentType = req.headers['content-type'];
+  
+  if (!contentType) {
+    return res.status(403).json({ error: 'Content-Type header required' });
+  }
+  
+  // Allow image/* and application/json
+  const allowedTypes = [
+    /^image\//,
+    /^application\/json/,
+    /^multipart\/form-data/, // For file uploads
+  ];
+  
+  const isAllowed = allowedTypes.some(pattern => pattern.test(contentType));
+  
+  if (!isAllowed) {
+    console.warn(`[SECURITY] Blocked content-type: ${contentType} from ${req.ip}`);
+    return res.status(403).json({ error: 'Content-Type not allowed' });
+  }
+  
+  next();
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
-  // CORS configuration for web + future iOS app
-  const allowedOrigins = [
-    process.env.BASE_URL || "https://pix.immo",
+  // Production domains for CORS
+  const productionOrigins = [
+    "https://pixcapture.app",
+    "https://pix.immo",
+    "https://www.pix.immo",
+  ];
+  
+  // Development origins
+  const devOrigins = [
     "http://localhost:5000",
     "http://localhost:5173",
-    "capacitor://localhost", // For future iOS app
-    "ionic://localhost", // For future Ionic app
+    "capacitor://localhost",
+    "ionic://localhost",
   ];
+  
+  const allowedOrigins = process.env.NODE_ENV === "production" 
+    ? productionOrigins 
+    : [...productionOrigins, ...devOrigins];
 
-  app.use((req: Request, res: Response, next: any) => {
-    const origin = req.headers.origin;
-    if (origin && allowedOrigins.includes(origin)) {
-      res.setHeader("Access-Control-Allow-Origin", origin);
-    }
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Max-Age", "86400");
-
-    if (req.method === "OPTIONS") {
-      return res.sendStatus(204);
-    }
-    next();
-  });
+  // CORS middleware with strict origin validation
+  app.use(cors({
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+    credentials: true,
+    maxAge: 86400, // 24 hours
+    optionsSuccessStatus: 204,
+  }));
 
   // Request ID middleware - Attach unique request_id to every request
   app.use((req: Request, res: Response, next: any) => {
@@ -159,41 +253,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Security headers middleware
-  app.use((req, res, next) => {
-    // Prevent clickjacking
-    res.setHeader("X-Frame-Options", "DENY");
-    
-    // Prevent MIME-type sniffing
-    res.setHeader("X-Content-Type-Options", "nosniff");
-    
-    // Enable XSS filter in older browsers
-    res.setHeader("X-XSS-Protection", "1; mode=block");
-    
-    // Referrer policy
-    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-    
-    // Content Security Policy - relaxed for development only
-    // In development, Vite HMR requires 'unsafe-inline' and 'unsafe-eval'
-    // This middleware only runs in development, so these directives are acceptable
-    res.setHeader(
-      "Content-Security-Policy",
-      "default-src 'self'; " +
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'; " +
-      "style-src 'self' 'unsafe-inline'; " +
-      "img-src 'self' data: https: blob:; " +
-      "font-src 'self' data:; " +
-      "connect-src 'self' https://storage.googleapis.com; " +
-      "frame-ancestors 'none';"
-    );
-    
-    // HSTS (only in production with HTTPS)
-    if (process.env.NODE_ENV === "production") {
-      res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-    }
-    
-    next();
-  });
+  // Security headers with Helmet
+  app.use(helmet({
+    strictTransportSecurity: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true,
+    },
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Vite dev needs unsafe-inline/eval
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", "data:", "https://pixcapture.app", "https://pix.immo", "https:", "blob:"],
+        fontSrc: ["'self'", "data:"],
+        connectSrc: ["'self'", "https://storage.googleapis.com"],
+        frameAncestors: ["'none'"],
+      },
+    },
+    frameguard: { action: 'sameorigin' }, // Changed from DENY to SAMEORIGIN for compatibility
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  }));
+  
+  // Global rate limiting (60 requests/min per IP)
+  app.use(globalLimiter);
+  
+  // Content-Type validation for POST/PUT/PATCH requests
+  app.use(validateUploadContentType);
   
   // Cookie parser middleware - Must come before authMiddleware
   app.use(cookieParser());
@@ -1568,6 +1654,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Gallery System V1.0 routes
   registerGalleryRoutes(app);
+
+  // Global error handler - Response Sanitization (must be last!)
+  app.use((err: any, req: Request, res: Response, next: any) => {
+    // Log the full error internally
+    console.error('[ERROR]', {
+      requestId: (req as any).requestId,
+      error: err.message,
+      stack: err.stack,
+      path: req.path,
+      method: req.method,
+      ip: req.ip,
+    });
+    
+    // Never send stack traces to client
+    const statusCode = err.statusCode || err.status || 500;
+    const message = statusCode === 500 
+      ? 'Internal Server Error' // Generic message for 500 errors
+      : err.message || 'An error occurred';
+    
+    res.status(statusCode).json({ 
+      error: message,
+      requestId: (req as any).requestId, // Include for support
+    });
+  });
 
   const httpServer = createServer(app);
 
