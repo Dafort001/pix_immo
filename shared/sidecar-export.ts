@@ -86,12 +86,12 @@ export function generateGermanAltText(
  * Vollständige Metadaten-Struktur für object_meta.json
  */
 export interface ObjectMeta {
-  // Pflichtfelder
+  // Pflichtfelder (MUST always be present in JSON, even if null)
   job_id: string;
   display_id: string;  // Human-readable: z.B. "AB3KQ-001"
   date: string;        // YYYY-MM-DD
   shoot_code: string;  // 5-char code
-  user_code?: string;  // Optional: User/Photographer identifier
+  user_code: string | null;  // User/Photographer identifier (null if not set, but MUST be in JSON)
   room_type: string;   // Lowercase normalized
   orientation: Orientation | null;
   
@@ -157,7 +157,7 @@ export function generateObjectMeta(data: {
     display_id: data.displayId,
     date: data.date,
     shoot_code: data.shootCode,
-    user_code: data.userCode,
+    user_code: data.userCode ?? null,  // MUST be present in JSON (null if not set)
     room_type: data.roomType.toLowerCase(),
     orientation: data.orientation ?? null,
     
