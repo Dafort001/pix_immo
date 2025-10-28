@@ -428,13 +428,267 @@ grep -A 20 '"SEOHead"' docs/component_map.json
 
 ---
 
+---
+
+## 5. Content Dump Tool
+
+**Script**: `tools/content-dump.ts`
+
+### Usage
+
+```bash
+# Using tsx directly:
+tsx tools/content-dump.ts
+
+# Or use shell script:
+./export-content.sh
+
+# Or add to package.json scripts (manually):
+# "export:content": "tsx tools/content-dump.ts"
+# Then run: npm run export:content
+```
+
+### What it does
+
+Extracts all text content from the codebase:
+
+1. **Scans pages** for hardcoded strings
+2. **Scans components** for JSX text content
+3. **Scans shared** for constants
+4. **Extracts patterns**:
+   - JSX text: `<h1>Text here</h1>`
+   - Props: `title="Text here"`
+   - Constants: `const TEXT = "Text here"`
+5. **Generates outputs**:
+   - `export/content_dump.json` - All entries with metadata
+   - `docs/content_index.md` - Grouped by route
+
+### Output Structure
+
+**JSON** (`export/content_dump.json`):
+```json
+{
+  "totalEntries": 3195,
+  "byType": {
+    "hardcoded": 3195,
+    "constant": 0
+  },
+  "entries": [
+    {
+      "key": "pages/home.tsx:42:h1",
+      "value": "Professional Real Estate Photography",
+      "route": "/",
+      "file": "pages/home.tsx",
+      "line": 42,
+      "type": "hardcoded"
+    }
+  ]
+}
+```
+
+### Use Cases
+
+**i18n Migration**: Find all strings that need translation
+**Copy Audit**: Review all user-facing text
+**Content Inventory**: Track marketing copy
+**SEO Audit**: Extract headings and descriptions
+
+---
+
+## 6. Routes Manifest Tool
+
+**Script**: `tools/routes-manifest.ts`
+
+### Usage
+
+```bash
+# Using tsx directly:
+tsx tools/routes-manifest.ts
+
+# Or use shell script:
+./audit-routes.sh
+
+# Or add to package.json scripts (manually):
+# "audit:routes": "tsx tools/routes-manifest.ts"
+# Then run: npm run audit:routes
+```
+
+### What it does
+
+Generates complete route manifest with metadata:
+
+1. **Parses App.tsx** for route definitions
+2. **Enriches metadata** by scanning page files:
+   - Auth requirements (`useAuth()`)
+   - Role guards (`role === "admin"`)
+   - Feature flags
+3. **Detects orphan routes** (not linked anywhere)
+4. **Finds link sources** (what links to each route)
+5. **Generates outputs**:
+   - `export/routes_manifest.json` - Complete manifest
+   - `docs/routes_manifest.md` - Human-readable report
+
+### Output Structure
+
+**JSON** (`export/routes_manifest.json`):
+```json
+{
+  "totalRoutes": 51,
+  "stats": {
+    "publicRoutes": 51,
+    "authRoutes": 0,
+    "guardedRoutes": 0,
+    "orphanRoutes": 48,
+    "dynamicRoutes": 8
+  },
+  "routes": [
+    {
+      "path": "/portal/job/:jobId",
+      "params": ["jobId"],
+      "layout": "portal",
+      "file": "pages/portal/job-detail.tsx",
+      "isOrphan": false,
+      "linkedFrom": ["/portal/jobs"]
+    }
+  ]
+}
+```
+
+### Use Cases
+
+**Security Audit**: Find unprotected routes
+**Dead Code**: Identify orphan routes
+**Navigation Design**: See linking structure
+**API Planning**: Extract dynamic parameters
+
+---
+
+## 7. Figma Bundle Tool
+
+**Script**: `tools/figma-bundle.ts`
+
+### Usage
+
+```bash
+# Using tsx directly:
+tsx tools/figma-bundle.ts
+
+# Or use shell script:
+./bundle-figma.sh
+```
+
+### What it does
+
+Packages all design assets for Figma import:
+
+1. **Copies wireframes** from `export/wireframes/` (50 SVGs)
+2. **Copies screenshots** from `export/screens/` (PNGs)
+3. **Copies site map** from `export/site_map.svg`
+4. **Copies design tokens** (if available)
+5. **Generates README_FIGMA.md** with import instructions
+6. **Creates .figmap.json** for Figma plugins
+
+### Bundle Structure
+
+```
+export/figma_bundle/
+├── wireframes/        # 50 SVG wireframes
+├── screenshots/       # PNG screenshots (3 breakpoints each)
+├── maps/              # site_map.svg
+├── tokens/            # design_tokens.json (optional)
+├── README_FIGMA.md    # Import guide
+└── .figmap.json       # Plugin metadata
+```
+
+### Use Cases
+
+**Design Handoff**: Share assets with designers
+**Figma Import**: Batch import all wireframes
+**Design System**: Use tokens in Figma
+**Documentation**: Visual site architecture
+
+---
+
+## 8. Audit ZIP Tool
+
+**Script**: `tools/audit-zip.ts`
+
+### Usage
+
+```bash
+# Using tsx directly:
+tsx tools/audit-zip.ts
+
+# Or use shell script:
+./create-audit-zip.sh
+```
+
+### What it does
+
+Creates complete audit package:
+
+1. **Generates AUDIT_INDEX.md** with links to all reports
+2. **Creates ZIP archive** containing:
+   - All `/docs` markdown reports
+   - All `/export` JSON/SVG/PNG files
+   - Figma bundle
+3. **Checks size** (<80 MB preferred)
+4. **Lists top 5 largest files**
+
+### Package Contents
+
+```
+site_audit_package.zip
+├── docs/
+│   ├── page_inventory.md
+│   ├── content_index.md
+│   ├── routes_manifest.md
+│   ├── component_map.md
+│   └── *.md guides
+└── export/
+    ├── wireframes/
+    ├── screenshots/
+    ├── figma_bundle/
+    ├── content_dump.json
+    ├── routes_manifest.json
+    └── AUDIT_INDEX.md
+```
+
+### Use Cases
+
+**Stakeholder Reports**: Single ZIP for stakeholders
+**Archival**: Snapshot of current state
+**Handoff**: Complete documentation package
+**Backup**: Audit baseline for future comparison
+
+---
+
+## Quick Reference
+
+| Tool | Script | Output | Use Case |
+|------|--------|--------|----------|
+| Page Inventory | `page-inventory.ts` | `docs/page_inventory.md` | Route list |
+| Wireframes | `wireframe-export.ts` | `export/wireframes/*.svg` | Design mockups |
+| Screenshots | `page-screenshots.ts` | `export/screens/*.png` | Visual testing |
+| Component Map | `component-map.ts` | `docs/component_map.md` | Refactoring |
+| Content Dump | `content-dump.ts` | `export/content_dump.json` | i18n migration |
+| Routes Manifest | `routes-manifest.ts` | `export/routes_manifest.json` | Security audit |
+| Figma Bundle | `figma-bundle.ts` | `export/figma_bundle/` | Design handoff |
+| Audit ZIP | `audit-zip.ts` | `export/site_audit_package.zip` | Complete package |
+
+---
+
 ## Related Documentation
 
 - `docs/WIREFRAME_EXPORT_GUIDE.md` - Wireframe export guide
 - `docs/SCREENSHOTS_GUIDE.md` - Screenshots guide
 - `docs/COMPONENT_MAP_GUIDE.md` - Component map guide
 - `docs/page_inventory.md` - Route list
+- `docs/content_index.md` - Content audit
+- `docs/routes_manifest.md` - Route manifest
 - `export/wireframes/` - Generated SVG wireframes
 - `export/skeletons/` - Generated HTML skeletons
 - `export/screens/` - Generated screenshots (or mocks)
 - `export/site_map.svg` - Site architecture diagram
+- `export/figma_bundle/` - Figma import package
+- `export/AUDIT_INDEX.md` - Complete audit index

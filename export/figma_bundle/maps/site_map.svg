@@ -1,0 +1,504 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1280" height="1720" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .sitemap-box { fill: #ffffff; stroke: #333333; stroke-width: 2; cursor: pointer; }
+      .sitemap-box:hover { fill: #f0f0f0; }
+      .sitemap-text { font-family: Arial, sans-serif; font-size: 12px; fill: #333333; }
+      .sitemap-route { font-family: monospace; font-size: 10px; fill: #666666; }
+      .sitemap-connector { stroke: #999999; stroke-width: 2; fill: none; }
+      .sitemap-title { font-family: Arial, sans-serif; font-size: 24px; fill: #333333; font-weight: bold; }
+      .sitemap-group { font-family: Arial, sans-serif; font-size: 14px; fill: #666666; font-weight: bold; }
+    </style>
+  </defs>
+  
+  <rect width="1280" height="1720" fill="#fafafa"/>
+  
+  <text x="640" y="50" class="sitemap-title" text-anchor="middle">
+    PIX.IMMO Site Map
+  </text>
+  <text x="640" y="75" class="sitemap-route" text-anchor="middle">
+    52 Routes
+  </text>
+
+  <text x="40" y="120" class="sitemap-group">ROOT</text>
+
+  <g class="sitemap-box-group" data-route="/">
+    <rect x="40" y="150" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="175" class="sitemap-text" text-anchor="middle">
+      Professionelle Im...
+    </text>
+    <text x="140" y="195" class="sitemap-route" text-anchor="middle">
+      /
+    </text>
+  </g>
+  <text x="40" y="330" class="sitemap-group">APP</text>
+
+  <g class="sitemap-box-group" data-route="/app/camera">
+    <rect x="40" y="360" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="385" class="sitemap-text" text-anchor="middle">
+      Untitled
+    </text>
+    <text x="140" y="405" class="sitemap-route" text-anchor="middle">
+      /app/camera
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/app/settings">
+    <rect x="280" y="360" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="385" class="sitemap-text" text-anchor="middle">
+      Manueller Modus
+    </text>
+    <text x="380" y="405" class="sitemap-route" text-anchor="middle">
+      /app/settings
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/app/splash">
+    <rect x="520" y="360" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="385" class="sitemap-text" text-anchor="middle">
+      {t(&apos;app_name&apos;)}
+    </text>
+    <text x="620" y="405" class="sitemap-route" text-anchor="middle">
+      /app/splash
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/app/upload">
+    <rect x="760" y="360" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="385" class="sitemap-text" text-anchor="middle">
+      Upload
+    </text>
+    <text x="860" y="405" class="sitemap-route" text-anchor="middle">
+      /app/upload
+    </text>
+  </g>
+  <text x="40" y="540" class="sitemap-group">PORTAL</text>
+
+  <g class="sitemap-box-group" data-route="/portal/delivery/:jobId">
+    <rect x="40" y="570" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="595" class="sitemap-text" text-anchor="middle">
+      Download
+    </text>
+    <text x="140" y="615" class="sitemap-route" text-anchor="middle">
+      /portal/delivery/:jobId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/gallery-editing">
+    <rect x="280" y="570" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="595" class="sitemap-text" text-anchor="middle">
+      Editing Gallery
+    </text>
+    <text x="380" y="615" class="sitemap-route" text-anchor="middle">
+      /portal/gallery-editing
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/gallery-photographer">
+    <rect x="520" y="570" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="595" class="sitemap-text" text-anchor="middle">
+      Photographer Upload
+    </text>
+    <text x="620" y="615" class="sitemap-route" text-anchor="middle">
+      /portal/gallery-photographer
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/gallery-upload">
+    <rect x="760" y="570" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="595" class="sitemap-text" text-anchor="middle">
+      Customer Upload G...
+    </text>
+    <text x="860" y="615" class="sitemap-route" text-anchor="middle">
+      /portal/gallery-upload
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/job/:jobId">
+    <rect x="1000" y="570" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="595" class="sitemap-text" text-anchor="middle">
+      Bildauswahl
+    </text>
+    <text x="1100" y="615" class="sitemap-route" text-anchor="middle">
+      /portal/job/:jobId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/payment/:jobId">
+    <rect x="40" y="710" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="735" class="sitemap-text" text-anchor="middle">
+      Zahlung
+    </text>
+    <text x="140" y="755" class="sitemap-route" text-anchor="middle">
+      /portal/payment/:jobId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/status/:jobId">
+    <rect x="280" y="710" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="735" class="sitemap-text" text-anchor="middle">
+      Status
+    </text>
+    <text x="380" y="755" class="sitemap-route" text-anchor="middle">
+      /portal/status/:jobId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/portal/uploads">
+    <rect x="520" y="710" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="735" class="sitemap-text" text-anchor="middle">
+      Uploads
+    </text>
+    <text x="620" y="755" class="sitemap-route" text-anchor="middle">
+      /portal/uploads
+    </text>
+  </g>
+  <text x="40" y="890" class="sitemap-group">CAPTURE</text>
+
+  <g class="sitemap-box-group" data-route="/capture/camera">
+    <rect x="40" y="920" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="945" class="sitemap-text" text-anchor="middle">
+      Kamera-Fehler
+    </text>
+    <text x="140" y="965" class="sitemap-route" text-anchor="middle">
+      /capture/camera
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/capture/index">
+    <rect x="280" y="920" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="945" class="sitemap-text" text-anchor="middle">
+      pix.immo Camera
+    </text>
+    <text x="380" y="965" class="sitemap-route" text-anchor="middle">
+      /capture/index
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/capture/upload">
+    <rect x="520" y="920" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="945" class="sitemap-text" text-anchor="middle">
+      Upload
+    </text>
+    <text x="620" y="965" class="sitemap-route" text-anchor="middle">
+      /capture/upload
+    </text>
+  </g>
+  <text x="40" y="1100" class="sitemap-group">ADMIN</text>
+
+  <g class="sitemap-box-group" data-route="/admin/editorial">
+    <rect x="40" y="1130" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1155" class="sitemap-text" text-anchor="middle">
+      Redaktionsplan
+    </text>
+    <text x="140" y="1175" class="sitemap-route" text-anchor="middle">
+      /admin/editorial
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/admin/seo">
+    <rect x="280" y="1130" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1155" class="sitemap-text" text-anchor="middle">
+      SEO Management
+    </text>
+    <text x="380" y="1175" class="sitemap-route" text-anchor="middle">
+      /admin/seo
+    </text>
+  </g>
+  <text x="40" y="1310" class="sitemap-group">OTHER</text>
+
+  <g class="sitemap-box-group" data-route="/about">
+    <rect x="40" y="1340" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1365" class="sitemap-text" text-anchor="middle">
+      Über PIX.IMMO
+    </text>
+    <text x="140" y="1385" class="sitemap-route" text-anchor="middle">
+      /about
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/agb">
+    <rect x="280" y="1340" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1365" class="sitemap-text" text-anchor="middle">
+      Allgemeine Liefer...
+    </text>
+    <text x="380" y="1385" class="sitemap-route" text-anchor="middle">
+      /agb
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/ai-lab">
+    <rect x="520" y="1340" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="1365" class="sitemap-text" text-anchor="middle">
+      AI Lab
+    </text>
+    <text x="620" y="1385" class="sitemap-route" text-anchor="middle">
+      /ai-lab
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/blog">
+    <rect x="760" y="1340" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="1365" class="sitemap-text" text-anchor="middle">
+      Blog
+    </text>
+    <text x="860" y="1385" class="sitemap-route" text-anchor="middle">
+      /blog
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/blog/:slug">
+    <rect x="1000" y="1340" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="1365" class="sitemap-text" text-anchor="middle">
+      Blog-Beitrag nich...
+    </text>
+    <text x="1100" y="1385" class="sitemap-route" text-anchor="middle">
+      /blog/:slug
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/booking-confirmation">
+    <rect x="40" y="1480" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1505" class="sitemap-text" text-anchor="middle">
+      Untitled
+    </text>
+    <text x="140" y="1525" class="sitemap-route" text-anchor="middle">
+      /booking-confirmation
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/buchen">
+    <rect x="280" y="1480" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1505" class="sitemap-text" text-anchor="middle">
+      Neue Bestellung
+    </text>
+    <text x="380" y="1525" class="sitemap-route" text-anchor="middle">
+      /buchen
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/dashboard">
+    <rect x="520" y="1480" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="1505" class="sitemap-text" text-anchor="middle">
+      Willkommen zurück...
+    </text>
+    <text x="620" y="1525" class="sitemap-route" text-anchor="middle">
+      /dashboard
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/datenschutz">
+    <rect x="760" y="1480" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="1505" class="sitemap-text" text-anchor="middle">
+      Datenschutzerklärung
+    </text>
+    <text x="860" y="1525" class="sitemap-route" text-anchor="middle">
+      /datenschutz
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/demo-jobs">
+    <rect x="1000" y="1480" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="1505" class="sitemap-text" text-anchor="middle">
+      Demo Jobs
+    </text>
+    <text x="1100" y="1525" class="sitemap-route" text-anchor="middle">
+      /demo-jobs
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/demo-upload">
+    <rect x="40" y="1620" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1645" class="sitemap-text" text-anchor="middle">
+      Job erstellt
+    </text>
+    <text x="140" y="1665" class="sitemap-route" text-anchor="middle">
+      /demo-upload
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/docs/rooms-spec">
+    <rect x="280" y="1620" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1645" class="sitemap-text" text-anchor="middle">
+      Raumtypen-Spezifi...
+    </text>
+    <text x="380" y="1665" class="sitemap-route" text-anchor="middle">
+      /docs/rooms-spec
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/downloads">
+    <rect x="520" y="1620" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="1645" class="sitemap-text" text-anchor="middle">
+      Downloads
+    </text>
+    <text x="620" y="1665" class="sitemap-route" text-anchor="middle">
+      /downloads
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/faq">
+    <rect x="760" y="1620" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="1645" class="sitemap-text" text-anchor="middle">
+      Häufig gestellte ...
+    </text>
+    <text x="860" y="1665" class="sitemap-route" text-anchor="middle">
+      /faq
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/galerie">
+    <rect x="1000" y="1620" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="1645" class="sitemap-text" text-anchor="middle">
+      Ihre Galerie
+    </text>
+    <text x="1100" y="1665" class="sitemap-route" text-anchor="middle">
+      /galerie
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/gallery">
+    <rect x="40" y="1760" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1785" class="sitemap-text" text-anchor="middle">
+      {t(&apos;gallery.title&apos;)}
+    </text>
+    <text x="140" y="1805" class="sitemap-route" text-anchor="middle">
+      /gallery
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/gallery">
+    <rect x="280" y="1760" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1785" class="sitemap-text" text-anchor="middle">
+      Untitled
+    </text>
+    <text x="380" y="1805" class="sitemap-route" text-anchor="middle">
+      /gallery
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/gallery/classify/:shootId">
+    <rect x="520" y="1760" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="1785" class="sitemap-text" text-anchor="middle">
+      Bilder klassifizi...
+    </text>
+    <text x="620" y="1805" class="sitemap-route" text-anchor="middle">
+      /gallery/classify/:shootId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/impressum">
+    <rect x="760" y="1760" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="1785" class="sitemap-text" text-anchor="middle">
+      Impressum und Dat...
+    </text>
+    <text x="860" y="1805" class="sitemap-route" text-anchor="middle">
+      /impressum
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/intake">
+    <rect x="1000" y="1760" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="1785" class="sitemap-text" text-anchor="middle">
+      Photographer Intake
+    </text>
+    <text x="1100" y="1805" class="sitemap-route" text-anchor="middle">
+      /intake
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/job/:id">
+    <rect x="40" y="1900" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="1925" class="sitemap-text" text-anchor="middle">
+      Verarbeitung gest...
+    </text>
+    <text x="140" y="1945" class="sitemap-route" text-anchor="middle">
+      /job/:id
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/jobs">
+    <rect x="280" y="1900" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="1925" class="sitemap-text" text-anchor="middle">
+      Workflow Jobs
+    </text>
+    <text x="380" y="1945" class="sitemap-route" text-anchor="middle">
+      /jobs
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/kontakt">
+    <rect x="520" y="1900" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="1925" class="sitemap-text" text-anchor="middle">
+      Kontakt
+    </text>
+    <text x="620" y="1945" class="sitemap-route" text-anchor="middle">
+      /kontakt
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/kontakt-formular">
+    <rect x="760" y="1900" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="1925" class="sitemap-text" text-anchor="middle">
+      Vielen Dank für I...
+    </text>
+    <text x="860" y="1945" class="sitemap-route" text-anchor="middle">
+      /kontakt-formular
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/login">
+    <rect x="1000" y="1900" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="1925" class="sitemap-text" text-anchor="middle">
+      Anmeldung erfolgr...
+    </text>
+    <text x="1100" y="1945" class="sitemap-route" text-anchor="middle">
+      /login
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/not-found">
+    <rect x="40" y="2040" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="2065" class="sitemap-text" text-anchor="middle">
+      404 Seite nicht g...
+    </text>
+    <text x="140" y="2085" class="sitemap-route" text-anchor="middle">
+      /not-found
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/order">
+    <rect x="280" y="2040" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="2065" class="sitemap-text" text-anchor="middle">
+      Neuer Fotoauftrag
+    </text>
+    <text x="380" y="2085" class="sitemap-route" text-anchor="middle">
+      /order
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/preise">
+    <rect x="520" y="2040" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="2065" class="sitemap-text" text-anchor="middle">
+      Preise und Leistu...
+    </text>
+    <text x="620" y="2085" class="sitemap-route" text-anchor="middle">
+      /preise
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/preisliste">
+    <rect x="760" y="2040" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="2065" class="sitemap-text" text-anchor="middle">
+      Interne Preisliste
+    </text>
+    <text x="860" y="2085" class="sitemap-route" text-anchor="middle">
+      /preisliste
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/register">
+    <rect x="1000" y="2040" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="1100" y="2065" class="sitemap-text" text-anchor="middle">
+      Konto erstellt
+    </text>
+    <text x="1100" y="2085" class="sitemap-route" text-anchor="middle">
+      /register
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/review/:jobId/:shootId">
+    <rect x="40" y="2180" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="140" y="2205" class="sitemap-text" text-anchor="middle">
+      {photos.length} {...
+    </text>
+    <text x="140" y="2225" class="sitemap-route" text-anchor="middle">
+      /review/:jobId/:shootId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/review/:jobId/:shootId">
+    <rect x="280" y="2180" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="380" y="2205" class="sitemap-text" text-anchor="middle">
+      {data.job.propert...
+    </text>
+    <text x="380" y="2225" class="sitemap-route" text-anchor="middle">
+      /review/:jobId/:shootId
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/test">
+    <rect x="520" y="2180" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="620" y="2205" class="sitemap-text" text-anchor="middle">
+      Untitled
+    </text>
+    <text x="620" y="2225" class="sitemap-route" text-anchor="middle">
+      /test
+    </text>
+  </g>
+  <g class="sitemap-box-group" data-route="/upload-raw">
+    <rect x="760" y="2180" width="200" height="60" class="sitemap-box" rx="8"/>
+    <text x="860" y="2205" class="sitemap-text" text-anchor="middle">
+      RAW-Dateien hochl...
+    </text>
+    <text x="860" y="2225" class="sitemap-route" text-anchor="middle">
+      /upload-raw
+    </text>
+  </g>
+</svg>

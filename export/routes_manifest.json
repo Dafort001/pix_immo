@@ -1,0 +1,398 @@
+{
+  "generated": "2025-10-28T12:51:00.479Z",
+  "totalRoutes": 51,
+  "stats": {
+    "publicRoutes": 51,
+    "authRoutes": 0,
+    "guardedRoutes": 0,
+    "orphanRoutes": 48,
+    "dynamicRoutes": 8
+  },
+  "routes": [
+    {
+      "path": "/",
+      "layout": "web",
+      "file": "pages/Home.tsx",
+      "component": "Home",
+      "isOrphan": false,
+      "linkedFrom": []
+    },
+    {
+      "path": "/about",
+      "layout": "web",
+      "file": "pages/About.tsx",
+      "component": "About",
+      "isOrphan": true
+    },
+    {
+      "path": "/admin/editorial",
+      "layout": "web",
+      "file": "pages/AdminEditorial.tsx",
+      "component": "AdminEditorial",
+      "isOrphan": true
+    },
+    {
+      "path": "/admin/seo",
+      "layout": "web",
+      "file": "pages/AdminSeo.tsx",
+      "component": "AdminSeo",
+      "isOrphan": true
+    },
+    {
+      "path": "/agb",
+      "layout": "web",
+      "file": "pages/AGB.tsx",
+      "component": "AGB",
+      "isOrphan": true
+    },
+    {
+      "path": "/ai-lab",
+      "layout": "web",
+      "file": "pages/AILab.tsx",
+      "component": "AILab",
+      "isOrphan": true
+    },
+    {
+      "path": "/app",
+      "layout": "app",
+      "file": "pages/AppSplash.tsx",
+      "component": "AppSplash",
+      "isOrphan": true
+    },
+    {
+      "path": "/app/camera",
+      "layout": "app",
+      "file": "pages/AppCamera.tsx",
+      "component": "AppCamera",
+      "isOrphan": true
+    },
+    {
+      "path": "/app/gallery",
+      "layout": "app",
+      "file": "pages/AppGallery.tsx",
+      "component": "AppGallery",
+      "isOrphan": true
+    },
+    {
+      "path": "/app/settings",
+      "layout": "app",
+      "file": "pages/AppSettings.tsx",
+      "component": "AppSettings",
+      "isOrphan": true
+    },
+    {
+      "path": "/app/upload",
+      "layout": "app",
+      "file": "pages/AppUpload.tsx",
+      "component": "AppUpload",
+      "isOrphan": true
+    },
+    {
+      "path": "/blog",
+      "layout": "web",
+      "file": "pages/Blog.tsx",
+      "component": "Blog",
+      "isOrphan": true
+    },
+    {
+      "path": "/blog/:slug",
+      "params": [
+        "slug"
+      ],
+      "layout": "web",
+      "file": "pages/BlogPost.tsx",
+      "component": "BlogPost",
+      "isOrphan": true
+    },
+    {
+      "path": "/booking-confirmation",
+      "layout": "web",
+      "file": "pages/BookingConfirmation.tsx",
+      "component": "BookingConfirmation",
+      "isOrphan": true
+    },
+    {
+      "path": "/buchen",
+      "layout": "web",
+      "file": "pages/Booking.tsx",
+      "component": "Booking",
+      "isOrphan": true
+    },
+    {
+      "path": "/capture",
+      "layout": "web",
+      "file": "pages/CaptureIndex.tsx",
+      "component": "CaptureIndex",
+      "isOrphan": true
+    },
+    {
+      "path": "/capture/camera",
+      "layout": "web",
+      "file": "pages/CaptureCamera.tsx",
+      "component": "CaptureCamera",
+      "isOrphan": true
+    },
+    {
+      "path": "/capture/review",
+      "layout": "web",
+      "file": "pages/CaptureReview.tsx",
+      "component": "CaptureReview",
+      "isOrphan": true
+    },
+    {
+      "path": "/capture/upload",
+      "layout": "web",
+      "file": "pages/CaptureUpload.tsx",
+      "component": "CaptureUpload",
+      "isOrphan": true
+    },
+    {
+      "path": "/dashboard",
+      "layout": "web",
+      "file": "pages/Dashboard.tsx",
+      "component": "Dashboard",
+      "isOrphan": true
+    },
+    {
+      "path": "/datenschutz",
+      "layout": "web",
+      "file": "pages/Datenschutz.tsx",
+      "component": "Datenschutz",
+      "isOrphan": true
+    },
+    {
+      "path": "/demo-jobs",
+      "layout": "web",
+      "file": "pages/DemoJobs.tsx",
+      "component": "DemoJobs",
+      "isOrphan": true
+    },
+    {
+      "path": "/demo-upload",
+      "layout": "web",
+      "file": "pages/DemoUpload.tsx",
+      "component": "DemoUpload",
+      "isOrphan": true
+    },
+    {
+      "path": "/docs/rooms-spec",
+      "layout": "web",
+      "file": "pages/DocsRoomsSpec.tsx",
+      "component": "DocsRoomsSpec",
+      "isOrphan": true
+    },
+    {
+      "path": "/downloads",
+      "layout": "web",
+      "file": "pages/Downloads.tsx",
+      "component": "Downloads",
+      "isOrphan": true
+    },
+    {
+      "path": "/faq",
+      "layout": "web",
+      "file": "pages/FAQ.tsx",
+      "component": "FAQ",
+      "isOrphan": true
+    },
+    {
+      "path": "/galerie",
+      "layout": "web",
+      "file": "pages/Galerie.tsx",
+      "component": "Galerie",
+      "isOrphan": true
+    },
+    {
+      "path": "/gallery",
+      "layout": "web",
+      "file": "pages/Gallery.tsx",
+      "component": "Gallery",
+      "isOrphan": true
+    },
+    {
+      "path": "/gallery/classify/:shootId",
+      "params": [
+        "shootId"
+      ],
+      "layout": "web",
+      "file": "pages/GalleryClassify.tsx",
+      "component": "GalleryClassify",
+      "isOrphan": true
+    },
+    {
+      "path": "/impressum",
+      "layout": "web",
+      "file": "pages/Imprint.tsx",
+      "component": "Imprint",
+      "isOrphan": true
+    },
+    {
+      "path": "/intake",
+      "layout": "web",
+      "file": "pages/Intake.tsx",
+      "component": "Intake",
+      "isOrphan": true
+    },
+    {
+      "path": "/job/:id",
+      "params": [
+        "id"
+      ],
+      "layout": "web",
+      "file": "pages/DemoJobDetail.tsx",
+      "component": "DemoJobDetail",
+      "isOrphan": true
+    },
+    {
+      "path": "/jobs",
+      "layout": "web",
+      "file": "pages/Jobs.tsx",
+      "component": "Jobs",
+      "isOrphan": true
+    },
+    {
+      "path": "/kontakt",
+      "layout": "web",
+      "file": "pages/Contact.tsx",
+      "component": "Contact",
+      "isOrphan": true
+    },
+    {
+      "path": "/kontakt-formular",
+      "layout": "web",
+      "file": "pages/KontaktFormular.tsx",
+      "component": "KontaktFormular",
+      "isOrphan": true
+    },
+    {
+      "path": "/login",
+      "layout": "web",
+      "file": "pages/Login.tsx",
+      "component": "Login",
+      "isOrphan": false,
+      "linkedFrom": []
+    },
+    {
+      "path": "/order",
+      "layout": "web",
+      "file": "pages/OrderForm.tsx",
+      "component": "OrderForm",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/delivery/:jobId",
+      "params": [
+        "jobId"
+      ],
+      "layout": "portal",
+      "file": "pages/Delivery.tsx",
+      "component": "Delivery",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/gallery-editing",
+      "layout": "portal",
+      "file": "pages/EditingGallery.tsx",
+      "component": "EditingGallery",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/gallery-photographer",
+      "layout": "portal",
+      "file": "pages/PhotographerUploadGallery.tsx",
+      "component": "PhotographerUploadGallery",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/gallery-upload",
+      "layout": "portal",
+      "file": "pages/CustomerUploadGallery.tsx",
+      "component": "CustomerUploadGallery",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/job/:jobId",
+      "params": [
+        "jobId"
+      ],
+      "layout": "portal",
+      "file": "pages/GallerySelection.tsx",
+      "component": "GallerySelection",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/payment/:jobId",
+      "params": [
+        "jobId"
+      ],
+      "layout": "portal",
+      "file": "pages/Payment.tsx",
+      "component": "Payment",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/status/:jobId",
+      "params": [
+        "jobId"
+      ],
+      "layout": "portal",
+      "file": "pages/StatusTimeline.tsx",
+      "component": "StatusTimeline",
+      "isOrphan": true
+    },
+    {
+      "path": "/portal/uploads",
+      "layout": "portal",
+      "file": "pages/UploadsOverview.tsx",
+      "component": "UploadsOverview",
+      "isOrphan": true
+    },
+    {
+      "path": "/preise",
+      "layout": "web",
+      "file": "pages/Pricing.tsx",
+      "component": "Pricing",
+      "isOrphan": true
+    },
+    {
+      "path": "/preisliste",
+      "layout": "web",
+      "file": "pages/Preisliste.tsx",
+      "component": "Preisliste",
+      "isOrphan": true
+    },
+    {
+      "path": "/register",
+      "layout": "web",
+      "file": "pages/Register.tsx",
+      "component": "Register",
+      "isOrphan": false,
+      "linkedFrom": []
+    },
+    {
+      "path": "/review/:jobId/:shootId",
+      "params": [
+        "jobId",
+        "shootId"
+      ],
+      "layout": "web",
+      "file": "pages/Review.tsx",
+      "component": "Review",
+      "isOrphan": true
+    },
+    {
+      "path": "/test",
+      "layout": "web",
+      "file": "pages/TestDebug.tsx",
+      "component": "TestDebug",
+      "isOrphan": true
+    },
+    {
+      "path": "/upload-raw",
+      "layout": "web",
+      "file": "pages/UploadRaw.tsx",
+      "component": "UploadRaw",
+      "isOrphan": true
+    }
+  ]
+}

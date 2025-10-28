@@ -1,0 +1,88 @@
+{
+  "version": "1.0",
+  "generated": "2025-10-28T12:51:51.220Z",
+  "project": "pix.immo",
+  "pages": [
+    {
+      "name": "Wireframes",
+      "files": [
+        "wireframes/_.svg",
+        "wireframes/_about.svg",
+        "wireframes/_admin_editorial.svg",
+        "wireframes/_admin_seo.svg",
+        "wireframes/_agb.svg",
+        "wireframes/_ai-lab.svg",
+        "wireframes/_app_camera.svg",
+        "wireframes/_app_settings.svg",
+        "wireframes/_app_splash.svg",
+        "wireframes/_app_upload.svg",
+        "wireframes/_blog.svg",
+        "wireframes/_blog__slug.svg",
+        "wireframes/_booking-confirmation.svg",
+        "wireframes/_buchen.svg",
+        "wireframes/_capture_camera.svg",
+        "wireframes/_capture_index.svg",
+        "wireframes/_capture_upload.svg",
+        "wireframes/_dashboard.svg",
+        "wireframes/_datenschutz.svg",
+        "wireframes/_demo-jobs.svg",
+        "wireframes/_demo-upload.svg",
+        "wireframes/_docs_rooms-spec.svg",
+        "wireframes/_downloads.svg",
+        "wireframes/_faq.svg",
+        "wireframes/_galerie.svg",
+        "wireframes/_gallery.svg",
+        "wireframes/_gallery_classify__shootId.svg",
+        "wireframes/_impressum.svg",
+        "wireframes/_intake.svg",
+        "wireframes/_job__id.svg",
+        "wireframes/_jobs.svg",
+        "wireframes/_kontakt-formular.svg",
+        "wireframes/_kontakt.svg",
+        "wireframes/_login.svg",
+        "wireframes/_not-found.svg",
+        "wireframes/_order.svg",
+        "wireframes/_portal_delivery__jobId.svg",
+        "wireframes/_portal_gallery-editing.svg",
+        "wireframes/_portal_gallery-photographer.svg",
+        "wireframes/_portal_gallery-upload.svg",
+        "wireframes/_portal_job__jobId.svg",
+        "wireframes/_portal_payment__jobId.svg",
+        "wireframes/_portal_status__jobId.svg",
+        "wireframes/_portal_uploads.svg",
+        "wireframes/_preise.svg",
+        "wireframes/_preisliste.svg",
+        "wireframes/_register.svg",
+        "wireframes/_review__jobId__shootId.svg",
+        "wireframes/_test.svg",
+        "wireframes/_upload-raw.svg"
+      ]
+    },
+    {
+      "name": "Screenshots",
+      "files": [
+        "screenshots/_-desktop.png",
+        "screenshots/_-mobile.png",
+        "screenshots/_-tablet.png",
+        "screenshots/_about-desktop.png",
+        "screenshots/_about-mobile.png",
+        "screenshots/_about-tablet.png",
+        "screenshots/_galerie-desktop.png",
+        "screenshots/_galerie-mobile.png",
+        "screenshots/_galerie-tablet.png"
+      ]
+    },
+    {
+      "name": "Site Architecture",
+      "files": [
+        "maps/site_map.svg"
+      ]
+    }
+  ],
+  "assets": {
+    "wireframes": 50,
+    "screenshots": 9,
+    "siteMaps": 1,
+    "tokens": false
+  }
+}
