@@ -369,15 +369,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Workflow API Routes
   
-  // POST /api/jobs - Create a new job with job_number generation
+  // POST /api/jobs - Create a new job with job_number generation and offline deduplication
   app.post("/api/jobs", validateBody(createJobSchema), async (req: Request, res: Response) => {
     try {
       // TODO: Get userId from session/auth middleware when auth is implemented
       // For now, use demo user
       const demoUser = await ensureDemoUser();
       
-      const { customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose, selectedUserId, selectedUserInitials, selectedUserCode } = req.body;
+      const { localId, customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose, selectedUserId, selectedUserInitials, selectedUserCode } = req.body;
+      
+      // Deduplication: Check if job with this localId already exists
+      if (localId) {
+        const existingJob = await storage.findJobByLocalId(localId);
+        if (existingJob) {
+          // Job already exists - return 409 Conflict with existing job data
+          return res.status(409).json({ 
+            message: "Job with this localId already exists",
+            job: existingJob 
+          });
+        }
+      }
+      
+      // No duplicate found - create new job
       const job = await storage.createJob(demoUser.id, {
+        localId,
         customerName,
         propertyName,
         propertyAddress,

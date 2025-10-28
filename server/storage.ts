@@ -538,6 +538,7 @@ export class DatabaseStorage implements IStorage {
 
   // Job operations
   async createJob(userId: string, data: {
+    localId?: string; // Client-generated ULID for offline deduplication
     customerName?: string;
     propertyName: string;
     propertyAddress?: string;
@@ -563,6 +564,7 @@ export class DatabaseStorage implements IStorage {
         id,
         jobNumber,
         userId,
+        localId: data.localId || null, // Store client-provided localId for deduplication
         customerName: data.customerName,
         propertyName: data.propertyName,
         propertyAddress: data.propertyAddress,
@@ -592,6 +594,11 @@ export class DatabaseStorage implements IStorage {
 
   async getJobByNumber(jobNumber: string): Promise<Job | undefined> {
     const [job] = await db.select().from(jobs).where(eq(jobs.jobNumber, jobNumber));
+    return job || undefined;
+  }
+
+  async findJobByLocalId(localId: string): Promise<Job | undefined> {
+    const [job] = await db.select().from(jobs).where(eq(jobs.localId, localId));
     return job || undefined;
   }
 

@@ -705,6 +705,7 @@ export type CreateOrderInput = z.infer<typeof createOrderSchema>;
 
 // Workflow Validation Schemas
 export const createJobSchema = z.object({
+  localId: z.string().optional(), // Client-generated ULID for offline deduplication
   customerName: z.string().optional(),
   propertyName: z.string().min(1, "Property name is required"),
   propertyAddress: z.string().optional(),
