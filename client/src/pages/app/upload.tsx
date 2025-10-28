@@ -9,6 +9,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Job } from '@shared/schema';
+import { normalizeOrientation, type RoomType, type Orientation } from '@shared/room-types';
 
 interface Photo {
   id: number;
@@ -17,8 +18,8 @@ interface Photo {
   width: number;
   height: number;
   selected?: boolean;
-  roomType?: string;
-  orientation?: string | null;
+  roomType?: RoomType;
+  orientation?: Orientation | null;
   stackId?: number;
   stackIndex?: number;
   stackTotal?: number;
@@ -30,8 +31,8 @@ interface PhotoStack {
   stackId: number;
   photos: Photo[];
   thumbnail: Photo;
-  roomType?: string;
-  orientation?: string | null;
+  roomType?: RoomType;
+  orientation?: Orientation | null;
 }
 
 export default function UploadScreen() {
@@ -191,6 +192,11 @@ export default function UploadScreen() {
     
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
+        // Normalize orientation before upload (applies "front" default for exterior rooms)
+        const normalizedOrientation = photo.roomType 
+          ? normalizeOrientation(photo.roomType, photo.orientation)
+          : null;
+        
         // Create form data
         const formData = new FormData();
         // Add "_M" suffix for manual mode photos
@@ -198,7 +204,7 @@ export default function UploadScreen() {
         formData.append('photo', blob, filename);
         formData.append('jobId', selectedJobId!);
         formData.append('roomType', photo.roomType || 'general');
-        if (photo.orientation) formData.append('orientation', photo.orientation);
+        if (normalizedOrientation) formData.append('orientation', normalizedOrientation);
         formData.append('capturedAt', photo.timestamp);
         if (photo.stackId) formData.append('stackId', photo.stackId.toString());
         if (photo.stackIndex !== undefined) formData.append('stackIndex', photo.stackIndex.toString());
