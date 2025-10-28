@@ -17,6 +17,8 @@ import { useManualModeStore } from '@/lib/manual-mode/store';
 import { buildCameraConstraints, applySettingsToTrack, logCapabilities } from '@/lib/manual-mode/constraints';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { TripodWarning, BracketAlignmentWarning, LongExposureTip } from '@/components/mobile/StabilityWarnings';
+import { checkMotionStability, calculateBracketAlignmentScore, estimateShutterSpeed, type MotionReading } from '@/lib/manual-mode/motion-detection';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -61,9 +63,27 @@ export default function CameraScreen() {
   const [brightness, setBrightness] = useState(0);
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   
-  // Manual Mode Store - Grid Type
+  // Stability Warning States
+  const [showTripodWarning, setShowTripodWarning] = useState(false);
+  const [stabilityScore, setStabilityScore] = useState(1.0);
+  const [showBracketWarning, setShowBracketWarning] = useState(false);
+  const [bracketAlignmentScore, setBracketAlignmentScore] = useState(1.0);
+  const [showLongExposureTip, setShowLongExposureTip] = useState(false);
+  const [estimatedShutter, setEstimatedShutter] = useState(1 / 60);
+  const [motionReadings, setMotionReadings] = useState<MotionReading[]>([]);
+  const [bypassStabilityCheck, setBypassStabilityCheck] = useState(false);
+  
+  // Manual Mode Store - Grid Type + Feature Flags
   const gridType = useManualModeStore((state) => state.gridType);
   const setGridType = useManualModeStore((state) => state.setGridType);
+  const tripodCheck = useManualModeStore((state) => state.tripodCheck);
+  const congruencyCheck = useManualModeStore((state) => state.congruencyCheck);
+  const longShutterTip = useManualModeStore((state) => state.longShutterTip);
+  const hdrBrackets = useManualModeStore((state) => state.hdrBrackets);
+  const nightModeEnabled = useManualModeStore((state) => state.nightModeEnabled);
+  const iso = useManualModeStore((state) => state.iso);
+  const shutterSpeed = useManualModeStore((state) => state.shutterSpeed);
+  const exposureCompensation = useManualModeStore((state) => state.exposureCompensation);
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -452,6 +472,46 @@ export default function CameraScreen() {
   const handleCapture = async () => {
     if (capturing || countdown !== null) return;
     
+    // Pre-Capture Stability Check
+    if (tripodCheck && !bypassStabilityCheck) {
+      const needsStabilityCheck = hdrEnabled || nightModeEnabled;
+      
+      if (needsStabilityCheck) {
+        // Check motion stability over 700ms
+        const result = await checkMotionStability(700, 50);
+        setStabilityScore(result.score);
+        setMotionReadings(result.readings);
+        
+        // Determine threshold based on mode
+        const threshold = 
+          nightModeEnabled ? 0.75 :
+          hdrBrackets === 5 ? 0.80 :
+          0.70; // HDR3 default
+        
+        if (result.score < threshold) {
+          // Show tripod warning and wait for user decision
+          setShowTripodWarning(true);
+          return; // Exit and wait for user to proceed or cancel
+        }
+      }
+    }
+    
+    // Long Exposure Tip (non-blocking)
+    if (longShutterTip) {
+      const estimated = typeof shutterSpeed === 'number' 
+        ? shutterSpeed 
+        : estimateShutterSpeed(iso, exposureCompensation, nightModeEnabled);
+      
+      setEstimatedShutter(estimated);
+      
+      // Show tip if estimated exposure > 1/30s (handheld warning threshold)
+      if (estimated > 1 / 30) {
+        setShowLongExposureTip(true);
+        // Auto-dismiss after 3 seconds
+        setTimeout(() => setShowLongExposureTip(false), 3000);
+      }
+    }
+    
     // Self-Timer Countdown
     if (timerMode > 0) {
       setCountdown(timerMode);
@@ -560,6 +620,25 @@ export default function CameraScreen() {
         }
         
         log('✅ Complete!');
+        
+        // Post-Capture Bracket Alignment Check
+        if (congruencyCheck && motionReadings.length > 0) {
+          const alignmentScore = calculateBracketAlignmentScore(motionReadings, hdrBrackets);
+          setBracketAlignmentScore(alignmentScore);
+          
+          // Determine threshold based on bracket count
+          const threshold = hdrBrackets === 5 ? 0.80 : 0.70;
+          
+          if (alignmentScore < threshold) {
+            // Show warning and wait for user decision
+            setShowBracketWarning(true);
+            // Save photos temporarily in case user wants to retake
+            sessionStorage.setItem('appPhotos', JSON.stringify(photos));
+            setCapturing(false);
+            setCaptureProgress({ current: 0, total: 0 });
+            return; // Exit and wait for user decision
+          }
+        }
       } else {
         setCaptureProgress({ current: 1, total: 1 });
         
@@ -623,6 +702,38 @@ export default function CameraScreen() {
       setCapturing(false);
       setCaptureProgress({ current: 0, total: 0 });
     }
+  };
+  
+  // Stability Warning Handlers
+  const handleTripodProceed = () => {
+    setShowTripodWarning(false);
+    setBypassStabilityCheck(true);
+    // Trigger capture again with bypass flag
+    setTimeout(() => {
+      handleCapture();
+      setBypassStabilityCheck(false);
+    }, 100);
+  };
+  
+  const handleTripodCancel = () => {
+    setShowTripodWarning(false);
+    setBypassStabilityCheck(false);
+  };
+  
+  const handleBracketRetake = () => {
+    setShowBracketWarning(false);
+    // Remove last HDR stack from photos
+    const photos = JSON.parse(sessionStorage.getItem('appPhotos') || '[]');
+    const filteredPhotos = photos.filter((p: any) => p.stackId !== photos[photos.length - 1]?.stackId);
+    sessionStorage.setItem('appPhotos', JSON.stringify(filteredPhotos));
+    // Trigger new capture
+    setTimeout(() => handleCapture(), 100);
+  };
+  
+  const handleBracketAccept = () => {
+    setShowBracketWarning(false);
+    // Photos are already saved, just dismiss
+    trigger('success');
   };
 
   return (
@@ -1271,6 +1382,29 @@ export default function CameraScreen() {
       {cameraStarted && isLandscape && isManualControlsOpen && (
         <ManualControls onClose={() => setIsManualControlsOpen(false)} />
       )}
+      
+      {/* Stability Warnings */}
+      <TripodWarning
+        isOpen={showTripodWarning}
+        mode={nightModeEnabled ? 'night' : hdrBrackets === 5 ? 'hdr5' : 'hdr3'}
+        stabilityScore={stabilityScore}
+        onProceed={handleTripodProceed}
+        onCancel={handleTripodCancel}
+      />
+      
+      <BracketAlignmentWarning
+        isOpen={showBracketWarning}
+        alignmentScore={bracketAlignmentScore}
+        brackets={hdrBrackets}
+        onRetake={handleBracketRetake}
+        onAccept={handleBracketAccept}
+      />
+      
+      <LongExposureTip
+        isOpen={showLongExposureTip}
+        estimatedShutter={estimatedShutter}
+        onDismiss={() => setShowLongExposureTip(false)}
+      />
 
       {/* BottomNav - Always Visible */}
       <BottomNav photoCount={photoCount} variant="dark" isLandscape={isLandscape} />
