@@ -19,6 +19,14 @@ import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import { TripodWarning, BracketAlignmentWarning, LongExposureTip } from '@/components/mobile/StabilityWarnings';
 import { checkMotionStability, calculateBracketAlignmentScore, estimateShutterSpeed, type MotionReading } from '@/lib/manual-mode/motion-detection';
+import { LiveRecommendations, type Recommendation } from '@/components/mobile/LiveRecommendations';
+import { 
+  captureVideoFrame, 
+  calculateHistogram, 
+  analyzeClipping, 
+  detectWindows, 
+  estimateWhiteBalance 
+} from '@/lib/manual-mode/scene-analysis';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -73,11 +81,16 @@ export default function CameraScreen() {
   const [motionReadings, setMotionReadings] = useState<MotionReading[]>([]);
   const [bypassStabilityCheck, setBypassStabilityCheck] = useState(false);
   
+  // Live Recommendations State
+  const [currentRecommendation, setCurrentRecommendation] = useState<Recommendation | null>(null);
+  const [lastRecommendationTime, setLastRecommendationTime] = useState(0);
+  
   // Manual Mode Store - Grid Type + Feature Flags
   const gridType = useManualModeStore((state) => state.gridType);
   const setGridType = useManualModeStore((state) => state.setGridType);
   const tripodCheck = useManualModeStore((state) => state.tripodCheck);
   const congruencyCheck = useManualModeStore((state) => state.congruencyCheck);
+  const liveRecommendations = useManualModeStore((state) => state.liveRecommendations);
   const longShutterTip = useManualModeStore((state) => state.longShutterTip);
   const hdrBrackets = useManualModeStore((state) => state.hdrBrackets);
   const nightModeEnabled = useManualModeStore((state) => state.nightModeEnabled);
@@ -88,6 +101,7 @@ export default function CameraScreen() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const analysisCanvasRef = useRef<HTMLCanvasElement>(null); // For scene analysis
 
   // Auth redirect effect
   useEffect(() => {
@@ -206,6 +220,129 @@ export default function CameraScreen() {
       setBrightness(0);
     }
   }, [exposureControl]);
+
+  // Live Scene Analysis & Recommendations
+  useEffect(() => {
+    if (!cameraStarted || !liveRecommendations) {
+      return;
+    }
+
+    const video = videoRef.current;
+    const canvas = analysisCanvasRef.current;
+    
+    if (!video || !canvas) {
+      return;
+    }
+
+    let animationFrameId: number;
+    let lastAnalysisTime = 0;
+    const ANALYSIS_INTERVAL = 2000; // Analyze every 2 seconds
+    const THROTTLE_INTERVAL = 8000; // Min 8 seconds between recommendations
+
+    const analyzeScene = () => {
+      const now = Date.now();
+      
+      // Throttle analysis for performance
+      if (now - lastAnalysisTime < ANALYSIS_INTERVAL) {
+        animationFrameId = requestAnimationFrame(analyzeScene);
+        return;
+      }
+
+      lastAnalysisTime = now;
+
+      // Capture current frame
+      const imageData = captureVideoFrame(video, canvas);
+      if (!imageData) {
+        animationFrameId = requestAnimationFrame(analyzeScene);
+        return;
+      }
+
+      // Calculate histogram and analyze clipping
+      const histogram = calculateHistogram(imageData);
+      const clipping = analyzeClipping(histogram);
+
+      // Check if we should throttle recommendations
+      const timeSinceLastRec = now - lastRecommendationTime;
+      const canShowRecommendation = timeSinceLastRec > THROTTLE_INTERVAL;
+
+      if (!canShowRecommendation) {
+        animationFrameId = requestAnimationFrame(analyzeScene);
+        return;
+      }
+
+      // Priority 1: Excessive clipping (both highlights & shadows > 10%)
+      if (clipping.hasExcessiveClipping && clipping.highlightClipping > 10 && clipping.shadowClipping > 10) {
+        setCurrentRecommendation({
+          type: 'hdr-ev-clipping',
+          message: 'Gegenlicht erkannt – HDR 5 + EV −0.3?',
+          applyLabel: 'Übernehmen',
+          onApply: () => {
+            const setHdrBrackets = useManualModeStore.getState().setHdrBrackets;
+            const setExposureComp = useManualModeStore.getState().setExposureComp;
+            setHdrBrackets(5);
+            setExposureComp(-0.3);
+            trigger('medium');
+          },
+          confidence: Math.min(clipping.highlightClipping, clipping.shadowClipping) / 100,
+          timestamp: now,
+        });
+        setLastRecommendationTime(now);
+        animationFrameId = requestAnimationFrame(analyzeScene);
+        return;
+      }
+
+      // Priority 2: Window detection
+      const windowResult = detectWindows(imageData);
+      if (windowResult.detected && windowResult.confidence > 0.7) {
+        setCurrentRecommendation({
+          type: 'hdr-ev-window',
+          message: 'Fenster erkannt – HDR 5 + EV −0.3?',
+          applyLabel: 'Übernehmen',
+          onApply: () => {
+            const setHdrBrackets = useManualModeStore.getState().setHdrBrackets;
+            const setExposureComp = useManualModeStore.getState().setExposureComp;
+            setHdrBrackets(5);
+            setExposureComp(-0.3);
+            trigger('medium');
+          },
+          confidence: windowResult.confidence,
+          timestamp: now,
+        });
+        setLastRecommendationTime(now);
+        animationFrameId = requestAnimationFrame(analyzeScene);
+        return;
+      }
+
+      // Priority 3: White balance estimation
+      const wbEstimate = estimateWhiteBalance(imageData);
+      if (wbEstimate.confidence > 0.6) {
+        setCurrentRecommendation({
+          type: 'wb-estimate',
+          message: `WB ${wbEstimate.kelvin} K anwenden?`,
+          applyLabel: 'Übernehmen',
+          onApply: () => {
+            const setWhiteBalanceKelvin = useManualModeStore.getState().setWhiteBalanceKelvin;
+            setWhiteBalanceKelvin(wbEstimate.kelvin);
+            trigger('medium');
+          },
+          confidence: wbEstimate.confidence,
+          timestamp: now,
+        });
+        setLastRecommendationTime(now);
+      }
+
+      animationFrameId = requestAnimationFrame(analyzeScene);
+    };
+
+    // Start analysis loop
+    animationFrameId = requestAnimationFrame(analyzeScene);
+
+    return () => {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+    };
+  }, [cameraStarted, liveRecommendations, lastRecommendationTime, trigger]);
 
   // Show nothing while checking auth or if not authenticated
   if (isAuthLoading || !authData?.user) {
@@ -1405,6 +1542,15 @@ export default function CameraScreen() {
         estimatedShutter={estimatedShutter}
         onDismiss={() => setShowLongExposureTip(false)}
       />
+      
+      {/* Live Recommendations */}
+      <LiveRecommendations
+        recommendation={currentRecommendation}
+        onDismiss={() => setCurrentRecommendation(null)}
+      />
+      
+      {/* Hidden canvas for scene analysis */}
+      <canvas ref={analysisCanvasRef} className="hidden" />
 
       {/* BottomNav - Always Visible */}
       <BottomNav photoCount={photoCount} variant="dark" isLandscape={isLandscape} />
