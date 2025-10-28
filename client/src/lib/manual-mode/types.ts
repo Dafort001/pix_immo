@@ -70,6 +70,11 @@ export interface ManualModeSettings {
   
   // Lens/Zoom
   zoomLevel: 0.5 | 1 | 2 | 3;
+  
+  // Feature Flags (Motion & Stability Warnings)
+  tripodCheck: boolean; // Pre-capture stability check for HDR/Night mode
+  congruencyCheck: boolean; // Post-capture bracket alignment validation
+  longShutterTip: boolean; // Long exposure stability tip (non-blocking)
 }
 
 /**
@@ -101,6 +106,9 @@ export const DEFAULT_MANUAL_SETTINGS: ManualModeSettings = {
   histogramEnabled: false,
   hdrBrackets: 3,
   zoomLevel: 1,
+  tripodCheck: true,
+  congruencyCheck: true,
+  longShutterTip: true,
 };
 
 /**

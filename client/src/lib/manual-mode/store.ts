@@ -42,6 +42,9 @@ interface ManualModeStore extends ManualModeSettings {
   setHistogram: (enabled: boolean) => void;
   setHdrBrackets: (brackets: ManualModeSettings['hdrBrackets']) => void;
   setZoomLevel: (zoom: ManualModeSettings['zoomLevel']) => void;
+  setTripodCheck: (enabled: boolean) => void;
+  setCongruencyCheck: (enabled: boolean) => void;
+  setLongShutterTip: (enabled: boolean) => void;
   resetToAuto: () => void;
   updateSettings: (partial: Partial<ManualModeSettings>) => void;
 }
@@ -135,6 +138,12 @@ export const useManualModeStore = create<ManualModeStore>()(
       
       setZoomLevel: (zoomLevel) => set({ zoomLevel }),
       
+      setTripodCheck: (tripodCheck) => set({ tripodCheck }),
+      
+      setCongruencyCheck: (congruencyCheck) => set({ congruencyCheck }),
+      
+      setLongShutterTip: (longShutterTip) => set({ longShutterTip }),
+      
       resetToAuto: () => set(DEFAULT_MANUAL_SETTINGS),
       
       updateSettings: (partial) => set((state) => ({ ...state, ...partial })),
@@ -176,5 +185,8 @@ export function getManualSettings(): ManualModeSettings {
     histogramEnabled: store.histogramEnabled,
     hdrBrackets: store.hdrBrackets,
     zoomLevel: store.zoomLevel,
+    tripodCheck: store.tripodCheck,
+    congruencyCheck: store.congruencyCheck,
+    longShutterTip: store.longShutterTip,
   };
 }
