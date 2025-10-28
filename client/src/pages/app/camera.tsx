@@ -27,6 +27,7 @@ import {
   detectWindows, 
   estimateWhiteBalance 
 } from '@/lib/manual-mode/scene-analysis';
+import { runDeviceDetection } from '@/lib/device-profile/detection';
 
 export default function CameraScreen() {
   const [, setLocation] = useLocation();
@@ -158,6 +159,11 @@ export default function CameraScreen() {
         streamRef.current.getTracks().forEach(track => track.stop());
       }
     };
+  }, []);
+
+  // Run device capability detection on mount (once per session)
+  useEffect(() => {
+    runDeviceDetection();
   }, []);
 
   // Apply manual mode settings when they change (debounced to avoid spamming camera)

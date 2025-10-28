@@ -15,6 +15,7 @@ import {
   SHUTTER_PRESETS,
   WHITE_BALANCE_PRESETS,
 } from '@/lib/manual-mode/types';
+import { isProCapable } from '@/lib/device-profile/store';
 import { 
   Sliders,
   Sun,
@@ -957,8 +958,7 @@ interface FileFormatPanelProps {
 
 function FileFormatPanel({ format, onChange, onClose }: FileFormatPanelProps) {
   // Device capability check (ProRAW support)
-  // TODO: Replace with actual MediaDevices capability check
-  const hasProRAWCapability = false; // Mock: Check navigator.mediaDevices constraints
+  const hasProRAWCapability = isProCapable();
   
   // Office-Pro registration check
   // TODO: Replace with actual user account type from backend
