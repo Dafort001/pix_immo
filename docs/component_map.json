@@ -1,0 +1,318 @@
+{
+  "components": {
+    "AddressAutocomplete": [
+      "/buchen"
+    ],
+    "MasonryGrid": [],
+    "SEOHead": [
+      "/about",
+      "/kontakt",
+      "/datenschutz",
+      "/docs/rooms-spec",
+      "/downloads",
+      "/faq",
+      "/galerie",
+      "/gallery/classify/:shootId",
+      "/",
+      "/impressum",
+      "/portal/delivery/:jobId",
+      "/portal/gallery-editing",
+      "/portal/gallery-photographer",
+      "/portal/job/:jobId",
+      "/portal/gallery-upload",
+      "/portal/payment/:jobId",
+      "/portal/status/:jobId",
+      "/portal/uploads",
+      "/preise"
+    ],
+    "SchemaTemplates": [
+      "/"
+    ],
+    "StaticMapThumbnail": [
+      "/buchen"
+    ],
+    "SunPositionIndicator": [
+      "/booking-confirmation"
+    ],
+    "WebHeader": [
+      "/portal/delivery/:jobId",
+      "/portal/job/:jobId",
+      "/portal/payment/:jobId",
+      "/portal/status/:jobId",
+      "/portal/uploads"
+    ],
+    "DetailSidebar": [
+      "/portal/gallery-editing",
+      "/portal/gallery-photographer",
+      "/portal/gallery-upload"
+    ],
+    "GalleryGrid": [
+      "/portal/gallery-editing",
+      "/portal/gallery-photographer",
+      "/portal/gallery-upload"
+    ],
+    "MaskEditor": [
+      "/portal/gallery-editing",
+      "/portal/gallery-photographer",
+      "/portal/gallery-upload"
+    ],
+    "UploadDialog": [
+      "/portal/gallery-photographer",
+      "/portal/gallery-upload"
+    ],
+    "A2HSHint": [
+      "/app/splash"
+    ],
+    "BottomNav": [
+      "/app/camera",
+      "/gallery",
+      "/app/settings",
+      "/app/splash",
+      "/app/upload"
+    ],
+    "GridOverlay": [
+      "/app/camera"
+    ],
+    "HorizonLevelOverlay": [
+      "/app/camera"
+    ],
+    "MeteringModeOverlay": [
+      "/app/camera"
+    ],
+    "FocusPeakingOverlay": [
+      "/app/camera"
+    ],
+    "CaptureThumb": [
+      "/app/camera"
+    ],
+    "DraggableHistogram": [
+      "/app/camera"
+    ],
+    "HapticButton": [
+      "/app/camera",
+      "/gallery",
+      "/app/settings",
+      "/app/splash",
+      "/app/upload"
+    ],
+    "Histogram": [],
+    "LevelIndicator": [
+      "/app/camera"
+    ],
+    "LiveRecommendations": [
+      "/app/camera"
+    ],
+    "ManualControls": [
+      "/app/camera"
+    ],
+    "TripodWarning": [
+      "/app/camera"
+    ],
+    "BracketAlignmentWarning": [
+      "/app/camera"
+    ],
+    "LongExposureTip": [
+      "/app/camera"
+    ],
+    "StatusBar": [
+      "/app/camera",
+      "/gallery",
+      "/app/settings",
+      "/app/splash",
+      "/app/upload"
+    ],
+    "SyncStatusBadge": [
+      "/app/upload"
+    ],
+    "Toaster": []
+  },
+  "routes": {
+    "/about": [
+      "SEOHead"
+    ],
+    "/admin/editorial": [],
+    "/admin/seo": [],
+    "/agb": [],
+    "/ai-lab": [],
+    "/app/camera": [
+      "HapticButton",
+      "StatusBar",
+      "BottomNav",
+      "DraggableHistogram",
+      "ManualControls",
+      "GridOverlay",
+      "HorizonLevelOverlay",
+      "MeteringModeOverlay",
+      "FocusPeakingOverlay",
+      "LevelIndicator",
+      "CaptureThumb",
+      "TripodWarning",
+      "BracketAlignmentWarning",
+      "LongExposureTip",
+      "LiveRecommendations"
+    ],
+    "/gallery": [],
+    "/app/settings": [
+      "StatusBar",
+      "BottomNav",
+      "HapticButton"
+    ],
+    "/app/splash": [
+      "HapticButton",
+      "StatusBar",
+      "BottomNav",
+      "A2HSHint"
+    ],
+    "/app/upload": [
+      "HapticButton",
+      "StatusBar",
+      "BottomNav",
+      "SyncStatusBadge"
+    ],
+    "/blog/:slug": [],
+    "/blog": [],
+    "/booking-confirmation": [
+      "SunPositionIndicator"
+    ],
+    "/buchen": [
+      "AddressAutocomplete",
+      "StaticMapThumbnail"
+    ],
+    "/capture/camera": [],
+    "/capture/index": [],
+    "/review/:jobId/:shootId": [],
+    "/capture/upload": [],
+    "/kontakt": [
+      "SEOHead"
+    ],
+    "/dashboard": [],
+    "/datenschutz": [
+      "SEOHead"
+    ],
+    "/job/:id": [],
+    "/demo-jobs": [],
+    "/demo-upload": [],
+    "/docs/rooms-spec": [
+      "SEOHead"
+    ],
+    "/downloads": [
+      "SEOHead"
+    ],
+    "/faq": [
+      "SEOHead"
+    ],
+    "/galerie": [
+      "SEOHead"
+    ],
+    "/gallery/classify/:shootId": [
+      "SEOHead"
+    ],
+    "/": [
+      "SEOHead",
+      "SchemaTemplates"
+    ],
+    "/impressum": [
+      "SEOHead"
+    ],
+    "/intake": [],
+    "/jobs": [],
+    "/kontakt-formular": [],
+    "/login": [],
+    "/not-found": [],
+    "/order": [],
+    "/portal/delivery/:jobId": [
+      "SEOHead",
+      "WebHeader"
+    ],
+    "/portal/gallery-editing": [
+      "GalleryGrid",
+      "DetailSidebar",
+      "MaskEditor",
+      "SEOHead"
+    ],
+    "/portal/gallery-photographer": [
+      "GalleryGrid",
+      "UploadDialog",
+      "DetailSidebar",
+      "MaskEditor",
+      "SEOHead"
+    ],
+    "/portal/job/:jobId": [
+      "SEOHead",
+      "WebHeader"
+    ],
+    "/portal/gallery-upload": [
+      "GalleryGrid",
+      "UploadDialog",
+      "DetailSidebar",
+      "MaskEditor",
+      "SEOHead"
+    ],
+    "/portal/payment/:jobId": [
+      "SEOHead",
+      "WebHeader"
+    ],
+    "/portal/status/:jobId": [
+      "SEOHead",
+      "WebHeader"
+    ],
+    "/portal/uploads": [
+      "SEOHead",
+      "WebHeader"
+    ],
+    "/preisliste": [],
+    "/preise": [
+      "SEOHead"
+    ],
+    "/register": [],
+    "/test": [],
+    "/upload-raw": []
+  },
+  "statistics": {
+    "totalComponents": 27,
+    "totalRoutes": 50,
+    "averageComponentsPerRoute": 1.3,
+    "mostUsedComponents": [
+      {
+        "component": "SEOHead",
+        "count": 19
+      },
+      {
+        "component": "WebHeader",
+        "count": 5
+      },
+      {
+        "component": "BottomNav",
+        "count": 5
+      },
+      {
+        "component": "HapticButton",
+        "count": 5
+      },
+      {
+        "component": "StatusBar",
+        "count": 5
+      },
+      {
+        "component": "DetailSidebar",
+        "count": 3
+      },
+      {
+        "component": "GalleryGrid",
+        "count": 3
+      },
+      {
+        "component": "MaskEditor",
+        "count": 3
+      },
+      {
+        "component": "UploadDialog",
+        "count": 2
+      },
+      {
+        "component": "AddressAutocomplete",
+        "count": 1
+      }
+    ]
+  }
+}
