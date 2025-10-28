@@ -424,6 +424,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to get job" });
     }
   });
+  
+  // PATCH /api/jobs/:id/status - Update job status (for Büro-Modus)
+  app.patch("/api/jobs/:id/status", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      const { status } = req.body;
+      if (!status) {
+        return res.status(400).json({ error: "Status is required" });
+      }
+      
+      const job = await storage.getJob(req.params.id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      await storage.updateJobStatus(req.params.id, status);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating job status:", error);
+      res.status(500).json({ error: "Failed to update job status" });
+    }
+  });
 
   // Demo: POST /api/jobs/:id/process - Trigger demo processing (preview → caption → exposé)
   app.post("/api/jobs/:id/process", validateUuidParam("id"), async (req: Request, res: Response) => {

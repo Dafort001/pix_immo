@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon, ChevronDown, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import { Check, Layers, Wifi, Smartphone, Upload as UploadIcon, ImageIcon, ChevronDown, MapPin, Loader2, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
 import { HapticButton } from '@/components/mobile/HapticButton';
 import { StatusBar } from '@/components/mobile/StatusBar';
 import { BottomNav } from '@/components/mobile/BottomNav';
 import { useHaptic } from '@/hooks/useHaptic';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { useTranslation } from '@/lib/i18n/useTranslation';
 import type { Job } from '@shared/schema';
 import { normalizeOrientation, type RoomType, type Orientation } from '@shared/room-types';
+import { getActiveUser } from '@/lib/app-users';
+import { queryClient, apiRequest } from '@/lib/queryClient';
 
 interface Photo {
   id: number;
@@ -52,6 +54,9 @@ export default function UploadScreen() {
   const [failedCount, setFailedCount] = useState(0);
   const hasAutoSelectedRef = useRef(false);
   
+  // Load active app user
+  const activeUser = getActiveUser();
+  
   // Route protection - redirect to login if not authenticated
   const { data: authData, isLoading: isAuthLoading } = useQuery<{ user?: { id: string; email: string } }>({
     queryKey: ['/api/auth/me'],
@@ -66,6 +71,27 @@ export default function UploadScreen() {
       if (!res.ok) throw new Error('Failed to fetch jobs');
       return res.json();
     }
+  });
+  
+  // Find active shoot (Büro-Modus)
+  const activeShoot = jobs?.find(job => 
+    job.status === 'in_aufnahme' && 
+    activeUser && 
+    job.selectedUserId === activeUser.id
+  );
+  
+  // Mutation to update job status
+  const updateJobStatusMutation = useMutation({
+    mutationFn: async ({ jobId, status }: { jobId: string; status: string }) => {
+      return apiRequest(`/api/jobs/${jobId}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
+      trigger('success');
+    },
   });
 
   // Load photos from sessionStorage and group into stacks
@@ -520,6 +546,18 @@ export default function UploadScreen() {
                             #{job.jobNumber}
                           </span>
                         </div>
+                        {job.selectedUserInitials && job.selectedUserCode && (
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center">
+                              <span className="text-gray-700 font-medium" style={{ fontSize: '10px' }}>
+                                {job.selectedUserInitials}
+                              </span>
+                            </div>
+                            <span className="text-gray-600 font-medium" style={{ fontSize: '12px' }}>
+                              {job.selectedUserCode}
+                            </span>
+                          </div>
+                        )}
                         {job.addressFormatted && (
                           <div className="flex items-start gap-1">
                             <MapPin className="w-3 h-3 text-gray-400 flex-shrink-0 mt-0.5" strokeWidth={1.5} />
@@ -540,6 +578,52 @@ export default function UploadScreen() {
               </div>
             )}
           </div>
+          
+          {/* Büro-Modus: Active Shoot Warning */}
+          {activeShoot && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-amber-50 border border-amber-200 rounded-lg p-4"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <AlertCircle className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-amber-900 font-semibold mb-1" style={{ fontSize: '14px' }}>
+                    Aufnahme läuft
+                  </p>
+                  <p className="text-amber-800 text-xs mb-2">
+                    {activeShoot.propertyName} (#{activeShoot.jobNumber})
+                  </p>
+                  <p className="text-amber-700" style={{ fontSize: '12px' }}>
+                    Bitte schließen Sie den aktuellen Auftrag ab oder brechen Sie ihn ab, bevor Sie einen neuen starten.
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <HapticButton
+                  onClick={() => updateJobStatusMutation.mutate({ jobId: activeShoot.id, status: 'abgeschlossen' })}
+                  hapticStyle="success"
+                  disabled={updateJobStatusMutation.isPending}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                  data-testid="button-complete-shoot"
+                >
+                  <CheckCircle className="w-4 h-4" />
+                  Abschließen
+                </HapticButton>
+                <HapticButton
+                  onClick={() => updateJobStatusMutation.mutate({ jobId: activeShoot.id, status: 'abgebrochen' })}
+                  hapticStyle="warning"
+                  disabled={updateJobStatusMutation.isPending}
+                  className="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                  data-testid="button-cancel-shoot"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Abbrechen
+                </HapticButton>
+              </div>
+            </motion.div>
+          )}
 
           {stacks.length > 0 && (
             <div className="flex items-center justify-between bg-gray-50 rounded-lg p-3">
