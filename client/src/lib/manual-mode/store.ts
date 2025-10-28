@@ -45,6 +45,7 @@ interface ManualModeStore extends ManualModeSettings {
   setTripodCheck: (enabled: boolean) => void;
   setCongruencyCheck: (enabled: boolean) => void;
   setLongShutterTip: (enabled: boolean) => void;
+  setLiveRecommendations: (enabled: boolean) => void;
   resetToAuto: () => void;
   updateSettings: (partial: Partial<ManualModeSettings>) => void;
 }
@@ -144,6 +145,8 @@ export const useManualModeStore = create<ManualModeStore>()(
       
       setLongShutterTip: (longShutterTip) => set({ longShutterTip }),
       
+      setLiveRecommendations: (liveRecommendations) => set({ liveRecommendations }),
+      
       resetToAuto: () => set(DEFAULT_MANUAL_SETTINGS),
       
       updateSettings: (partial) => set((state) => ({ ...state, ...partial })),
@@ -188,5 +191,6 @@ export function getManualSettings(): ManualModeSettings {
     tripodCheck: store.tripodCheck,
     congruencyCheck: store.congruencyCheck,
     longShutterTip: store.longShutterTip,
+    liveRecommendations: store.liveRecommendations,
   };
 }

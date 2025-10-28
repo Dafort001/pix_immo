@@ -75,6 +75,9 @@ export interface ManualModeSettings {
   tripodCheck: boolean; // Pre-capture stability check for HDR/Night mode
   congruencyCheck: boolean; // Post-capture bracket alignment validation
   longShutterTip: boolean; // Long exposure stability tip (non-blocking)
+  
+  // Feature Flags (Live Recommendations)
+  liveRecommendations: boolean; // Intelligent shooting suggestions based on scene analysis
 }
 
 /**
@@ -109,6 +112,7 @@ export const DEFAULT_MANUAL_SETTINGS: ManualModeSettings = {
   tripodCheck: true,
   congruencyCheck: true,
   longShutterTip: true,
+  liveRecommendations: true,
 };
 
 /**
