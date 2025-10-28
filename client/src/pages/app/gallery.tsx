@@ -26,6 +26,7 @@ import {
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n/useTranslation';
+import { ALL_ROOM_TYPES } from '@shared/room-types';
 
 interface Photo {
   id: number;
@@ -50,19 +51,7 @@ interface PhotoStack {
   roomType?: string;
 }
 
-const ROOM_TYPES = [
-  'Wohnzimmer', 'Esszimmer', 'Küche', 'Offene Küche', 'Essbereich',
-  'Flur/Eingang', 'Diele', 'Galerie', 'Wintergarten',
-  'Schlafzimmer', 'Hauptschlafzimmer', 'Kinderzimmer', 'Gästezimmer', 'Ankleidezimmer',
-  'Badezimmer', 'Gästebad', 'Hauptbad', 'En-Suite Bad', 'WC', 'Sauna', 'Wellness',
-  'Arbeitszimmer', 'Homeoffice', 'Bibliothek', 'Hobbyraum', 'Atelier',
-  'Balkon', 'Terrasse', 'Loggia', 'Dachterrasse', 'Garten', 'Innenhof', 'Pool', 'Poolhaus',
-  'Abstellraum', 'Hauswirtschaftsraum', 'Waschküche', 'Speisekammer', 'Garderobe',
-  'Keller', 'Weinkeller', 'Fitnessraum', 'Partyraum', 'Dachboden',
-  'Außenansicht Vorne', 'Außenansicht Hinten', 'Außenansicht Seitlich', 
-  'Fassade', 'Eingangsbereich', 'Carport', 'Garage',
-  'Treppenhaus', 'Gemeinschaftsraum', 'Sonstiges'
-];
+const ROOM_TYPES = ALL_ROOM_TYPES;
 
 export default function GalleryScreen() {
   const [, setLocation] = useLocation();
