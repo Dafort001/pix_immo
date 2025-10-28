@@ -482,7 +482,9 @@ export default function CameraScreen() {
       if (hdrEnabled) {
         log('🎬 HDR Start');
         
-        const evStops = [-2, 0, 2];
+        // Use dynamic HDR brackets from manual mode store
+        const hdrBrackets = useManualModeStore.getState().hdrBrackets;
+        const evStops = hdrBrackets === 5 ? [-4, -2, 0, 2, 4] : [-2, 0, 2];
         let exposureValues: number[];
 
         if (exposureControl) {
@@ -522,6 +524,9 @@ export default function CameraScreen() {
           
           const imageData = await captureWithExposure(exposureValues[i], evStops[i]);
           
+          // Get current manual mode settings for persistence
+          const manualSettings = useManualModeStore.getState();
+          
           photos.push({
             id: Date.now() + i * 100,
             timestamp: new Date().toISOString(),
@@ -534,7 +539,15 @@ export default function CameraScreen() {
             evCompensation: evStops[i],
             roomType: currentRoomType,
             orientation: finalOrientation,
-            isManualMode: manualModeEnabled
+            isManualMode: manualModeEnabled,
+            // Manual mode metadata
+            ev: manualSettings.exposureCompensation,
+            wb_mode: manualSettings.whiteBalancePreset,
+            wb_kelvin: manualSettings.whiteBalanceKelvin,
+            hdr_brackets: manualSettings.hdrBrackets,
+            lens: manualSettings.zoomLevel,
+            focus_mode: manualSettings.focusMode,
+            focus_lock: manualSettings.focusDistance !== null
           });
 
           if (i < evStops.length - 1) {
@@ -567,6 +580,9 @@ export default function CameraScreen() {
             // Higher quality for professional real estate photography
             const imageData = canvas.toDataURL('image/jpeg', 0.95);
             
+            // Get current manual mode settings for persistence
+            const manualSettings = useManualModeStore.getState();
+            
             photos.push({
               id: Date.now(),
               timestamp: new Date().toISOString(),
@@ -575,7 +591,15 @@ export default function CameraScreen() {
               height: canvas.height,
               roomType: currentRoomType,
               orientation: finalOrientation,
-              isManualMode: manualModeEnabled
+              isManualMode: manualModeEnabled,
+              // Manual mode metadata
+              ev: manualSettings.exposureCompensation,
+              wb_mode: manualSettings.whiteBalancePreset,
+              wb_kelvin: manualSettings.whiteBalanceKelvin,
+              hdr_brackets: hdrEnabled ? manualSettings.hdrBrackets : 1,
+              lens: manualSettings.zoomLevel,
+              focus_mode: manualSettings.focusMode,
+              focus_lock: manualSettings.focusDistance !== null
             });
             
             log('✅ Photo saved');

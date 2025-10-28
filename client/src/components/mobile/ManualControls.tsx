@@ -693,25 +693,25 @@ function ExposureCompensationPanel({
           
           <input
             type="range"
-            min="-2"
-            max="2"
+            min="-4"
+            max="4"
             step="0.33"
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value))}
             className="w-full h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
             style={{
               background: `linear-gradient(to right, #4A5849 0%, #4A5849 ${
-                ((value + 2) / 4) * 100
+                ((value + 4) / 8) * 100
               }%, rgba(255,255,255,0.2) ${
-                ((value + 2) / 4) * 100
+                ((value + 4) / 8) * 100
               }%, rgba(255,255,255,0.2) 100%)`,
             }}
             data-testid="slider-ev"
           />
 
           <div className="flex justify-between text-xs text-white/50">
-            <span>-2 (Dunkler)</span>
-            <span>+2 (Heller)</span>
+            <span>-4 (Dunkler)</span>
+            <span>+4 (Heller)</span>
           </div>
         </div>
 
@@ -735,7 +735,7 @@ function ExposureCompensationPanel({
 
         {/* Info */}
         <p className="mt-4 text-xs text-white/50 leading-relaxed">
-          Negative Werte (bis -2) machen das Bild dunkler, positive Werte (bis +2) heller. 
+          Negative Werte (bis -4) machen das Bild dunkler, positive Werte (bis +4) heller. 
           Nutzen Sie dies für schwierige Lichtverhältnisse.
         </p>
       </div>

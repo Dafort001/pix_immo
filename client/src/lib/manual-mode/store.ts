@@ -35,6 +35,8 @@ interface ManualModeStore extends ManualModeSettings {
   setThumbProgress: (enabled: boolean) => void;
   setMeteringMode: (mode: ManualModeSettings['meteringMode']) => void;
   setHistogram: (enabled: boolean) => void;
+  setHdrBrackets: (brackets: ManualModeSettings['hdrBrackets']) => void;
+  setZoomLevel: (zoom: ManualModeSettings['zoomLevel']) => void;
   resetToAuto: () => void;
   updateSettings: (partial: Partial<ManualModeSettings>) => void;
 }
@@ -106,6 +108,10 @@ export const useManualModeStore = create<ManualModeStore>()(
       
       setHistogram: (histogramEnabled) => set({ histogramEnabled }),
       
+      setHdrBrackets: (hdrBrackets) => set({ hdrBrackets }),
+      
+      setZoomLevel: (zoomLevel) => set({ zoomLevel }),
+      
       resetToAuto: () => set(DEFAULT_MANUAL_SETTINGS),
       
       updateSettings: (partial) => set((state) => ({ ...state, ...partial })),
@@ -145,5 +151,7 @@ export function getManualSettings(): ManualModeSettings {
     showThumbProgress: store.showThumbProgress,
     meteringMode: store.meteringMode,
     histogramEnabled: store.histogramEnabled,
+    hdrBrackets: store.hdrBrackets,
+    zoomLevel: store.zoomLevel,
   };
 }

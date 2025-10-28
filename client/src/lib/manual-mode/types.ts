@@ -33,7 +33,7 @@ export interface ManualModeSettings {
   focusPeakingEnabled: boolean;
   
   // Exposure
-  exposureCompensation: number; // -2 to +2 in 1/3 steps
+  exposureCompensation: number; // -4 to +4 in 1/3 steps
   
   // File Format
   fileFormat: FileFormat;
@@ -64,6 +64,12 @@ export interface ManualModeSettings {
   
   // Histogram
   histogramEnabled: boolean;
+  
+  // HDR Brackets
+  hdrBrackets: 3 | 5;
+  
+  // Lens/Zoom
+  zoomLevel: 0.5 | 1 | 2 | 3;
 }
 
 /**
@@ -93,6 +99,8 @@ export const DEFAULT_MANUAL_SETTINGS: ManualModeSettings = {
   showThumbProgress: true,
   meteringMode: 'matrix',
   histogramEnabled: false,
+  hdrBrackets: 3,
+  zoomLevel: 1,
 };
 
 /**
