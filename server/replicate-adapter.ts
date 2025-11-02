@@ -1,13 +1,14 @@
 import Replicate from "replicate";
+import { getAIConfig } from './ai-providers';
 
-const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
+const config = getAIConfig();
 
-if (!REPLICATE_API_TOKEN) {
-  console.warn("REPLICATE_API_TOKEN not configured. AI features will be unavailable.");
+if (!config.replicateApiKey && config.imageProvider === 'replicate') {
+  console.warn("REPLICATE_API_TOKEN not configured. Image processing features will be unavailable.");
 }
 
 export const replicate = new Replicate({
-  auth: REPLICATE_API_TOKEN || "",
+  auth: config.replicateApiKey || "",
 });
 
 export interface AIToolDefinition {

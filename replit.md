@@ -45,6 +45,9 @@ The frontend is a React 18 SPA utilizing Wouter for routing, Shadcn UI component
 - **Client Gallery**: Features image viewer, favorites, comments, and download functionality.
 - **QA-Autofix System**: Plugin-based framework validating authentication, routes, upload, naming conventions, and room taxonomy.
 - **Mobile Camera Integration (PWA)**: iOS-style PWA (`/app/*`) for on-site photo capture, leveraging MediaDevices API, sessionStorage for photo management, and a comprehensive upload workflow to R2 storage. Includes Service Worker for offline support and install-to-homescreen capability.
+- **AI Provider System**: Modulares System mit zwei Haupt-Anbindungen:
+  - **Bildbearbeitung**: Replicate oder Clipdrop (via `AI_IMAGE_PROVIDER` Environment Variable wählbar). Unterstützt Upscaling, Denoise, Background Removal, Sky Enhancement.
+  - **Captioning & Text**: OpenAI ChatGPT (GPT-4o mit Vision) für KI-generierte Bildbeschreibungen, Exposé-Texte und Keyword-Extraktion. Deutsche und englische Sprache unterstützt.
 - **Mobile PWA Upload Workflow**: Production-ready system with retry logic, real-time progress tracking, and animated success states.
 - **Web Portal Gallery Upload System**: Supports multi-file upload (JPEG/PNG/HEIC and 13 RAW formats), automatic thumbnail generation, per-file editing presets, annotation tools, and bulk settings application.
 - **Room Type System**: Consolidated into 20 types with AI-optimized German caption prompts.
@@ -69,4 +72,6 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono. It mai
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
 - **Email Service**: Mailgun (planned)
-- **AI Services**: Modal Labs (USA) for image analysis, Replicate (USA) for advanced retouching.
+- **AI Services**: 
+  - **Image Processing**: Replicate oder Clipdrop (konfigurierbar)
+  - **Text & Captions**: OpenAI ChatGPT (GPT-4 Vision)
