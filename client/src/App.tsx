@@ -56,11 +56,13 @@ import PhotographerUploadGallery from "@/pages/portal/gallery-photographer";
 import EditingGallery from "@/pages/portal/gallery-editing";
 import NotFound from "@/pages/not-found";
 import TestDebug from "@/pages/test-debug";
+import ExportOverview from "@/pages/export-overview";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/export-overview" component={ExportOverview} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
