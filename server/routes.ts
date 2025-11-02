@@ -112,8 +112,18 @@ const authLimiter = rateLimit({
 // Global rate limiter: 60 requests/min per IP with burst of 10
 const globalLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 60, // 60 requests per minute
+  max: process.env.NODE_ENV === "production" ? 60 : 500, // Higher limit in dev for Vite HMR
   skipSuccessfulRequests: false,
+  skip: (req: Request) => {
+    // Skip rate limiting for Vite dev assets
+    const path = req.path;
+    return path.startsWith('/src/') || 
+           path.startsWith('/@vite/') || 
+           path.startsWith('/@fs/') || 
+           path.startsWith('/@react-refresh') ||
+           path.startsWith('/@replit/') ||
+           path.startsWith('/node_modules/');
+  },
   handler: (req: Request, res: Response) => {
     // Log abuse after 5 rate limit hits in 10 minutes
     logAbuse(req.ip || 'unknown', req.path);
