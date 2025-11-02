@@ -189,6 +189,9 @@ function validateUploadContentType(req: Request, res: Response, next: any) {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Enable trust proxy for correct IP detection with Replit's reverse proxy
+  app.set('trust proxy', true);
+  
   // Production domains for CORS
   const productionOrigins = [
     "https://pixcapture.app",
@@ -200,6 +203,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const devOrigins = [
     "http://localhost:5000",
     "http://localhost:5173",
+    "http://127.0.0.1:5000",
+    "http://127.0.0.1:5173",
     "capacitor://localhost",
     "ionic://localhost",
   ];
