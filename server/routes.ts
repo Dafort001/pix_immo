@@ -209,6 +209,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     "ionic://localhost",
   ];
   
+  // Add Replit domain if available
+  if (process.env.REPLIT_DOMAINS) {
+    const replitDomain = `https://${process.env.REPLIT_DOMAINS}`;
+    devOrigins.push(replitDomain);
+  }
+  
   const allowedOrigins = process.env.NODE_ENV === "production" 
     ? productionOrigins 
     : [...productionOrigins, ...devOrigins];
@@ -218,6 +224,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
+      
+      // Allow Replit preview domains (*.replit.dev)
+      if (origin.endsWith('.replit.dev')) {
+        return callback(null, true);
+      }
       
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
