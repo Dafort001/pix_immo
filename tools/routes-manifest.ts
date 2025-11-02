@@ -307,7 +307,7 @@ function generateMarkdownReport(manifest: ManifestOutput): string {
       lines.push('');
       
       layoutRoutes.forEach(route => {
-        const guards = [];
+        const guards: string[] = [];
         if (route.requiresAuth) guards.push('🔐 Auth');
         if (route.requiresRole) guards.push(`👤 ${route.requiresRole}`);
         if (route.requiresFlag) guards.push(`🚩 ${route.requiresFlag}`);

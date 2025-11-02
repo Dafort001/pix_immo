@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>pix.immo - Audit Preview</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    header {
+      background: white;
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      margin-bottom: 2rem;
+    }
+    
+    h1 {
+      color: #2d3748;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .subtitle {
+      color: #718096;
+      font-size: 1.1rem;
+    }
+    
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .stat-number {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+    
+    .stat-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    }
+    
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .icon {
+      font-size: 2rem;
+    }
+    
+    .card-title {
+      font-size: 1.3rem;
+      color: #2d3748;
+      font-weight: 600;
+    }
+    
+    .card-desc {
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    
+    .file-list {
+      list-style: none;
+      margin-bottom: 1rem;
+    }
+    
+    .file-list li {
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+      background: #f7fafc;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.85rem;
+      color: #4a5568;
+    }
+    
+    .btn {
+      display: inline-block;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+      margin: 0.25rem;
+    }
+    
+    .btn:hover {
+      opacity: 0.9;
+    }
+    
+    .btn-secondary {
+      background: #e2e8f0;
+      color: #2d3748;
+    }
+    
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: #48bb78;
+      color: white;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-left: 0.5rem;
+    }
+    
+    .wireframes-preview {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .wireframe-thumb {
+      aspect-ratio: 3/4;
+      background: #f7fafc;
+      border-radius: 8px;
+      border: 2px solid #e2e8f0;
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .wireframe-thumb:hover {
+      transform: scale(1.05);
+      border-color: #667eea;
+    }
+    
+    .wireframe-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    
+    footer {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      text-align: center;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎨 pix.immo Audit Preview</h1>
+      <p class="subtitle">Komplette Dokumentations- und Design-Asset-Suite</p>
+      
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-number">8</div>
+          <div class="stat-label">Tools</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">51</div>
+          <div class="stat-label">Routes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">3,195</div>
+          <div class="stat-label">Text Entries</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">296 KB</div>
+          <div class="stat-label">Package Size</div>
+        </div>
+      </div>
+    </header>
+    
+    <div class="grid">
+      <!-- Page Inventory -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📋</span>
+          <div>
+            <div class="card-title">Page Inventory</div>
+          </div>
+        </div>
+        <p class="card-desc">Komplette Liste aller 52 Routes mit Layout-Info und Features.</p>
+        <ul class="file-list">
+          <li>docs/page_inventory.md</li>
+        </ul>
+        <a href="../docs/page_inventory.md" class="btn">Anzeigen</a>
+      </div>
+      
+      <!-- Wireframes -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🎨</span>
+          <div>
+            <div class="card-title">Wireframes <span class="badge">50 SVG</span></div>
+          </div>
+        </div>
+        <p class="card-desc">SVG Wireframes aller Seiten + HTML Skeletons + Site Map.</p>
+        <ul class="file-list">
+          <li>export/wireframes/*.svg</li>
+          <li>export/skeletons/*.html</li>
+          <li>export/site_map.svg</li>
+        </ul>
+        <a href="./wireframes/" class="btn">Wireframes</a>
+        <a href="./site_map.svg" class="btn btn-secondary">Site Map</a>
+      </div>
+      
+      <!-- Screenshots -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📸</span>
+          <div>
+            <div class="card-title">Screenshots</div>
+          </div>
+        </div>
+        <p class="card-desc">Automatisierte Screenshots (Mock-Version auf Replit).</p>
+        <ul class="file-list">
+          <li>export/screens/*.png</li>
+        </ul>
+        <a href="./screens/" class="btn">Screenshots</a>
+      </div>
+      
+      <!-- Component Map -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🧩</span>
+          <div>
+            <div class="card-title">Component Map <span class="badge">27 Components</span></div>
+          </div>
+        </div>
+        <p class="card-desc">Bidirektionale Zuordnung von Components zu Routes.</p>
+        <ul class="file-list">
+          <li>docs/component_map.md</li>
+          <li>export/component_map.json</li>
+        </ul>
+        <a href="../docs/component_map.md" class="btn">Anzeigen</a>
+      </div>
+      
+      <!-- Content Dump -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📝</span>
+          <div>
+            <div class="card-title">Content Dump <span class="badge">3,195 Entries</span></div>
+          </div>
+        </div>
+        <p class="card-desc">Alle hardcoded Strings für i18n Migration extrahiert.</p>
+        <ul class="file-list">
+          <li>export/content_dump.json (928 KB)</li>
+          <li>docs/content_index.md</li>
+        </ul>
+        <a href="./content_dump.json" class="btn">JSON Download</a>
+        <a href="../docs/content_index.md" class="btn btn-secondary">Index</a>
+      </div>
+      
+      <!-- Routes Manifest -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🗺️</span>
+          <div>
+            <div class="card-title">Routes Manifest</div>
+          </div>
+        </div>
+        <p class="card-desc">Komplettes Route Mapping mit Guards, Params, Orphans.</p>
+        <ul class="file-list">
+          <li>export/routes_manifest.json</li>
+          <li>docs/routes_manifest.md</li>
+        </ul>
+        <a href="./routes_manifest.json" class="btn">JSON Download</a>
+        <a href="../docs/routes_manifest.md" class="btn btn-secondary">Report</a>
+      </div>
+      
+      <!-- Figma Bundle -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">🎯</span>
+          <div>
+            <div class="card-title">Figma Bundle</div>
+          </div>
+        </div>
+        <p class="card-desc">Komplettes Design-Asset-Package für Figma Import.</p>
+        <ul class="file-list">
+          <li>export/figma_bundle/wireframes/</li>
+          <li>export/figma_bundle/screenshots/</li>
+          <li>export/figma_bundle/README_FIGMA.md</li>
+        </ul>
+        <a href="./figma_bundle/" class="btn">Bundle öffnen</a>
+      </div>
+      
+      <!-- Audit ZIP -->
+      <div class="card">
+        <div class="card-header">
+          <span class="icon">📦</span>
+          <div>
+            <div class="card-title">Audit ZIP <span class="badge">296 KB</span></div>
+          </div>
+        </div>
+        <p class="card-desc">Komplettes Audit-Paket: Alle Reports + Exports gepackt.</p>
+        <ul class="file-list">
+          <li>export/site_audit_package.zip</li>
+          <li>export/AUDIT_INDEX.md</li>
+        </ul>
+        <a href="./site_audit_package.zip" class="btn" download>ZIP Download</a>
+        <a href="./AUDIT_INDEX.md" class="btn btn-secondary">Index</a>
+      </div>
+    </div>
+    
+    <footer>
+      <p><strong>pix.immo Audit Tooling Suite</strong></p>
+      <p>8 Tools • 51 Routes • 27 Components • 3,195 Content Entries</p>
+      <p style="margin-top: 1rem; font-size: 0.85rem;">
+        Generiert: November 2025 • Alle Tools unter <code>/tools</code>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
