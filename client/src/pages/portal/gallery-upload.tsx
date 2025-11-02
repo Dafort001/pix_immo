@@ -128,38 +128,74 @@ export default function CustomerUploadGallery() {
   // Gallery creation error state
   if (createGalleryMutation.isError && !galleryId) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <SEOHead 
           title="Customer Upload - Error | pix.immo" 
           description="Gallery creation failed"
         />
-        <div className="container mx-auto px-4 py-8">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription className="ml-2">
-              Failed to create gallery. Please try again.
-            </AlertDescription>
-          </Alert>
-          <div className="mt-4 flex justify-center">
-            <Button
-              onClick={() => {
-                hasCreatedGallery.current = false;
-                createGalleryMutation.mutate();
-              }}
-              disabled={createGalleryMutation.isPending}
-              data-testid="button-retry-gallery-creation"
-            >
-              {createGalleryMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                "Retry Gallery Creation"
-              )}
-            </Button>
+        <Card className="max-w-md w-full">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold mb-1">
+                  Galerie konnte nicht erstellt werden
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Beim Erstellen der Upload-Galerie ist ein Fehler aufgetreten.
+                </p>
+              </div>
+            </div>
+            
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                {(createGalleryMutation.error as Error)?.message || "Unbekannter Fehler"}
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Mögliche Lösungen:
+              </p>
+              <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+                <li>Überprüfen Sie Ihre Internetverbindung</li>
+                <li>Aktualisieren Sie die Seite (F5)</li>
+                <li>Versuchen Sie es in wenigen Minuten erneut</li>
+              </ul>
+            </div>
+
+            <div className="mt-6 flex gap-3">
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="flex-1"
+                data-testid="button-reload-page"
+              >
+                Seite neu laden
+              </Button>
+              <Button
+                onClick={() => {
+                  hasCreatedGallery.current = false;
+                  createGalleryMutation.mutate();
+                }}
+                disabled={createGalleryMutation.isPending}
+                className="flex-1"
+                data-testid="button-retry-gallery-creation"
+              >
+                {createGalleryMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Wird erstellt...
+                  </>
+                ) : (
+                  "Erneut versuchen"
+                )}
+              </Button>
+            </div>
           </div>
-        </div>
+        </Card>
       </div>
     );
   }
@@ -183,19 +219,53 @@ export default function CustomerUploadGallery() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <SEOHead
           title="Error | pix.immo"
           description="Gallery load error"
         />
-        <div className="container mx-auto px-4 py-8">
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              Failed to load gallery: {(error as Error).message}
-            </AlertDescription>
-          </Alert>
-        </div>
+        <Card className="max-w-md w-full">
+          <div className="p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-shrink-0">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold mb-1">
+                  Galerie konnte nicht geladen werden
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Die angeforderte Galerie ist nicht verfügbar.
+                </p>
+              </div>
+            </div>
+            
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                {(error as Error).message}
+              </AlertDescription>
+            </Alert>
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium">Was Sie tun können:</p>
+              <ul className="text-sm text-muted-foreground space-y-2 ml-4 list-disc">
+                <li>Überprüfen Sie die URL auf Tippfehler</li>
+                <li>Stellen Sie sicher, dass Sie angemeldet sind</li>
+                <li>Kontaktieren Sie den Support, falls das Problem weiterhin besteht</li>
+              </ul>
+            </div>
+
+            <div className="mt-6">
+              <Button
+                onClick={() => window.location.href = '/portal/uploads'}
+                className="w-full"
+                data-testid="button-back-to-uploads"
+              >
+                Zurück zur Übersicht
+              </Button>
+            </div>
+          </div>
+        </Card>
       </div>
     );
   }
