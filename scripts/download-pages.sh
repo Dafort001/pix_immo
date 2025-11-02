@@ -16,7 +16,7 @@ echo "✅ Server läuft"
 echo ""
 
 # Run export
-tsx tools/simple-html-export.ts
+tsx tools/fetch-html-export.ts
 
 echo ""
 echo "✅ Fertig!"
