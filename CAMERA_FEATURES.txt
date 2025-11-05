@@ -1,0 +1,52 @@
+MANUELLE KAMERA-EINSTELLUNGEN - pix.immo Mobile PWA
+========================================================
+
+EXPERT MODE (Erweiterte Kontrollen)
+------------------------------------
+✓ ISO: 32-6400 + Auto
+✓ Verschlusszeit: 1/8000s - 30s + Auto
+✓ Weißabgleich: 2800K-7500K + Presets (Daylight, Cloudy, Tungsten, Fluorescent, Shade)
+✓ Dateiformat: HEIC, JPG, RAW/DNG (Office-Pro only)
+
+BASIS-EINSTELLUNGEN (Immer verfügbar)
+--------------------------------------
+✓ Belichtungskorrektur (EV): -4 bis +4 EV (1/3 Schritte)
+✓ HDR Bracketing: 3 Brackets (-2/0/+2 EV) oder 5 Brackets (-4/-2/0/+2/+4 EV)
+✓ Zoom/Objektiv: 0.5×, 1×, 2×, 3×
+✓ Fokus: Auto oder Manuell (mit Distance 0-1)
+
+ANZEIGE & HILFSLINIEN
+----------------------
+✓ Grid Type: Aus, 3×3 Raster, Goldener Schnitt
+✓ Level Indicator: Wasserwaage mit Grad-Anzeige (Sensitivität: Standard/Strikt/Locker)
+✓ Histogram: Echtzeit Helligkeitsverteilung
+✓ Capture Thumbnail: Vorschau mit Auto-Hide & Progress
+
+ERWEITERTE EINSTELLUNGEN
+-------------------------
+✓ Metering Mode: Matrix, Center-weighted, Spot
+✓ OIS: Bildstabilisierung Ein/Aus
+✓ Tripod Mode: Stativ-optimiert (OIS aus)
+✓ Night Mode: Low-Light-Boost
+
+INTELLIGENTE ASSISTENZSYSTEME
+------------------------------
+✓ Tripod Check: Pre-Capture Stabilität (700ms Sampling)
+✓ Bracket Alignment: Post-Capture Congruency Score
+✓ Long Exposure Tip: Warnung bei >1/30s
+✓ Live Recommendations: HDR/WB Vorschläge basierend auf Scene-Analyse
+
+OFFICE-PRO FEATURES (Registrierung erforderlich)
+-------------------------------------------------
+✓ RAW/DNG Dateiformat (~25 MB)
+✓ Erweiterte Metadaten (ISO, Shutter, WB in EXIF)
+✓ Voraussetzung: ProRAW-fähiges Gerät (iPhone 12 Pro+)
+
+FEATURE FLAGS (Ein/Aus konfigurierbar)
+---------------------------------------
+✓ tripodCheck
+✓ congruencyCheck
+✓ longShutterTip
+✓ liveRecommendations
+
+GESAMT: 20 manuelle Einstellungen + 4 intelligente Assistenzsysteme
