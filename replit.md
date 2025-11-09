@@ -1,7 +1,7 @@
 # pix.immo - Real Estate Media Platform
 
 ## Overview
-pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. The platform consists of a Mobile PWA for on-site photo capture and a Web Portal for client/admin management and gallery uploads. It features an order management system, robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
+pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. The platform consists of a Mobile PWA for on-site photo capture and a Web Portal for client/admin management and gallery uploads. It features an order management system, robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. **Service area: Hamburg only (30 km radius)** - Berlin location removed as of January 2025. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
 
 ## User Preferences
 - Hono for Cloudflare Workers compatibility
