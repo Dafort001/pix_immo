@@ -1,6 +1,6 @@
 import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, or, inArray } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -375,6 +375,8 @@ export interface IStorage {
     status?: string;
     priority?: string;
     editorId?: string;
+    limit?: number;
+    offset?: number;
   }): Promise<import("@shared/schema").EditorAssignment[]>;
   updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void>;
   updateAssignmentPriority(id: string, priority: string): Promise<void>;
@@ -1975,12 +1977,15 @@ export class DatabaseStorage implements IStorage {
     specialization?: string;
     maxConcurrentJobs?: number;
   }): Promise<void> {
+    // Only update fields that are explicitly provided (avoid NULL overwrites)
+    const updates: any = { updatedAt: Date.now() };
+    if (data.name !== undefined) updates.name = data.name;
+    if (data.specialization !== undefined) updates.specialization = data.specialization;
+    if (data.maxConcurrentJobs !== undefined) updates.maxConcurrentJobs = data.maxConcurrentJobs;
+
     await db
       .update(editors)
-      .set({ 
-        ...data,
-        updatedAt: Date.now(),
-      })
+      .set(updates)
       .where(eq(editors.id, id));
   }
 
@@ -2053,6 +2058,8 @@ export class DatabaseStorage implements IStorage {
     status?: string;
     priority?: string;
     editorId?: string;
+    limit?: number;
+    offset?: number;
   }): Promise<EditorAssignment[]> {
     const conditions = [];
     if (filters?.status) {
@@ -2065,11 +2072,20 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(editorAssignments.editorId, filters.editorId));
     }
 
-    return await db
+    let query = db
       .select()
       .from(editorAssignments)
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(editorAssignments.assignedAt));
+
+    if (filters?.limit) {
+      query = query.limit(filters.limit) as any;
+    }
+    if (filters?.offset) {
+      query = query.offset(filters.offset) as any;
+    }
+
+    return await query;
   }
 
   async updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void> {
@@ -2102,38 +2118,50 @@ export class DatabaseStorage implements IStorage {
   }
 
   async reassignJob(prevAssignmentId: string, newEditorId: string, notes?: string): Promise<EditorAssignment> {
-    // 1. Get the previous assignment
-    const prevAssignment = await this.getEditorAssignment(prevAssignmentId);
-    if (!prevAssignment) {
-      throw new Error('Previous assignment not found');
-    }
+    // Wrap in transaction for data consistency
+    return await db.transaction(async (tx) => {
+      // 1. Get the previous assignment
+      const [prevAssignment] = await tx
+        .select()
+        .from(editorAssignments)
+        .where(eq(editorAssignments.id, prevAssignmentId));
+      
+      if (!prevAssignment) {
+        throw new Error('Previous assignment not found');
+      }
 
-    // 2. Cancel the old assignment
-    await db
-      .update(editorAssignments)
-      .set({ 
-        status: 'cancelled',
-        cancelledAt: Date.now(),
-      })
-      .where(eq(editorAssignments.id, prevAssignmentId));
+      // Guard: Prevent reassigning already cancelled/completed assignments
+      if (prevAssignment.status === 'cancelled' || prevAssignment.status === 'completed') {
+        throw new Error(`Cannot reassign ${prevAssignment.status} assignment`);
+      }
 
-    // 3. Create new assignment with audit trail
-    const newId = randomUUID();
-    const [newAssignment] = await db
-      .insert(editorAssignments)
-      .values({
-        id: newId,
-        jobId: prevAssignment.jobId,
-        editorId: newEditorId,
-        status: 'assigned',
-        priority: prevAssignment.priority,
-        assignedAt: Date.now(),
-        notes: notes || `Reassigned from ${prevAssignment.editorId}`,
-        reassignedFrom: prevAssignment.editorId,
-      })
-      .returning();
+      // 2. Cancel the old assignment
+      await tx
+        .update(editorAssignments)
+        .set({ 
+          status: 'cancelled',
+          cancelledAt: Date.now(),
+        })
+        .where(eq(editorAssignments.id, prevAssignmentId));
 
-    return newAssignment;
+      // 3. Create new assignment with audit trail
+      const newId = randomUUID();
+      const [newAssignment] = await tx
+        .insert(editorAssignments)
+        .values({
+          id: newId,
+          jobId: prevAssignment.jobId,
+          editorId: newEditorId,
+          status: 'assigned',
+          priority: prevAssignment.priority,
+          assignedAt: Date.now(),
+          notes: notes || `Reassigned from ${prevAssignment.editorId}`,
+          reassignedFrom: prevAssignment.editorId,
+        })
+        .returning();
+
+      return newAssignment;
+    });
   }
 
   async cancelAssignment(id: string): Promise<void> {
@@ -2147,12 +2175,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEditorWorkload(editorId: string): Promise<number> {
+    // Count active assignments (assigned or in_progress)
     const assignments = await db
       .select()
       .from(editorAssignments)
       .where(and(
         eq(editorAssignments.editorId, editorId),
-        eq(editorAssignments.status, 'assigned')
+        inArray(editorAssignments.status, ['assigned', 'in_progress'])
       ));
     return assignments.length;
   }
@@ -2181,29 +2210,51 @@ export class DatabaseStorage implements IStorage {
     specialization?: string;
     maxWorkload?: boolean;
   }): Promise<Editor[]> {
-    let editorsList = await db
-      .select()
+    if (!filters?.maxWorkload) {
+      // Simple query without workload filtering
+      const conditions = [eq(editors.availability, 'available')];
+      if (filters?.specialization) {
+        conditions.push(eq(editors.specialization, filters.specialization));
+      }
+      return await db
+        .select()
+        .from(editors)
+        .where(and(...conditions))
+        .orderBy(editors.name);
+    }
+
+    // Complex query with workload filtering using JOIN + GROUP BY to avoid N+1
+    const { sql } = await import('drizzle-orm');
+    
+    // Build WHERE conditions
+    const conditions = [eq(editors.availability, 'available')];
+    if (filters?.specialization) {
+      conditions.push(eq(editors.specialization, filters.specialization));
+    }
+
+    // Query editors with aggregated workload count
+    const editorsWithWorkload = await db
+      .select({
+        id: editors.id,
+        name: editors.name,
+        email: editors.email,
+        specialization: editors.specialization,
+        availability: editors.availability,
+        maxConcurrentJobs: editors.maxConcurrentJobs,
+        createdAt: editors.createdAt,
+        updatedAt: editors.updatedAt,
+        activeAssignments: sql<number>`CAST(COUNT(CASE WHEN ${editorAssignments.status} IN ('assigned', 'in_progress') THEN 1 END) AS INTEGER)`,
+      })
       .from(editors)
-      .where(eq(editors.availability, 'available'))
+      .leftJoin(editorAssignments, eq(editors.id, editorAssignments.editorId))
+      .where(and(...conditions))
+      .groupBy(editors.id)
       .orderBy(editors.name);
 
-    if (filters?.specialization) {
-      editorsList = editorsList.filter(e => e.specialization === filters.specialization);
-    }
-
-    if (filters?.maxWorkload) {
-      // Filter editors who haven't reached max capacity
-      const editorsWithCapacity: Editor[] = [];
-      for (const editor of editorsList) {
-        const workload = await this.getEditorWorkload(editor.id);
-        if (workload < editor.maxConcurrentJobs) {
-          editorsWithCapacity.push(editor);
-        }
-      }
-      return editorsWithCapacity;
-    }
-
-    return editorsList;
+    // Filter editors below maxConcurrentJobs capacity
+    return editorsWithWorkload
+      .filter(e => e.activeAssignments < e.maxConcurrentJobs)
+      .map(({ activeAssignments, ...editor }) => editor as Editor);
   }
 }
 
