@@ -86,6 +86,10 @@ export const shoots = pgTable("shoots", {
   shootCode: varchar("shoot_code", { length: 5 }).notNull().unique(),
   jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
   status: varchar("status", { length: 50 }).notNull().default("initialized"), // 'initialized', 'uploading', 'intake_complete', 'handoff_generated', 'editor_returned', 'processing'
+  // Editor Assignment
+  assignedEditorId: varchar("assigned_editor_id", { length: 50 }), // Editor ID from editor-assignment.ts
+  editorAssignedAt: bigint("editor_assigned_at", { mode: "number" }), // When editor was assigned
+  editorAssignedBy: varchar("editor_assigned_by").references(() => users.id, { onDelete: "set null" }), // Admin who assigned
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   intakeCompletedAt: bigint("intake_completed_at", { mode: "number" }),
   handoffGeneratedAt: bigint("handoff_generated_at", { mode: "number" }),
@@ -120,6 +124,12 @@ export const images = pgTable("images", {
   filenamePatternVersion: varchar("filename_pattern_version", { length: 10 }).default("v3.1"), // Naming pattern version
   validatedAt: bigint("validated_at", { mode: "number" }), // Timestamp when filename was validated against v3.1
   classifiedAt: bigint("classified_at", { mode: "number" }), // Timestamp when room_type was classified
+  // QC Quality Check fields
+  qcStatus: varchar("qc_status", { length: 20 }).default("pending"), // 'pending', 'approved', 'rejected', 'needs-revision'
+  qcComment: text("qc_comment"), // QC rejection/revision reason
+  qcTechnicalIssues: text("qc_technical_issues").array(), // Array of technical issues
+  qcBy: varchar("qc_by").references(() => users.id, { onDelete: "set null" }), // Admin who performed QC
+  qcAt: bigint("qc_at", { mode: "number" }), // Timestamp when QC was performed
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
