@@ -238,6 +238,24 @@ export const invoices = pgTable("invoices", {
   updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
 });
 
+// Blog Posts Management
+export const blogPosts = pgTable("blog_posts", {
+  id: varchar("id").primaryKey(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(), // URL-friendly slug
+  title: varchar("title", { length: 500 }).notNull(),
+  excerpt: text("excerpt").notNull(), // Short summary
+  content: text("content").notNull(), // Full blog post content (Markdown or HTML)
+  author: varchar("author", { length: 255 }).notNull(), // Author name
+  category: varchar("category", { length: 100 }).notNull(), // e.g., 'Tipps', 'Trends', 'Guides'
+  tags: text("tags").array(), // Array of tags
+  featuredImage: text("featured_image"), // URL to featured image
+  status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'published', 'archived'
+  publishedAt: bigint("published_at", { mode: "number" }),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+
 // Personal Access Tokens (PAT) for app authentication
 export const personalAccessTokens = pgTable("personal_access_tokens", {
   id: varchar("id").primaryKey(),
@@ -1127,3 +1145,34 @@ export const insertGalleryAnnotationSchema = createInsertSchema(galleryAnnotatio
 export type InsertGalleryInput = z.infer<typeof insertGallerySchema>;
 export type InsertGalleryFileInput = z.infer<typeof insertGalleryFileSchema>;
 export type InsertGalleryAnnotationInput = z.infer<typeof insertGalleryAnnotationSchema>;
+
+// Media Library Types
+export type PublicImage = typeof publicImages.$inferSelect;
+export type InsertPublicImage = typeof publicImages.$inferInsert;
+
+// Invoice Types
+export type Invoice = typeof invoices.$inferSelect;
+export type InsertInvoice = typeof invoices.$inferInsert;
+
+// Blog Post Types
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = typeof blogPosts.$inferInsert;
+
+// Insert Schemas for validation
+export const insertPublicImageSchema = createInsertSchema(publicImages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertInvoiceSchema = createInsertSchema(invoices).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});

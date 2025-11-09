@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -418,6 +418,81 @@ export interface IStorage {
     specialization?: string;
     maxWorkload?: boolean; // Only editors below maxConcurrentJobs
   }): Promise<import("@shared/schema").Editor[]>;
+
+  // Media Library Operations (Public Images)
+  createPublicImage(data: {
+    page: string;
+    imageKey: string;
+    url: string;
+    alt: string;
+    description?: string;
+    displayOrder?: number;
+    updatedBy?: string;
+  }): Promise<import("@shared/schema").PublicImage>;
+  getPublicImage(id: string): Promise<import("@shared/schema").PublicImage | undefined>;
+  getAllPublicImages(): Promise<import("@shared/schema").PublicImage[]>;
+  getPublicImagesByPage(page: string): Promise<import("@shared/schema").PublicImage[]>;
+  updatePublicImage(id: string, data: {
+    url?: string;
+    alt?: string;
+    description?: string;
+    displayOrder?: number;
+    isActive?: string;
+    updatedBy?: string;
+  }): Promise<import("@shared/schema").PublicImage | undefined>;
+  deletePublicImage(id: string): Promise<void>;
+
+  // Invoice Operations
+  createInvoice(data: {
+    invoiceNumber: string;
+    jobId?: string;
+    bookingId?: string;
+    customerName: string;
+    customerEmail: string;
+    customerAddress?: string;
+    invoiceDate: number;
+    dueDate?: number;
+    serviceDescription: string;
+    lineItems: string; // JSON string
+    netAmount: number;
+    vatRate?: number;
+    vatAmount: number;
+    grossAmount: number;
+    status?: string;
+    notes?: string;
+    createdBy: string;
+  }): Promise<import("@shared/schema").Invoice>;
+  getInvoice(id: string): Promise<import("@shared/schema").Invoice | undefined>;
+  getInvoiceByNumber(invoiceNumber: string): Promise<import("@shared/schema").Invoice | undefined>;
+  getAllInvoices(): Promise<import("@shared/schema").Invoice[]>;
+  getUserInvoices(userId: string): Promise<import("@shared/schema").Invoice[]>;
+  updateInvoiceStatus(id: string, status: string, paidAt?: number): Promise<void>;
+  updateInvoice(id: string, data: Partial<import("@shared/schema").Invoice>): Promise<import("@shared/schema").Invoice | undefined>;
+  deleteInvoice(id: string): Promise<void>;
+  getNextInvoiceNumber(): Promise<string>;
+
+  // Blog Post Operations
+  createBlogPost(data: {
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    author: string;
+    category: string;
+    tags?: string[]; // Array of tags
+    featuredImage?: string;
+    status?: string;
+    publishedAt?: number;
+    createdBy: string;
+  }): Promise<import("@shared/schema").BlogPost>;
+  getBlogPost(id: string): Promise<import("@shared/schema").BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<import("@shared/schema").BlogPost | undefined>;
+  getAllBlogPosts(status?: string): Promise<import("@shared/schema").BlogPost[]>;
+  getPublishedBlogPosts(): Promise<import("@shared/schema").BlogPost[]>;
+  updateBlogPost(id: string, data: Partial<import("@shared/schema").BlogPost>): Promise<import("@shared/schema").BlogPost | undefined>;
+  deleteBlogPost(id: string): Promise<void>;
+  publishBlogPost(id: string): Promise<void>;
+  unpublishBlogPost(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2407,6 +2482,292 @@ export class DatabaseStorage implements IStorage {
     return editorsWithWorkload
       .filter(e => e.activeAssignments < e.maxConcurrentJobs)
       .map(({ activeAssignments, ...editor }) => editor as Editor);
+  }
+
+  // ==================== Media Library (PublicImage) Operations ====================
+
+  async createPublicImage(data: {
+    page: string;
+    imageKey: string;
+    url: string;
+    alt: string;
+    description?: string;
+    displayOrder?: number;
+    updatedBy?: string;
+  }): Promise<PublicImage> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [publicImage] = await db
+      .insert(publicImages)
+      .values({
+        id,
+        ...data,
+        displayOrder: data.displayOrder ?? 0,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return publicImage;
+  }
+
+  async getPublicImage(id: string): Promise<PublicImage | undefined> {
+    const [publicImage] = await db
+      .select()
+      .from(publicImages)
+      .where(eq(publicImages.id, id));
+    return publicImage || undefined;
+  }
+
+  async getAllPublicImages(): Promise<PublicImage[]> {
+    return await db
+      .select()
+      .from(publicImages)
+      .orderBy(publicImages.page, publicImages.displayOrder);
+  }
+
+  async getPublicImagesByPage(page: string): Promise<PublicImage[]> {
+    return await db
+      .select()
+      .from(publicImages)
+      .where(eq(publicImages.page, page))
+      .orderBy(publicImages.displayOrder);
+  }
+
+  async updatePublicImage(id: string, data: {
+    url?: string;
+    alt?: string;
+    description?: string;
+    displayOrder?: number;
+    isActive?: string;
+    updatedBy?: string;
+  }): Promise<PublicImage | undefined> {
+    const [publicImage] = await db
+      .update(publicImages)
+      .set({
+        ...data,
+        updatedAt: Date.now(),
+      })
+      .where(eq(publicImages.id, id))
+      .returning();
+    return publicImage || undefined;
+  }
+
+  async deletePublicImage(id: string): Promise<void> {
+    await db.delete(publicImages).where(eq(publicImages.id, id));
+  }
+
+  // ==================== Invoice Operations ====================
+
+  async createInvoice(data: {
+    invoiceNumber: string;
+    jobId?: string;
+    bookingId?: string;
+    customerName: string;
+    customerEmail: string;
+    customerAddress?: string;
+    invoiceDate: number;
+    dueDate?: number;
+    serviceDescription: string;
+    lineItems: string;
+    netAmount: number;
+    vatRate?: number;
+    vatAmount: number;
+    grossAmount: number;
+    status?: string;
+    notes?: string;
+    createdBy: string;
+  }): Promise<Invoice> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [invoice] = await db
+      .insert(invoices)
+      .values({
+        id,
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return invoice;
+  }
+
+  async getInvoice(id: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.id, id));
+    return invoice || undefined;
+  }
+
+  async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.invoiceNumber, invoiceNumber));
+    return invoice || undefined;
+  }
+
+  async getAllInvoices(): Promise<Invoice[]> {
+    return await db
+      .select()
+      .from(invoices)
+      .orderBy(desc(invoices.invoiceDate));
+  }
+
+  async getUserInvoices(userId: string): Promise<Invoice[]> {
+    return await db
+      .select()
+      .from(invoices)
+      .where(eq(invoices.createdBy, userId))
+      .orderBy(desc(invoices.invoiceDate));
+  }
+
+  async updateInvoiceStatus(id: string, status: string, paidAt?: number): Promise<void> {
+    const updates: any = { status, updatedAt: Date.now() };
+    if (paidAt !== undefined) {
+      updates.paidAt = paidAt;
+    }
+    await db
+      .update(invoices)
+      .set(updates)
+      .where(eq(invoices.id, id));
+  }
+
+  async updateInvoice(id: string, data: Partial<Invoice>): Promise<Invoice | undefined> {
+    const [invoice] = await db
+      .update(invoices)
+      .set({
+        ...data,
+        updatedAt: Date.now(),
+      })
+      .where(eq(invoices.id, id))
+      .returning();
+    return invoice || undefined;
+  }
+
+  async deleteInvoice(id: string): Promise<void> {
+    await db.delete(invoices).where(eq(invoices.id, id));
+  }
+
+  async getNextInvoiceNumber(): Promise<string> {
+    const currentYear = new Date().getFullYear();
+    const yearPrefix = `INV-${currentYear}-`;
+    
+    // Get all invoices for current year
+    const yearInvoices = await db
+      .select()
+      .from(invoices)
+      .where(sql`${invoices.invoiceNumber} LIKE ${yearPrefix + '%'}`);
+    
+    // Calculate next number
+    const nextNumber = yearInvoices.length + 1;
+    const paddedNumber = String(nextNumber).padStart(3, '0');
+    
+    return `${yearPrefix}${paddedNumber}`;
+  }
+
+  // ==================== Blog Post Operations ====================
+
+  async createBlogPost(data: {
+    slug: string;
+    title: string;
+    excerpt: string;
+    content: string;
+    author: string;
+    category: string;
+    tags?: string[];
+    featuredImage?: string;
+    status?: string;
+    publishedAt?: number;
+    createdBy: string;
+  }): Promise<BlogPost> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [blogPost] = await db
+      .insert(blogPosts)
+      .values({
+        id,
+        ...data,
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning();
+    return blogPost;
+  }
+
+  async getBlogPost(id: string): Promise<BlogPost | undefined> {
+    const [blogPost] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.id, id));
+    return blogPost || undefined;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [blogPost] = await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.slug, slug));
+    return blogPost || undefined;
+  }
+
+  async getAllBlogPosts(status?: string): Promise<BlogPost[]> {
+    if (status) {
+      return await db
+        .select()
+        .from(blogPosts)
+        .where(eq(blogPosts.status, status))
+        .orderBy(desc(blogPosts.publishedAt));
+    }
+    return await db
+      .select()
+      .from(blogPosts)
+      .orderBy(desc(blogPosts.publishedAt));
+  }
+
+  async getPublishedBlogPosts(): Promise<BlogPost[]> {
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(eq(blogPosts.status, 'published'))
+      .orderBy(desc(blogPosts.publishedAt));
+  }
+
+  async updateBlogPost(id: string, data: Partial<BlogPost>): Promise<BlogPost | undefined> {
+    const [blogPost] = await db
+      .update(blogPosts)
+      .set({
+        ...data,
+        updatedAt: Date.now(),
+      })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return blogPost || undefined;
+  }
+
+  async deleteBlogPost(id: string): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async publishBlogPost(id: string): Promise<void> {
+    await db
+      .update(blogPosts)
+      .set({
+        status: 'published',
+        publishedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(eq(blogPosts.id, id));
+  }
+
+  async unpublishBlogPost(id: string): Promise<void> {
+    await db
+      .update(blogPosts)
+      .set({
+        status: 'draft',
+        updatedAt: Date.now(),
+      })
+      .where(eq(blogPosts.id, id));
   }
 }
 
