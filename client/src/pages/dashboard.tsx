@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, LogOut, Image as ImageIcon, ListOrdered, Briefcase, CalendarCheck, FileText, Upload, Sparkles, Download, Camera, Folder, ImagePlus, Key, Users, CheckSquare } from "lucide-react";
+import { Plus, LogOut, Image as ImageIcon, ListOrdered, Briefcase, CalendarCheck, FileText, Upload, Sparkles, Download, Camera, Folder, ImagePlus, Key, Users, CheckSquare, Images, Receipt } from "lucide-react";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
@@ -153,6 +153,18 @@ export default function Dashboard() {
                   <Button variant="ghost" data-testid="button-qc-check">
                     <CheckSquare className="mr-2 h-4 w-4" />
                     Quality Check
+                  </Button>
+                </Link>
+                <Link href="/admin/media-library">
+                  <Button variant="ghost" data-testid="button-media-library">
+                    <Images className="mr-2 h-4 w-4" />
+                    Media Library
+                  </Button>
+                </Link>
+                <Link href="/admin/invoices">
+                  <Button variant="ghost" data-testid="button-invoices">
+                    <Receipt className="mr-2 h-4 w-4" />
+                    Rechnungen
                   </Button>
                 </Link>
               </>

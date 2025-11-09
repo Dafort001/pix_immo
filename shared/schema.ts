@@ -198,6 +198,46 @@ export const seoMetadata = pgTable("seo_metadata", {
   updatedBy: varchar("updated_by").references(() => users.id, { onDelete: "set null" }),
 });
 
+// Media Library - Public Images Management
+export const publicImages = pgTable("public_images", {
+  id: varchar("id").primaryKey(),
+  page: varchar("page", { length: 50 }).notNull(), // 'home', 'pixcapture', 'gallery', 'blog'
+  imageKey: varchar("image_key", { length: 100 }).notNull(), // 'home-001', 'pixcap-001', etc.
+  url: text("url").notNull(), // Image URL (Unsplash or R2 storage)
+  alt: text("alt").notNull(), // Alt text for accessibility
+  description: text("description"), // Optional SEO description
+  displayOrder: bigint("display_order", { mode: "number" }).notNull().default(0), // Sort order on page
+  isActive: varchar("is_active", { length: 10 }).notNull().default("true"), // 'true' or 'false'
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+  updatedBy: varchar("updated_by").references(() => users.id, { onDelete: "set null" }),
+});
+
+// Invoices for completed jobs
+export const invoices = pgTable("invoices", {
+  id: varchar("id").primaryKey(),
+  invoiceNumber: varchar("invoice_number", { length: 50 }).notNull().unique(), // e.g., 'INV-2025-001'
+  jobId: varchar("job_id").references(() => jobs.id, { onDelete: "set null" }), // Optional job reference
+  bookingId: varchar("booking_id").references(() => bookings.id, { onDelete: "set null" }), // Optional booking reference
+  customerName: varchar("customer_name", { length: 255 }).notNull(),
+  customerEmail: varchar("customer_email", { length: 255 }).notNull(),
+  customerAddress: text("customer_address"),
+  invoiceDate: bigint("invoice_date", { mode: "number" }).notNull(),
+  dueDate: bigint("due_date", { mode: "number" }),
+  serviceDescription: text("service_description").notNull(), // Description of services
+  lineItems: text("line_items").notNull(), // JSON array of line items
+  netAmount: bigint("net_amount", { mode: "number" }).notNull(), // Amount in cents
+  vatRate: bigint("vat_rate", { mode: "number" }).notNull().default(19), // VAT percentage (19 for Germany)
+  vatAmount: bigint("vat_amount", { mode: "number" }).notNull(), // VAT in cents
+  grossAmount: bigint("gross_amount", { mode: "number" }).notNull(), // Total in cents
+  status: varchar("status", { length: 20 }).notNull().default("draft"), // 'draft', 'sent', 'paid', 'cancelled'
+  notes: text("notes"), // Internal notes
+  paidAt: bigint("paid_at", { mode: "number" }),
+  createdBy: varchar("created_by").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+});
+
 // Personal Access Tokens (PAT) for app authentication
 export const personalAccessTokens = pgTable("personal_access_tokens", {
   id: varchar("id").primaryKey(),

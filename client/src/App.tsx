@@ -62,6 +62,8 @@ import EditorJobDetail from "@/pages/editor-job-detail";
 import AdminPassword from "@/pages/admin-password";
 import AdminEditorManagement from "@/pages/admin-editor-management";
 import QCQualityCheck from "@/pages/qc-quality-check";
+import AdminMediaLibrary from "@/pages/admin-media-library";
+import AdminInvoices from "@/pages/admin-invoices";
 
 function Router() {
   return (
@@ -73,6 +75,8 @@ function Router() {
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin/password" component={AdminPassword} />
       <Route path="/admin/editor-management" component={AdminEditorManagement} />
+      <Route path="/admin/media-library" component={AdminMediaLibrary} />
+      <Route path="/admin/invoices" component={AdminInvoices} />
       <Route path="/qc-quality-check" component={QCQualityCheck} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
