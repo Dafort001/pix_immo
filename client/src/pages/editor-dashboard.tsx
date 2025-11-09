@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SEOHead } from '@/components/SEOHead';
+import { SEOHead } from '@shared/components';
 import {
   Select,
   SelectContent,

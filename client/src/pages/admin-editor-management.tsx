@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SEOHead } from '@/components/SEOHead';
+import { SEOHead } from '@shared/components';
 import {
   Select,
   SelectContent,
