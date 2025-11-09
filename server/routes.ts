@@ -6,7 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
-import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
+import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
 import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey } from "./r2-client";
@@ -231,6 +231,434 @@ function validateUploadContentType(req: Request, res: Response, next: any) {
   }
   
   next();
+}
+
+// Register Media Library Routes
+function registerMediaLibraryRoutes(app: Express) {
+  // GET /api/media-library - Get all public images (no auth required)
+  app.get("/api/media-library", async (req: Request, res: Response) => {
+    try {
+      const images = await storage.getAllPublicImages();
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching public images:", error);
+      res.status(500).json({ error: "Failed to fetch public images" });
+    }
+  });
+
+  // GET /api/media-library/page/:page - Get images by page (no auth required)
+  app.get("/api/media-library/page/:page", validateStringParam("page"), async (req: Request, res: Response) => {
+    try {
+      const { page } = req.params;
+      const images = await storage.getPublicImagesByPage(page);
+      res.json(images);
+    } catch (error) {
+      console.error("Error fetching images by page:", error);
+      res.status(500).json({ error: "Failed to fetch images by page" });
+    }
+  });
+
+  // GET /api/media-library/:id - Get single image by ID (no auth required)
+  app.get("/api/media-library/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const images = await storage.getAllPublicImages();
+      const image = images.find(img => img.id === id);
+      
+      if (!image) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      res.json(image);
+    } catch (error) {
+      console.error("Error fetching public image:", error);
+      res.status(500).json({ error: "Failed to fetch public image" });
+    }
+  });
+
+  // POST /api/media-library - Create new image (admin auth required)
+  app.post("/api/media-library", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const validatedData = insertPublicImageSchema.parse(req.body);
+      
+      // Filter out null values
+      const cleanedData = Object.fromEntries(
+        Object.entries(validatedData).filter(([_, v]) => v !== null)
+      );
+      
+      const newImage = await storage.createPublicImage({
+        ...cleanedData,
+        updatedBy: req.user.id,
+      } as any);
+      
+      res.status(201).json(newImage);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating public image:", error);
+      res.status(500).json({ error: "Failed to create public image" });
+    }
+  });
+
+  // PATCH /api/media-library/:id - Update image (admin auth required)
+  app.patch("/api/media-library/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      
+      const updatedImage = await storage.updatePublicImage(id, {
+        ...req.body,
+        updatedBy: req.user.id,
+      });
+      
+      if (!updatedImage) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+      
+      res.json(updatedImage);
+    } catch (error) {
+      console.error("Error updating public image:", error);
+      res.status(500).json({ error: "Failed to update public image" });
+    }
+  });
+
+  // DELETE /api/media-library/:id - Delete image (admin auth required)
+  app.delete("/api/media-library/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.deletePublicImage(id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting public image:", error);
+      res.status(500).json({ error: "Failed to delete public image" });
+    }
+  });
+}
+
+// Register Invoice Routes
+function registerInvoiceRoutes(app: Express) {
+  // GET /api/invoices - Get all invoices for current user (auth required, admin sees all)
+  app.get("/api/invoices", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const invoices = req.user.role === "admin" 
+        ? await storage.getAllInvoices()
+        : await storage.getUserInvoices(req.user.id);
+      
+      res.json(invoices);
+    } catch (error) {
+      console.error("Error fetching invoices:", error);
+      res.status(500).json({ error: "Failed to fetch invoices" });
+    }
+  });
+
+  // GET /api/invoices/next-number - Get next invoice number (admin auth required)
+  app.get("/api/invoices/next-number", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const nextNumber = await storage.getNextInvoiceNumber();
+      res.json({ invoiceNumber: nextNumber });
+    } catch (error) {
+      console.error("Error fetching next invoice number:", error);
+      res.status(500).json({ error: "Failed to fetch next invoice number" });
+    }
+  });
+
+  // GET /api/invoices/:id - Get single invoice (auth required, check ownership or admin)
+  app.get("/api/invoices/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+      const { id } = req.params;
+      const invoice = await storage.getInvoice(id);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // Check ownership or admin
+      if (req.user.role !== "admin" && invoice.createdBy !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      res.json(invoice);
+    } catch (error) {
+      console.error("Error fetching invoice:", error);
+      res.status(500).json({ error: "Failed to fetch invoice" });
+    }
+  });
+
+  // POST /api/invoices - Create new invoice (admin auth required)
+  app.post("/api/invoices", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const validatedData = insertInvoiceSchema.parse(req.body);
+      
+      // Filter out null values
+      const cleanedData = Object.fromEntries(
+        Object.entries(validatedData).filter(([_, v]) => v !== null)
+      );
+      
+      const newInvoice = await storage.createInvoice({
+        ...cleanedData,
+        createdBy: req.user.id,
+      } as any);
+      
+      res.status(201).json(newInvoice);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating invoice:", error);
+      res.status(500).json({ error: "Failed to create invoice" });
+    }
+  });
+
+  // PATCH /api/invoices/:id/status - Update invoice status (admin auth required)
+  app.patch("/api/invoices/:id/status", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      const { status, paidAt } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ error: "Status is required" });
+      }
+      
+      await storage.updateInvoiceStatus(id, status, paidAt);
+      
+      const updatedInvoice = await storage.getInvoice(id);
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error updating invoice status:", error);
+      res.status(500).json({ error: "Failed to update invoice status" });
+    }
+  });
+
+  // PATCH /api/invoices/:id - Update invoice (admin auth required)
+  app.patch("/api/invoices/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      
+      const updatedInvoice = await storage.updateInvoice(id, req.body);
+      
+      if (!updatedInvoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      res.json(updatedInvoice);
+    } catch (error) {
+      console.error("Error updating invoice:", error);
+      res.status(500).json({ error: "Failed to update invoice" });
+    }
+  });
+
+  // DELETE /api/invoices/:id - Delete invoice (admin auth required)
+  app.delete("/api/invoices/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.deleteInvoice(id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting invoice:", error);
+      res.status(500).json({ error: "Failed to delete invoice" });
+    }
+  });
+}
+
+// Register Blog Routes
+function registerBlogRoutes(app: Express) {
+  // GET /api/blog - Get published blog posts (no auth required)
+  app.get("/api/blog", async (req: Request, res: Response) => {
+    try {
+      const posts = await storage.getPublishedBlogPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ error: "Failed to fetch blog posts" });
+    }
+  });
+
+  // GET /api/blog/all - Get all blog posts including drafts (admin auth required)
+  app.get("/api/blog/all", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const allPosts = await storage.getAllBlogPosts();
+      res.json(allPosts);
+    } catch (error) {
+      console.error("Error fetching all blog posts:", error);
+      res.status(500).json({ error: "Failed to fetch all blog posts" });
+    }
+  });
+
+  // GET /api/blog/slug/:slug - Get blog post by slug (no auth required if published, admin for drafts)
+  app.get("/api/blog/slug/:slug", validateStringParam("slug"), async (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+      const post = await storage.getBlogPostBySlug(slug);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Blog post not found" });
+      }
+      
+      // If post is not published, only admin can view it
+      if (post.status !== "published") {
+        if (!req.user || req.user.role !== "admin") {
+          return res.status(403).json({ error: "Access denied" });
+        }
+      }
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post by slug:", error);
+      res.status(500).json({ error: "Failed to fetch blog post" });
+    }
+  });
+
+  // GET /api/blog/:id - Get blog post by ID (admin auth required)
+  app.get("/api/blog/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      const post = await storage.getBlogPost(id);
+      
+      if (!post) {
+        return res.status(404).json({ error: "Blog post not found" });
+      }
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post:", error);
+      res.status(500).json({ error: "Failed to fetch blog post" });
+    }
+  });
+
+  // POST /api/blog - Create new blog post (admin auth required)
+  app.post("/api/blog", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const validatedData = insertBlogPostSchema.parse(req.body);
+      
+      // Filter out null values
+      const cleanedData = Object.fromEntries(
+        Object.entries(validatedData).filter(([_, v]) => v !== null)
+      );
+      
+      const newPost = await storage.createBlogPost({
+        ...cleanedData,
+        createdBy: req.user.id,
+      } as any);
+      
+      res.status(201).json(newPost);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Error creating blog post:", error);
+      res.status(500).json({ error: "Failed to create blog post" });
+    }
+  });
+
+  // PATCH /api/blog/:id - Update blog post (admin auth required)
+  app.patch("/api/blog/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      
+      const updatedPost = await storage.updateBlogPost(id, req.body);
+      
+      if (!updatedPost) {
+        return res.status(404).json({ error: "Blog post not found" });
+      }
+      
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error updating blog post:", error);
+      res.status(500).json({ error: "Failed to update blog post" });
+    }
+  });
+
+  // PATCH /api/blog/:id/publish - Publish blog post (admin auth required)
+  app.patch("/api/blog/:id/publish", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.publishBlogPost(id);
+      
+      const updatedPost = await storage.getBlogPost(id);
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error publishing blog post:", error);
+      res.status(500).json({ error: "Failed to publish blog post" });
+    }
+  });
+
+  // PATCH /api/blog/:id/unpublish - Unpublish blog post (admin auth required)
+  app.patch("/api/blog/:id/unpublish", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.unpublishBlogPost(id);
+      
+      const updatedPost = await storage.getBlogPost(id);
+      res.json(updatedPost);
+    } catch (error) {
+      console.error("Error unpublishing blog post:", error);
+      res.status(500).json({ error: "Failed to unpublish blog post" });
+    }
+  });
+
+  // DELETE /api/blog/:id - Delete blog post (admin auth required)
+  app.delete("/api/blog/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.deleteBlogPost(id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting blog post:", error);
+      res.status(500).json({ error: "Failed to delete blog post" });
+    }
+  });
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -1752,6 +2180,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Editor Management System routes (Admin-only)
   registerEditorRoutes(app);
+
+  // Register Media Library routes
+  registerMediaLibraryRoutes(app);
+
+  // Register Invoice routes
+  registerInvoiceRoutes(app);
+
+  // Register Blog routes
+  registerBlogRoutes(app);
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
