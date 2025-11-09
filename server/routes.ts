@@ -27,10 +27,11 @@ import { generatePresignedPutUrl, generateObjectPath } from "./objectStorage";
 import { isValidFilenameV31 } from "./fileNaming";
 import { processJobDemo } from "./demo-processing";
 import { registerGalleryRoutes } from "./gallery-routes";
+import { registerEditorRoutes } from "./editor-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 
 // Middleware to validate request body with Zod
-function validateBody(schema: z.ZodSchema) {
+export function validateBody(schema: z.ZodSchema) {
   return (req: Request, res: Response, next: any) => {
     try {
       schema.parse(req.body);
@@ -46,7 +47,7 @@ function validateBody(schema: z.ZodSchema) {
 }
 
 // Middleware to validate UUID path parameters
-function validateUuidParam(...paramNames: string[]) {
+export function validateUuidParam(...paramNames: string[]) {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
   
   return (req: Request, res: Response, next: any) => {
@@ -61,7 +62,7 @@ function validateUuidParam(...paramNames: string[]) {
 }
 
 // Middleware to validate and sanitize string path parameters
-function validateStringParam(...paramNames: string[]) {
+export function validateStringParam(...paramNames: string[]) {
   // Allow alphanumeric, hyphens, and underscores only
   const safeStringRegex = /^[a-zA-Z0-9_-]+$/;
   
@@ -71,6 +72,29 @@ function validateStringParam(...paramNames: string[]) {
       if (value && !safeStringRegex.test(value)) {
         return res.status(400).json({ error: `Invalid ${paramName} format` });
       }
+    }
+    next();
+  };
+}
+
+// Middleware to require authentication
+export function requireAuth(req: Request, res: Response, next: any) {
+  const user = (req as any).user;
+  if (!user) {
+    return res.status(401).json({ error: "Authentication required" });
+  }
+  next();
+}
+
+// Middleware to require specific role(s)
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: any) => {
+    const user = (req as any).user;
+    if (!user) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+    if (!roles.includes(user.role)) {
+      return res.status(403).json({ error: "Insufficient permissions" });
     }
     next();
   };
@@ -355,14 +379,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Require authentication middleware
-  function requireAuth(req: Request, res: Response, next: any) {
-    const user = (req as any).user;
-    if (!user) {
-      return res.status(401).json({ error: "Authentication required" });
-    }
-    next();
-  }
-
   // Apply auth middleware to all routes
   app.use(authMiddleware);
 
@@ -1680,6 +1696,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Gallery System V1.0 routes
   registerGalleryRoutes(app);
+
+  // Register Editor Management System routes (Admin-only)
+  registerEditorRoutes(app);
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
