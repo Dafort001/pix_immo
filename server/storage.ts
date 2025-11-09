@@ -493,6 +493,25 @@ export interface IStorage {
   deleteBlogPost(id: string): Promise<void>;
   publishBlogPost(id: string): Promise<void>;
   unpublishBlogPost(id: string): Promise<void>;
+
+  // Service Operations
+  createService(data: {
+    serviceCode: string;
+    category: string;
+    name: string;
+    description?: string;
+    netPrice?: number;
+    priceNote?: string;
+    notes?: string;
+    isActive?: string;
+  }): Promise<Service>;
+  getService(id: string): Promise<Service | undefined>;
+  getServiceByCode(serviceCode: string): Promise<Service | undefined>;
+  getAllServices(): Promise<Service[]>;
+  getActiveServices(): Promise<Service[]>;
+  getServicesByCategory(category: string): Promise<Service[]>;
+  updateService(id: string, data: Partial<Service>): Promise<void>;
+  deleteService(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1080,10 +1099,6 @@ export class DatabaseStorage implements IStorage {
       updates[timestampField] = Date.now();
     }
     await db.update(editedImages).set(updates).where(eq(editedImages.id, id));
-  }
-
-  async getAllServices(): Promise<Service[]> {
-    return await db.select().from(services).where(eq(services.isActive, "true")).orderBy(services.serviceCode);
   }
 
   async createBooking(userId: string, bookingData: {
@@ -2768,6 +2783,77 @@ export class DatabaseStorage implements IStorage {
         updatedAt: Date.now(),
       })
       .where(eq(blogPosts.id, id));
+  }
+
+  // Service Operations
+  async createService(data: {
+    serviceCode: string;
+    category: string;
+    name: string;
+    description?: string;
+    netPrice?: number;
+    priceNote?: string;
+    notes?: string;
+    isActive?: string;
+  }): Promise<Service> {
+    const id = randomUUID();
+    const [service] = await db
+      .insert(services)
+      .values({
+        id,
+        serviceCode: data.serviceCode,
+        category: data.category,
+        name: data.name,
+        description: data.description || null,
+        netPrice: data.netPrice || null,
+        priceNote: data.priceNote || null,
+        notes: data.notes || null,
+        isActive: data.isActive || 'true',
+        createdAt: Date.now(),
+      })
+      .returning();
+    return service;
+  }
+
+  async getService(id: string): Promise<Service | undefined> {
+    const [service] = await db.select().from(services).where(eq(services.id, id));
+    return service || undefined;
+  }
+
+  async getServiceByCode(serviceCode: string): Promise<Service | undefined> {
+    const [service] = await db.select().from(services).where(eq(services.serviceCode, serviceCode));
+    return service || undefined;
+  }
+
+  async getAllServices(): Promise<Service[]> {
+    return await db.select().from(services).orderBy(desc(services.createdAt));
+  }
+
+  async getActiveServices(): Promise<Service[]> {
+    return await db
+      .select()
+      .from(services)
+      .where(eq(services.isActive, 'true'))
+      .orderBy(desc(services.createdAt));
+  }
+
+  async getServicesByCategory(category: string): Promise<Service[]> {
+    return await db
+      .select()
+      .from(services)
+      .where(eq(services.category, category))
+      .orderBy(desc(services.createdAt));
+  }
+
+  async updateService(id: string, data: Partial<Service>): Promise<void> {
+    await db
+      .update(services)
+      .set(data)
+      .where(eq(services.id, id));
+  }
+
+  async deleteService(id: string): Promise<void> {
+    await db.delete(services).where(eq(services.id, id));
   }
 }
 

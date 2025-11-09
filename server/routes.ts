@@ -6,7 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
-import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
+import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
 import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey } from "./r2-client";
@@ -832,6 +832,90 @@ function registerBlogRoutes(app: Express) {
     } catch (error) {
       console.error("Error deleting blog post:", error);
       res.status(500).json({ error: "Failed to delete blog post" });
+    }
+  });
+}
+
+// Register Service Routes
+function registerServiceRoutes(app: Express) {
+  // GET /api/services - Get all services (public)
+  app.get("/api/services", async (req: Request, res: Response) => {
+    try {
+      const services = await storage.getAllServices();
+      res.json(services);
+    } catch (error) {
+      console.error("Error fetching services:", error);
+      res.status(500).json({ error: "Failed to fetch services" });
+    }
+  });
+
+  // GET /api/services/active - Get active services only (public)
+  app.get("/api/services/active", async (req: Request, res: Response) => {
+    try {
+      const services = await storage.getActiveServices();
+      res.json(services);
+    } catch (error) {
+      console.error("Error fetching active services:", error);
+      res.status(500).json({ error: "Failed to fetch active services" });
+    }
+  });
+
+  // GET /api/services/category/:category - Get services by category (public)
+  app.get("/api/services/category/:category", validateStringParam("category"), async (req: Request, res: Response) => {
+    try {
+      const { category } = req.params;
+      const services = await storage.getServicesByCategory(category);
+      res.json(services);
+    } catch (error) {
+      console.error("Error fetching services by category:", error);
+      res.status(500).json({ error: "Failed to fetch services by category" });
+    }
+  });
+
+  // POST /api/services - Create service (admin auth required)
+  app.post("/api/services", validateBody(insertServiceSchema), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const service = await storage.createService(req.body);
+      res.status(201).json(service);
+    } catch (error: any) {
+      console.error("Error creating service:", error);
+      res.status(500).json({ error: error.message || "Failed to create service" });
+    }
+  });
+
+  // PATCH /api/services/:id - Update service (admin auth required)
+  app.patch("/api/services/:id", validateUuidParam("id"), validateBody(insertServiceSchema.partial()), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.updateService(id, req.body);
+      
+      const updatedService = await storage.getService(id);
+      res.json(updatedService);
+    } catch (error) {
+      console.error("Error updating service:", error);
+      res.status(500).json({ error: "Failed to update service" });
+    }
+  });
+
+  // DELETE /api/services/:id - Delete service (admin auth required)
+  app.delete("/api/services/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      await storage.deleteService(id);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting service:", error);
+      res.status(500).json({ error: "Failed to delete service" });
     }
   });
 }
@@ -2364,6 +2448,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Blog routes
   registerBlogRoutes(app);
+
+  // Register Service routes
+  registerServiceRoutes(app);
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {

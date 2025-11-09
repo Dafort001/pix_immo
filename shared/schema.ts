@@ -1176,3 +1176,8 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
   createdAt: true,
   updatedAt: true,
 });
+
+export const insertServiceSchema = createInsertSchema(services).omit({
+  id: true,
+  createdAt: true,
+});

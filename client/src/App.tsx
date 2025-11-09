@@ -65,6 +65,7 @@ import QCQualityCheck from "@/pages/qc-quality-check";
 import AdminMediaLibrary from "@/pages/admin-media-library";
 import AdminInvoices from "@/pages/admin-invoices";
 import AdminBlog from "@/pages/admin-blog";
+import AdminServices from "@/pages/admin-services";
 
 function Router() {
   return (
@@ -79,6 +80,7 @@ function Router() {
       <Route path="/admin/media-library" component={AdminMediaLibrary} />
       <Route path="/admin/invoices" component={AdminInvoices} />
       <Route path="/admin/blog" component={AdminBlog} />
+      <Route path="/admin/services" component={AdminServices} />
       <Route path="/qc-quality-check" component={QCQualityCheck} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
