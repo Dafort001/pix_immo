@@ -137,9 +137,6 @@ export default function PixCaptureHome() {
                 <h2 className="text-white mb-4" style={{ fontSize: '28pt', fontWeight: 700, fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.2 }}>
                   Brauchst du Hilfe?
                 </h2>
-                <p className="text-white/90" style={{ fontSize: '16pt', fontFamily: 'Inter, system-ui, sans-serif' }}>
-                  Anleitung zur App-Nutzung
-                </p>
               </div>
               <div className="flex items-center gap-2 text-white mt-6">
                 <span style={{ fontSize: '16pt', fontWeight: 600, fontFamily: 'Inter, system-ui, sans-serif' }}>Mehr erfahren</span>
