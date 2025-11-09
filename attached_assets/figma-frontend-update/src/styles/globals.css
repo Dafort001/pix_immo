@@ -1,0 +1,227 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+/* ============================================
+   PIX.IMMO DESIGN SYSTEM
+   Professional Real Estate Photography
+   ============================================ */
+
+:root {
+  /* PRIMARY COLORS (Grautöne) */
+  --color-white: #FFFFFF;
+  --color-grey: #8E9094;
+  --color-black: #1A1A1C;
+  --color-light-grey: #E9E9E9;
+  
+  /* SECONDARY COLORS (Akzente) */
+  --color-green: #64BF49;
+  --color-blue: #74A4EA;
+  --color-red: #C94B38;
+  --color-yellow: #C9B55A;
+  --color-pink: #D87088;
+  --color-orange: #C8B048;
+
+  /* SYSTEM COLORS - mapped to PIX.IMMO palette */
+  --background: var(--color-white);
+  --foreground: var(--color-black);
+  --card: var(--color-white);
+  --card-foreground: var(--color-black);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-black);
+  --primary: var(--color-black);
+  --primary-foreground: var(--color-white);
+  --secondary: var(--color-light-grey);
+  --secondary-foreground: var(--color-black);
+  --muted: var(--color-light-grey);
+  --muted-foreground: var(--color-grey);
+  --accent: var(--color-green);
+  --accent-foreground: var(--color-white);
+  --destructive: var(--color-red);
+  --destructive-foreground: var(--color-white);
+  --border: var(--color-light-grey);
+  --input: var(--color-light-grey);
+  --input-background: var(--color-white);
+  --switch-background: var(--color-grey);
+  --ring: var(--color-black);
+
+  /* TYPOGRAPHY - Inter (optimized for digital/screen) */
+  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  
+  /* Font Sizes */
+  --font-size-display: 150px;
+  --font-size-h1: 105px;
+  --font-size-h2: 75px;
+  --font-size-h3: 60px;
+  --font-size-h4: 34px;
+  --font-size-body: 16px;
+  --font-size-caption: 20px;
+  
+  /* Letter Spacing */
+  --letter-spacing-tight: -0.03em;
+  --letter-spacing-normal: -0.02em;
+  --letter-spacing-none: 0;
+  
+  /* Font Weights */
+  --font-weight-medium: 500;
+  --font-weight-regular: 400;
+
+  /* SPACING & LAYOUT */
+  --spacing-xs: 0.5rem;
+  --spacing-sm: 1rem;
+  --spacing-md: 1.5rem;
+  --spacing-lg: 2rem;
+  --spacing-xl: 3rem;
+  --spacing-2xl: 4rem;
+  --spacing-3xl: 6rem;
+
+  /* RADIUS */
+  --radius: 0.5rem;
+
+  /* CHART COLORS (using secondary palette) */
+  --chart-1: var(--color-blue);
+  --chart-2: var(--color-green);
+  --chart-3: var(--color-yellow);
+  --chart-4: var(--color-pink);
+  --chart-5: var(--color-orange);
+
+  /* SIDEBAR */
+  --sidebar: var(--color-white);
+  --sidebar-foreground: var(--color-black);
+  --sidebar-primary: var(--color-black);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-light-grey);
+  --sidebar-accent-foreground: var(--color-black);
+  --sidebar-border: var(--color-light-grey);
+  --sidebar-ring: var(--color-grey);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-family-base);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+  }
+}
+
+/**
+ * PIX.IMMO Typography System
+ * Based on Helvetica Neue with specific sizing and spacing
+ */
+@layer base {
+  /* Display Title - 150px, -3% letter spacing */
+  .pix-display {
+    font-size: var(--font-size-display);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.1;
+  }
+
+  /* H1 Headline - 105px, -3% letter spacing */
+  .pix-h1 {
+    font-size: var(--font-size-h1);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.1;
+  }
+
+  /* H2 Headline - 75px, -3% letter spacing */
+  .pix-h2 {
+    font-size: var(--font-size-h2);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.2;
+  }
+
+  /* H3 Headline - 60px, -3% letter spacing */
+  .pix-h3 {
+    font-size: var(--font-size-h3);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.2;
+  }
+
+  /* H4 Headline - 34px, -3% letter spacing */
+  .pix-h4 {
+    font-size: var(--font-size-h4);
+    font-weight: var(--font-weight-medium);
+    letter-spacing: var(--letter-spacing-tight);
+    line-height: 1.3;
+  }
+
+  /* Body/Paragraph - 16px, -2% letter spacing */
+  .pix-body {
+    font-size: var(--font-size-body);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-normal);
+    line-height: 1.6;
+  }
+
+  /* Caption - 20px, 0% letter spacing */
+  .pix-caption {
+    font-size: var(--font-size-caption);
+    font-weight: var(--font-weight-regular);
+    letter-spacing: var(--letter-spacing-none);
+    line-height: 1.5;
+  }
+}
+
+html {
+  font-size: 16px;
+}
+
+/* Hide scrollbar for iPhone display */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
