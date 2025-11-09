@@ -85,6 +85,11 @@ export interface IStorage {
   getActiveShootForJob(jobId: string): Promise<Shoot | undefined>;
   updateShootStatus(id: string, status: string, timestampField?: string): Promise<void>;
   
+  // Editor Assignment operations
+  assignShootEditor(shootId: string, editorId: string, userId?: string): Promise<void>;
+  clearShootEditor(shootId: string): Promise<void>;
+  getShootsByEditor(editorId: string): Promise<Shoot[]>;
+  
   // Workflow operations - Stacks
   createStack(shootId: string, stackNumber: string, frameCount: number, roomType: string): Promise<Stack>;
   getStack(id: string): Promise<Stack | undefined>;
@@ -110,6 +115,11 @@ export interface IStorage {
   getShootImages(shootId: string): Promise<Image[]>;
   getStackImages(stackId: string): Promise<Image[]>;
   updateImageRenamedFilename(id: string, renamedFilename: string): Promise<void>;
+  
+  // QC Quality Check operations
+  updateImageQCStatus(id: string, qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision', qcComment?: string, qcTechnicalIssues?: string[], userId?: string): Promise<void>;
+  getImagesByQCStatus(qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision'): Promise<Image[]>;
+  getShootImagesWithQC(shootId: string): Promise<Image[]>;
   
   // Workflow operations - Editor Tokens
   createEditorToken(shootId: string, tokenType: 'download' | 'upload', token: string, expiresAt: number, filePath?: string): Promise<EditorToken>;
@@ -735,6 +745,27 @@ export class DatabaseStorage implements IStorage {
     await db.update(shoots).set(updateData).where(eq(shoots.id, id));
   }
 
+  // Editor Assignment operations
+  async assignShootEditor(shootId: string, editorId: string, userId?: string): Promise<void> {
+    await db.update(shoots).set({
+      assignedEditorId: editorId,
+      editorAssignedAt: Date.now(),
+      editorAssignedBy: userId || null
+    }).where(eq(shoots.id, shootId));
+  }
+
+  async clearShootEditor(shootId: string): Promise<void> {
+    await db.update(shoots).set({
+      assignedEditorId: null,
+      editorAssignedAt: null,
+      editorAssignedBy: null
+    }).where(eq(shoots.id, shootId));
+  }
+
+  async getShootsByEditor(editorId: string): Promise<Shoot[]> {
+    return await db.select().from(shoots).where(eq(shoots.assignedEditorId, editorId));
+  }
+
   // Stack operations
   async createStack(
     shootId: string, 
@@ -862,6 +893,31 @@ export class DatabaseStorage implements IStorage {
 
   async updateImageRenamedFilename(id: string, renamedFilename: string): Promise<void> {
     await db.update(images).set({ renamedFilename }).where(eq(images.id, id));
+  }
+
+  // QC Quality Check operations
+  async updateImageQCStatus(
+    id: string, 
+    qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision', 
+    qcComment?: string, 
+    qcTechnicalIssues?: string[], 
+    userId?: string
+  ): Promise<void> {
+    await db.update(images).set({ 
+      qcStatus,
+      qcComment: qcComment || null,
+      qcTechnicalIssues: qcTechnicalIssues || null,
+      qcBy: userId || null,
+      qcAt: Date.now()
+    }).where(eq(images.id, id));
+  }
+
+  async getImagesByQCStatus(qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision'): Promise<Image[]> {
+    return await db.select().from(images).where(eq(images.qcStatus, qcStatus));
+  }
+
+  async getShootImagesWithQC(shootId: string): Promise<Image[]> {
+    return await db.select().from(images).where(eq(images.shootId, shootId));
   }
 
   // Editor Token operations
