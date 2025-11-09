@@ -66,6 +66,7 @@ export default function EditorDashboard() {
     const query = searchQuery.toLowerCase();
     const matchesSearch =
       (assignment.job.jobNumber && assignment.job.jobNumber.toLowerCase().includes(query)) ||
+      (assignment.job.propertyName && assignment.job.propertyName.toLowerCase().includes(query)) ||
       (assignment.job.customerName && assignment.job.customerName.toLowerCase().includes(query)) ||
       (assignment.job.propertyAddress && assignment.job.propertyAddress.toLowerCase().includes(query));
     
