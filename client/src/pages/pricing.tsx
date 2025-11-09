@@ -7,7 +7,7 @@ export default function Pricing() {
     <div className="min-h-screen bg-white">
       <SEOHead
         title="Preise und Leistungen"
-        description="Professionelle Immobilienfotografie ab 180€. Drohnenaufnahmen, 360°-Touren, Videos und KI-gestützte Bildoptimierung für Hamburg und Berlin."
+        description="Professionelle Immobilienfotografie ab 180€. Drohnenaufnahmen, 360°-Touren, Videos und KI-gestützte Bildoptimierung für Hamburg."
         path="/preise"
       />
       {/* Header */}
@@ -37,7 +37,7 @@ export default function Pricing() {
             Preise und Leistungen
           </h1>
           <p className="text-lg text-gray-700 mb-2">
-            Immobilienfotografie Hamburg & Berlin
+            Immobilienfotografie Hamburg
           </p>
           <p className="text-base text-gray-600 mb-12 leading-relaxed">
             Professionelle Immobilienfotografie, Drohnenaufnahmen, Videos und 360°-Rundgänge für Exposés, Online-Präsentationen und soziale Medien.
@@ -183,8 +183,8 @@ export default function Pricing() {
             <section data-testid="section-travel">
               <h2 className="text-2xl font-semibold mb-3">Anfahrt und Geltungsbereich</h2>
               <p className="text-gray-700 mb-4">
-                Unsere Leistungen werden im Großraum Hamburg und Berlin angeboten.
-                Die Anfahrt ist innerhalb von <strong>30 Kilometern um Hamburg</strong> sowie <strong>innerhalb des Berliner S-Bahn-Rings</strong> im Preis enthalten.
+                Unsere Leistungen werden im Großraum Hamburg angeboten.
+                Die Anfahrt ist innerhalb von <strong>30 Kilometern um Hamburg</strong> im Preis enthalten.
               </p>
               <p className="text-gray-700 mb-4">
                 Für weiter entfernte Objekte werden <strong>0,80 € pro gefahrenem Kilometer</strong> (Hin- und Rückweg) berechnet.

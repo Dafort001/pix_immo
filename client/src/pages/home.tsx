@@ -33,8 +33,8 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       <SEOHead
-        title="Professionelle Immobilienfotografie Hamburg & Berlin"
-        description="PIX.IMMO - Professionelle Immobilienfotografie, Drohnenaufnahmen, 360°-Touren und Videos für Hamburg und Berlin. KI-gestützte Bildoptimierung und schnelle Lieferung."
+        title="Professionelle Immobilienfotografie Hamburg"
+        description="PIX.IMMO - Professionelle Immobilienfotografie, Drohnenaufnahmen, 360°-Touren und Videos für Hamburg. KI-gestützte Bildoptimierung und schnelle Lieferung."
         path="/"
         schema={SchemaTemplates.localBusiness}
       />

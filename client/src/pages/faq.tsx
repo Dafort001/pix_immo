@@ -173,7 +173,7 @@ export default function FAQ() {
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
                 Die Kosten richten sich nach den gebuchten Leistungen (z.B. Fotopakete, Drohnenaufnahmen, Videos). 
-                Innerhalb unserer Servicebereiche (Hamburg bis 30 km, Berlin S-Bahn-Ring) ist die Anfahrt inklusive. 
+                Innerhalb unseres Servicebereichs (Hamburg bis 30 km) ist die Anfahrt inklusive. 
                 Für weiter entfernte Objekte berechnen wir 0,80 € pro gefahrenem Kilometer (Hin- und Rückweg). 
                 Alle Preise verstehen sich zzgl. 19 % MwSt. 
                 Eine detaillierte Preisübersicht finden Sie auf unserer <Link href="/preise"><span className="underline cursor-pointer">Preisseite</span></Link>.

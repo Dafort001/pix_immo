@@ -190,7 +190,7 @@ export default function Preisliste() {
         <h3 className="text-lg mb-2">Hinweise</h3>
         <ul className="text-sm text-muted-foreground space-y-1">
           <li>• Alle Preise verstehen sich netto, zzgl. 19% MwSt.</li>
-          <li>• Reisekosten: Hamburg bis 30 km und Berlin innerhalb S-Bahn-Ring inklusive</li>
+          <li>• Reisekosten: Hamburg bis 30 km inklusive</li>
           <li>• Drohnenaufnahmen wetterabhängig, ggf. separate Genehmigung erforderlich</li>
           <li>• Pakete können individuell angepasst werden</li>
         </ul>
