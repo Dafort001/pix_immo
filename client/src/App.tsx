@@ -59,6 +59,7 @@ import TestDebug from "@/pages/test-debug";
 import ExportOverview from "@/pages/export-overview";
 import EditorDashboard from "@/pages/editor-dashboard";
 import EditorJobDetail from "@/pages/editor-job-detail";
+import AdminPassword from "@/pages/admin-password";
 
 function Router() {
   return (
@@ -68,6 +69,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/admin/password" component={AdminPassword} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
