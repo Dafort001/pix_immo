@@ -6,7 +6,7 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
-import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
+import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, insertBookingSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
 import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey } from "./r2-client";
@@ -832,6 +832,108 @@ function registerBlogRoutes(app: Express) {
     } catch (error) {
       console.error("Error deleting blog post:", error);
       res.status(500).json({ error: "Failed to delete blog post" });
+    }
+  });
+}
+
+// Register Booking Routes
+function registerBookingRoutes(app: Express) {
+  // POST /api/bookings - Create booking (auth required)
+  app.post("/api/bookings", validateBody(insertBookingSchema), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+      const userId = req.user.id;
+      const { serviceSelections, ...bookingData } = req.body;
+
+      const result = await storage.createBooking(userId, {
+        ...bookingData,
+        serviceSelections,
+      });
+
+      res.status(201).json(result);
+    } catch (error: any) {
+      console.error("Error creating booking:", error);
+      res.status(500).json({ error: error.message || "Failed to create booking" });
+    }
+  });
+
+  // GET /api/bookings - Get user's bookings (auth required)
+  app.get("/api/bookings", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+      const bookings = await storage.getUserBookings(req.user.id);
+      res.json(bookings);
+    } catch (error) {
+      console.error("Error fetching user bookings:", error);
+      res.status(500).json({ error: "Failed to fetch bookings" });
+    }
+  });
+
+  // GET /api/bookings/all - Get all bookings (admin auth required)
+  app.get("/api/bookings/all", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const bookings = await storage.getAllBookings();
+      res.json(bookings);
+    } catch (error) {
+      console.error("Error fetching all bookings:", error);
+      res.status(500).json({ error: "Failed to fetch all bookings" });
+    }
+  });
+
+  // GET /api/bookings/:id - Get booking by ID with items (auth required)
+  app.get("/api/bookings/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+      const { id } = req.params;
+      const result = await storage.getBookingWithItems(id);
+
+      if (!result) {
+        return res.status(404).json({ error: "Booking not found" });
+      }
+
+      // Check if user owns booking or is admin
+      if (result.booking.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error fetching booking:", error);
+      res.status(500).json({ error: "Failed to fetch booking" });
+    }
+  });
+
+  // PATCH /api/bookings/:id/status - Update booking status (admin auth required)
+  app.patch("/api/bookings/:id/status", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!status || typeof status !== 'string') {
+        return res.status(400).json({ error: "Status is required" });
+      }
+
+      const validStatuses = ['pending', 'confirmed', 'completed', 'cancelled'];
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+
+      await storage.updateBookingStatus(id, status);
+      const updatedBooking = await storage.getBooking(id);
+      
+      res.json(updatedBooking);
+    } catch (error) {
+      console.error("Error updating booking status:", error);
+      res.status(500).json({ error: "Failed to update booking status" });
     }
   });
 }
@@ -2451,6 +2553,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Service routes
   registerServiceRoutes(app);
+
+  // Register Booking routes
+  registerBookingRoutes(app);
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
