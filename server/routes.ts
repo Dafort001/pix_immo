@@ -495,6 +495,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // POST /api/auth/change-password - Change user password
+  app.post("/api/auth/change-password", authLimiter, requireAuth, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { currentPassword, newPassword } = req.body;
+      
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ error: "Aktuelles und neues Passwort erforderlich" });
+      }
+      
+      if (newPassword.length < 8) {
+        return res.status(400).json({ error: "Neues Passwort muss mindestens 8 Zeichen lang sein" });
+      }
+      
+      // Verify current password
+      const currentUser = await storage.getUser(user.id);
+      if (!currentUser) {
+        return res.status(404).json({ error: "Benutzer nicht gefunden" });
+      }
+      
+      const isValidPassword = await verifyPassword(currentPassword, currentUser.hashedPassword);
+      if (!isValidPassword) {
+        return res.status(401).json({ error: "Aktuelles Passwort ist falsch" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update password
+      await storage.updateUserPassword(user.id, hashedPassword);
+      
+      res.json({ 
+        success: true,
+        message: "Passwort erfolgreich geändert"
+      });
+    } catch (error) {
+      console.error("Password change error:", error);
+      res.status(500).json({ error: "Passwortänderung fehlgeschlagen" });
+    }
+  });
+
   // PATCH /api/device-profile - Update device profile (Office-Pro registration)
   app.patch("/api/device-profile", async (req: Request, res: Response) => {
     try {
