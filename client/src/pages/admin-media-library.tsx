@@ -21,6 +21,9 @@ export default function AdminMediaLibrary() {
   const [selectedPage, setSelectedPage] = useState<string>('all');
   const [editingImage, setEditingImage] = useState<PublicImage | null>(null);
   const [showDialog, setShowDialog] = useState(false);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
+  const [uploadPage, setUploadPage] = useState<string>('home');
   
   const { data: images = [], isLoading } = useQuery<PublicImage[]>({
     queryKey: ['/api/media-library'],
@@ -61,6 +64,42 @@ export default function AdminMediaLibrary() {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: async (files: File[]) => {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('files', file);
+      });
+      formData.append('page', uploadPage);
+
+      const response = await fetch('/api/media-library/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload fehlgeschlagen');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/media-library'] });
+      toast({ title: "Bilder erfolgreich hochgeladen" });
+      setShowUploadDialog(false);
+      setUploadFiles([]);
+      setUploadPage('home');
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Fehler beim Upload", 
+        description: error.message || "Bilder konnten nicht hochgeladen werden",
+        variant: "destructive"
+      });
+    },
+  });
+
   const handleEditImage = (image: PublicImage) => {
     setEditingImage(image);
     setShowDialog(true);
@@ -74,6 +113,23 @@ export default function AdminMediaLibrary() {
       description: editingImage.description || undefined,
       url: editingImage.url,
     });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setUploadFiles(files);
+  };
+
+  const handleUpload = () => {
+    if (uploadFiles.length === 0) {
+      toast({ 
+        title: "Keine Dateien ausgewählt", 
+        description: "Bitte wähle mindestens ein Bild aus",
+        variant: "destructive" 
+      });
+      return;
+    }
+    uploadMutation.mutate(uploadFiles);
   };
 
   const getPageBadge = (page: string) => {
@@ -113,7 +169,7 @@ export default function AdminMediaLibrary() {
               </div>
             </div>
 
-            <Button data-testid="button-add-image">
+            <Button onClick={() => setShowUploadDialog(true)} data-testid="button-add-image">
               <Plus className="h-5 w-5 mr-2" />
               Bild hochladen
             </Button>
@@ -293,6 +349,80 @@ export default function AdminMediaLibrary() {
                     Speichern
                   </Button>
                 </div>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showUploadDialog && (
+        <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Bilder hochladen</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Seite auswählen</label>
+                <Select value={uploadPage} onValueChange={setUploadPage}>
+                  <SelectTrigger data-testid="select-upload-page">
+                    <SelectValue placeholder="Wähle eine Seite" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="home">Homepage</SelectItem>
+                    <SelectItem value="pixcapture">PixCapture</SelectItem>
+                    <SelectItem value="gallery">Gallery</SelectItem>
+                    <SelectItem value="blog">Blog</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">
+                  Bilder auswählen
+                </label>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  data-testid="input-file-upload"
+                />
+                {uploadFiles.length > 0 && (
+                  <p className="text-sm text-gray-600 mt-2">
+                    {uploadFiles.length} Datei(en) ausgewählt
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <p className="text-sm text-blue-900">
+                  <strong>Hinweis:</strong> Bilder werden automatisch in Object Storage gespeichert 
+                  und können danach mit Alt-Text und SEO-Beschreibung versehen werden.
+                </p>
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setShowUploadDialog(false);
+                    setUploadFiles([]);
+                  }} 
+                  className="flex-1"
+                  data-testid="button-cancel-upload"
+                >
+                  Abbrechen
+                </Button>
+                <Button 
+                  onClick={handleUpload} 
+                  disabled={uploadMutation.isPending || uploadFiles.length === 0}
+                  className="flex-1"
+                  data-testid="button-submit-upload"
+                >
+                  {uploadMutation.isPending ? 'Wird hochgeladen...' : 'Hochladen'}
+                </Button>
               </div>
             </div>
           </DialogContent>

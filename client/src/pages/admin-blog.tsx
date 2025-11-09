@@ -43,6 +43,8 @@ export default function AdminBlog() {
     tags: '',
     featuredImage: '',
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
 
   const { data: posts = [], isLoading } = useQuery<BlogPost[]>({
     queryKey: ['/api/blog/all'],
@@ -189,6 +191,7 @@ export default function AdminBlog() {
   const handleCloseDialog = () => {
     setShowDialog(false);
     setEditingPost(null);
+    setSelectedImageFile(null);
     setFormData({
       title: '',
       slug: '',
@@ -199,6 +202,57 @@ export default function AdminBlog() {
       tags: '',
       featuredImage: '',
     });
+  };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImageFile(file);
+    }
+  };
+
+  const handleUploadFeaturedImage = async () => {
+    if (!selectedImageFile) {
+      toast({ 
+        title: "Keine Datei ausgewählt", 
+        variant: "destructive" 
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+    try {
+      const formData = new FormData();
+      formData.append('files', selectedImageFile);
+      formData.append('page', 'blog');
+
+      const response = await fetch('/api/media-library/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload fehlgeschlagen');
+      }
+
+      const result = await response.json();
+      
+      if (result.images && result.images.length > 0) {
+        const uploadedImage = result.images[0];
+        setFormData(prev => ({ ...prev, featuredImage: uploadedImage.url }));
+        setSelectedImageFile(null);
+        toast({ title: "Bild erfolgreich hochgeladen" });
+      }
+    } catch (error: any) {
+      toast({ 
+        title: "Upload fehlgeschlagen", 
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setUploadingImage(false);
+    }
   };
 
   const handleSave = () => {
@@ -226,7 +280,7 @@ export default function AdminBlog() {
         updates: postData,
       });
     } else {
-      createMutation.mutate(postData);
+      createMutation.mutate(postData as any);
     }
   };
 
@@ -514,14 +568,49 @@ export default function AdminBlog() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">
-                  Featured Image URL
+                  Featured Image
                 </label>
-                <Input
-                  value={formData.featuredImage}
-                  onChange={(e) => setFormData({...formData, featuredImage: e.target.value})}
-                  placeholder="https://..."
-                  data-testid="input-featured-image"
-                />
+                
+                {formData.featuredImage && (
+                  <div className="mb-3">
+                    <img 
+                      src={formData.featuredImage} 
+                      alt="Featured preview" 
+                      className="w-full h-48 object-cover rounded-lg border border-gray-200"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageFileChange}
+                      data-testid="input-featured-image-file"
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={handleUploadFeaturedImage}
+                      disabled={!selectedImageFile || uploadingImage}
+                      data-testid="button-upload-featured-image"
+                    >
+                      {uploadingImage ? 'Lädt...' : 'Hochladen'}
+                    </Button>
+                  </div>
+
+                  <p className="text-xs text-gray-500">
+                    Oder URL direkt eingeben:
+                  </p>
+                  
+                  <Input
+                    value={formData.featuredImage}
+                    onChange={(e) => setFormData({...formData, featuredImage: e.target.value})}
+                    placeholder="https://..."
+                    data-testid="input-featured-image-url"
+                  />
+                </div>
               </div>
 
               <div className="flex gap-3 pt-4">

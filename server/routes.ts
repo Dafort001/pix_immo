@@ -343,6 +343,84 @@ function registerMediaLibraryRoutes(app: Express) {
       res.status(500).json({ error: "Failed to delete public image" });
     }
   });
+
+  // POST /api/media-library/upload - Upload images to Object Storage (admin auth required)
+  app.post("/api/media-library/upload", upload.array("files", 20), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const files = req.files as Express.Multer.File[];
+      const page = req.body.page;
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      if (!page || !['home', 'pixcapture', 'gallery', 'blog'].includes(page)) {
+        return res.status(400).json({ error: "Invalid page parameter" });
+      }
+
+      // Import uploadFile from objectStorage
+      const { uploadFile } = await import("./objectStorage");
+      const createdImages = [];
+
+      for (const file of files) {
+        // Validate file type (images only)
+        if (!file.mimetype.startsWith('image/')) {
+          console.warn(`Skipping non-image file: ${file.originalname}`);
+          continue;
+        }
+
+        // Generate unique filename
+        const timestamp = Date.now();
+        const randomStr = randomBytes(8).toString('hex');
+        const ext = file.originalname.split('.').pop() || 'jpg';
+        const filename = `${page}_${timestamp}_${randomStr}.${ext}`;
+        const objectPath = `media-library/${page}/${filename}`;
+
+        // Upload to Object Storage
+        const uploadResult = await uploadFile(objectPath, file.buffer, file.mimetype);
+
+        if (!uploadResult.ok) {
+          console.error(`Failed to upload ${file.originalname}:`, uploadResult.error);
+          continue;
+        }
+
+        // Generate public URL (using Replit Object Storage URL pattern)
+        const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+        const publicUrl = `https://storage.googleapis.com/${bucketId}/${objectPath}`;
+
+        // Create database entry with default alt text
+        const newImage = await storage.createPublicImage({
+          page,
+          url: publicUrl,
+          alt: file.originalname.replace(/\.[^/.]+$/, ''), // filename without extension
+          description: null,
+          updatedBy: req.user.id,
+        } as any);
+
+        createdImages.push(newImage);
+      }
+
+      // Fail if no files were successfully uploaded
+      if (createdImages.length === 0) {
+        return res.status(400).json({ 
+          error: "Keine Bilder konnten hochgeladen werden. Überprüfe die Dateiformate (nur Bilder erlaubt)." 
+        });
+      }
+
+      res.status(201).json({
+        success: true,
+        uploadedCount: createdImages.length,
+        totalFiles: files.length,
+        images: createdImages,
+      });
+    } catch (error) {
+      console.error("Error uploading media library images:", error);
+      res.status(500).json({ error: "Failed to upload images" });
+    }
+  });
 }
 
 // Register Invoice Routes
