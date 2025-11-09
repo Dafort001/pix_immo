@@ -1,8 +1,8 @@
 import { Link } from "wouter";
 import { SEOHead } from "@shared/components";
 import { FooterPixCapture } from "../components/FooterPixCapture";
-import { Button } from "../components/ui/button";
-import { Card } from "../components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 
 export default function PixCaptureImpressum() {
@@ -17,10 +17,10 @@ export default function PixCaptureImpressum() {
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/pixcapture-home">
+            <Link href="/pixcapture">
               <span className="text-xl font-semibold tracking-tight cursor-pointer">pixcapture.app</span>
             </Link>
-            <Link href="/pixcapture-home">
+            <Link href="/pixcapture">
               <Button variant="ghost" size="sm">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Zurück

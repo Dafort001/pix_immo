@@ -15,15 +15,16 @@ import {
   Star,
   Shield,
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { Input } from '../components/ui/input';
-import { Textarea } from '../components/ui/textarea';
-import { SEOHead } from '../components/SEOHead';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { SEOHead } from '@shared/components';
 import { FooterPixCapture } from '../components/FooterPixCapture';
-import { Badge } from '../components/ui/badge';
-import { toast } from 'sonner@2.0.3';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 
 export default function PixCaptureExpertCall() {
+  const { toast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -39,7 +40,8 @@ export default function PixCaptureExpertCall() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Integration mit TidyCal / Google Calendar API
-    toast.success('Anfrage erfolgreich gesendet!', {
+    toast({
+      title: 'Anfrage erfolgreich gesendet!',
       description: 'Wir melden uns innerhalb von 24 Stunden bei dir.',
     });
     console.log('Expert Call Request:', formData);
@@ -90,7 +92,7 @@ export default function PixCaptureExpertCall() {
       <header className="bg-white border-b border-[#E5E5E5] sticky top-0 z-20">
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
-            <Link href="/pixcapture-help">
+            <Link href="/pixcapture/help">
               <Button variant="ghost" size="icon" className="h-10 w-10">
                 <ArrowLeft className="h-5 w-5" />
               </Button>

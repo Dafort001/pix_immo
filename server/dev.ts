@@ -5,9 +5,75 @@ import { registerRoutes } from "./routes";
 import { scheduleCleanup } from "./cleanup";
 import { storage } from "./storage";
 import { seedDemoJobs } from "./seed-demo-jobs";
+import { createServer as createViteServer, createLogger } from "vite";
+import viteConfig from "../vite.config";
+import fs from "fs";
+import path from "path";
+import { nanoid } from "nanoid";
 
 const app = express();
 const server = createServer(app);
+
+const viteLogger = createLogger();
+
+// Multi-SPA Vite setup: serves both pix.immo (client/) and pixcapture (pixcapture/)
+async function setupMultiSpaVite(app: express.Express, server: ReturnType<typeof createServer>) {
+  const serverOptions = {
+    middlewareMode: true,
+    hmr: { server },
+    allowedHosts: true as const,
+  };
+
+  const vite = await createViteServer({
+    ...viteConfig,
+    configFile: false,
+    customLogger: {
+      ...viteLogger,
+      error: (msg, options) => {
+        viteLogger.error(msg, options);
+        process.exit(1);
+      },
+    },
+    server: serverOptions,
+    appType: "custom",
+  });
+
+  app.use(vite.middlewares);
+  app.use("*", async (req, res, next) => {
+    const url = req.originalUrl;
+
+    try {
+      // Path-based routing: /pixcapture/* or /pxc/* → pixcapture app
+      const isPixcapture = url.startsWith("/pixcapture") || url.startsWith("/pxc");
+      
+      const templatePath = isPixcapture
+        ? path.resolve(import.meta.dirname, "..", "client", "pixcapture", "index.html")
+        : path.resolve(import.meta.dirname, "..", "client", "index.html");
+      
+      // Always reload the index.html file from disk in case it changes
+      let template = await fs.promises.readFile(templatePath, "utf-8");
+      
+      // Add cache-busting to script tag
+      if (isPixcapture) {
+        template = template.replace(
+          'src="/pixcapture/src/main.tsx"',
+          `src="/pixcapture/src/main.tsx?v=${nanoid()}"`
+        );
+      } else {
+        template = template.replace(
+          'src="/src/main.tsx"',
+          `src="/src/main.tsx?v=${nanoid()}"`
+        );
+      }
+      
+      const page = await vite.transformIndexHtml(url, template);
+      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+    } catch (e) {
+      vite.ssrFixStacktrace(e as Error);
+      next(e);
+    }
+  });
+}
 
 async function startDevServer() {
   const port = process.env.PORT || 5000;
@@ -70,8 +136,8 @@ async function startDevServer() {
     }
   });
 
-  // Setup Vite middleware for React app
-  await setupVite(app, server);
+  // Setup Multi-SPA Vite middleware (serves both pix.immo and pixcapture)
+  await setupMultiSpaVite(app, server);
 
   // Schedule cleanup job to remove orphaned temp files every 6 hours
   scheduleCleanup(6, 6);

@@ -8,12 +8,10 @@ export function PixCaptureNav() {
   const [location] = useLocation();
 
   const navItems = [
-    { href: '/pixcapture-home', label: 'Start', icon: null },
-    { href: '/app-upload', label: 'Upload', icon: Upload },
-    { href: '/pixcapture-help', label: 'Hilfe', icon: HelpCircle },
-    { href: '/pixcapture-expert-call', label: 'Experten-Call', icon: Phone },
-    { href: '/pixcapture-about', label: 'About', icon: Info },
-    { href: '/app-login', label: 'Mein Konto', icon: User },
+    { href: '/pixcapture', label: 'Start', icon: null },
+    { href: '/pixcapture/help', label: 'Hilfe', icon: HelpCircle },
+    { href: '/pixcapture/expert-call', label: 'Experten-Call', icon: Phone },
+    { href: '/pixcapture/about', label: 'About', icon: Info },
   ];
 
   const isActive = (href: string) => location === href;
@@ -25,7 +23,7 @@ export function PixCaptureNav() {
         <div className="max-w-[1400px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <Link href="/pixcapture-home">
+            <Link href="/pixcapture">
               <h1
                 className="text-[#1A1A1C] cursor-pointer hover:text-[#64BF49] transition-colors"
                 style={{
@@ -68,7 +66,7 @@ export function PixCaptureNav() {
       <header className="md:hidden bg-white border-b border-[#E5E5E5] sticky top-0 z-50">
         <div className="px-6 py-4 flex items-center justify-between">
           {/* Logo */}
-          <Link href="/pixcapture-home">
+          <Link href="/pixcapture">
             <h1
               className="text-[#1A1A1C]"
               style={{
@@ -129,10 +127,9 @@ export function PixCaptureNavMinimal() {
   const [location] = useLocation();
 
   const navItems = [
-    { href: '/pixcapture-home', label: 'Start' },
-    { href: '/app-upload', label: 'Upload' },
-    { href: '/pixcapture-help', label: 'Hilfe' },
-    { href: '/pixcapture-expert-call', label: 'Experten-Call' },
+    { href: '/pixcapture', label: 'Start' },
+    { href: '/pixcapture/help', label: 'Hilfe' },
+    { href: '/pixcapture/expert-call', label: 'Experten-Call' },
   ];
 
   const isActive = (href: string) => location === href;

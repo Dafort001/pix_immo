@@ -15,13 +15,13 @@ import NotFound from "./pages/not-found";
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/about" component={About} />
-      <Route path="/agb" component={AGB} />
-      <Route path="/datenschutz" component={Datenschutz} />
-      <Route path="/expert-call" component={ExpertCall} />
-      <Route path="/help" component={Help} />
-      <Route path="/impressum" component={Impressum} />
+      <Route path="/pixcapture" component={Home} />
+      <Route path="/pixcapture/about" component={About} />
+      <Route path="/pixcapture/agb" component={AGB} />
+      <Route path="/pixcapture/datenschutz" component={Datenschutz} />
+      <Route path="/pixcapture/expert-call" component={ExpertCall} />
+      <Route path="/pixcapture/help" component={Help} />
+      <Route path="/pixcapture/impressum" component={Impressum} />
       <Route component={NotFound} />
     </Switch>
   );

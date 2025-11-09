@@ -15,7 +15,7 @@ export default function PixCaptureAbout() {
       {/* Header */}
       <header className="border-b border-[var(--color-light-grey)]">
         <div className="max-w-[1200px] mx-auto px-8 py-6">
-          <Link href="/pixcapture-home">
+          <Link href="/pixcapture">
             <h1 className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-[var(--color-black)] leading-none hover:text-[var(--color-grey)] transition-colors">
               pixcapture.app
             </h1>
@@ -99,7 +99,7 @@ export default function PixCaptureAbout() {
             <section className="border-t border-[var(--color-light-grey)] pt-12">
               <h3 className="mb-6">Jetzt starten</h3>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/app-login">
+                <Link href="/pixcapture/login">
                   <button className="px-6 py-3 bg-[var(--color-accent)] text-[var(--color-white)] rounded-md hover:opacity-90 transition-opacity text-[16px] tracking-[-0.02em]">
                     Zur Anmeldung
                   </button>

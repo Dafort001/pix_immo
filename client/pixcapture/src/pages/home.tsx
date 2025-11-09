@@ -17,13 +17,13 @@ export default function PixCaptureHome() {
       <SEOHead
         title="pixcapture.app – Immobilienfotos selbst erstellen"
         description="Self-Service-Plattform für Immobilienfotografie. Mit dem iPhone fotografieren, hochladen und professionell bearbeiten lassen."
-        path="/pixcapture-home"
+        path="/pixcapture"
       />
 
       {/* Logo und Hamburger Menu - Fixed Top */}
       <div className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between">
         {/* Logo als Home-Button */}
-        <Link href="/pixcapture-home">
+        <Link href="/pixcapture">
           <h1 className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-[var(--color-black)] leading-none hover:text-[var(--color-grey)] transition-colors">
             pixcapture.app
           </h1>
@@ -43,7 +43,7 @@ export default function PixCaptureHome() {
       {menuOpen && (
         <div className="fixed top-20 right-8 z-50 bg-[var(--color-white)] border border-[var(--color-light-grey)] shadow-lg">
           <nav className="flex flex-col px-8 py-6 gap-6">
-            <Link href="/pixcapture-app">
+            <Link href="/pixcapture/app">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
@@ -51,7 +51,7 @@ export default function PixCaptureHome() {
                 Upload
               </span>
             </Link>
-            <Link href="/pixcapture-help">
+            <Link href="/pixcapture/help">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
@@ -59,7 +59,7 @@ export default function PixCaptureHome() {
                 Hilfe
               </span>
             </Link>
-            <Link href="/pixcapture-expert-call">
+            <Link href="/pixcapture/expert-call">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
@@ -67,7 +67,7 @@ export default function PixCaptureHome() {
                 Expertengespräch
               </span>
             </Link>
-            <Link href="/pixcapture-about">
+            <Link href="/pixcapture/about">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
@@ -102,22 +102,22 @@ export default function PixCaptureHome() {
 
         {/* Navigation Buttons - Above Strip (Desktop only) */}
         <nav className="hidden lg:flex items-center justify-start gap-6 pb-6 pl-8 bg-[var(--color-white)] h-[40px]">
-          <Link href="/pixcapture-app">
+          <Link href="/pixcapture/app">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.12em]">
               Upload
             </span>
           </Link>
-          <Link href="/pixcapture-help">
+          <Link href="/pixcapture/help">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
               Hilfe
             </span>
           </Link>
-          <Link href="/pixcapture-expert-call">
+          <Link href="/pixcapture/expert-call">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
               Expertengespräch
             </span>
           </Link>
-          <Link href="/pixcapture-about">
+          <Link href="/pixcapture/about">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
               About
             </span>
@@ -139,7 +139,7 @@ export default function PixCaptureHome() {
       <section className="max-w-[1200px] mx-auto px-8 py-20">
         <div className="grid md:grid-cols-2 gap-8">
           {/* Help Card */}
-          <Link href="/pixcapture-help">
+          <Link href="/pixcapture/help">
             <div className="bg-[#74A4EA] p-12 cursor-pointer hover:opacity-90 transition-opacity min-h-[280px] flex flex-col justify-between">
               <div>
                 <div className="h-12 w-12 mb-6">
@@ -191,7 +191,7 @@ export default function PixCaptureHome() {
 
         {/* Upload Quick Access */}
         <div className="mt-8">
-          <Link href="/app-upload">
+          <Link href="/pixcapture/upload">
             <div className="bg-[#1A1A1C] p-12 cursor-pointer hover:bg-[#2A2A2C] transition-colors">
               <div className="flex items-center justify-between">
                 <div>

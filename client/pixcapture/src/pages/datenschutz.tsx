@@ -355,7 +355,7 @@ export default function PixCaptureDatenschutz() {
                 </button>
               </Link>
               
-              <Link href="/pixcapture-home">
+              <Link href="/pixcapture">
                 <span className="text-[var(--color-black)] tracking-tight cursor-pointer active:opacity-70 transition-opacity">
                   pixcapture.app
                 </span>

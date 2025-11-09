@@ -1,7 +1,7 @@
 # pix.immo - Real Estate Media Platform
 
 ## Overview
-pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. The platform consists of a Mobile PWA for on-site photo capture and a Web Portal for client/admin management and gallery uploads. It features a **complete booking system** (service catalog, multi-step wizard, admin management), robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. **Service area: Hamburg only (30 km radius)** - Berlin location removed as of January 2025. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
+pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. **Multi-SPA Architecture**: The platform now consists of TWO independent web applications sharing a single backend - (1) **pix.immo** - professional web portal at `/` for full-service photography, and (2) **pixcapture.app** - budget-conscious mobile-first SPA at `/pixcapture` for DIY smartphone photography. Both share ~90% backend infrastructure (PostgreSQL/Neon database, Cloudflare Workers backend, session auth) while maintaining separate frontends (`client/src/` and `client/pixcapture/src/`). The platform features a **complete booking system** (service catalog, multi-step wizard, admin management), robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. **Service area: Hamburg only (30 km radius)** - Berlin location removed as of January 2025. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
 
 ## User Preferences
 - Hono for Cloudflare Workers compatibility
@@ -33,8 +33,9 @@ pix.immo is a professional real estate media platform built with Node.js 22, Typ
 The frontend is a React 18 SPA utilizing Wouter for routing, Shadcn UI components, and Tailwind CSS for a modern, responsive design with dark/light mode support. Forms are handled with `react-hook-form` and `zod` for validation. Brand colors Sage Dark (#4A5849) and Copper (#A85B2E) define the visual identity.
 
 ### Technical Implementations
-- **Backend**: Hono v4 framework on Node.js 22, optimized for Cloudflare Workers.
-- **Frontend**: React 18 SPA with Wouter, Shadcn UI, Tailwind CSS, `react-hook-form` + `zod`, and TanStack Query v5.
+- **Backend**: Hono v4 framework on Node.js 22, optimized for Cloudflare Workers. Shared across both SPAs.
+- **Frontend**: React 18 with Wouter, Shadcn UI, Tailwind CSS, `react-hook-form` + `zod`, and TanStack Query v5.
+- **Multi-SPA Development Server**: Path-based routing via `server/dev.ts` enables simultaneous development of both apps on single port (5000). Routes: `/` → pix.immo (professional), `/pixcapture` → pixcapture.app (budget DIY). Both access shared backend APIs without CORS. Import strategy: `@/components/ui/*` for shared Shadcn components, `../components/*` for app-specific components, `@shared/*` for cross-app utilities (SEOHead, room types).
 - **Database**: PostgreSQL (Neon) with Drizzle ORM.
 - **Object Storage**: Replit Object Storage (Google Cloud Storage) for RAW images, edited files, and handoff packages.
 - **Authentication**: Custom session-based authentication with HTTP-only cookies and Scrypt password hashing, designed to be Lucia-compatible, including password reset and rate limiting.

@@ -17,15 +17,15 @@ import {
   Image as ImageIcon,
   Zap,
 } from 'lucide-react';
-import { Button } from '../components/ui/button';
-import { SEOHead } from '../components/SEOHead';
+import { Button } from '@/components/ui/button';
+import { SEOHead } from '@shared/components';
 import { FooterPixCapture } from '../components/FooterPixCapture';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from '../components/ui/accordion';
+} from '@/components/ui/accordion';
 
 export default function PixCaptureHelp() {
   const [activeStep, setActiveStep] = useState<number | null>(null);
@@ -144,7 +144,7 @@ export default function PixCaptureHelp() {
         <div className="max-w-[1200px] mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Link href="/pixcapture-home">
+              <Link href="/pixcapture">
                 <Button variant="ghost" size="icon" className="h-10 w-10">
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
@@ -162,7 +162,7 @@ export default function PixCaptureHelp() {
               </div>
             </div>
 
-            <Link href="/pixcapture-expert-call">
+            <Link href="/pixcapture/expert-call">
               <Button className="bg-[#74A4EA] text-white hover:opacity-90" style={{ borderRadius: '0px' }}>
                 <Phone className="h-5 w-5 mr-2" />
                 Experten-Call buchen
@@ -404,7 +404,7 @@ export default function PixCaptureHelp() {
               Buche ein kostenloses Expertengespräch und lass dich persönlich beraten.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/pixcapture-expert-call">
+              <Link href="/pixcapture/expert-call">
                 <Button className="bg-[#74A4EA] text-white hover:opacity-90" style={{ borderRadius: '0px', height: '48px' }}>
                   <Phone className="h-5 w-5 mr-2" />
                   Experten-Call buchen
