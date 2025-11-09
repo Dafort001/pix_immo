@@ -7,7 +7,7 @@ export default function Contact() {
     <div className="min-h-screen bg-white">
       <SEOHead
         title="Kontakt"
-        description="Kontaktieren Sie PIX.IMMO in Hamburg oder Berlin. Professionelle Immobilienfotografie mit schneller Buchung und persönlichem Service."
+        description="Kontaktieren Sie PIX.IMMO in Hamburg. Professionelle Immobilienfotografie mit schneller Buchung und persönlichem Service."
         path="/kontakt"
       />
       {/* Header */}
@@ -35,13 +35,13 @@ export default function Contact() {
         <div className="w-full max-w-4xl mx-auto px-6">
           <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">Kontakt</h1>
           <p className="text-lg text-gray-600 mb-12">
-            Sie erreichen uns direkt an unseren beiden Standorten.
+            Sie erreichen uns direkt in Hamburg.
           </p>
 
-          <div className="grid md:grid-cols-2 gap-8 mb-12">
+          <div className="max-w-lg mb-12">
             {/* Hamburg */}
             <div className="bg-gray-50 p-8 rounded-lg" data-testid="contact-hamburg">
-              <h2 className="text-2xl font-semibold mb-4">Hamburg (Hauptsitz)</h2>
+              <h2 className="text-2xl font-semibold mb-4">Hamburg</h2>
               <div className="space-y-4">
                 <div>
                   <p className="font-semibold text-lg mb-2">Daniel Fortmann</p>
@@ -67,39 +67,6 @@ export default function Contact() {
                   >
                     <Phone className="h-4 w-4" />
                     +49 172 430 7071
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Berlin */}
-            <div className="bg-gray-50 p-8 rounded-lg" data-testid="contact-berlin">
-              <h2 className="text-2xl font-semibold mb-4">Berlin (Kooperationspartner)</h2>
-              <div className="space-y-4">
-                <div>
-                  <p className="font-semibold text-lg mb-2">Nino Gehrig Photography</p>
-                  <p className="text-gray-700">
-                    Lychener Straße 1<br />
-                    10437 Berlin<br />
-                    Deutschland
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  <a
-                    href="mailto:mail@nino-foto.de"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                    data-testid="email-berlin"
-                  >
-                    <Mail className="h-4 w-4" />
-                    mail@nino-foto.de
-                  </a>
-                  <a
-                    href="tel:+491636762943"
-                    className="flex items-center gap-2 text-primary hover:underline"
-                    data-testid="phone-berlin"
-                  >
-                    <Phone className="h-4 w-4" />
-                    +49 163 676 2943
                   </a>
                 </div>
               </div>
