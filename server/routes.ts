@@ -938,9 +938,48 @@ function registerBookingRoutes(app: Express) {
   });
 }
 
+// Helper: Convert Service to DTO for booking wizard
+function serviceToDTO(service: any): any {
+  // Convert price from cents to euros
+  const priceEuro = service.netPrice !== null ? service.netPrice / 100 : null;
+  
+  // Derive unit from priceNote or category
+  let unit: "flat" | "per_item" | "per_km" | "range" | "from" = "flat";
+  let priceRange: string | undefined;
+  let priceFrom: string | undefined;
+  
+  if (service.priceNote) {
+    const note = service.priceNote.toLowerCase();
+    if (note.includes('/km') || note.includes('pro km')) {
+      unit = "per_km";
+    } else if (note.includes('/stück') || note.includes('pro stück') || note.includes('je ')) {
+      unit = "per_item";
+    } else if (note.includes('ab ')) {
+      unit = "from";
+      priceFrom = service.priceNote;
+    } else if (note.includes('-') && service.netPrice === null) {
+      unit = "range";
+      priceRange = service.priceNote;
+    }
+  }
+  
+  return {
+    id: service.id, // Include ID for backend service selection mapping
+    code: service.serviceCode,
+    category: service.category,
+    title: service.name,
+    description: service.description || "",
+    price_net: priceEuro,
+    unit,
+    price_range: priceRange,
+    price_from: priceFrom,
+    notes: service.notes || "",
+  };
+}
+
 // Register Service Routes
 function registerServiceRoutes(app: Express) {
-  // GET /api/services - Get all services (public)
+  // GET /api/services - Get all services (public, returns raw Service[])
   app.get("/api/services", async (req: Request, res: Response) => {
     try {
       const services = await storage.getAllServices();
@@ -948,6 +987,28 @@ function registerServiceRoutes(app: Express) {
     } catch (error) {
       console.error("Error fetching services:", error);
       res.status(500).json({ error: "Failed to fetch services" });
+    }
+  });
+
+  // GET /api/services/catalog - Get services as DTO for booking wizard (public)
+  app.get("/api/services/catalog", async (req: Request, res: Response) => {
+    try {
+      const services = await storage.getActiveServices();
+      const serviceDTOs = services.map(serviceToDTO);
+      
+      const catalog = {
+        services: serviceDTOs,
+        meta: {
+          currency: "EUR",
+          vat_rate: 0.19,
+          last_updated: new Date().toISOString(),
+        },
+      };
+      
+      res.json(catalog);
+    } catch (error) {
+      console.error("Error fetching service catalog:", error);
+      res.status(500).json({ error: "Failed to fetch service catalog" });
     }
   });
 

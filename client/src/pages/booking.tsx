@@ -21,13 +21,14 @@ import { AddressAutocomplete } from "@/components/AddressAutocomplete";
 import type { AddressValidationResult } from "@/components/AddressAutocomplete";
 import { StaticMapThumbnail } from "@/components/StaticMapThumbnail";
 
-// Service types matching JSON structure
+// Service types for booking wizard frontend (DTO from backend)
 interface ServiceData {
+  id: string; // Service UUID for backend mapping
   code: string;
   category: string;
   title: string;
   description: string;
-  price_net: number | null;
+  price_net: number | null; // In euros (converted from cents)
   unit: "flat" | "per_item" | "per_km" | "range" | "from";
   price_range?: string;
   price_from?: string;
@@ -158,9 +159,9 @@ export default function Booking() {
   const [services, setServices] = useState<ServiceCatalog | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load services from API
+  // Load services from API (catalog endpoint for booking wizard)
   useEffect(() => {
-    fetch("/api/services")
+    fetch("/api/services/catalog")
       .then((res) => {
         if (!res.ok) {
           throw new Error(`HTTP ${res.status}`);
@@ -208,52 +209,57 @@ export default function Booking() {
   const watchRegion = form.watch("region");
   const watchKilometers = form.watch("kilometers");
 
-  const createOrderMutation = useMutation({
+  const createBookingMutation = useMutation({
     mutationFn: async (data: BookingFormData) => {
-      // Prepare order payload matching requirements
-      const items = Object.entries(selectedServices)
-        .filter(([, qty]) => qty > 0)
-        .map(([code, qty]) => {
+      // Map service codes to service IDs for backend
+      const serviceSelections: Record<string, number> = {};
+      Object.entries(selectedServices).forEach(([code, qty]) => {
+        if (qty > 0) {
           const service = services?.services.find(s => s.code === code);
-          return {
-            code,
-            unit: service?.unit || "flat",
-            qty,
-          };
-        });
+          if (service) {
+            serviceSelections[service.id] = qty; // Use service ID for backend
+          }
+        }
+      });
 
-      const orderPayload = {
+      // Calculate total prices in cents
+      const totalNetCents = Math.round(totalNet * 100);
+      const vatAmountCents = Math.round(vatAmount * 100);
+      const grossAmountCents = Math.round(totalGross * 100);
+
+      const bookingPayload = {
         region: data.region,
         kilometers: data.region === "EXT" ? data.kilometers : undefined,
-        contact: {
-          name: data.contactName || undefined,
-          email: data.contactEmail || undefined,
-          mobile: data.contactMobile,
-        },
+        contactName: data.contactName || undefined,
+        contactEmail: data.contactEmail || undefined,
+        contactMobile: data.contactMobile,
         propertyName: data.propertyName,
-        propertyAddress: data.propertyAddress,
+        propertyAddress: data.propertyAddress || undefined,
         // Google Maps verified address data
-        addressLat: data.addressLat,
-        addressLng: data.addressLng,
-        addressPlaceId: data.addressPlaceId,
-        addressFormatted: data.addressFormatted,
-        propertyType: data.propertyType,
-        preferredDate: data.preferredDate,
-        preferredTime: data.preferredTime,
-        specialRequirements: data.specialRequirements,
+        addressLat: data.addressLat || undefined,
+        addressLng: data.addressLng || undefined,
+        addressPlaceId: data.addressPlaceId || undefined,
+        addressFormatted: data.addressFormatted || undefined,
+        propertyType: data.propertyType || undefined,
+        preferredDate: data.preferredDate || undefined,
+        preferredTime: data.preferredTime || undefined,
+        specialRequirements: data.specialRequirements || undefined,
+        totalNetPrice: totalNetCents,
+        vatAmount: vatAmountCents,
+        grossAmount: grossAmountCents,
         agbAccepted: data.agbAccepted,
-        items,
+        serviceSelections,
       };
 
-      const response = await apiRequest("POST", "/api/orders", orderPayload);
+      const response = await apiRequest("POST", "/api/bookings", bookingPayload);
       return response;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
-      sessionStorage.setItem("lastOrder", JSON.stringify(data));
+      queryClient.invalidateQueries({ queryKey: ["/api/bookings"] });
+      sessionStorage.setItem("lastBooking", JSON.stringify(data));
       toast({
-        title: "Bestellung erfolgreich",
-        description: "Ihre Bestellung wurde übermittelt. Sie erhalten in Kürze eine SMS-Bestätigung.",
+        title: "Buchung erfolgreich",
+        description: "Ihre Buchung wurde übermittelt. Sie erhalten in Kürze eine SMS-Bestätigung.",
       });
       setLocation("/booking-confirmation");
     },
@@ -335,7 +341,7 @@ export default function Booking() {
   };
 
   const onSubmit = (data: BookingFormData) => {
-    createOrderMutation.mutate(data);
+    createBookingMutation.mutate(data);
   };
 
   const selectedCount = Object.values(selectedServices).filter(q => q > 0).length;
@@ -1053,10 +1059,10 @@ export default function Booking() {
                       }
                     )();
                   }}
-                  disabled={createOrderMutation.isPending || !form.getValues("agbAccepted")}
-                  data-testid="button-submit-order"
+                  disabled={createBookingMutation.isPending || !form.getValues("agbAccepted")}
+                  data-testid="button-submit-booking"
                 >
-                  {createOrderMutation.isPending ? "Wird gesendet..." : "Bestellung absenden"}
+                  {createBookingMutation.isPending ? "Wird gesendet..." : "Buchung absenden"}
                   <Check className="ml-2 h-4 w-4" />
                 </Button>
               </div>
