@@ -7,7 +7,7 @@ export default function About() {
     <div className="min-h-screen bg-white">
       <SEOHead
         title="Über PIX.IMMO"
-        description="Professionelle Immobilienfotografie für Hamburg und Berlin. Hochwertige Aufnahmen, Drohnenvideos, 360°-Touren und KI-gestützte Bildoptimierung."
+        description="Professionelle Immobilienfotografie für Hamburg. Hochwertige Aufnahmen, Drohnenvideos, 360°-Touren und KI-gestützte Bildoptimierung."
         path="/about"
       />
       {/* Header */}
@@ -37,7 +37,7 @@ export default function About() {
             Über PIX.IMMO
           </h1>
           <p className="text-lg text-gray-700 mb-12">
-            Professionelle Immobilienfotografie für Hamburg und Berlin
+            Professionelle Immobilienfotografie für Hamburg
           </p>
 
           <div className="space-y-12">
@@ -45,7 +45,7 @@ export default function About() {
             <section>
               <p className="text-gray-700 leading-relaxed mb-4">
                 PIX.IMMO ist spezialisiert auf hochwertige Immobilienfotografie für Makler, Bauträger und Immobilienverwalter. 
-                Mit Standorten in Hamburg und Berlin bieten wir ein umfassendes Leistungsportfolio, das von klassischer Objektfotografie 
+                Mit Standort in Hamburg bieten wir ein umfassendes Leistungsportfolio, das von klassischer Objektfotografie 
                 über Drohnenaufnahmen bis hin zu KI-gestützter Bildoptimierung reicht.
               </p>
               <p className="text-gray-700 leading-relaxed">
@@ -147,34 +147,22 @@ export default function About() {
               </div>
             </section>
 
-            {/* Standorte */}
+            {/* Standort */}
             <section data-testid="section-locations">
-              <h2 className="text-2xl font-semibold mb-4">Unsere Standorte</h2>
+              <h2 className="text-2xl font-semibold mb-4">Unser Standort</h2>
               
-              <div className="space-y-6">
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-2">Hamburg (Hauptsitz)</h3>
-                  <p className="text-gray-700 mb-2">
-                    <strong>Daniel Fortmann</strong>
-                  </p>
-                  <p className="text-gray-700">
-                    Servicebereich: Hamburg und Umgebung (bis 30 km inklusive)
-                  </p>
-                </div>
-
-                <div className="bg-gray-50 p-6 rounded-lg">
-                  <h3 className="text-xl font-semibold mb-2">Berlin (Partnerstandort)</h3>
-                  <p className="text-gray-700 mb-2">
-                    <strong>Nino Gehrig Photography</strong>
-                  </p>
-                  <p className="text-gray-700">
-                    Servicebereich: Berlin S-Bahn-Ring (inklusive)
-                  </p>
-                </div>
+              <div className="bg-gray-50 p-6 rounded-lg max-w-lg">
+                <h3 className="text-xl font-semibold mb-2">Hamburg</h3>
+                <p className="text-gray-700 mb-2">
+                  <strong>Daniel Fortmann</strong>
+                </p>
+                <p className="text-gray-700">
+                  Servicebereich: Hamburg und Umgebung (bis 30 km inklusive)
+                </p>
               </div>
 
               <p className="text-gray-700 mt-6">
-                Für Objekte außerhalb dieser Bereiche berechnen wir 0,80 € pro gefahrenem Kilometer (Hin- und Rückweg). 
+                Für Objekte außerhalb dieses Bereichs berechnen wir 0,80 € pro gefahrenem Kilometer (Hin- und Rückweg). 
                 Weitere Informationen finden Sie auf unserer{" "}
                 <Link href="/preise">
                   <span className="underline cursor-pointer">Preisseite</span>
