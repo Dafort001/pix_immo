@@ -120,6 +120,7 @@ export default function AdminPassword() {
                         <Input
                           type="password"
                           placeholder="Aktuelles Passwort eingeben"
+                          autoComplete="current-password"
                           {...field}
                           data-testid="input-current-password"
                         />
@@ -139,6 +140,7 @@ export default function AdminPassword() {
                         <Input
                           type="password"
                           placeholder="Mindestens 8 Zeichen"
+                          autoComplete="new-password"
                           {...field}
                           data-testid="input-new-password"
                         />
@@ -158,6 +160,7 @@ export default function AdminPassword() {
                         <Input
                           type="password"
                           placeholder="Neues Passwort wiederholen"
+                          autoComplete="new-password"
                           {...field}
                           data-testid="input-confirm-password"
                         />

@@ -199,9 +199,20 @@ function validateUploadContentType(req: Request, res: Response, next: any) {
     return next();
   }
   
+  // Skip auth routes that don't require a body (e.g., logout)
+  if (req.path === '/api/auth/logout' || req.path === '/api/auth/demo') {
+    return next();
+  }
+  
   const contentType = req.headers['content-type'];
   
+  // Allow requests without Content-Type if they have no body
   if (!contentType) {
+    // Check if request has a body by checking Content-Length
+    const contentLength = req.headers['content-length'];
+    if (!contentLength || contentLength === '0') {
+      return next();
+    }
     return res.status(403).json({ error: 'Content-Type header required' });
   }
   
@@ -224,7 +235,8 @@ function validateUploadContentType(req: Request, res: Response, next: any) {
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable trust proxy for correct IP detection with Replit's reverse proxy
-  app.set('trust proxy', true);
+  // Set to 1 to trust only the first proxy (Replit's reverse proxy)
+  app.set('trust proxy', 1);
   
   // Production domains for CORS
   const productionOrigins = [

@@ -36,7 +36,7 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/me"],
+    queryKey: ["/api/auth/me"],
     queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
   });
 
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
       queryClient.clear();

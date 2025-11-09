@@ -61,7 +61,7 @@ export default function OrderForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/me"],
+    queryKey: ["/api/auth/me"],
     queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
   });
 

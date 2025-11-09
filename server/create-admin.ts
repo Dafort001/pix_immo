@@ -15,6 +15,11 @@ async function createAdmin() {
       console.log("✅ Admin user already exists:", email);
       console.log("Role:", existingUser.role);
       
+      // Always update password to ensure it's correct
+      const hashedPassword = await hashPassword(password);
+      await storage.updateUserPassword(existingUser.id, hashedPassword);
+      console.log("✅ Updated admin password");
+      
       // Update role to admin if it's not
       if (existingUser.role !== "admin") {
         await db.update(users)
