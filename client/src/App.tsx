@@ -60,6 +60,7 @@ import ExportOverview from "@/pages/export-overview";
 import EditorDashboard from "@/pages/editor-dashboard";
 import EditorJobDetail from "@/pages/editor-job-detail";
 import AdminPassword from "@/pages/admin-password";
+import AdminEditorManagement from "@/pages/admin-editor-management";
 
 function Router() {
   return (
@@ -70,6 +71,7 @@ function Router() {
       <Route path="/register" component={Register} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin/password" component={AdminPassword} />
+      <Route path="/admin/editor-management" component={AdminEditorManagement} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
