@@ -170,6 +170,9 @@ export interface IStorage {
   getBooking(id: string): Promise<Booking | undefined>;
   getUserBookings(userId: string): Promise<Booking[]>;
   getAllBookings(): Promise<Booking[]>;
+  getBookingItems(bookingId: string): Promise<BookingItem[]>;
+  getBookingWithItems(bookingId: string): Promise<{ booking: Booking; items: BookingItem[] } | undefined>;
+  updateBookingStatus(id: string, status: string): Promise<void>;
   
   // Client gallery operations
   getClientGallery(userId: string): Promise<any[]>;
@@ -1198,6 +1201,29 @@ export class DatabaseStorage implements IStorage {
 
   async getAllBookings(): Promise<Booking[]> {
     return await db.select().from(bookings).orderBy(desc(bookings.createdAt));
+  }
+
+  async getBookingItems(bookingId: string): Promise<BookingItem[]> {
+    return await db.select().from(bookingItems).where(eq(bookingItems.bookingId, bookingId));
+  }
+
+  async getBookingWithItems(bookingId: string): Promise<{ booking: Booking; items: BookingItem[] } | undefined> {
+    const booking = await this.getBooking(bookingId);
+    if (!booking) return undefined;
+    
+    const items = await this.getBookingItems(bookingId);
+    return { booking, items };
+  }
+
+  async updateBookingStatus(id: string, status: string): Promise<void> {
+    const timestamp = Date.now();
+    const updateData: any = { status };
+    
+    if (status === 'confirmed') {
+      updateData.confirmedAt = timestamp;
+    }
+    
+    await db.update(bookings).set(updateData).where(eq(bookings.id, id));
   }
 
   async getClientGallery(userId: string): Promise<any[]> {

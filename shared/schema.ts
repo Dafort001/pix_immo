@@ -1181,3 +1181,14 @@ export const insertServiceSchema = createInsertSchema(services).omit({
   id: true,
   createdAt: true,
 });
+
+export const insertBookingSchema = createInsertSchema(bookings).omit({
+  id: true,
+  createdAt: true,
+  confirmedAt: true,
+});
+
+export const insertBookingItemSchema = createInsertSchema(bookingItems).omit({
+  id: true,
+  createdAt: true,
+});
