@@ -1184,8 +1184,15 @@ export const insertServiceSchema = createInsertSchema(services).omit({
 
 export const insertBookingSchema = createInsertSchema(bookings).omit({
   id: true,
+  userId: true, // userId comes from authenticated session, not request body
   createdAt: true,
   confirmedAt: true,
+  status: true, // status is set by backend to 'pending' by default
+}).extend({
+  agbAccepted: z.boolean().refine((val) => val === true, {
+    message: "AGB must be accepted",
+  }), // Accept boolean from frontend, backend converts to string
+  serviceSelections: z.record(z.string(), z.number()), // {serviceId: quantity}
 });
 
 export const insertBookingItemSchema = createInsertSchema(bookingItems).omit({

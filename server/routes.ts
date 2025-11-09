@@ -844,10 +844,11 @@ function registerBookingRoutes(app: Express) {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
       const userId = req.user.id;
-      const { serviceSelections, ...bookingData } = req.body;
+      const { serviceSelections, agbAccepted, ...bookingData } = req.body;
 
       const result = await storage.createBooking(userId, {
         ...bookingData,
+        agbAccepted: agbAccepted ? "true" : "false", // Convert boolean to string for DB
         serviceSelections,
       });
 
