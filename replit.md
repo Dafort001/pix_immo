@@ -1,7 +1,7 @@
 # pix.immo - Real Estate Media Platform
 
 ## Overview
-pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. The platform consists of a Mobile PWA for on-site photo capture and a Web Portal for client/admin management and gallery uploads. It features an order management system, robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. **Service area: Hamburg only (30 km radius)** - Berlin location removed as of January 2025. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
+pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React, aiming to connect real estate professionals with photography services. It streamlines the ordering and management of property photography. The platform consists of a Mobile PWA for on-site photo capture and a Web Portal for client/admin management and gallery uploads. It features a **complete booking system** (service catalog, multi-step wizard, admin management), robust session-based authentication with role-based access, and is designed for future AI integration for image analysis and deployment to Cloudflare Workers. **Service area: Hamburg only (30 km radius)** - Berlin location removed as of January 2025. The ultimate goal is to enhance property listings with high-quality, AI-analyzed media.
 
 ## User Preferences
 - Hono for Cloudflare Workers compatibility
@@ -61,7 +61,13 @@ The frontend is a React 18 SPA utilizing Wouter for routing, Shadcn UI component
 ### Feature Specifications
 - **Authentication**: Signup, login, logout, password reset, session management.
 - **User Roles**: "admin" and "client" with distinct access.
-- **Order Management**: Create, view, and update orders with defined statuses.
+- **Booking System** (COMPLETED):
+  - Service Catalog API with DTO conversion (cents → euros)
+  - Multi-step booking wizard (/buchen) with region selection, service selection, property details
+  - Backend validation (Zod schemas, auth enforcement, session-based userId)
+  - Admin bookings management (/admin/bookings) with table view, status updates, filtering (status/region), details dialog
+  - Booking items with quantity, unit price, total price calculations
+  - E2E tested and verified (login → booking creation → admin management → status updates → filtering)
 - **Homepage, Gallery, Blog, Pricing Pages**: Standard web content.
 - **Mobile App Screens**: SplashScreen, CameraScreen (with self-timer, zoom, grid), GalleryScreen (photo stacks, bulk operations), UploadScreen (job selection, multi-stack upload with progress).
 - **Web Portal Screens**: UploadsOverview, GallerySelection, Payment, StatusTimeline, and Delivery for complete photo order workflow.
