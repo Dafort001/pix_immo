@@ -57,6 +57,8 @@ import EditingGallery from "@/pages/portal/gallery-editing";
 import NotFound from "@/pages/not-found";
 import TestDebug from "@/pages/test-debug";
 import ExportOverview from "@/pages/export-overview";
+import EditorDashboard from "@/pages/editor-dashboard";
+import EditorJobDetail from "@/pages/editor-job-detail";
 
 function Router() {
   return (
@@ -112,6 +114,8 @@ function Router() {
       <Route path="/portal/gallery-upload" component={CustomerUploadGallery} />
       <Route path="/portal/gallery-photographer" component={PhotographerUploadGallery} />
       <Route path="/portal/gallery-editing" component={EditingGallery} />
+      <Route path="/editor-dashboard" component={EditorDashboard} />
+      <Route path="/editor-job-detail" component={EditorJobDetail} />
       <Route path="/test" component={TestDebug} />
       <Route component={NotFound} />
     </Switch>

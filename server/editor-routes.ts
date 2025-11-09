@@ -187,6 +187,23 @@ export function registerEditorRoutes(app: Express): void {
     }
   });
 
+  // GET /api/editor-assignments/by-job/:jobNumber - Get assignment by job number (enriched)
+  app.get("/api/editor-assignments/by-job/:jobNumber", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
+    try {
+      const { jobNumber } = req.params;
+      const assignment = await storage.getAssignmentByJobNumber(jobNumber);
+
+      if (!assignment) {
+        return res.status(404).json({ error: "Assignment not found for this job" });
+      }
+
+      res.json(assignment);
+    } catch (error) {
+      console.error("Get assignment by job number error:", error);
+      res.status(500).json({ error: "Failed to fetch assignment" });
+    }
+  });
+
   // GET /api/jobs/:jobId/assignments - Get all assignments for a job (including history)
   app.get("/api/jobs/:jobId/assignments", requireAuth, requireRole("admin"), validateUuidParam("jobId"), async (req: Request, res: Response) => {
     try {

@@ -389,6 +389,11 @@ export interface IStorage {
     editor: import("@shared/schema").Editor;
     imageCount: number;
   }>>;
+  getAssignmentByJobNumber(jobNumber: string): Promise<(import("@shared/schema").EditorAssignment & {
+    job: import("@shared/schema").Job;
+    editor: import("@shared/schema").Editor;
+    imageCount: number;
+  }) | undefined>;
   updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void>;
   updateAssignmentPriority(id: string, priority: string): Promise<void>;
   updateAssignmentNotes(id: string, notes: string): Promise<void>;
@@ -2146,6 +2151,37 @@ export class DatabaseStorage implements IStorage {
       editor: row.editor,
       imageCount: Number(row.imageCount),
     }));
+  }
+
+  async getAssignmentByJobNumber(jobNumber: string): Promise<(EditorAssignment & { job: Job; editor: Editor; imageCount: number }) | undefined> {
+    const results = await db
+      .select({
+        assignment: editorAssignments,
+        job: jobs,
+        editor: editors,
+        imageCount: sql<number>`COALESCE(COUNT(DISTINCT ${images.id}), 0)`.as('image_count'),
+      })
+      .from(editorAssignments)
+      .innerJoin(jobs, eq(editorAssignments.jobId, jobs.id))
+      .innerJoin(editors, eq(editorAssignments.editorId, editors.id))
+      .leftJoin(shoots, eq(jobs.id, shoots.jobId))
+      .leftJoin(images, eq(shoots.id, images.shootId))
+      .where(eq(jobs.jobNumber, jobNumber))
+      .groupBy(editorAssignments.id, jobs.id, editors.id)
+      .orderBy(desc(editorAssignments.assignedAt), desc(editorAssignments.id))
+      .limit(1);
+
+    if (results.length === 0) {
+      return undefined;
+    }
+
+    const row = results[0];
+    return {
+      ...row.assignment,
+      job: row.job,
+      editor: row.editor,
+      imageCount: Number(row.imageCount),
+    };
   }
 
   async updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void> {

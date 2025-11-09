@@ -21,7 +21,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SEOHead } from '@/components/SEOHead';
-import { WebFooter } from '@/components/WebFooter';
 import {
   Select,
   SelectContent,
@@ -380,8 +379,6 @@ export default function EditorDashboard() {
           </div>
         )}
       </main>
-
-      <WebFooter />
     </div>
   );
 }
