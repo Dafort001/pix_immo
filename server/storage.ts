@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -340,6 +340,56 @@ export interface IStorage {
   }): Promise<import("@shared/schema").GalleryAnnotation>;
   getFileAnnotations(fileId: string): Promise<import("@shared/schema").GalleryAnnotation[]>;
   deleteGalleryAnnotation(id: string): Promise<void>;
+
+  // Editor Management Operations
+  createEditor(data: {
+    name: string;
+    email: string;
+    specialization?: string;
+    availability?: string;
+    maxConcurrentJobs?: number;
+  }): Promise<import("@shared/schema").Editor>;
+  getEditor(id: string): Promise<import("@shared/schema").Editor | undefined>;
+  getEditorByEmail(email: string): Promise<import("@shared/schema").Editor | undefined>;
+  getAllEditors(): Promise<import("@shared/schema").Editor[]>;
+  updateEditorAvailability(id: string, availability: string): Promise<void>;
+  updateEditor(id: string, data: {
+    name?: string;
+    specialization?: string;
+    maxConcurrentJobs?: number;
+  }): Promise<void>;
+  deleteEditor(id: string): Promise<void>;
+
+  // Editor Assignment Operations
+  assignJobToEditor(data: {
+    jobId: string;
+    editorId: string;
+    priority?: string;
+    notes?: string;
+  }): Promise<import("@shared/schema").EditorAssignment>;
+  getEditorAssignment(id: string): Promise<import("@shared/schema").EditorAssignment | undefined>;
+  getEditorAssignments(editorId: string): Promise<import("@shared/schema").EditorAssignment[]>;
+  getJobAssignment(jobId: string): Promise<import("@shared/schema").EditorAssignment | undefined>;
+  getAllJobAssignments(jobId: string): Promise<import("@shared/schema").EditorAssignment[]>; // Full assignment history including reassignments
+  getAllAssignments(filters?: {
+    status?: string;
+    priority?: string;
+    editorId?: string;
+  }): Promise<import("@shared/schema").EditorAssignment[]>;
+  updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void>;
+  updateAssignmentPriority(id: string, priority: string): Promise<void>;
+  updateAssignmentNotes(id: string, notes: string): Promise<void>;
+  reassignJob(prevAssignmentId: string, newEditorId: string, notes?: string): Promise<import("@shared/schema").EditorAssignment>; // Returns new assignment, cancels old one
+  cancelAssignment(id: string): Promise<void>;
+  getEditorWorkload(editorId: string): Promise<number>; // Count of active assignments
+  getEditorWorkloadDetailed(editorId: string): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+  }>;
+  getAvailableEditors(filters?: {
+    specialization?: string;
+    maxWorkload?: boolean; // Only editors below maxConcurrentJobs
+  }): Promise<import("@shared/schema").Editor[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1859,6 +1909,301 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(galleryAnnotations)
       .where(eq(galleryAnnotations.id, id));
+  }
+
+  // ==================== Editor Management Operations ====================
+
+  async createEditor(data: {
+    name: string;
+    email: string;
+    specialization?: string;
+    availability?: string;
+    maxConcurrentJobs?: number;
+  }): Promise<Editor> {
+    const id = randomUUID();
+    const [editor] = await db
+      .insert(editors)
+      .values({
+        id,
+        name: data.name,
+        email: data.email.toLowerCase(),
+        specialization: data.specialization,
+        availability: data.availability || 'available',
+        maxConcurrentJobs: data.maxConcurrentJobs || 3,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .returning();
+    return editor;
+  }
+
+  async getEditor(id: string): Promise<Editor | undefined> {
+    const [editor] = await db
+      .select()
+      .from(editors)
+      .where(eq(editors.id, id));
+    return editor || undefined;
+  }
+
+  async getEditorByEmail(email: string): Promise<Editor | undefined> {
+    const [editor] = await db
+      .select()
+      .from(editors)
+      .where(eq(editors.email, email.toLowerCase()));
+    return editor || undefined;
+  }
+
+  async getAllEditors(): Promise<Editor[]> {
+    return await db
+      .select()
+      .from(editors)
+      .orderBy(editors.name);
+  }
+
+  async updateEditorAvailability(id: string, availability: string): Promise<void> {
+    await db
+      .update(editors)
+      .set({ 
+        availability,
+        updatedAt: Date.now(),
+      })
+      .where(eq(editors.id, id));
+  }
+
+  async updateEditor(id: string, data: {
+    name?: string;
+    specialization?: string;
+    maxConcurrentJobs?: number;
+  }): Promise<void> {
+    await db
+      .update(editors)
+      .set({ 
+        ...data,
+        updatedAt: Date.now(),
+      })
+      .where(eq(editors.id, id));
+  }
+
+  async deleteEditor(id: string): Promise<void> {
+    await db
+      .delete(editors)
+      .where(eq(editors.id, id));
+  }
+
+  // ==================== Editor Assignment Operations ====================
+
+  async assignJobToEditor(data: {
+    jobId: string;
+    editorId: string;
+    priority?: string;
+    notes?: string;
+  }): Promise<EditorAssignment> {
+    const id = randomUUID();
+    const [assignment] = await db
+      .insert(editorAssignments)
+      .values({
+        id,
+        jobId: data.jobId,
+        editorId: data.editorId,
+        status: 'assigned',
+        priority: data.priority || 'normal',
+        assignedAt: Date.now(),
+        notes: data.notes,
+      })
+      .returning();
+    return assignment;
+  }
+
+  async getEditorAssignment(id: string): Promise<EditorAssignment | undefined> {
+    const [assignment] = await db
+      .select()
+      .from(editorAssignments)
+      .where(eq(editorAssignments.id, id));
+    return assignment || undefined;
+  }
+
+  async getEditorAssignments(editorId: string): Promise<EditorAssignment[]> {
+    return await db
+      .select()
+      .from(editorAssignments)
+      .where(eq(editorAssignments.editorId, editorId))
+      .orderBy(desc(editorAssignments.assignedAt));
+  }
+
+  async getJobAssignment(jobId: string): Promise<EditorAssignment | undefined> {
+    const [assignment] = await db
+      .select()
+      .from(editorAssignments)
+      .where(and(
+        eq(editorAssignments.jobId, jobId),
+        eq(editorAssignments.status, 'assigned')
+      ));
+    return assignment || undefined;
+  }
+
+  async getAllJobAssignments(jobId: string): Promise<EditorAssignment[]> {
+    return await db
+      .select()
+      .from(editorAssignments)
+      .where(eq(editorAssignments.jobId, jobId))
+      .orderBy(desc(editorAssignments.assignedAt));
+  }
+
+  async getAllAssignments(filters?: {
+    status?: string;
+    priority?: string;
+    editorId?: string;
+  }): Promise<EditorAssignment[]> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(editorAssignments.status, filters.status));
+    }
+    if (filters?.priority) {
+      conditions.push(eq(editorAssignments.priority, filters.priority));
+    }
+    if (filters?.editorId) {
+      conditions.push(eq(editorAssignments.editorId, filters.editorId));
+    }
+
+    return await db
+      .select()
+      .from(editorAssignments)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(editorAssignments.assignedAt));
+  }
+
+  async updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void> {
+    const updates: any = { status };
+    
+    if (timestampField === 'startedAt') {
+      updates.startedAt = Date.now();
+    } else if (timestampField === 'completedAt') {
+      updates.completedAt = Date.now();
+    }
+
+    await db
+      .update(editorAssignments)
+      .set(updates)
+      .where(eq(editorAssignments.id, id));
+  }
+
+  async updateAssignmentPriority(id: string, priority: string): Promise<void> {
+    await db
+      .update(editorAssignments)
+      .set({ priority })
+      .where(eq(editorAssignments.id, id));
+  }
+
+  async updateAssignmentNotes(id: string, notes: string): Promise<void> {
+    await db
+      .update(editorAssignments)
+      .set({ notes })
+      .where(eq(editorAssignments.id, id));
+  }
+
+  async reassignJob(prevAssignmentId: string, newEditorId: string, notes?: string): Promise<EditorAssignment> {
+    // 1. Get the previous assignment
+    const prevAssignment = await this.getEditorAssignment(prevAssignmentId);
+    if (!prevAssignment) {
+      throw new Error('Previous assignment not found');
+    }
+
+    // 2. Cancel the old assignment
+    await db
+      .update(editorAssignments)
+      .set({ 
+        status: 'cancelled',
+        cancelledAt: Date.now(),
+      })
+      .where(eq(editorAssignments.id, prevAssignmentId));
+
+    // 3. Create new assignment with audit trail
+    const newId = randomUUID();
+    const [newAssignment] = await db
+      .insert(editorAssignments)
+      .values({
+        id: newId,
+        jobId: prevAssignment.jobId,
+        editorId: newEditorId,
+        status: 'assigned',
+        priority: prevAssignment.priority,
+        assignedAt: Date.now(),
+        notes: notes || `Reassigned from ${prevAssignment.editorId}`,
+        reassignedFrom: prevAssignment.editorId,
+      })
+      .returning();
+
+    return newAssignment;
+  }
+
+  async cancelAssignment(id: string): Promise<void> {
+    await db
+      .update(editorAssignments)
+      .set({ 
+        status: 'cancelled',
+        cancelledAt: Date.now(),
+      })
+      .where(eq(editorAssignments.id, id));
+  }
+
+  async getEditorWorkload(editorId: string): Promise<number> {
+    const assignments = await db
+      .select()
+      .from(editorAssignments)
+      .where(and(
+        eq(editorAssignments.editorId, editorId),
+        eq(editorAssignments.status, 'assigned')
+      ));
+    return assignments.length;
+  }
+
+  async getEditorWorkloadDetailed(editorId: string): Promise<{
+    total: number;
+    byStatus: Record<string, number>;
+  }> {
+    const assignments = await db
+      .select()
+      .from(editorAssignments)
+      .where(eq(editorAssignments.editorId, editorId));
+
+    const byStatus: Record<string, number> = {};
+    assignments.forEach(a => {
+      byStatus[a.status] = (byStatus[a.status] || 0) + 1;
+    });
+
+    return {
+      total: assignments.length,
+      byStatus,
+    };
+  }
+
+  async getAvailableEditors(filters?: {
+    specialization?: string;
+    maxWorkload?: boolean;
+  }): Promise<Editor[]> {
+    let editorsList = await db
+      .select()
+      .from(editors)
+      .where(eq(editors.availability, 'available'))
+      .orderBy(editors.name);
+
+    if (filters?.specialization) {
+      editorsList = editorsList.filter(e => e.specialization === filters.specialization);
+    }
+
+    if (filters?.maxWorkload) {
+      // Filter editors who haven't reached max capacity
+      const editorsWithCapacity: Editor[] = [];
+      for (const editor of editorsList) {
+        const workload = await this.getEditorWorkload(editor.id);
+        if (workload < editor.maxConcurrentJobs) {
+          editorsWithCapacity.push(editor);
+        }
+      }
+      return editorsWithCapacity;
+    }
+
+    return editorsList;
   }
 }
 

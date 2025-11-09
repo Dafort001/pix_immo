@@ -918,6 +918,37 @@ export const editorialComments = pgTable("editorial_comments", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
+// Editor Management System
+export const editors = pgTable("editors", {
+  id: varchar("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  specialization: varchar("specialization", { length: 100 }), // 'residential', 'commercial', 'luxury', etc.
+  availability: varchar("availability", { length: 50 }).notNull().default("available"), // 'available', 'busy', 'unavailable'
+  maxConcurrentJobs: bigint("max_concurrent_jobs", { mode: "number" }).notNull().default(3),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  updatedAt: bigint("updated_at", { mode: "number" }).notNull(),
+}, (table) => ({
+  emailIdx: { unique: true, name: "editors_email_idx", columns: [table.email] },
+}));
+
+export const editorAssignments = pgTable("editor_assignments", {
+  id: varchar("id").primaryKey(),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  editorId: varchar("editor_id").notNull().references(() => editors.id, { onDelete: "cascade" }),
+  status: varchar("status", { length: 50 }).notNull().default("assigned"), // 'assigned', 'in_progress', 'completed', 'cancelled'
+  priority: varchar("priority", { length: 20 }).notNull().default("normal"), // 'low', 'normal', 'high', 'urgent'
+  assignedAt: bigint("assigned_at", { mode: "number" }).notNull(),
+  startedAt: bigint("started_at", { mode: "number" }),
+  completedAt: bigint("completed_at", { mode: "number" }),
+  cancelledAt: bigint("cancelled_at", { mode: "number" }),
+  notes: text("notes"),
+  reassignedFrom: varchar("reassigned_from"), // Previous editor ID if reassigned
+}, (table) => ({
+  editorStatusIdx: { name: "editor_assignments_editor_status_idx", columns: [table.editorId, table.status] },
+  jobIdx: { name: "editor_assignments_job_idx", columns: [table.jobId] },
+}));
+
 // Editorial Relations
 export const editorialItemsRelations = relations(editorialItems, ({ one, many }) => ({
   createdByUser: one(users, {
@@ -944,9 +975,29 @@ export const editorialCommentsRelations = relations(editorialComments, ({ one })
   }),
 }));
 
+// Editor Relations
+export const editorsRelations = relations(editors, ({ many }) => ({
+  assignments: many(editorAssignments),
+}));
+
+export const editorAssignmentsRelations = relations(editorAssignments, ({ one }) => ({
+  job: one(jobs, {
+    fields: [editorAssignments.jobId],
+    references: [jobs.id],
+  }),
+  editor: one(editors, {
+    fields: [editorAssignments.editorId],
+    references: [editors.id],
+  }),
+}));
+
 // Editorial Types
 export type EditorialItem = typeof editorialItems.$inferSelect;
 export type EditorialComment = typeof editorialComments.$inferSelect;
+
+// Editor Types
+export type Editor = typeof editors.$inferSelect;
+export type EditorAssignment = typeof editorAssignments.$inferSelect;
 
 // Insert Schemas
 export const insertEditorialItemSchema = createInsertSchema(editorialItems).omit({
@@ -963,6 +1014,21 @@ export const insertEditorialCommentSchema = createInsertSchema(editorialComments
 
 export type InsertEditorialItem = z.infer<typeof insertEditorialItemSchema>;
 export type InsertEditorialComment = z.infer<typeof insertEditorialCommentSchema>;
+
+// Editor Insert Schemas
+export const insertEditorSchema = createInsertSchema(editors).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertEditorAssignmentSchema = createInsertSchema(editorAssignments).omit({
+  id: true,
+  assignedAt: true,
+});
+
+export type InsertEditor = z.infer<typeof insertEditorSchema>;
+export type InsertEditorAssignment = z.infer<typeof insertEditorAssignmentSchema>;
 
 // Demo Phase - Job/Caption/Expose Schemas
 export const createDemoJobSchema = z.object({
