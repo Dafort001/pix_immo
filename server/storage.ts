@@ -378,6 +378,17 @@ export interface IStorage {
     limit?: number;
     offset?: number;
   }): Promise<import("@shared/schema").EditorAssignment[]>;
+  getAllAssignmentsWithDetails(filters?: {
+    status?: string;
+    priority?: string;
+    editorId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<import("@shared/schema").EditorAssignment & {
+    job: import("@shared/schema").Job;
+    editor: import("@shared/schema").Editor;
+    imageCount: number;
+  }>>;
   updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void>;
   updateAssignmentPriority(id: string, priority: string): Promise<void>;
   updateAssignmentNotes(id: string, notes: string): Promise<void>;
@@ -2086,6 +2097,55 @@ export class DatabaseStorage implements IStorage {
     }
 
     return await query;
+  }
+
+  async getAllAssignmentsWithDetails(filters?: {
+    status?: string;
+    priority?: string;
+    editorId?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Array<EditorAssignment & { job: Job; editor: Editor; imageCount: number }>> {
+    const conditions = [];
+    if (filters?.status) {
+      conditions.push(eq(editorAssignments.status, filters.status));
+    }
+    if (filters?.priority) {
+      conditions.push(eq(editorAssignments.priority, filters.priority));
+    }
+    if (filters?.editorId) {
+      conditions.push(eq(editorAssignments.editorId, filters.editorId));
+    }
+
+    // Build query with JOINs
+    const limit = filters?.limit || 50; // Default pagination
+    const offset = filters?.offset || 0;
+
+    const results = await db
+      .select({
+        assignment: editorAssignments,
+        job: jobs,
+        editor: editors,
+        imageCount: sql<number>`COALESCE(COUNT(DISTINCT ${images.id}), 0)`.as('image_count'),
+      })
+      .from(editorAssignments)
+      .innerJoin(jobs, eq(editorAssignments.jobId, jobs.id))
+      .innerJoin(editors, eq(editorAssignments.editorId, editors.id))
+      .leftJoin(shoots, eq(jobs.id, shoots.jobId))
+      .leftJoin(images, eq(shoots.id, images.shootId))
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .groupBy(editorAssignments.id, jobs.id, editors.id)
+      .orderBy(desc(editorAssignments.assignedAt))
+      .limit(limit)
+      .offset(offset);
+
+    // Map to enriched assignment objects
+    return results.map((row) => ({
+      ...row.assignment,
+      job: row.job,
+      editor: row.editor,
+      imageCount: Number(row.imageCount),
+    }));
   }
 
   async updateAssignmentStatus(id: string, status: string, timestampField?: string): Promise<void> {

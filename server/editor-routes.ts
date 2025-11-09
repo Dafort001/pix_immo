@@ -154,7 +154,7 @@ export function registerEditorRoutes(app: Express): void {
   // Editor Assignments (Admin-only)
   // ============================================================
 
-  // GET /api/editor-assignments - List all assignments (with optional filters)
+  // GET /api/editor-assignments - List all assignments with enriched data (with optional filters)
   app.get("/api/editor-assignments", requireAuth, requireRole("admin"), async (req: Request, res: Response) => {
     try {
       const filters = {
@@ -165,7 +165,7 @@ export function registerEditorRoutes(app: Express): void {
         offset: req.query.offset ? parseInt(req.query.offset as string) : undefined,
       };
 
-      const assignments = await storage.getAllAssignments(filters);
+      const assignments = await storage.getAllAssignmentsWithDetails(filters);
       res.json(assignments);
     } catch (error) {
       console.error("Get assignments error:", error);
