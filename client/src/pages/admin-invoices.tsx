@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ArrowLeft, Plus, FileText, Send, DollarSign, Calendar } from 'lucide-react';
+import { ArrowLeft, Plus, FileText, Send, DollarSign, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -205,15 +205,29 @@ export default function AdminInvoices() {
               <Card key={invoice.id} data-testid={`invoice-card-${invoice.id}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle className="text-lg">{invoice.invoiceNumber}</CardTitle>
                       <p className="text-sm text-gray-600 mt-1">{invoice.customerName}</p>
+                      <p className="text-xs text-gray-500 mt-1">{invoice.serviceDescription}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-2xl font-bold text-gray-900">
-                        {(invoice.grossAmount / 100).toFixed(2)}€
-                      </p>
-                      {getStatusBadge(invoice.status)}
+                    <div className="flex items-center gap-4">
+                      <div className="text-right">
+                        <p className="text-2xl font-bold text-gray-900">
+                          {(invoice.grossAmount / 100).toFixed(2)}€
+                        </p>
+                        {getStatusBadge(invoice.status)}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
+                          data-testid={`button-download-pdf-${invoice.id}`}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          PDF
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardHeader>

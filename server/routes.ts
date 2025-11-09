@@ -492,6 +492,39 @@ function registerInvoiceRoutes(app: Express) {
       res.status(500).json({ error: "Failed to delete invoice" });
     }
   });
+
+  // GET /api/invoices/:id/pdf - Download invoice as PDF (auth required)
+  app.get("/api/invoices/:id/pdf", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+
+      const { id } = req.params;
+      const invoice = await storage.getInvoice(id);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // Check ownership or admin
+      if (req.user.role !== "admin" && invoice.createdBy !== req.user.id) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+      
+      // Import PDF generator
+      const { generateInvoicePDF } = await import('./utils/invoice-pdf');
+      
+      const pdfBuffer = await generateInvoicePDF(invoice);
+      
+      // Send PDF as download
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${invoice.invoiceNumber}.pdf"`);
+      res.send(pdfBuffer);
+      
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      res.status(500).json({ error: "Failed to generate PDF" });
+    }
+  });
 }
 
 // Register Blog Routes
