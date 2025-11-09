@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Plus, FileText, Send, DollarSign, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,18 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SEOHead } from '@/components/SEOHead';
 import { useToast } from '@/hooks/use-toast';
-
-interface Invoice {
-  id: string;
-  invoiceNumber: string;
-  customerName: string;
-  customerEmail: string;
-  invoiceDate: number;
-  grossAmount: number;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled';
-}
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import type { Invoice, InsertInvoice } from '@shared/schema';
 
 export default function AdminInvoices() {
   const [, setLocation] = useLocation();
@@ -32,40 +26,77 @@ export default function AdminInvoices() {
     netAmount: '',
   });
 
-  const mockInvoices: Invoice[] = [];
+  const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
+    queryKey: ['/api/invoices'],
+  });
+
+  const { data: nextNumberData } = useQuery<{ nextNumber: string }>({
+    queryKey: ['/api/invoices/next-number'],
+    enabled: showCreateDialog,
+  });
 
   const stats = {
-    draft: 0,
-    sent: 0,
-    paid: 0,
-    total: 0,
-    totalRevenue: 0,
+    draft: invoices.filter(inv => inv.status === 'draft').length,
+    sent: invoices.filter(inv => inv.status === 'sent').length,
+    paid: invoices.filter(inv => inv.status === 'paid').length,
+    total: invoices.length,
+    totalRevenue: invoices.reduce((sum, inv) => sum + (inv.grossAmount / 100), 0),
   };
 
+  const createMutation = useMutation({
+    mutationFn: async (data: Omit<InsertInvoice, 'createdBy'>) => {
+      return await apiRequest('POST', '/api/invoices', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices/next-number'] });
+      toast({ title: "Rechnung erstellt" });
+      setShowCreateDialog(false);
+      setFormData({
+        customerName: '',
+        customerEmail: '',
+        customerAddress: '',
+        serviceDescription: '',
+        netAmount: '',
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fehler",
+        description: error.message || "Rechnung konnte nicht erstellt werden",
+        variant: "destructive"
+      });
+    },
+  });
+
   const handleCreateInvoice = () => {
-    const netAmount = parseFloat(formData.netAmount) || 0;
-    const vatAmount = Math.round(netAmount * 0.19 * 100) / 100;
+    const netAmountFloat = parseFloat(formData.netAmount) || 0;
+    const netAmount = Math.round(netAmountFloat * 100);
+    const vatAmount = Math.round(netAmount * 0.19);
     const grossAmount = netAmount + vatAmount;
 
-    toast({
-      title: "Rechnung erstellt",
-      description: `Rechnung über ${grossAmount.toFixed(2)}€ (inkl. 19% MwSt.) wurde erstellt`,
-    });
-
-    setShowCreateDialog(false);
-    setFormData({
-      customerName: '',
-      customerEmail: '',
-      customerAddress: '',
-      serviceDescription: '',
-      netAmount: '',
+    createMutation.mutate({
+      customerName: formData.customerName,
+      customerEmail: formData.customerEmail,
+      customerAddress: formData.customerAddress || undefined,
+      serviceDescription: formData.serviceDescription,
+      invoiceDate: Date.now(),
+      netAmount,
+      vatRate: 19,
+      vatAmount,
+      grossAmount,
+      lineItems: JSON.stringify([{
+        description: formData.serviceDescription,
+        quantity: 1,
+        unitPrice: netAmount,
+        totalPrice: netAmount
+      }]),
+      status: 'draft',
     });
   };
 
   const getNextInvoiceNumber = () => {
-    const year = new Date().getFullYear();
-    const nextNumber = stats.total + 1;
-    return `INV-${year}-${String(nextNumber).padStart(3, '0')}`;
+    return nextNumberData?.nextNumber || 'INV-XXXX-XXX';
   };
 
   const getStatusBadge = (status: Invoice['status']) => {
@@ -135,7 +166,26 @@ export default function AdminInvoices() {
       </header>
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {mockInvoices.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-2 flex-1">
+                      <Skeleton className="h-6 w-32" />
+                      <Skeleton className="h-4 w-48" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-8 w-24" />
+                      <Skeleton className="h-6 w-20" />
+                    </div>
+                  </div>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
+        ) : invoices.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <FileText className="h-16 w-16 text-gray-300 mb-4" />
@@ -151,7 +201,7 @@ export default function AdminInvoices() {
           </Card>
         ) : (
           <div className="grid gap-4">
-            {mockInvoices.map((invoice) => (
+            {invoices.map((invoice) => (
               <Card key={invoice.id} data-testid={`invoice-card-${invoice.id}`}>
                 <CardHeader>
                   <div className="flex items-center justify-between">

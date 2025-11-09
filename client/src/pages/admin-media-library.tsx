@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { ArrowLeft, Plus, Edit2, Trash2, Image as ImageIcon, Upload, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,43 +9,71 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 import { SEOHead } from '@/components/SEOHead';
 import { useToast } from '@/hooks/use-toast';
-import { homePageImages, pixCaptureImages, type ImageAsset } from '@/data/images';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import type { PublicImage } from '@shared/schema';
 
 export default function AdminMediaLibrary() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedPage, setSelectedPage] = useState<string>('all');
-  const [editingImage, setEditingImage] = useState<ImageAsset | null>(null);
+  const [editingImage, setEditingImage] = useState<PublicImage | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   
-  const allImages: ImageAsset[] = [...homePageImages, ...pixCaptureImages];
+  const { data: images = [], isLoading } = useQuery<PublicImage[]>({
+    queryKey: ['/api/media-library'],
+  });
   
   const filteredImages = selectedPage === 'all' 
-    ? allImages 
-    : allImages.filter(img => img.page === selectedPage);
+    ? images 
+    : images.filter(img => img.page === selectedPage);
 
   const stats = {
-    total: allImages.length,
-    home: homePageImages.length,
-    pixcapture: pixCaptureImages.length,
-    gallery: 0,
-    blog: 0,
+    total: images.length,
+    home: images.filter(img => img.page === 'home').length,
+    pixcapture: images.filter(img => img.page === 'pixcapture').length,
+    gallery: images.filter(img => img.page === 'gallery').length,
+    blog: images.filter(img => img.page === 'blog').length,
   };
 
-  const handleEditImage = (image: ImageAsset) => {
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; alt: string; description?: string; url: string }) => {
+      return await apiRequest('PATCH', '/api/media-library/' + data.id, {
+        alt: data.alt,
+        description: data.description,
+        url: data.url,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/media-library'] });
+      toast({ title: "Bild aktualisiert" });
+      setShowDialog(false);
+      setEditingImage(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Fehler", 
+        description: error.message || "Bild konnte nicht aktualisiert werden",
+        variant: "destructive"
+      });
+    },
+  });
+
+  const handleEditImage = (image: PublicImage) => {
     setEditingImage(image);
     setShowDialog(true);
   };
 
   const handleSaveImage = () => {
-    toast({
-      title: "Bild aktualisiert",
-      description: "Die Änderungen wurden gespeichert",
+    if (!editingImage) return;
+    updateMutation.mutate({
+      id: editingImage.id,
+      alt: editingImage.alt,
+      description: editingImage.description || undefined,
+      url: editingImage.url,
     });
-    setShowDialog(false);
-    setEditingImage(null);
   };
 
   const getPageBadge = (page: string) => {
@@ -123,16 +151,30 @@ export default function AdminMediaLibrary() {
             </Select>
 
             <span className="text-gray-600 text-sm">
-              {filteredImages.length} von {allImages.length} Bildern
+              {filteredImages.length} von {images.length} Bildern
             </span>
           </div>
         </div>
       </div>
 
       <main className="max-w-[1600px] mx-auto px-6 py-6">
-        <div className="grid grid-cols-4 gap-4">
-          {filteredImages.map((image) => (
-            <Card key={image.id} className="group relative overflow-hidden" data-testid={`image-card-${image.id}`}>
+        {isLoading ? (
+          <div className="grid grid-cols-4 gap-4">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <Card key={i}>
+                <Skeleton className="aspect-[4/3] w-full" />
+                <CardContent className="p-4 space-y-2">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-full" />
+                  <Skeleton className="h-3 w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-4 gap-4">
+            {filteredImages.map((image) => (
+              <Card key={image.id} className="group relative overflow-hidden" data-testid={`image-card-${image.id}`}>
               <div className="aspect-[4/3] relative overflow-hidden bg-gray-100">
                 <img src={image.url} alt={image.alt} className="w-full h-full object-cover" />
                 
@@ -172,9 +214,10 @@ export default function AdminMediaLibrary() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
-        {filteredImages.length === 0 && (
+        {!isLoading && filteredImages.length === 0 && (
           <div className="text-center py-16">
             <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-600">Keine Bilder gefunden</p>

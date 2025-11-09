@@ -407,17 +407,21 @@ function registerInvoiceRoutes(app: Express) {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
 
-      const validatedData = insertInvoiceSchema.parse(req.body);
+      // Generate invoice number if not provided
+      const invoiceNumber = req.body.invoiceNumber || await storage.getNextInvoiceNumber();
+
+      const validatedData = insertInvoiceSchema.parse({
+        ...req.body,
+        invoiceNumber,
+        createdBy: req.user.id,
+      });
       
       // Filter out null values
       const cleanedData = Object.fromEntries(
         Object.entries(validatedData).filter(([_, v]) => v !== null)
       );
       
-      const newInvoice = await storage.createInvoice({
-        ...cleanedData,
-        createdBy: req.user.id,
-      } as any);
+      const newInvoice = await storage.createInvoice(cleanedData as any);
       
       res.status(201).json(newInvoice);
     } catch (error) {
@@ -567,17 +571,17 @@ function registerBlogRoutes(app: Express) {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
 
-      const validatedData = insertBlogPostSchema.parse(req.body);
+      const validatedData = insertBlogPostSchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+      });
       
       // Filter out null values
       const cleanedData = Object.fromEntries(
         Object.entries(validatedData).filter(([_, v]) => v !== null)
       );
       
-      const newPost = await storage.createBlogPost({
-        ...cleanedData,
-        createdBy: req.user.id,
-      } as any);
+      const newPost = await storage.createBlogPost(cleanedData as any);
       
       res.status(201).json(newPost);
     } catch (error) {

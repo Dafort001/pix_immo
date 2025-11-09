@@ -167,6 +167,12 @@ export default function Dashboard() {
                     Rechnungen
                   </Button>
                 </Link>
+                <Link href="/admin/blog">
+                  <Button variant="ghost" data-testid="button-blog-admin">
+                    <FileText className="mr-2 h-4 w-4" />
+                    Blog-Verwaltung
+                  </Button>
+                </Link>
               </>
             )}
             <Link href="/jobs">
