@@ -132,15 +132,15 @@ export default function Home() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="font-semibold text-black mb-4">PIX.IMMO</h3>
-            <p className="text-sm mb-3">
+            <p className="text-sm">
               Professionelle Immobilienfotografie für Hamburg
             </p>
             <Link href="/pixcapture">
-              <span className="text-sm hover:text-black cursor-pointer inline-block font-medium" data-testid="link-pixcapture-app">
-                → PixCapture App
-              </span>
+              <h3 className="font-semibold text-black mb-4 mt-8 hover:text-gray-600 cursor-pointer transition-colors" data-testid="link-pixcapture-app">
+                PixCapture
+              </h3>
             </Link>
-            <p className="text-sm mt-1 italic">
+            <p className="text-sm">
               You capture, we do the rest
             </p>
           </div>
