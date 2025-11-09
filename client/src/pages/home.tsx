@@ -135,11 +135,11 @@ export default function Home() {
             <p className="text-sm">
               Professionelle Immobilienfotografie für Hamburg
             </p>
-            <Link href="/pixcapture">
+            <a href="/pixcapture">
               <h3 className="font-semibold text-black mb-4 mt-8 hover:text-gray-600 cursor-pointer transition-colors" data-testid="link-pixcapture-app">
                 PixCapture
               </h3>
-            </Link>
+            </a>
             <p className="text-sm">
               You capture, we do the rest
             </p>
