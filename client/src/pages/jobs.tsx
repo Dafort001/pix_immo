@@ -193,7 +193,7 @@ export default function Jobs() {
                   <Input
                     id="propertyAddress"
                     data-testid="input-property-address"
-                    placeholder="z.B. Seestraße 123, 12345 Berlin"
+                    placeholder="z.B. Seestraße 123, 20095 Hamburg"
                     value={propertyAddress}
                     onChange={(e) => setPropertyAddress(e.target.value)}
                   />

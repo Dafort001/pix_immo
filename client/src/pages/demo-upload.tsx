@@ -131,7 +131,7 @@ export default function DemoUpload() {
                     <FormLabel>Objektadresse</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="z.B. Musterstraße 123, 10115 Berlin"
+                        placeholder="z.B. Musterstraße 123, 20095 Hamburg"
                         data-testid="input-property-address"
                         {...field}
                       />

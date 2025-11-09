@@ -132,7 +132,6 @@ const categoryOrder = [
 
 const regionLabels: Record<string, string> = {
   HH: "Hamburg (bis 30 km)",
-  B: "Berlin (S-Bahn-Ring)",
   EXT: "Erweiterte Anfahrt"
 };
 
@@ -700,7 +699,7 @@ export default function Booking() {
                       <FormItem>
                         <FormLabel>Objektbezeichnung *</FormLabel>
                         <FormControl>
-                          <Input placeholder="z.B. Musterwohnung Berlin-Mitte" {...field} data-testid="input-property-name" />
+                          <Input placeholder="z.B. Musterwohnung Hamburg-Mitte" {...field} data-testid="input-property-name" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

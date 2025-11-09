@@ -295,7 +295,7 @@ export default function KontaktFormular() {
                 <Link href="/kontakt">
                   <span className="underline cursor-pointer">Kontaktseite</span>
                 </Link>
-                {" "}für weitere Informationen zu unseren Standorten in Hamburg und Berlin.
+                {" "}für weitere Informationen zu unserem Standort in Hamburg.
               </p>
             </div>
           </div>
