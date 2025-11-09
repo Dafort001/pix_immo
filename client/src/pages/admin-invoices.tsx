@@ -69,18 +69,39 @@ export default function AdminInvoices() {
     },
   });
 
+  const sendEmailMutation = useMutation({
+    mutationFn: async (invoiceId: string) => {
+      return await apiRequest('POST', `/api/invoices/${invoiceId}/send`, {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+      toast({ 
+        title: "E-Mail versendet",
+        description: data.message || "Rechnung wurde erfolgreich per E-Mail versendet"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "E-Mail-Fehler",
+        description: error.message || "Rechnung konnte nicht per E-Mail versendet werden",
+        variant: "destructive"
+      });
+    },
+  });
+
   const handleCreateInvoice = () => {
     const netAmountFloat = parseFloat(formData.netAmount) || 0;
     const netAmount = Math.round(netAmountFloat * 100);
     const vatAmount = Math.round(netAmount * 0.19);
     const grossAmount = netAmount + vatAmount;
+    const now = Date.now();
 
     createMutation.mutate({
       customerName: formData.customerName,
       customerEmail: formData.customerEmail,
       customerAddress: formData.customerAddress || undefined,
       serviceDescription: formData.serviceDescription,
-      invoiceDate: Date.now(),
+      invoiceDate: now,
       netAmount,
       vatRate: 19,
       vatAmount,
@@ -92,7 +113,7 @@ export default function AdminInvoices() {
         totalPrice: netAmount
       }]),
       status: 'draft',
-    });
+    } as any);
   };
 
   const getNextInvoiceNumber = () => {
@@ -100,14 +121,14 @@ export default function AdminInvoices() {
   };
 
   const getStatusBadge = (status: Invoice['status']) => {
-    const styles = {
+    const styles: Record<Invoice['status'], string> = {
       draft: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
       sent: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
       paid: 'bg-green-500/10 text-green-600 border-green-500/20',
       cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
     };
 
-    const labels = {
+    const labels: Record<Invoice['status'], string> = {
       draft: 'Entwurf',
       sent: 'Versendet',
       paid: 'Bezahlt',
@@ -226,6 +247,16 @@ export default function AdminInvoices() {
                         >
                           <Download className="h-4 w-4 mr-2" />
                           PDF
+                        </Button>
+                        <Button
+                          variant="default"
+                          size="sm"
+                          onClick={() => sendEmailMutation.mutate(invoice.id)}
+                          disabled={sendEmailMutation.isPending}
+                          data-testid={`button-send-email-${invoice.id}`}
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {sendEmailMutation.isPending ? 'Senden...' : 'E-Mail'}
                         </Button>
                       </div>
                     </div>

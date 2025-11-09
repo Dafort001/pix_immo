@@ -71,7 +71,7 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono. It mai
 
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
-- **Email Service**: Mailgun (planned)
+- **Email Service**: Resend (API key stored in RESEND_API_KEY environment variable)
 - **AI Services**: 
   - **Image Processing**: Replicate oder Clipdrop (konfigurierbar)
   - **Text & Captions**: OpenAI ChatGPT (GPT-4 Vision)

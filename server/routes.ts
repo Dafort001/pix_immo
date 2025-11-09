@@ -525,6 +525,66 @@ function registerInvoiceRoutes(app: Express) {
       res.status(500).json({ error: "Failed to generate PDF" });
     }
   });
+
+  // POST /api/invoices/:id/send - Send invoice via email (admin auth required)
+  app.post("/api/invoices/:id/send", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      const invoice = await storage.getInvoice(id);
+      
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      
+      // Import email service and PDF generator
+      const { sendInvoiceEmail } = await import('./email');
+      const { generateInvoicePDF } = await import('./utils/invoice-pdf');
+      
+      // Generate PDF attachment
+      const pdfBuffer = await generateInvoicePDF(invoice);
+      
+      // Send email with PDF attachment
+      const emailResult = await sendInvoiceEmail({
+        to: invoice.customerEmail,
+        customerName: invoice.customerName,
+        invoiceNumber: invoice.invoiceNumber,
+        invoiceDate: new Date(Number(invoice.invoiceDate)),
+        grossAmount: Number(invoice.grossAmount),
+        pdfAttachment: {
+          filename: `${invoice.invoiceNumber}.pdf`,
+          content: Buffer.from(pdfBuffer),
+        },
+      });
+      
+      if (!emailResult.success) {
+        return res.status(500).json({ 
+          error: "Failed to send email",
+          details: emailResult.error 
+        });
+      }
+      
+      // Update invoice status to 'sent' if it was 'draft'
+      if (invoice.status === 'draft') {
+        await storage.updateInvoice(id, { 
+          status: 'sent',
+          updatedAt: Date.now(),
+        });
+      }
+      
+      res.json({ 
+        success: true,
+        messageId: emailResult.messageId,
+        message: `Invoice sent to ${invoice.customerEmail}`,
+      });
+      
+    } catch (error) {
+      console.error("Error sending invoice email:", error);
+      res.status(500).json({ error: "Failed to send invoice email" });
+    }
+  });
 }
 
 // Register Blog Routes
