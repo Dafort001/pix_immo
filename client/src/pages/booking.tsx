@@ -17,9 +17,9 @@ import { Label } from "@/components/ui/label";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, ArrowRight, Check, AlertCircle } from "lucide-react";
-import { AddressAutocomplete } from "@/components/AddressAutocomplete";
-import type { AddressValidationResult } from "@/components/AddressAutocomplete";
-import { StaticMapThumbnail } from "@/components/StaticMapThumbnail";
+import { AddressAutocomplete } from "@shared/components";
+import type { AddressValidationResult } from "@shared/components";
+import { StaticMapThumbnail } from "@shared/components";
 
 // Service types for booking wizard frontend (DTO from backend)
 interface ServiceData {

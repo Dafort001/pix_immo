@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Home, Calendar } from "lucide-react";
-import { SunPositionIndicator } from "@/components/SunPositionIndicator";
+import { SunPositionIndicator } from "@shared/components";
 
 export default function BookingConfirmation() {
   const [, setLocation] = useLocation();

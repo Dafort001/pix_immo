@@ -18,7 +18,7 @@ import { GalleryGrid, GalleryFile } from "@/components/gallery/GalleryGrid";
 import { UploadDialog } from "@/components/gallery/UploadDialog";
 import { DetailSidebar } from "@/components/gallery/DetailSidebar";
 import { MaskEditor } from "@/components/gallery/MaskEditor";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 

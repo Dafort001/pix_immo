@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { SEOHead } from "../components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { ScrollingImageStrip } from "../components/ScrollingImageStrip";
 import { FooterPixCapture } from "../components/FooterPixCapture";
 import { Menu, X } from "lucide-react";

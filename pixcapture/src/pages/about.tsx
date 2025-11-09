@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { SEOHead } from "../components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { FooterPixCapture } from "../components/FooterPixCapture";
 import { Camera, Upload, Sparkles } from "lucide-react";
 

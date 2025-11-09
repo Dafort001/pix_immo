@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { WebHeader } from "@/components/WebHeader";
 
 type Job = {

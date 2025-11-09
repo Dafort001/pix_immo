@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { SEOHead } from "../components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { IPhoneFrame } from "../components/IPhoneFrame";
 import { ArrowLeft } from "lucide-react";
 

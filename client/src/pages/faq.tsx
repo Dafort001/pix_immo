@@ -6,7 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 export default function FAQ() {
   return (

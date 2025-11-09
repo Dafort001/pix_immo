@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { WebHeader } from "@/components/WebHeader";
 
 type Job = {

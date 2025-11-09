@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Camera, Plane, Video, Box, Wand2 } from "lucide-react";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 export default function About() {
   return (

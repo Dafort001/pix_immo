@@ -11,7 +11,7 @@ import { Separator } from "@/components/ui/separator";
 import { Home, Download, X, ChevronLeft, ChevronRight, Image as ImageIcon, Heart, MessageCircle, Send, Package } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 type EditedImage = {
   id: string;

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 import { WebHeader } from "@/components/WebHeader";
 
 type Image = {

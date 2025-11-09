@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 interface RoomType {
   id: string;

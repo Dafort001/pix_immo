@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { ArrowLeft, Mail, Phone } from "lucide-react";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 export default function Contact() {
   return (

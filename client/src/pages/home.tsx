@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { SEOHead, SchemaTemplates } from "@/components/SEOHead";
+import { SEOHead, SchemaTemplates } from "@shared/components";
 import { ScrollingImageStrip } from "@/components/ScrollingImageStrip";
 import { Menu, X } from "lucide-react";
 import { homePageImages, formatForScrollingStrip } from "@/data/images";

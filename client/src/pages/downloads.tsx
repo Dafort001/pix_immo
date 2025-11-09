@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Home, Download, Package, FileArchive, Image as ImageIcon, CheckCircle } from "lucide-react";
 import { getQueryFn } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { SEOHead } from "@/components/SEOHead";
+import { SEOHead } from "@shared/components";
 
 type EditedImage = {
   id: string;
