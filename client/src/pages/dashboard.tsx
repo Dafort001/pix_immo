@@ -173,6 +173,12 @@ export default function Dashboard() {
                     Blog-Verwaltung
                   </Button>
                 </Link>
+                <Link href="/admin/bookings">
+                  <Button variant="ghost" data-testid="button-bookings-admin">
+                    <CalendarCheck className="mr-2 h-4 w-4" />
+                    Buchungen
+                  </Button>
+                </Link>
               </>
             )}
             <Link href="/jobs">
