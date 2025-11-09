@@ -38,8 +38,7 @@ const serviceData = [
   
   // Travel
   { serviceCode: "AH", category: "travel", name: "Hamburg", description: "bis 30 km inklusive", netPrice: 0, notes: "Grundpreis enthalten" },
-  { serviceCode: "AB", category: "travel", name: "Berlin", description: "innerhalb Berliner S-Bahn-Rings inklusive", netPrice: 0, notes: "Grundpreis enthalten" },
-  { serviceCode: "AEX", category: "travel", name: "Erweiterte Anfahrt", description: "> 30 km bzw. außerhalb S-Bahn-Ring", netPrice: null, priceNote: "€0.80/km", notes: "Hin- und Rückweg" },
+  { serviceCode: "AEX", category: "travel", name: "Erweiterte Anfahrt", description: "> 30 km", netPrice: null, priceNote: "€0.80/km", notes: "Hin- und Rückweg" },
   { serviceCode: "ARE", category: "travel", name: "Reise/Übernachtung", description: "nach Absprache", netPrice: null, priceNote: "auf Anfrage", notes: "individuell vereinbar" },
 ];
 

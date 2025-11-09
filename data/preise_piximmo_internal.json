@@ -201,19 +201,10 @@
       "notes": "Grundpreis enthalten"
     },
     {
-      "code": "AB",
-      "category": "travel",
-      "title": "Berlin",
-      "description": "innerhalb Berliner S-Bahn-Rings inklusive",
-      "price_net": 0,
-      "unit": "flat",
-      "notes": "Grundpreis enthalten"
-    },
-    {
       "code": "AEX",
       "category": "travel",
       "title": "Erweiterte Anfahrt",
-      "description": "> 30 km bzw. außerhalb S-Bahn-Ring",
+      "description": "> 30 km",
       "price_net": 0.80,
       "unit": "per_km",
       "notes": "Hin- und Rückweg (× 2)"
