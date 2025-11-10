@@ -29,7 +29,7 @@ export function ScrollingImageStrip({
   };
 
   return (
-    <div className="relative w-full overflow-hidden bg-[var(--color-white)]">
+    <div className="relative w-full overflow-hidden bg-white">
       <div
         className="flex gap-2"
         style={{
@@ -58,6 +58,7 @@ export function ScrollingImageStrip({
             onClick={() => handleImageClick(image.id, image.url)}
             onMouseEnter={() => setHoveredId(`${image.id}-${index}`)}
             onMouseLeave={() => setHoveredId(null)}
+            data-testid={`image-strip-${index}`}
           >
             <img
               src={image.url}
@@ -81,7 +82,7 @@ export function ScrollingImageStrip({
                     strokeWidth="2"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    className="text-[var(--color-black)]"
+                    className="text-black"
                   >
                     <polyline points="9 18 15 12 9 6"></polyline>
                   </svg>

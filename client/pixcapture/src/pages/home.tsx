@@ -13,7 +13,7 @@ export default function PixCaptureHome() {
   const pixImages = formatForScrollingStrip(pixCaptureImages);
 
   return (
-    <div className="bg-[var(--color-white)]">
+    <div className="bg-white">
       <SEOHead
         title="pixcapture.app – Immobilienfotos selbst erstellen"
         description="Self-Service-Plattform für Immobilienfotografie. Mit dem iPhone fotografieren, hochladen und professionell bearbeiten lassen."
@@ -24,7 +24,10 @@ export default function PixCaptureHome() {
       <div className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between">
         {/* Logo als Home-Button */}
         <Link href="/pixcapture">
-          <h1 className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-[var(--color-black)] leading-none hover:text-[var(--color-grey)] transition-colors">
+          <h1 
+            className="text-2xl font-medium tracking-tight cursor-pointer text-black leading-none hover:text-gray-600 transition-colors"
+            data-testid="brand-logo"
+          >
             pixcapture.app
           </h1>
         </Link>
@@ -32,8 +35,9 @@ export default function PixCaptureHome() {
         {/* Hamburger Menu */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 text-[var(--color-black)]"
+          className="p-2 text-black"
           aria-label="Menu"
+          data-testid="button-menu-toggle"
         >
           {menuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -41,40 +45,64 @@ export default function PixCaptureHome() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="fixed top-20 right-8 z-50 bg-[var(--color-white)] border border-[var(--color-light-grey)] shadow-lg">
+        <div className="fixed top-20 right-8 z-50 bg-white border border-gray-200 shadow-lg rounded-md">
           <nav className="flex flex-col px-8 py-6 gap-6">
-            <a href="/app">
-              <span
-                className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Upload
-              </span>
-            </a>
-            <Link href="/pixcapture/help">
-              <span
-                className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
-                onClick={() => setMenuOpen(false)}
-              >
-                Hilfe
-              </span>
-            </Link>
             <Link href="/pixcapture/about">
               <span
-                className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
+                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
+                data-testid="menu-link-about"
               >
                 About
               </span>
             </Link>
+            <Link href="/pixcapture/blog">
+              <span
+                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
+                onClick={() => setMenuOpen(false)}
+                data-testid="menu-link-blog"
+              >
+                Blog
+              </span>
+            </Link>
             <a href="/login">
               <span
-                className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
+                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
+                data-testid="menu-link-login"
               >
                 Login
               </span>
             </a>
+            <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
+              <Link href="/pixcapture/impressum">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-impressum"
+                >
+                  Impressum
+                </span>
+              </Link>
+              <Link href="/pixcapture/datenschutz">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-datenschutz"
+                >
+                  Datenschutz
+                </span>
+              </Link>
+              <Link href="/pixcapture/agb">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-agb"
+                >
+                  AGB
+                </span>
+              </Link>
+            </div>
           </nav>
         </div>
       )}
@@ -84,33 +112,37 @@ export default function PixCaptureHome() {
         {/* White space above */}
         <div className="h-[calc(65vh+31px)]"></div>
 
-        {/* Spacer wo Logo war - kann entfernt werden */}
+        {/* Spacer */}
         <div className="pl-8">
-          <div className="h-[56px]"></div>
+          <div className="h-14"></div>
         </div>
 
         {/* Spacer to push buttons and strip to bottom */}
         <div className="flex-1"></div>
 
         {/* Navigation Buttons - Above Strip (Desktop only) */}
-        <nav className="hidden lg:flex items-center justify-start gap-6 pb-6 pl-8 bg-[var(--color-white)] h-[40px]">
-          <a href="/app">
-            <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.12em]">
-              Upload
-            </span>
-          </a>
-          <Link href="/pixcapture/help">
-            <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
-              Hilfe
-            </span>
-          </Link>
+        <nav className="hidden lg:flex items-center justify-start gap-6 pb-6 pl-8 bg-white h-10">
           <Link href="/pixcapture/about">
-            <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
+            <span 
+              className="text-base text-black hover:text-gray-600 transition-colors cursor-pointer tracking-tight"
+              data-testid="link-about"
+            >
               About
             </span>
           </Link>
+          <Link href="/pixcapture/blog">
+            <span 
+              className="text-base text-black hover:text-gray-600 transition-colors cursor-pointer tracking-tight"
+              data-testid="link-blog"
+            >
+              Blog
+            </span>
+          </Link>
           <a href="/login">
-            <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
+            <span 
+              className="text-base text-black hover:text-gray-600 transition-colors cursor-pointer tracking-tight"
+              data-testid="link-login"
+            >
               Login
             </span>
           </a>
@@ -122,58 +154,8 @@ export default function PixCaptureHome() {
         </div>
       </div>
 
-      {/* Feature Cards Section */}
-      <section className="max-w-[1200px] mx-auto px-8 py-20">
-        <div className="grid md:grid-cols-1 gap-8">
-          {/* Help Card */}
-          <Link href="/pixcapture/help">
-            <div className="bg-[#74A4EA] p-12 cursor-pointer hover:opacity-90 transition-opacity min-h-[280px] flex flex-col justify-between">
-              <div>
-                <div className="h-12 w-12 mb-6">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="white" className="w-12 h-12">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
-                  </svg>
-                </div>
-                <h2 className="text-white mb-4" style={{ fontSize: '28pt', fontWeight: 700, fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.2 }}>
-                  Brauchst du Hilfe?
-                </h2>
-              </div>
-              <div className="flex items-center gap-2 text-white mt-6">
-                <span style={{ fontSize: '16pt', fontWeight: 600, fontFamily: 'Inter, system-ui, sans-serif' }}>Mehr erfahren</span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-                </svg>
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Upload Quick Access */}
-        <div className="mt-8">
-          <Link href="/pixcapture/upload">
-            <div className="bg-[#1A1A1C] p-12 cursor-pointer hover:bg-[#2A2A2C] transition-colors">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-white mb-3" style={{ fontSize: '32pt', fontWeight: 700, fontFamily: 'Inter, system-ui, sans-serif', lineHeight: 1.2 }}>
-                    Jetzt Fotos hochladen
-                  </h2>
-                  <p className="text-white/80" style={{ fontSize: '16pt', fontFamily: 'Inter, system-ui, sans-serif' }}>
-                    Einfach mit dem iPhone fotografieren und direkt hochladen
-                  </p>
-                </div>
-                <div className="hidden md:block">
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="white" className="w-16 h-16">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </div>
-      </section>
-
-      {/* Spacer before footer */}
-      <div className="h-[20vh]"></div>
+      {/* Spacer between strip and footer */}
+      <div className="h-[50vh]"></div>
 
       <FooterPixCapture />
     </div>
