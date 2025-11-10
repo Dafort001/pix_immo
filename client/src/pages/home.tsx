@@ -77,6 +77,35 @@ export default function Home() {
                 Login
               </span>
             </Link>
+            <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
+              <Link href="/impressum">
+                <span
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-impressum"
+                >
+                  Impressum
+                </span>
+              </Link>
+              <Link href="/datenschutz">
+                <span
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-datenschutz"
+                >
+                  Datenschutz
+                </span>
+              </Link>
+              <Link href="/agb">
+                <span
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setMenuOpen(false)}
+                  data-testid="menu-link-agb"
+                >
+                  AGB
+                </span>
+              </Link>
+            </div>
           </nav>
         </div>
       )}
