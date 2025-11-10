@@ -7,7 +7,6 @@ import Home from "./pages/home";
 import About from "./pages/about";
 import AGB from "./pages/agb";
 import Datenschutz from "./pages/datenschutz";
-import ExpertCall from "./pages/expert-call";
 import Help from "./pages/help";
 import Impressum from "./pages/impressum";
 import NotFound from "./pages/not-found";
@@ -19,7 +18,6 @@ function Router() {
       <Route path="/pixcapture/about" component={About} />
       <Route path="/pixcapture/agb" component={AGB} />
       <Route path="/pixcapture/datenschutz" component={Datenschutz} />
-      <Route path="/pixcapture/expert-call" component={ExpertCall} />
       <Route path="/pixcapture/help" component={Help} />
       <Route path="/pixcapture/impressum" component={Impressum} />
       <Route component={NotFound} />
