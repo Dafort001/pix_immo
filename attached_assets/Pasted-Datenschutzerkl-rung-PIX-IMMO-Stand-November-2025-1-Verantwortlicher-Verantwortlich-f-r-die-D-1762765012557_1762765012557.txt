@@ -1,0 +1,163 @@
+Datenschutzerklärung – PIX.IMMO
+
+Stand: November 2025
+
+1. Verantwortlicher
+
+Verantwortlich für die Datenverarbeitung auf dieser Website ist:
+
+PIX.IMMO
+Daniel Fortmann
+[Anschrift ergänzen, z. B. Musterstraße 1, 20 000 Hamburg]
+Kontakt: Siehe Impressum
+
+Ein Datenschutzbeauftragter ist nicht bestellt, da die gesetzlichen Voraussetzungen hierfür nicht vorliegen.
+
+2. Allgemeine Hinweise zur Datenverarbeitung
+
+Der Schutz Ihrer persönlichen Daten ist uns wichtig. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.
+
+Die Nutzung unserer Website ist in der Regel ohne Angabe personenbezogener Daten möglich. Soweit auf unseren Seiten personenbezogene Daten (z. B. Name, Anschrift oder E-Mail-Adresse) erhoben werden, erfolgt dies, soweit möglich, stets auf freiwilliger Basis.
+
+3. Erhebung und Speicherung personenbezogener Daten
+3.1 Websitebesuch
+
+Beim Aufruf unserer Website werden automatisch technische Daten erfasst, die Ihr Browser an unseren Server übermittelt:
+
+Browsertyp und -version
+
+Betriebssystem
+
+IP-Adresse
+
+Datum und Uhrzeit des Zugriffs
+
+Quelle (Website, von der der Zugriff erfolgt)
+
+Diese Informationen werden in Server-Logfiles gespeichert. Eine Zusammenführung mit anderen personenbezogenen Daten findet nicht statt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Stabilität und Sicherheit der Website).
+
+3.2 Registrierung und Kundenlogin
+
+Bei der Registrierung für unseren Kundenbereich erheben wir:
+
+E-Mail-Adresse
+
+Passwort (verschlüsselt gespeichert)
+
+Optional: Name, Telefonnummer, Unternehmensname
+
+Die Datenverarbeitung erfolgt zur Durchführung des Vertragsverhältnisses (Art. 6 Abs. 1 lit. b DSGVO).
+
+3.3 Kontaktformular und E-Mail-Kontakt
+
+Bei Kontaktaufnahme über unser Formular oder per E-Mail werden Ihre Angaben ausschließlich zur Bearbeitung Ihrer Anfrage verwendet und nicht ohne Einwilligung weitergegeben.
+
+3.4 Buchung von Fotografieleistungen
+
+Bei einer Buchung über das Kundenportal werden folgende Angaben erhoben:
+
+Immobilienadresse und -details
+
+Kontaktdaten (Name, E-Mail, Telefonnummer)
+
+Wunschtermin und besondere Hinweise
+
+Ausgewählte Leistungspakete
+
+Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).
+
+4. Bildverarbeitung mit KI-Systemen
+4.1 Automatische Bildoptimierung
+
+Zur Verbesserung und Vereinheitlichung der von uns erstellten Immobilienfotos können automatisierte KI-Systeme zur Bildanalyse, Beschriftung und Nachbearbeitung eingesetzt werden.
+
+4.2 Verarbeitung außerhalb der EU
+
+Die KI-Verarbeitung erfolgt teilweise über externe Dienstleister mit Serverstandorten außerhalb der Europäischen Union, derzeit insbesondere:
+
+Modal Inc. (USA) – Bildanalyse und automatische Bildbeschreibungen
+
+Replicate Inc. (USA) – KI-gestützte Retusche und Optimierung
+
+4.3 Datenschutzmaßnahmen
+
+Anonymisierung: Vor der Verarbeitung werden alle EXIF- und GPS-Daten entfernt.
+
+Keine Kundendaten: KI-Systeme erhalten nur Bildinhalte, keine Kundennamen oder Adressen.
+
+Temporäre Speicherung: Nach Abschluss der Verarbeitung werden die Dateien auf den externen Servern gelöscht.
+
+Verschlüsselte Übertragung: Alle Übertragungen erfolgen über HTTPS/TLS.
+
+4.4 Rechtsgrundlage
+
+Die Verarbeitung erfolgt nach Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) und Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an effizienter Leistungserbringung).
+
+Kunden können der Nutzung von KI-Systemen vor Auftragserteilung widersprechen. In diesem Fall erfolgt die Bearbeitung ausschließlich manuell, was zu längeren Bearbeitungszeiten führen kann.
+
+4.5 Einschränkung
+
+Die KI-gestützte Bearbeitung steht ausschließlich für Bildmaterial zur Verfügung, das von PIX.IMMO produziert wurde. Extern erstellte Fotos werden nicht automatisiert verarbeitet.
+
+5. Cookies
+
+Unsere Website kann Cookies verwenden. Cookies sind kleine Textdateien, die auf Ihrem Endgerät gespeichert werden und vom Browser verarbeitet werden können.
+
+5.1 Technisch notwendige Cookies
+
+Bestimmte Funktionen (z. B. Login-Sitzungen oder Sprachauswahl) können den Einsatz technisch notwendiger Cookies erfordern. Diese Cookies enthalten keine personenbezogenen Daten und werden nach Ende der Sitzung gelöscht.
+
+5.2 Optionale Cookies und Einwilligung
+
+Sollten zukünftig weitere Cookies (z. B. zu Analysezwecken) eingesetzt werden, informieren wir Sie darüber und holen Ihre ausdrückliche Einwilligung ein.
+
+6. Weitergabe von Daten an Dritte
+
+Eine Weitergabe Ihrer personenbezogenen Daten erfolgt nur, wenn:
+
+Sie nach Art. 6 Abs. 1 lit. a DSGVO eingewilligt haben,
+
+die Weitergabe zur Vertragserfüllung erforderlich ist (Art. 6 Abs. 1 lit. b DSGVO),
+
+eine rechtliche Verpflichtung besteht, oder
+
+ein berechtigtes Interesse im Sinne von Art. 6 Abs. 1 lit. f DSGVO vorliegt.
+
+Unsere Website wird über Cloudflare Inc. (USA) bereitgestellt.
+Es besteht ein Auftragsverarbeitungsvertrag auf Grundlage der EU-Standardvertragsklauseln, der ein angemessenes Datenschutzniveau sicherstellt.
+
+7. Speicherdauer
+
+Personenbezogene Daten werden nur so lange gespeichert, wie sie für den jeweiligen Zweck erforderlich sind oder gesetzliche Aufbewahrungspflichten bestehen.
+Kundengalerien und Projektdaten werden spätestens 12 Monate nach Auftragsabschluss gelöscht, sofern keine gesetzlichen Pflichten oder laufenden Projekte entgegenstehen.
+
+8. Ihre Rechte als betroffene Person
+
+Sie haben nach der DSGVO folgende Rechte:
+
+Auskunft (Art. 15)
+
+Berichtigung (Art. 16)
+
+Löschung (Art. 17)
+
+Einschränkung der Verarbeitung (Art. 18)
+
+Datenübertragbarkeit (Art. 20)
+
+Widerspruch gegen die Verarbeitung (Art. 21)
+
+Zudem haben Sie das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren.
+
+9. Datensicherheit
+
+Wir verwenden SSL- bzw. TLS-Verschlüsselung bei allen Datenübertragungen.
+Unsere Systeme und Mitarbeiter sind auf Vertraulichkeit und Einhaltung der datenschutzrechtlichen Vorgaben verpflichtet.
+
+10. Änderungen dieser Datenschutzerklärung
+
+Wir behalten uns vor, diese Datenschutzerklärung anzupassen, wenn gesetzliche Änderungen oder technische Entwicklungen dies erforderlich machen. Es gilt jeweils die zum Zeitpunkt des Websitebesuchs aktuelle Fassung.
+
+Fragen zum Datenschutz?
+
+Bei Fragen zur Erhebung, Verarbeitung oder Nutzung Ihrer personenbezogenen Daten wenden Sie sich bitte an die im Impressum angegebenen Kontaktdaten.
