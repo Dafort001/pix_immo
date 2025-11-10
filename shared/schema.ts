@@ -106,6 +106,24 @@ export const stacks = pgTable("stacks", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
+// PixCapture Uploaded Files (Intent-based Upload System)
+export const uploadedFiles = pgTable("uploaded_files", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "cascade" }), // Optional: link to order
+  objectKey: text("object_key").notNull().unique(), // R2 path (server-generated)
+  originalFilename: varchar("original_filename", { length: 255 }).notNull(),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  fileSize: bigint("file_size", { mode: "number" }).notNull(),
+  checksum: varchar("checksum", { length: 64 }), // SHA256
+  status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'processing', 'completed', 'failed'
+  roomType: varchar("room_type", { length: 50 }), // Optional: room classification
+  stackId: varchar("stack_id", { length: 20 }), // Optional: group ID (e.g., 'g003')
+  exifMeta: text("exif_meta"), // JSON string: { make, model, focal, iso, shutter }
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  finalizedAt: bigint("finalized_at", { mode: "number" }), // When finalize was called
+});
+
 export const images = pgTable("images", {
   id: varchar("id").primaryKey(),
   shootId: varchar("shoot_id").notNull().references(() => shoots.id, { onDelete: "cascade" }),
@@ -1199,3 +1217,13 @@ export const insertBookingItemSchema = createInsertSchema(bookingItems).omit({
   id: true,
   createdAt: true,
 });
+
+// UploadedFiles Schemas
+export const insertUploadedFileSchema = createInsertSchema(uploadedFiles).omit({
+  id: true,
+  createdAt: true,
+  finalizedAt: true,
+});
+
+export type UploadedFile = typeof uploadedFiles.$inferSelect;
+export type InsertUploadedFile = typeof uploadedFiles.$inferInsert;

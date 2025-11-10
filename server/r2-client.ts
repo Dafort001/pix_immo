@@ -87,6 +87,24 @@ export async function generatePresignedUploadUrl(
   return await getSignedUrl(r2Client, command, { expiresIn });
 }
 
+/**
+ * Generate a signed PUT URL for direct upload to R2 (non-multipart)
+ * Used by Intent-based upload system for files <100MB
+ */
+export async function generateSignedPutUrl(
+  key: string,
+  contentType: string,
+  expiresIn: number = 300 // 5 minutes default
+): Promise<string> {
+  const command = new PutObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+    ContentType: contentType,
+  });
+
+  return await getSignedUrl(r2Client, command, { expiresIn });
+}
+
 export async function completeMultipartUpload(
   key: string,
   uploadId: string,
