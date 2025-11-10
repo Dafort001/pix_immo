@@ -153,7 +153,7 @@ export default function AILabPage() {
     switch (status) {
       case "completed":
         return (
-          <Badge variant="default" data-testid="badge-status-completed">
+          <Badge variant="secondary" data-testid="badge-status-completed">
             <CheckCircle2 className="w-3 h-3 mr-1" />
             Abgeschlossen
           </Badge>

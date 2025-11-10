@@ -31,11 +31,11 @@ const STATUS_LABELS: Record<BookingStatus, string> = {
   cancelled: 'Storniert',
 };
 
-const STATUS_VARIANTS: Record<BookingStatus, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-  pending: 'secondary',
-  confirmed: 'default',
-  inProgress: 'default',
-  completed: 'default',
+const STATUS_VARIANTS: Record<BookingStatus, 'secondary' | 'destructive' | 'outline'> = {
+  pending: 'outline',
+  confirmed: 'secondary',
+  inProgress: 'secondary',
+  completed: 'outline',
   cancelled: 'destructive',
 };
 

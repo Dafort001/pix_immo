@@ -35,10 +35,10 @@ function JobCard({ job }: { job: Job }) {
   });
 
   const getStatusBadge = (status: string) => {
-    const variants: Record<string, { label: string; variant: "default" | "secondary" | "outline" }> = {
+    const variants: Record<string, { label: string; variant: "secondary" | "outline" | "destructive" }> = {
       created: { label: "Erstellt", variant: "outline" },
-      in_progress: { label: "In Bearbeitung", variant: "default" },
-      edited_returned: { label: "Editor fertig", variant: "secondary" },
+      in_progress: { label: "In Bearbeitung", variant: "secondary" },
+      edited_returned: { label: "Editor fertig", variant: "outline" },
       completed: { label: "Abgeschlossen", variant: "secondary" },
     };
     const config = variants[status] || variants.created;
