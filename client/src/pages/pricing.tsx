@@ -24,7 +24,7 @@ export default function Pricing() {
           <p className="text-base text-gray-600 mb-12 leading-relaxed">
             Professionelle Immobilienfotografie, Drohnenaufnahmen, Videos und 360°-Rundgänge für Exposés, Online-Präsentationen und soziale Medien.
             Alle Aufnahmen werden auftragsbezogen geplant, mit professioneller Kamera- und Lichttechnik umgesetzt und sorgfältig nachbearbeitet.
-            Optional kann eine KI-gestützte Optimierung zur automatischen Licht- und Farbkorrektur eingesetzt werden.
+            Die Bildbearbeitung erfolgt anhand festgelegter Stilvorgaben, die für unterschiedliche Objekttypen kombiniert werden können. Dadurch bleibt die Darstellung einheitlich und an das jeweilige Projekt angepasst.
           </p>
 
           <div className="space-y-12">
