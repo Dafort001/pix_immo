@@ -404,7 +404,7 @@ export default function Booking() {
           <div className="space-y-8">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-semibold mb-2">Leistungen auswählen</h2>
+                <h2 className="text-lg font-semibold mb-2">Leistungen auswählen</h2>
                 <p className="text-muted-foreground">
                   Wählen Sie zunächst Ihre Region, dann die gewünschten Leistungen
                 </p>
@@ -588,7 +588,7 @@ export default function Booking() {
             <div className="flex items-center justify-between pt-6">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Zwischensumme (netto)</p>
-                <p className="text-2xl font-semibold" data-testid="text-subtotal">
+                <p className="text-base font-semibold" data-testid="text-subtotal">
                   €{totalNet.toFixed(2).replace(".", ",")}
                 </p>
               </div>
@@ -625,7 +625,7 @@ export default function Booking() {
 
         {step === 2 && (
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-6">Kontakt & Objektdetails</h2>
+            <h2 className="text-lg font-semibold mb-6">Kontakt & Objektdetails</h2>
             
             <Form {...form}>
               <form className="space-y-6">
@@ -866,7 +866,7 @@ export default function Booking() {
 
         {step === 3 && (
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-2xl font-semibold mb-6">Bestellung prüfen</h2>
+            <h2 className="text-lg font-semibold mb-6">Bestellung prüfen</h2>
             
             <Form {...form}>
               <div className="space-y-6">

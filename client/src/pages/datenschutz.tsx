@@ -15,7 +15,7 @@ export default function Datenschutz() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-3xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">
             Datenschutzerklärung
           </h1>
           <p className="text-sm text-gray-600 mb-12">
@@ -25,7 +25,7 @@ export default function Datenschutz() {
           <div className="space-y-8 text-gray-700">
             {/* 1. Verantwortlicher */}
             <section data-testid="section-responsible">
-              <h2 className="text-2xl font-semibold mb-3 text-black">1. Verantwortlicher</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">1. Verantwortlicher</h2>
               <p className="mb-2">
                 Verantwortlich für die Datenverarbeitung auf dieser Website ist:
               </p>
@@ -41,7 +41,7 @@ export default function Datenschutz() {
 
             {/* 2. Allgemeine Hinweise */}
             <section data-testid="section-general">
-              <h2 className="text-2xl font-semibold mb-3 text-black">2. Allgemeine Hinweise zur Datenverarbeitung</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">2. Allgemeine Hinweise zur Datenverarbeitung</h2>
               <p className="mb-4">
                 Wir nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend der gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.
               </p>
@@ -52,7 +52,7 @@ export default function Datenschutz() {
 
             {/* 3. Erhebung und Speicherung */}
             <section data-testid="section-data-collection">
-              <h2 className="text-2xl font-semibold mb-3 text-black">3. Erhebung und Speicherung personenbezogener Daten</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">3. Erhebung und Speicherung personenbezogener Daten</h2>
               
               <h3 className="text-xl font-semibold mb-2 mt-4">3.1 Websitebesuch</h3>
               <p className="mb-4">
@@ -104,7 +104,7 @@ export default function Datenschutz() {
 
             {/* 4. Bildverarbeitung und KI-Systeme */}
             <section data-testid="section-ai-processing" className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-3 text-black">4. Bildverarbeitung mit KI-Systemen (wichtiger Hinweis)</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">4. Bildverarbeitung mit KI-Systemen (wichtiger Hinweis)</h2>
               
               <h3 className="text-xl font-semibold mb-2 mt-4">4.1 Automatische Bildoptimierung</h3>
               <p className="mb-4">
@@ -162,7 +162,7 @@ export default function Datenschutz() {
 
             {/* 5. Cookies */}
             <section data-testid="section-cookies">
-              <h2 className="text-2xl font-semibold mb-3 text-black">5. Cookies</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">5. Cookies</h2>
               <p className="mb-4">
                 Unsere Website verwendet Cookies. Cookies sind kleine Textdateien, die auf Ihrem Endgerät gespeichert werden und die Ihr Browser speichert.
               </p>
@@ -177,7 +177,7 @@ export default function Datenschutz() {
 
             {/* 6. Weitergabe von Daten */}
             <section data-testid="section-data-sharing">
-              <h2 className="text-2xl font-semibold mb-3 text-black">6. Weitergabe von Daten an Dritte</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">6. Weitergabe von Daten an Dritte</h2>
               <p className="mb-4">
                 Eine Übermittlung Ihrer persönlichen Daten an Dritte zu anderen als den im Folgenden aufgeführten Zwecken findet nicht statt. Wir geben Ihre persönlichen Daten nur an Dritte weiter, wenn:
               </p>
@@ -193,7 +193,7 @@ export default function Datenschutz() {
 
             {/* 7. Speicherdauer */}
             <section data-testid="section-storage-duration">
-              <h2 className="text-2xl font-semibold mb-3 text-black">7. Speicherdauer</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">7. Speicherdauer</h2>
               <p className="mb-4">
                 Wir speichern Ihre personenbezogenen Daten nur so lange, wie dies für die Erfüllung der Zwecke erforderlich ist, für die sie erhoben wurden, oder wie es gesetzliche Aufbewahrungsfristen vorsehen.
               </p>
@@ -204,7 +204,7 @@ export default function Datenschutz() {
 
             {/* 8. Ihre Rechte */}
             <section data-testid="section-rights">
-              <h2 className="text-2xl font-semibold mb-3 text-black">8. Ihre Rechte als betroffene Person</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">8. Ihre Rechte als betroffene Person</h2>
               <p className="mb-4">
                 Sie haben folgende Rechte:
               </p>
@@ -221,7 +221,7 @@ export default function Datenschutz() {
 
             {/* 9. Datensicherheit */}
             <section data-testid="section-security">
-              <h2 className="text-2xl font-semibold mb-3 text-black">9. Datensicherheit</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">9. Datensicherheit</h2>
               <p className="mb-4">
                 Wir verwenden innerhalb des Website-Besuchs das verbreitete SSL-Verfahren (Secure Socket Layer) in Verbindung mit der jeweils höchsten Verschlüsselungsstufe, die von Ihrem Browser unterstützt wird.
               </p>
@@ -232,7 +232,7 @@ export default function Datenschutz() {
 
             {/* 10. Änderungen */}
             <section data-testid="section-changes">
-              <h2 className="text-2xl font-semibold mb-3 text-black">10. Änderungen dieser Datenschutzerklärung</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">10. Änderungen dieser Datenschutzerklärung</h2>
               <p>
                 Wir behalten uns vor, diese Datenschutzerklärung gelegentlich anzupassen, damit sie stets den aktuellen rechtlichen Anforderungen entspricht oder um Änderungen unserer Leistungen umzusetzen. Für Ihren erneuten Besuch gilt dann die neue Datenschutzerklärung.
               </p>
@@ -240,7 +240,7 @@ export default function Datenschutz() {
 
             {/* Kontakt */}
             <section data-testid="section-contact-privacy" className="bg-gray-100 p-6 rounded-lg mt-8">
-              <h2 className="text-2xl font-semibold mb-3 text-black">Fragen zum Datenschutz?</h2>
+              <h2 className="text-lg font-semibold mb-3 text-black">Fragen zum Datenschutz?</h2>
               <p>
                 Bei Fragen zur Erhebung, Verarbeitung oder Nutzung Ihrer personenbezogenen Daten, bei Auskünften, Berichtigung, Sperrung oder Löschung von Daten wenden Sie sich bitte an die im{" "}
                 <Link href="/impressum">

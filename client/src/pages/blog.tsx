@@ -111,7 +111,7 @@ export default function Blog() {
 
       {/* Blog Grid */}
       <main className="px-[5vw] py-12">
-        <h1 className="text-3xl md:text-4xl font-bold mb-12 tracking-wide" data-testid="page-title">
+        <h1 className="text-lg font-bold mb-12 tracking-wide" data-testid="page-title">
           Blog
         </h1>
 

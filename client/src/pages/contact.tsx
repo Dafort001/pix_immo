@@ -15,18 +15,18 @@ export default function Contact() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-4xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">Kontakt</h1>
-          <p className="text-lg text-gray-600 mb-12">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">Kontakt</h1>
+          <p className="text-base text-gray-600 mb-12">
             Sie erreichen uns direkt in Hamburg.
           </p>
 
           <div className="max-w-lg mb-12">
             {/* Hamburg */}
             <div className="bg-gray-50 p-8 rounded-lg" data-testid="contact-hamburg">
-              <h2 className="text-2xl font-semibold mb-4">Hamburg</h2>
+              <h2 className="text-lg font-semibold mb-4">Hamburg</h2>
               <div className="space-y-4">
                 <div>
-                  <p className="font-semibold text-lg mb-2">Daniel Fortmann</p>
+                  <p className="font-semibold text-base mb-2">Daniel Fortmann</p>
                   <p className="text-gray-700">
                     Kaiser-Wilhelm-Straße 47<br />
                     20355 Hamburg<br />

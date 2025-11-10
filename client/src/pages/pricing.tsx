@@ -15,10 +15,10 @@ export default function Pricing() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-3xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">
             Preise und Leistungen
           </h1>
-          <p className="text-lg text-gray-700 mb-2">
+          <p className="text-base text-gray-700 mb-2">
             Immobilienfotografie Hamburg
           </p>
           <p className="text-base text-gray-600 mb-12 leading-relaxed">
@@ -30,8 +30,8 @@ export default function Pricing() {
           <div className="space-y-12">
             {/* Immobilienfotografie */}
             <section data-testid="section-photography">
-              <h2 className="text-2xl font-semibold mb-3">Immobilienfotografie</h2>
-              <p className="text-xl font-medium text-gray-900 mb-4">ab 180 € zzgl. MwSt.</p>
+              <h2 className="text-lg font-semibold mb-3">Immobilienfotografie</h2>
+              <p className="text-base font-medium text-gray-900 mb-4">ab 180 € zzgl. MwSt.</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -46,16 +46,16 @@ export default function Pricing() {
                   <span>Lieferung als hochauflösende JPG-Dateien, optimiert für Web und Druck</span>
                 </li>
               </ul>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Ideal für hochwertige Exposés, Online-Anzeigen und Social-Media-Beiträge.
               </p>
             </section>
 
             {/* Drohnenaufnahmen */}
             <section data-testid="section-drone">
-              <h2 className="text-2xl font-semibold mb-3">Drohnenaufnahmen</h2>
-              <p className="text-xl font-medium text-gray-900 mb-1">ab 150 € zzgl. MwSt.</p>
-              <p className="text-lg font-medium text-gray-700 mb-4">ab 100 €, wenn Bestandteil eines Fotopakets</p>
+              <h2 className="text-lg font-semibold mb-3">Drohnenaufnahmen</h2>
+              <p className="text-base font-medium text-gray-900 mb-1">ab 150 € zzgl. MwSt.</p>
+              <p className="text-base font-medium text-gray-700 mb-4">ab 100 €, wenn Bestandteil eines Fotopakets</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -70,15 +70,15 @@ export default function Pricing() {
                   <span>Lieferung mehrerer Perspektiven in hoher Auflösung</span>
                 </li>
               </ul>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Empfohlen als Ergänzung zur klassischen Immobilienfotografie.
               </p>
             </section>
 
             {/* Videoaufnahmen */}
             <section data-testid="section-video">
-              <h2 className="text-2xl font-semibold mb-3">Videoaufnahmen</h2>
-              <p className="text-xl font-medium text-gray-900 mb-4">ab 199 € zzgl. MwSt.</p>
+              <h2 className="text-lg font-semibold mb-3">Videoaufnahmen</h2>
+              <p className="text-base font-medium text-gray-900 mb-4">ab 199 € zzgl. MwSt.</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -93,15 +93,15 @@ export default function Pricing() {
                   <span>Quer- oder Hochformat für Reels, Instagram und YouTube</span>
                 </li>
               </ul>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Für Makler, Bauträger und Agenturen, die Immobilien filmisch präsentieren möchten.
               </p>
             </section>
 
             {/* Virtuelle Rundgänge */}
             <section data-testid="section-360">
-              <h2 className="text-2xl font-semibold mb-3">Virtuelle Rundgänge (360°-Touren)</h2>
-              <p className="text-xl font-medium text-gray-900 mb-4">ab 100 € zzgl. MwSt.</p>
+              <h2 className="text-lg font-semibold mb-3">Virtuelle Rundgänge (360°-Touren)</h2>
+              <p className="text-base font-medium text-gray-900 mb-4">ab 100 € zzgl. MwSt.</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -120,28 +120,28 @@ export default function Pricing() {
                   <span>Lieferung in Formaten, die mit gängiger Maklersoftware kompatibel sind</span>
                 </li>
               </ul>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Ideal zur Integration in Exposés, Immobilienportale oder Kunden-Galerien.
               </p>
             </section>
 
             {/* Virtuelles Staging */}
             <section data-testid="section-staging">
-              <h2 className="text-2xl font-semibold mb-3">Virtuelles Staging</h2>
-              <p className="text-xl font-medium text-gray-900 mb-4">auf Anfrage</p>
+              <h2 className="text-lg font-semibold mb-3">Virtuelles Staging</h2>
+              <p className="text-base font-medium text-gray-900 mb-4">auf Anfrage</p>
               <p className="text-gray-700 mb-4">
                 Virtuelles Staging wird individuell nach Briefing und Moodboard angeboten.
                 Die Preisgestaltung richtet sich nach Raumgröße, Stilrichtung und gewünschtem Detailgrad.
               </p>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Ideal für leerstehende oder renovierungsbedürftige Objekte.
               </p>
             </section>
 
             {/* Bildoptimierung */}
             <section data-testid="section-retouching">
-              <h2 className="text-2xl font-semibold mb-3">Bildoptimierung und KI-Retusche</h2>
-              <p className="text-xl font-medium text-gray-900 mb-4">ab 3,90 € pro Bild zzgl. MwSt.</p>
+              <h2 className="text-lg font-semibold mb-3">Bildoptimierung und KI-Retusche</h2>
+              <p className="text-base font-medium text-gray-900 mb-4">ab 3,90 € pro Bild zzgl. MwSt.</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -156,14 +156,14 @@ export default function Pricing() {
                   <span>Auf Wunsch automatische Optimierung über internes KI-System (separat berechnet)</span>
                 </li>
               </ul>
-              <p className="text-sm text-gray-600 italic">
+              <p className="text-base text-gray-600 italic">
                 Für eine harmonische und technisch saubere Bildwirkung.
               </p>
             </section>
 
             {/* Anfahrt */}
             <section data-testid="section-travel">
-              <h2 className="text-2xl font-semibold mb-3">Anfahrt und Geltungsbereich</h2>
+              <h2 className="text-lg font-semibold mb-3">Anfahrt und Geltungsbereich</h2>
               <p className="text-gray-700 mb-4">
                 Die Leistungen werden im Großraum Hamburg angeboten.
                 Die Anfahrt ist innerhalb von 30 km um Hamburg im Preis enthalten (Entfernung ab Stadtgrenze).
@@ -179,7 +179,7 @@ export default function Pricing() {
 
             {/* Allgemeine Hinweise */}
             <section data-testid="section-notes">
-              <h2 className="text-2xl font-semibold mb-3">Allgemeine Hinweise</h2>
+              <h2 className="text-lg font-semibold mb-3">Allgemeine Hinweise</h2>
               <p className="text-gray-700 mb-2">
                 Alle Preise verstehen sich zzgl. 19 % MwSt.
               </p>

@@ -16,10 +16,10 @@ export default function About() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-3xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">
             Über PIX.IMMO
           </h1>
-          <p className="text-lg text-gray-700 mb-12">
+          <p className="text-base text-gray-700 mb-12">
             Professionelle Immobilienfotografie für Hamburg
           </p>
 
@@ -39,7 +39,7 @@ export default function About() {
 
             {/* Services */}
             <section data-testid="section-services">
-              <h2 className="text-2xl font-semibold mb-6">Unsere Leistungen</h2>
+              <h2 className="text-lg font-semibold mb-6">Unsere Leistungen</h2>
               
               <div className="space-y-8">
                 {/* Immobilienfotografie */}
@@ -50,7 +50,7 @@ export default function About() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Immobilienfotografie</h3>
+                    <h3 className="text-base font-semibold mb-2">Immobilienfotografie</h3>
                     <p className="text-gray-700 leading-relaxed">
                       Professionelle Innen- und Außenaufnahmen mit hochwertiger Kamera- und Lichttechnik. 
                       Wir erfassen die Atmosphäre Ihrer Immobilie und liefern optimierte Dateien für Web, Print und Social Media. 
@@ -67,7 +67,7 @@ export default function About() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Drohnenaufnahmen</h3>
+                    <h3 className="text-base font-semibold mb-2">Drohnenaufnahmen</h3>
                     <p className="text-gray-700 leading-relaxed">
                       Luftaufnahmen zur Darstellung von Lage, Grundstück und Umgebung. 
                       Ideal zur Ergänzung klassischer Immobilienfotografie. 
@@ -84,7 +84,7 @@ export default function About() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Videoaufnahmen</h3>
+                    <h3 className="text-base font-semibold mb-2">Videoaufnahmen</h3>
                     <p className="text-gray-700 leading-relaxed">
                       Kurze Videoclips für Online- und Social-Media-Plattformen. 
                       Kombination aus Boden- und Luftaufnahmen möglich. 
@@ -101,7 +101,7 @@ export default function About() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Virtuelle Rundgänge (360°-Touren)</h3>
+                    <h3 className="text-base font-semibold mb-2">Virtuelle Rundgänge (360°-Touren)</h3>
                     <p className="text-gray-700 leading-relaxed">
                       Interaktive 360°-Aufnahmen für Online-Exposés. 
                       Basis-Variante für MLS- und CRM-Systeme (z.B. FIO, onOffice, Propstack). 
@@ -118,7 +118,7 @@ export default function About() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">KI-gestützte Bildoptimierung</h3>
+                    <h3 className="text-base font-semibold mb-2">KI-gestützte Bildoptimierung</h3>
                     <p className="text-gray-700 leading-relaxed">
                       Automatische Optimierung von Farben, Kontrast und Belichtung. 
                       Entfernen störender Elemente. 
@@ -132,7 +132,7 @@ export default function About() {
 
             {/* Standort */}
             <section data-testid="section-locations">
-              <h2 className="text-2xl font-semibold mb-4">Unser Standort</h2>
+              <h2 className="text-lg font-semibold mb-4">Unser Standort</h2>
               
               <div className="bg-gray-50 p-6 rounded-lg max-w-lg">
                 <h3 className="text-xl font-semibold mb-2">Hamburg</h3>
@@ -155,7 +155,7 @@ export default function About() {
 
             {/* Workflow */}
             <section data-testid="section-workflow">
-              <h2 className="text-2xl font-semibold mb-4">Unser Workflow</h2>
+              <h2 className="text-lg font-semibold mb-4">Unser Workflow</h2>
               <div className="space-y-4 text-gray-700">
                 <div>
                   <h3 className="font-semibold mb-1">1. Buchung</h3>
@@ -186,7 +186,7 @@ export default function About() {
 
             {/* CTA */}
             <section className="bg-gray-50 p-6 rounded-lg" data-testid="section-cta">
-              <h2 className="text-2xl font-semibold mb-3">Starten Sie Ihr Projekt</h2>
+              <h2 className="text-lg font-semibold mb-3">Starten Sie Ihr Projekt</h2>
               <p className="text-gray-700 mb-4">
                 Interessiert an professioneller Immobilienfotografie? Kontaktieren Sie uns für ein individuelles Angebot!
               </p>

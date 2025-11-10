@@ -21,17 +21,17 @@ export default function FAQ() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-3xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">
             Häufig gestellte Fragen
           </h1>
-          <p className="text-lg text-gray-700 mb-12">
+          <p className="text-base text-gray-700 mb-12">
             Hier finden Sie Antworten auf die wichtigsten Fragen zu unseren Leistungen, Abläufen und Konditionen.
           </p>
 
           <Accordion type="single" collapsible className="space-y-4" data-testid="faq-accordion">
             {/* Buchung & Ablauf */}
             <AccordionItem value="booking" className="border rounded-lg px-6" data-testid="faq-booking">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wie funktioniert die Buchung?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -42,7 +42,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="duration" className="border rounded-lg px-6" data-testid="faq-duration">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wie lange dauert ein Termin vor Ort?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -52,7 +52,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="delivery-time" className="border rounded-lg px-6" data-testid="faq-delivery-time">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wann erhalte ich die fertigen Bilder?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -61,7 +61,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="delivery-format" className="border rounded-lg px-6" data-testid="faq-delivery-format">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 In welchem Format werden die Bilder geliefert?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -72,7 +72,7 @@ export default function FAQ() {
 
             {/* Rechte & Nutzung */}
             <AccordionItem value="rights" className="border rounded-lg px-6" data-testid="faq-rights">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Welche Nutzungsrechte erhalte ich?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -82,7 +82,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="third-party" className="border rounded-lg px-6" data-testid="faq-third-party">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Darf ich die Bilder an Dritte weitergeben?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -92,7 +92,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="editing" className="border rounded-lg px-6" data-testid="faq-editing">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Kann ich individuelle Bearbeitungen beauftragen?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -103,7 +103,7 @@ export default function FAQ() {
 
             {/* Technik & Qualität */}
             <AccordionItem value="equipment" className="border rounded-lg px-6" data-testid="faq-equipment">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Mit welcher Ausrüstung wird fotografiert?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -113,7 +113,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="weather" className="border rounded-lg px-6" data-testid="faq-weather">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Was passiert bei schlechtem Wetter?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -123,7 +123,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="ai-processing" className="border rounded-lg px-6" data-testid="faq-ai-processing">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Was bedeutet KI-gestützte Bearbeitung?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -134,7 +134,7 @@ export default function FAQ() {
 
             {/* Kosten & Zahlung */}
             <AccordionItem value="pricing" className="border rounded-lg px-6" data-testid="faq-pricing">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wie setzen sich die Preise zusammen?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -144,7 +144,7 @@ export default function FAQ() {
             </AccordionItem>
 
             <AccordionItem value="payment" className="border rounded-lg px-6" data-testid="faq-payment">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wann und wie wird bezahlt?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -155,7 +155,7 @@ export default function FAQ() {
 
             {/* Vorbereitung der Immobilie */}
             <AccordionItem value="preparation" className="border rounded-lg px-6" data-testid="faq-preparation">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
+              <AccordionTrigger className="text-base font-semibold hover:no-underline">
                 Wie sollte die Immobilie vor dem Fototermin vorbereitet werden?
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
@@ -184,7 +184,7 @@ export default function FAQ() {
 
           {/* Contact CTA */}
           <div className="mt-12 pt-8 border-t border-gray-200">
-            <h2 className="text-2xl font-semibold mb-3">Weitere Fragen?</h2>
+            <h2 className="text-lg font-semibold mb-3">Weitere Fragen?</h2>
             <p className="text-gray-700 mb-4">
               Haben Sie eine Frage, die hier nicht beantwortet wurde? Wir helfen Ihnen gerne weiter!
             </p>

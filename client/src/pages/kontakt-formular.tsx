@@ -83,10 +83,10 @@ export default function KontaktFormular() {
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center px-6">
           <CheckCircle2 className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-3xl font-bold mb-3" data-testid="success-title">
+          <h1 className="text-lg font-bold mb-3" data-testid="success-title">
             Vielen Dank für Ihre Nachricht!
           </h1>
-          <p className="text-lg text-gray-700 mb-6">
+          <p className="text-base text-gray-700 mb-6">
             Wir haben Ihre Anfrage erhalten und werden uns schnellstmöglich bei Ihnen melden.
           </p>
           <Link href="/">
@@ -124,10 +124,10 @@ export default function KontaktFormular() {
       {/* Content */}
       <div className="py-12 md:py-20">
         <div className="w-full max-w-2xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-4" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-4" data-testid="page-title">
             Kontaktformular
           </h1>
-          <p className="text-lg text-gray-700 mb-8">
+          <p className="text-base text-gray-700 mb-8">
             Sie haben Fragen zu unseren Leistungen oder möchten ein individuelles Angebot anfragen? 
             Schreiben Sie uns – wir melden uns schnellstmöglich bei Ihnen!
           </p>

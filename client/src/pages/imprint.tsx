@@ -14,10 +14,10 @@ export default function Imprint() {
       {/* Content */}
       <article className="py-12 md:py-20">
         <div className="w-full max-w-3xl mx-auto px-6">
-          <h1 className="text-3xl md:text-4xl font-bold mb-8" data-testid="page-title">Impressum und Datenschutz</h1>
+          <h1 className="text-lg font-bold mb-8" data-testid="page-title">Impressum und Datenschutz</h1>
           
           <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Impressum</h2>
+            <h2 className="text-lg font-semibold mb-4">Impressum</h2>
             <p className="mb-2">Verantwortlich gemäß § 5 TMG und § 18 Abs. 2 MStV</p>
             <p className="mb-4">
               <strong>Daniel Fortmann</strong><br />
@@ -38,7 +38,7 @@ export default function Imprint() {
           </section>
 
           <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-4">Vorbehalt gemäß § 44b UrhG – Text- und Data-Mining (TDM)</h2>
+            <h2 className="text-lg font-semibold mb-4">Vorbehalt gemäß § 44b UrhG – Text- und Data-Mining (TDM)</h2>
             <p className="mb-4">
               Pix.immo, vertreten durch Daniel Fortmann, behält sich die Nutzung sämtlicher Inhalte dieser Website zum Zweck des kommerziellen Text- und Data-Minings im Sinne von § 44b UrhG ausdrücklich vor.
             </p>
@@ -51,7 +51,7 @@ export default function Imprint() {
           </section>
 
           <section className="mb-12">
-            <h2 className="text-2xl font-semibold mb-6">Datenschutzerklärung</h2>
+            <h2 className="text-lg font-semibold mb-6">Datenschutzerklärung</h2>
             
             <div className="prose prose-sm max-w-none">
               <p className="mb-6">

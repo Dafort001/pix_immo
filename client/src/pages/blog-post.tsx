@@ -123,7 +123,7 @@ export default function BlogPost() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Blog-Beitrag nicht gefunden</h1>
+          <h1 className="text-lg font-bold mb-4">Blog-Beitrag nicht gefunden</h1>
           <Link href="/blog">
             <span className="text-primary hover:underline cursor-pointer">Zurück zum Blog</span>
           </Link>
@@ -164,7 +164,7 @@ export default function BlogPost() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-[5vw] md:p-12">
-          <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold text-white max-w-4xl leading-tight" data-testid="post-title">
+          <h1 className="text-lg font-bold text-white max-w-4xl leading-tight" data-testid="post-title">
             {post.title}
           </h1>
         </div>

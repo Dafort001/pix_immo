@@ -283,7 +283,7 @@ export default function Galerie() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="mb-2 text-3xl font-bold" data-testid="heading-gallery">
+              <h1 className="text-lg font-bold mb-2" data-testid="heading-gallery">
                 Ihre Galerie
               </h1>
               <p className="text-muted-foreground">
