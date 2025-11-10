@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -353,6 +353,25 @@ export interface IStorage {
   }): Promise<import("@shared/schema").GalleryAnnotation>;
   getFileAnnotations(fileId: string): Promise<import("@shared/schema").GalleryAnnotation[]>;
   deleteGalleryAnnotation(id: string): Promise<void>;
+
+  // PixCapture Uploaded Files operations (Intent-based Upload System)
+  createUploadedFile(data: {
+    userId: string;
+    objectKey: string;
+    originalFilename: string;
+    mimeType: string;
+    fileSize: number;
+    checksum?: string;
+    orderId?: string;
+    roomType?: string;
+    stackId?: string;
+    exifMeta?: string;
+  }): Promise<import("@shared/schema").UploadedFile>;
+  getUploadedFile(id: string): Promise<import("@shared/schema").UploadedFile | undefined>;
+  getUploadedFileByObjectKey(objectKey: string): Promise<import("@shared/schema").UploadedFile | undefined>;
+  getUserUploadedFiles(userId: string): Promise<import("@shared/schema").UploadedFile[]>;
+  updateUploadedFileStatus(id: string, status: string): Promise<void>;
+  finalizeUploadedFile(objectKey: string, finalizedAt: number): Promise<void>;
 
   // Editor Management Operations
   createEditor(data: {
@@ -2880,6 +2899,80 @@ export class DatabaseStorage implements IStorage {
 
   async deleteService(id: string): Promise<void> {
     await db.delete(services).where(eq(services.id, id));
+  }
+
+  // PixCapture Uploaded Files Operations (Intent-based Upload System)
+  async createUploadedFile(data: {
+    userId: string;
+    objectKey: string;
+    originalFilename: string;
+    mimeType: string;
+    fileSize: number;
+    checksum?: string;
+    orderId?: string;
+    roomType?: string;
+    stackId?: string;
+    exifMeta?: string;
+  }): Promise<import("@shared/schema").UploadedFile> {
+    const id = randomUUID();
+    const [uploadedFile] = await db
+      .insert(uploadedFiles)
+      .values({
+        id,
+        userId: data.userId,
+        orderId: data.orderId || null,
+        objectKey: data.objectKey,
+        originalFilename: data.originalFilename,
+        mimeType: data.mimeType,
+        fileSize: data.fileSize,
+        checksum: data.checksum || null,
+        status: 'uploaded',
+        roomType: data.roomType || null,
+        stackId: data.stackId || null,
+        exifMeta: data.exifMeta || null,
+        createdAt: Date.now(),
+        finalizedAt: null,
+      })
+      .returning();
+    return uploadedFile;
+  }
+
+  async getUploadedFile(id: string): Promise<import("@shared/schema").UploadedFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, id));
+    return file || undefined;
+  }
+
+  async getUploadedFileByObjectKey(objectKey: string): Promise<import("@shared/schema").UploadedFile | undefined> {
+    const [file] = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.objectKey, objectKey));
+    return file || undefined;
+  }
+
+  async getUserUploadedFiles(userId: string): Promise<import("@shared/schema").UploadedFile[]> {
+    return await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.userId, userId))
+      .orderBy(desc(uploadedFiles.createdAt));
+  }
+
+  async updateUploadedFileStatus(id: string, status: string): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ status })
+      .where(eq(uploadedFiles.id, id));
+  }
+
+  async finalizeUploadedFile(objectKey: string, finalizedAt: number): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ finalizedAt })
+      .where(eq(uploadedFiles.objectKey, objectKey));
   }
 }
 
