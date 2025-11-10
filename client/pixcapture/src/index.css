@@ -2,6 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  @keyframes scroll-left {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  
+  .animate-scroll-left {
+    animation: scroll-left linear infinite;
+    animation-duration: var(--scroll-duration, 120s);
+    width: var(--scroll-width, auto);
+  }
+}
+
 /* LIGHT MODE */
 :root {
   /* === Sage & Clay v3 Brand Colors === */

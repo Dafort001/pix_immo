@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface ScrollingImageStripProps {
   images: Array<{
@@ -18,6 +18,7 @@ export function ScrollingImageStrip({
   clickable = false,
 }: ScrollingImageStripProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Duplicate images for seamless loop
   const duplicatedImages = [...images, ...images];
@@ -28,31 +29,37 @@ export function ScrollingImageStrip({
     }
   };
 
+  const handleMouseEnter = () => {
+    if (clickable && containerRef.current) {
+      containerRef.current.style.animationPlayState = 'paused';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (clickable && containerRef.current) {
+      containerRef.current.style.animationPlayState = 'running';
+    }
+  };
+
+  // Dynamic values as CSS custom properties (best practice for runtime-calculated values)
+  const scrollStyles = {
+    '--scroll-width': `${duplicatedImages.length * 482}px`,
+    '--scroll-duration': `${duration}s`,
+  } as React.CSSProperties;
+
   return (
     <div className="relative w-full overflow-hidden bg-white">
       <div
-        className="flex gap-2"
-        style={{
-          animation: `scroll-left ${duration}s linear infinite`,
-          width: `${duplicatedImages.length * 482}px`,
-        }}
-        onMouseEnter={() => {
-          if (clickable) {
-            const element = document.querySelector('.scrolling-strip') as HTMLElement;
-            if (element) element.style.animationPlayState = 'paused';
-          }
-        }}
-        onMouseLeave={() => {
-          if (clickable) {
-            const element = document.querySelector('.scrolling-strip') as HTMLElement;
-            if (element) element.style.animationPlayState = 'running';
-          }
-        }}
+        ref={containerRef}
+        className="flex gap-2 animate-scroll-left"
+        style={scrollStyles}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {duplicatedImages.map((image, index) => (
           <div
             key={`${image.id}-${index}`}
-            className={`flex-shrink-0 w-[480px] h-[360px] relative overflow-hidden scrolling-strip ${
+            className={`flex-shrink-0 w-[480px] h-[360px] relative overflow-hidden ${
               clickable ? 'cursor-pointer' : ''
             }`}
             onClick={() => handleImageClick(image.id, image.url)}
@@ -92,17 +99,6 @@ export function ScrollingImageStrip({
           </div>
         ))}
       </div>
-
-      <style>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-${images.length * 482}px);
-          }
-        }
-      `}</style>
     </div>
   );
 }
