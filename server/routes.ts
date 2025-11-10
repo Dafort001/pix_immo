@@ -29,6 +29,7 @@ import { processJobDemo } from "./demo-processing";
 import { registerGalleryRoutes } from "./gallery-routes";
 import { registerEditorRoutes } from "./editor-routes";
 import { registerOrderFilesRoutes } from "./order-files-routes";
+import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 
 // Middleware to validate request body with Zod
@@ -2751,6 +2752,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Order Files Management routes (PixCapture)
   registerOrderFilesRoutes(app);
+
+  // Register Edit Workflow routes (Phase 2 - Stubs)
+  registerEditWorkflowRoutes(app);
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
