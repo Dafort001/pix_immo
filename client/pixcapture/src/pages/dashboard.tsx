@@ -1,15 +1,19 @@
 import { Link } from "wouter";
 import { SEOHead } from "@shared/components";
 import { FooterPixCapture } from "../components/FooterPixCapture";
+import { UploadDropzone } from "../components/UploadDropzone";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Upload, Image, Clock, CheckCircle, ArrowLeft, LogOut } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function PixCaptureDashboard() {
   const { toast } = useToast();
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
 
   // Check if user is authenticated
   const { data: user, isLoading, isError } = useQuery({
@@ -102,26 +106,45 @@ export default function PixCaptureDashboard() {
           {/* Action Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {/* Upload Card */}
-            <Card className="border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
-              <CardHeader>
-                <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
-                  <Upload className="text-blue-600" size={24} />
-                </div>
-                <CardTitle className="text-black">Fotos hochladen</CardTitle>
-                <CardDescription className="text-gray-600">
-                  Laden Sie neue Immobilienfotos hoch
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button 
-                  className="w-full" 
-                  data-testid="button-upload"
-                  disabled
-                >
-                  Kommt bald
-                </Button>
-              </CardContent>
-            </Card>
+            <Dialog open={uploadDialogOpen} onOpenChange={setUploadDialogOpen}>
+              <DialogTrigger asChild>
+                <Card className="border-gray-200 hover:shadow-lg transition-shadow cursor-pointer">
+                  <CardHeader>
+                    <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                      <Upload className="text-blue-600" size={24} />
+                    </div>
+                    <CardTitle className="text-black">Fotos hochladen</CardTitle>
+                    <CardDescription className="text-gray-600">
+                      Laden Sie neue Immobilienfotos hoch
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Button 
+                      className="w-full" 
+                      data-testid="button-upload"
+                    >
+                      Jetzt hochladen
+                    </Button>
+                  </CardContent>
+                </Card>
+              </DialogTrigger>
+              <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Fotos hochladen</DialogTitle>
+                  <DialogDescription>
+                    Laden Sie Ihre Immobilienfotos hoch. Unterstützt werden JPEG, PNG und HEIC bis 100 MB.
+                  </DialogDescription>
+                </DialogHeader>
+                <UploadDropzone
+                  onUploadComplete={(objectKeys) => {
+                    toast({
+                      title: "Upload abgeschlossen",
+                      description: `${objectKeys.length} Datei(en) erfolgreich hochgeladen`,
+                    });
+                  }}
+                />
+              </DialogContent>
+            </Dialog>
 
             {/* Gallery Card */}
             <Card className="border-gray-200 hover:shadow-lg transition-shadow">
