@@ -1,0 +1,130 @@
+Ziel
+
+Kunde wählt Bilder → Upload läuft direkt in Cloudflare R2 über signed URL → Abschluss („finalize“) schreibt DB → Datei erscheint im richtigen Auftrag.
+
+UI-Verhalten (Frontend)
+
+Elemente: Button „Dateien auswählen“, Drop-Zone, Liste mit Upload-Items (Name, Fortschritt, Status, Retry, Abbrechen).
+
+Nur Bilder/Videos zulassen (jpg/jpeg/png/heic/dng/mp4/mov; konfigurierbar).
+
+Max. gleichzeitige Uploads: 3–5 (Queue).
+
+Nach Erfolg: Item-Status = „hochgeladen“, dann „registriert“ (nach finalize).
+
+Nach Fehler: „fehlgeschlagen“ + „Erneut versuchen“.
+
+Frontend-Ablauf (pro Datei)
+
+Select: Nutzer wählt Datei + optional order_id (aus „aktueller Auftrag“ vorausgewählt).
+
+Intent:
+POST /api/uploads/intent mit Auth (Session-Cookie oder device_token in Header).
+
+{
+  "filename": "IMG_1234.HEIC",
+  "mime": "image/heic",
+  "order_id": "<ORDER_ID>",
+  "room_type": "livingroom",
+  "stack_id": "g003"
+}
+
+
+Erwartete Antwort:
+
+{
+  "signed_url": "<pre-signed PUT URL>",
+  "object_key": "user/<UID>/orders/<ORDER_ID>/raw/2025-11-10_SH123_livingroom_g003_v1.jpg",
+  "headers": { "Content-Type": "image/heic", "x-amz-acl": "private" }
+}
+
+
+Upload → R2: PUT signed_url mit gelieferten headers.
+
+Fortschritt tracken (onProgress).
+
+Bei Abbruch/Timeout: Retry mit neuer signed_url (erneut intent aufrufen).
+
+Finalize:
+POST /api/uploads/finalize
+
+{
+  "object_key": "user/<UID>/orders/<ORDER_ID>/raw/2025-11-10_SH123_livingroom_g003_v1.jpg",
+  "bytes": 4231987,
+  "checksum": "<SHA256 hex>",
+  "exif_meta": { "make":"Apple","model":"iPhone","focal":26,"iso":100,"shutter":"1/120" }
+}
+
+
+Erwartete Antwort:
+
+{ "file_id":"<FILE_ID>", "status":"uploaded" }
+
+
+UI aktualisieren: Item auf „registriert“, Liste vom Server neu laden (GET /api/orders/:id/files).
+
+Backend-Endpunkte (Hono/Workers)
+
+POST /api/uploads/intent
+Auth Pflicht (Session oder device_token).
+Checks: order_id gehört zu user_id.
+Server generiert object_key (Client darf keinen Pfad bestimmen).
+Return: signed_url, object_key, headers.
+
+POST /api/uploads/finalize
+Checks: Objekt existiert in R2, object_key gehört zu user_id.
+Action: DB-Insert/Update File{ user_id, order_id, object_key, bytes, mime, status='uploaded', meta }.
+Return: file_id, status.
+
+Regeln / Sicherheit
+
+Kein clientseitiger Pfadbau. object_key immer serverseitig.
+
+signed_url TTL 5 Min., einmalig.
+
+order_id muss zu user_id passen → sonst 403.
+
+Max. 3 parallele intent pro Sekunde pro Nutzer (Rate-Limit).
+
+Größenlimit pro Datei (z. B. 250 MB).
+
+Optional: tus/S3-Multipart für >100 MB; sonst normaler PUT.
+
+Fehlerszenarien (UI-Reaktion)
+
+401/403 bei intent: Session/Token ungültig → Login anzeigen.
+
+PUT 403/410: signed URL abgelaufen → automatisch neuen intent holen, max. 2 Retries.
+
+Finalize 409: Objekt fehlt → UI setzt Datei zurück auf „wartet“, bietet Retry.
+
+Netzwerkfehler: Exponentielles Backoff, dann „Erneut versuchen“.
+
+Akzeptanzkriterien (prüfbar)
+
+10 Dateien hintereinander laden korrekt in den richtigen Auftrag.
+
+Abbruch mitten im Upload → erneuter Versuch funktioniert.
+
+Ohne finalize erscheint die Datei nicht in der Auftragsliste.
+
+Falscher order_id → 403 bei intent.
+
+Nach erfolgreichem Upload ist die Datei binnen ≤10 s in GET /api/orders/:id/files.
+
+UI-Texte (kurz, DE)
+
+Button: „Dateien auswählen“
+
+Drop-Zone: „Dateien hierher ziehen“
+
+Status: „wartet… / lädt hoch… / hochgeladen / registriert / fehlgeschlagen“
+
+Aktionen: „Erneut versuchen“, „Abbrechen“
+
+Minimal-Konfig (Server)
+
+R2 Bucket: piximmo-media
+
+object_key Schema:
+user/{user_id}/orders/{order_id}/raw/{date}-{shootcode}_{room_type}_{index}_v{ver}.jpg

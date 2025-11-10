@@ -12,7 +12,7 @@ export default function PixCaptureDashboard() {
   const { toast } = useToast();
 
   // Check if user is authenticated
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, isError } = useQuery({
     queryKey: ["/api/auth/me"],
   });
 
@@ -44,7 +44,12 @@ export default function PixCaptureDashboard() {
     );
   }
 
-  if (!user) {
+  if (!user || isError) {
+    toast({
+      variant: "destructive",
+      title: "Nicht angemeldet",
+      description: "Bitte melden Sie sich an, um fortzufahren.",
+    });
     window.location.href = "/pixcapture/login";
     return null;
   }
@@ -108,11 +113,13 @@ export default function PixCaptureDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Link href="/pixcapture/upload">
-                  <Button className="w-full" data-testid="button-upload">
-                    Jetzt hochladen
-                  </Button>
-                </Link>
+                <Button 
+                  className="w-full" 
+                  data-testid="button-upload"
+                  disabled
+                >
+                  Kommt bald
+                </Button>
               </CardContent>
             </Card>
 
