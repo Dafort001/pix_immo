@@ -1,18 +1,25 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { ArrowLeft, Eye, Filter } from 'lucide-react';
+import { Eye, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SEOHead } from '@shared/components';
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, getQueryFn } from '@/lib/queryClient';
 import type { Booking, BookingItem, Service } from '@shared/schema';
+
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
 
 type BookingStatus = 'pending' | 'confirmed' | 'inProgress' | 'completed' | 'cancelled';
 
@@ -40,14 +47,16 @@ const REGION_LABELS: Record<string, string> = {
 
 export default function AdminBookings() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [selectedBooking, setSelectedBooking] = useState<{ booking: Booking; items: BookingItem[] } | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
-  if (authLoading) return null;
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
 
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ['/api/bookings/all'],
@@ -100,45 +109,41 @@ export default function AdminBookings() {
     return statusMatch && regionMatch;
   });
 
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
+
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-muted/30 p-6">
-        <div className="max-w-7xl mx-auto space-y-4">
-          <Skeleton className="h-12 w-64" />
-          <Skeleton className="h-96 w-full" />
+      <AdminLayout userRole={userData.user.role}>
+        <div className="flex flex-col h-full">
+          <AdminPageHeader title="Buchungsverwaltung" showBackButton />
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-6xl mx-auto px-6 py-8 space-y-4">
+              <Skeleton className="h-12 w-64" />
+              <Skeleton className="h-96 w-full" />
+            </div>
+          </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <>
-      <SEOHead
-        title="Buchungsverwaltung | Admin"
-        description="Verwaltung aller Buchungen"
-      />
-      <div className="min-h-screen bg-muted/30 p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <Button
-                variant="ghost"
-                onClick={() => setLocation('/admin')}
-                className="mb-4 hover-elevate"
-                data-testid="button-back-admin"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Zurück
-              </Button>
-              <h1 className="text-lg font-bold">Buchungsverwaltung</h1>
-              <p className="text-muted-foreground mt-1">
-                {filteredBookings.length} von {bookings.length} Buchungen
-              </p>
-            </div>
-          </div>
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title="Buchungsverwaltung"
+          showBackButton
+        />
 
-          {/* Filters */}
-          <Card>
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+            <p className="text-muted-foreground">
+              {filteredBookings.length} von {bookings.length} Buchungen
+            </p>
+
+            {/* Filters */}
+            <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Filter className="h-5 w-5" />
@@ -179,8 +184,8 @@ export default function AdminBookings() {
             </CardContent>
           </Card>
 
-          {/* Bookings Table */}
-          <Card>
+            {/* Bookings Table */}
+            <Card>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -280,7 +285,8 @@ export default function AdminBookings() {
                 </table>
               </div>
             </CardContent>
-          </Card>
+            </Card>
+          </div>
         </div>
       </div>
 
@@ -414,6 +420,6 @@ export default function AdminBookings() {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </AdminLayout>
   );
 }

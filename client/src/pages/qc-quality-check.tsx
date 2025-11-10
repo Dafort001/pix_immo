@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
+import { useQuery } from "@tanstack/react-query";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { getQueryFn } from "@/lib/queryClient";
 import {
-  ArrowLeft,
   Check,
   X,
   AlertCircle,
@@ -13,13 +15,13 @@ import {
   XCircle,
   Clock,
   Send,
-  Eye,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { SEOHead } from '@shared/components';
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +43,13 @@ import {
   Editor,
 } from '@/utils/editor-assignment';
 import { useToast } from '@/hooks/use-toast';
+
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
 
 type UploadSource = 'app' | 'professional';
 type QCStatus = 'pending' | 'approved' | 'rejected' | 'needs-revision';
@@ -75,6 +84,7 @@ interface QCJob {
 }
 
 export default function QCQualityCheck() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const [job, setJob] = useState<QCJob | null>(null);
   const [images, setImages] = useState<QCImage[]>([]);
@@ -86,6 +96,11 @@ export default function QCQualityCheck() {
   const [showEditorAssignment, setShowEditorAssignment] = useState(false);
   const [selectedEditor, setSelectedEditor] = useState<string>('auto');
   const { toast } = useToast();
+  
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
   
   const availableEditors = job ? getAvailableEditors({ source: job.source }) : [];
 
@@ -217,109 +232,70 @@ export default function QCQualityCheck() {
   };
 
   const getStatusBadge = (status: QCStatus) => {
-    const styles = {
-      pending: 'bg-yellow-500/10 text-yellow-600 border-yellow-500/20',
-      approved: 'bg-green-500/10 text-green-600 border-green-500/20',
-      rejected: 'bg-red-500/10 text-red-600 border-red-500/20',
-      'needs-revision': 'bg-orange-500/10 text-orange-600 border-orange-500/20',
+    const variants: Record<QCStatus, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
+      pending: { label: 'Ausstehend', variant: 'secondary' },
+      approved: { label: 'Freigegeben', variant: 'default' },
+      rejected: { label: 'Abgelehnt', variant: 'destructive' },
+      'needs-revision': { label: 'Revision', variant: 'outline' },
     };
 
-    const labels = {
-      pending: 'Ausstehend',
-      approved: 'Freigegeben',
-      rejected: 'Abgelehnt',
-      'needs-revision': 'Revision',
-    };
-
+    const config = variants[status];
     return (
-      <Badge variant="outline" className={styles[status]}>
-        {labels[status]}
+      <Badge variant={config.variant}>
+        {config.label}
       </Badge>
     );
   };
 
   const getSourceBadge = (source: UploadSource) => {
     return source === 'app' ? (
-      <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/20">
+      <Badge variant="outline">
         <Smartphone className="h-3 w-3 mr-1" />
         App-Upload
       </Badge>
     ) : (
-      <Badge variant="outline" className="bg-gray-700/10 text-gray-700 border-gray-700/20">
+      <Badge variant="secondary">
         <Camera className="h-3 w-3 mr-1" />
         Professional
       </Badge>
     );
   };
 
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
+
   if (!job) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        <SEOHead title="Quality Check – pix.immo" description="Bildqualitätsprüfung" path="/qc-quality-check" />
-        
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-[1600px] mx-auto px-6 py-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/dashboard')}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-5 w-5" />
+      <AdminLayout userRole={userData.user.role}>
+        <div className="flex flex-col h-full">
+          <AdminPageHeader title="Quality Check" showBackButton />
+          
+          <div className="flex-1 overflow-auto flex items-center justify-center">
+            <div className="text-center max-w-md mx-auto px-6">
+              <ImageIcon className="h-24 w-24 text-muted-foreground mx-auto mb-6" />
+              <h2 className="text-lg font-semibold mb-2">
+                Kein Job ausgewählt
+              </h2>
+              <p className="text-muted-foreground mb-6">
+                Wähle einen Job aus, um die Bildqualität zu prüfen
+              </p>
+              <Button onClick={() => setLocation('/dashboard')}>
+                Zum Dashboard
               </Button>
-              <h1 className="text-lg font-bold">Quality Check</h1>
             </div>
           </div>
-        </header>
-
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <ImageIcon className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              Kein Job ausgewählt
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Wähle einen Job aus, um die Bildqualität zu prüfen
-            </p>
-            <Button onClick={() => setLocation('/dashboard')}>
-              Zum Dashboard
-            </Button>
-          </div>
-        </main>
-      </div>
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <SEOHead title={`Quality Check – ${job.jobId}`} description="Bildqualitätsprüfung" path="/qc-quality-check" />
-
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/dashboard')}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-lg font-bold text-gray-900">
-                    Quality Check · {job.jobId}
-                  </h1>
-                  {getSourceBadge(job.source)}
-                </div>
-                <p className="text-gray-600">
-                  {job.customer} · {job.property}
-                </p>
-              </div>
-            </div>
-
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title={`Quality Check · ${job.jobId}`}
+          showBackButton
+          actions={
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
@@ -333,169 +309,171 @@ export default function QCQualityCheck() {
               <Button
                 onClick={handleSendToEditor}
                 disabled={stats.approved === 0}
-                className="bg-green-600 text-white hover:bg-green-700"
                 data-testid="button-send-to-editor"
               >
                 <Send className="h-5 w-5 mr-2" />
                 An Editor senden ({stats.approved})
               </Button>
             </div>
-          </div>
+          }
+        />
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-yellow-600" />
-              <span className="text-gray-600 text-sm">
-                {stats.pending} ausstehend
+        <div className="border-b bg-card">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-muted-foreground">
+                {job.customer} · {job.property}
               </span>
+              {getSourceBadge(job.source)}
             </div>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-green-600" />
-              <span className="text-gray-600 text-sm">
-                {stats.approved} freigegeben
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <XCircle className="h-4 w-4 text-red-500" />
-              <span className="text-gray-600 text-sm">
-                {stats.rejected} abgelehnt
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-orange-500" />
-              <span className="text-gray-600 text-sm">
-                {stats.needsRevision} Revision
-              </span>
-            </div>
-          </div>
-        </div>
-      </header>
 
-      <div className="bg-white border-b border-gray-200 sticky top-[104px] z-10">
-        <div className="max-w-[1600px] mx-auto px-6 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
-                <SelectTrigger className="w-[200px] h-10" data-testid="filter-status">
-                  <SelectValue placeholder="Status filtern" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Alle Status</SelectItem>
-                  <SelectItem value="pending">Ausstehend</SelectItem>
-                  <SelectItem value="approved">Freigegeben</SelectItem>
-                  <SelectItem value="rejected">Abgelehnt</SelectItem>
-                  <SelectItem value="needs-revision">Revision</SelectItem>
-                </SelectContent>
-              </Select>
-
+            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                <Checkbox
-                  id="show-approved"
-                  checked={showApprovedImages}
-                  onCheckedChange={(checked) => setShowApprovedImages(checked as boolean)}
-                  data-testid="checkbox-show-approved"
-                />
-                <label htmlFor="show-approved" className="text-gray-600 cursor-pointer text-sm">
-                  Freigegebene anzeigen
-                </label>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">
+                  {stats.pending} ausstehend
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">
+                  {stats.approved} freigegeben
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">
+                  {stats.rejected} abgelehnt
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground text-sm">
+                  {stats.needsRevision} Revision
+                </span>
               </div>
             </div>
-
-            <p className="text-gray-600 text-sm">
-              {filteredImages.length} von {images.length} Bildern
-            </p>
           </div>
         </div>
-      </div>
 
-      <main className="flex-1 max-w-[1600px] mx-auto w-full px-6 py-6">
-        <div className="grid grid-cols-4 gap-4">
-          {filteredImages.map((image) => (
-            <div key={image.id} className="group relative" data-testid={`image-card-${image.id}`}>
-              <div
-                className={`relative aspect-[4/3] rounded-lg overflow-hidden bg-gray-100 cursor-pointer border-2 transition-all ${
-                  image.status === 'approved'
-                    ? 'border-green-500 opacity-60'
-                    : image.status === 'rejected'
-                    ? 'border-red-500'
-                    : image.status === 'needs-revision'
-                    ? 'border-orange-500'
-                    : 'border-transparent'
-                }`}
-                onClick={() => handleImageClick(image)}
-              >
-                <img src={image.thumbnail} alt={image.filename} className="w-full h-full object-cover" />
+        <div className="border-b bg-card">
+          <div className="max-w-6xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+                  <SelectTrigger className="w-[200px]" data-testid="filter-status">
+                    <SelectValue placeholder="Status filtern" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Alle Status</SelectItem>
+                    <SelectItem value="pending">Ausstehend</SelectItem>
+                    <SelectItem value="approved">Freigegeben</SelectItem>
+                    <SelectItem value="rejected">Abgelehnt</SelectItem>
+                    <SelectItem value="needs-revision">Revision</SelectItem>
+                  </SelectContent>
+                </Select>
 
-                <div className="absolute top-2 left-2">{getStatusBadge(image.status)}</div>
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="show-approved"
+                    checked={showApprovedImages}
+                    onCheckedChange={(checked) => setShowApprovedImages(checked as boolean)}
+                    data-testid="checkbox-show-approved"
+                  />
+                  <label htmlFor="show-approved" className="text-muted-foreground cursor-pointer text-sm">
+                    Freigegebene anzeigen
+                  </label>
+                </div>
+              </div>
 
-                {image.technicalIssues && image.technicalIssues.length > 0 && (
-                  <div className="absolute top-2 right-2">
-                    <Badge variant="destructive" className="bg-red-500">
-                      <AlertCircle className="h-3 w-3 mr-1" />
-                      {image.technicalIssues.length}
-                    </Badge>
-                  </div>
-                )}
+              <p className="text-muted-foreground text-sm">
+                {filteredImages.length} von {images.length} Bildern
+              </p>
+            </div>
+          </div>
+        </div>
 
-                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="bg-white/90 hover:bg-white"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleImageClick(image);
-                    }}
-                    data-testid={`button-zoom-${image.id}`}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-6">
+            <div className="grid grid-cols-4 gap-4">
+              {filteredImages.map((image) => (
+                <div key={image.id} className="group relative" data-testid={`image-card-${image.id}`}>
+                  <div
+                    className="relative aspect-[4/3] rounded-lg overflow-hidden bg-muted cursor-pointer border-2 transition-all hover:border-border"
+                    onClick={() => handleImageClick(image)}
                   >
-                    <ZoomIn className="h-4 w-4" />
-                  </Button>
-                  {image.status === 'pending' && (
-                    <>
+                    <img src={image.thumbnail} alt={image.filename} className="w-full h-full object-cover" />
+
+                    <div className="absolute top-2 left-2">{getStatusBadge(image.status)}</div>
+
+                    {image.technicalIssues && image.technicalIssues.length > 0 && (
+                      <div className="absolute top-2 right-2">
+                        <Badge variant="destructive">
+                          <AlertCircle className="h-3 w-3 mr-1" />
+                          {image.technicalIssues.length}
+                        </Badge>
+                      </div>
+                    )}
+
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100">
                       <Button
                         size="icon"
-                        className="bg-green-600 hover:bg-green-700"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleApprove(image.id);
-                        }}
-                        data-testid={`button-approve-${image.id}`}
-                      >
-                        <Check className="h-4 w-4 text-white" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="destructive"
+                        variant="secondary"
                         onClick={(e) => {
                           e.stopPropagation();
                           handleImageClick(image);
                         }}
-                        data-testid={`button-reject-${image.id}`}
+                        data-testid={`button-zoom-${image.id}`}
                       >
-                        <X className="h-4 w-4" />
+                        <ZoomIn className="h-4 w-4" />
                       </Button>
-                    </>
-                  )}
+                      {image.status === 'pending' && (
+                        <>
+                          <Button
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleApprove(image.id);
+                            }}
+                            data-testid={`button-approve-${image.id}`}
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="icon"
+                            variant="destructive"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleImageClick(image);
+                            }}
+                            data-testid={`button-reject-${image.id}`}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-muted-foreground mt-2 truncate text-center text-sm">
+                    {image.room}
+                  </p>
+                  <p className="text-muted-foreground truncate text-center text-xs opacity-60">
+                    {image.filename}
+                  </p>
                 </div>
-              </div>
-
-              <p className="text-gray-600 mt-2 truncate text-center text-sm">
-                {image.room}
-              </p>
-              <p className="text-gray-400 truncate text-center text-xs">
-                {image.filename}
-              </p>
+              ))}
             </div>
-          ))}
-        </div>
 
-        {filteredImages.length === 0 && (
-          <div className="text-center py-16">
-            <ImageIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-600">Keine Bilder gefunden</p>
+            {filteredImages.length === 0 && (
+              <div className="text-center py-16">
+                <ImageIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Keine Bilder gefunden</p>
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
 
       {showLightbox && selectedImage && (
         <Dialog open={showLightbox} onOpenChange={setShowLightbox}>
@@ -505,30 +483,30 @@ export default function QCQualityCheck() {
                 <img src={selectedImage.url} alt={selectedImage.filename} className="max-w-full max-h-full object-contain" />
               </div>
 
-              <div className="bg-white p-6 overflow-y-auto">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+              <div className="bg-card p-6 overflow-y-auto">
+                <h3 className="text-lg font-semibold mb-4">
                   Quality Check
                 </h3>
 
                 <div className="mb-4">{getStatusBadge(selectedImage.status)}</div>
 
-                <div className="space-y-2 mb-6 text-sm text-gray-600">
-                  <p><strong>Datei:</strong> {selectedImage.filename}</p>
-                  <p><strong>Raum:</strong> {selectedImage.room}</p>
-                  <p><strong>Auflösung:</strong> {selectedImage.metadata.resolution}</p>
-                  <p><strong>Größe:</strong> {selectedImage.metadata.fileSize}</p>
-                  {selectedImage.metadata.iso && <p><strong>ISO:</strong> {selectedImage.metadata.iso}</p>}
-                  {selectedImage.metadata.aperture && <p><strong>Blende:</strong> {selectedImage.metadata.aperture}</p>}
-                  {selectedImage.metadata.shutterSpeed && <p><strong>Belichtung:</strong> {selectedImage.metadata.shutterSpeed}</p>}
+                <div className="space-y-2 mb-6 text-sm text-muted-foreground">
+                  <p><strong className="text-foreground">Datei:</strong> {selectedImage.filename}</p>
+                  <p><strong className="text-foreground">Raum:</strong> {selectedImage.room}</p>
+                  <p><strong className="text-foreground">Auflösung:</strong> {selectedImage.metadata.resolution}</p>
+                  <p><strong className="text-foreground">Größe:</strong> {selectedImage.metadata.fileSize}</p>
+                  {selectedImage.metadata.iso && <p><strong className="text-foreground">ISO:</strong> {selectedImage.metadata.iso}</p>}
+                  {selectedImage.metadata.aperture && <p><strong className="text-foreground">Blende:</strong> {selectedImage.metadata.aperture}</p>}
+                  {selectedImage.metadata.shutterSpeed && <p><strong className="text-foreground">Belichtung:</strong> {selectedImage.metadata.shutterSpeed}</p>}
                 </div>
 
                 {selectedImage.technicalIssues && selectedImage.technicalIssues.length > 0 && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <div className="mb-6 p-4 border border-destructive/20 rounded-lg bg-destructive/5">
                     <div className="flex items-start gap-2 mb-2">
-                      <AlertCircle className="h-5 w-5 text-red-600 mt-0.5" />
-                      <p className="text-red-900 font-semibold">Technische Probleme:</p>
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                      <p className="text-destructive font-semibold">Technische Probleme:</p>
                     </div>
-                    <ul className="list-disc list-inside text-red-700 text-sm">
+                    <ul className="list-disc list-inside text-destructive/90 text-sm">
                       {selectedImage.technicalIssues.map((issue, idx) => (
                         <li key={idx}>{issue}</li>
                       ))}
@@ -537,15 +515,15 @@ export default function QCQualityCheck() {
                 )}
 
                 {selectedImage.comment && (
-                  <div className="mb-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p className="text-orange-900 text-sm">
+                  <div className="mb-6 p-4 border rounded-lg bg-muted/50">
+                    <p className="text-sm">
                       <strong>Kommentar:</strong> {selectedImage.comment}
                     </p>
                   </div>
                 )}
 
                 <div className="mb-6">
-                  <label className="block text-gray-900 font-semibold mb-2 text-sm">
+                  <label className="block font-semibold mb-2 text-sm">
                     Kommentar / Ablehnungsgrund
                   </label>
                   <Textarea
@@ -631,7 +609,7 @@ export default function QCQualityCheck() {
                 <Button variant="outline" onClick={() => setShowEditorAssignment(false)} className="flex-1">
                   Abbrechen
                 </Button>
-                <Button onClick={confirmEditorAssignment} className="flex-1 bg-green-600 text-white hover:bg-green-700" data-testid="button-confirm-assignment">
+                <Button onClick={confirmEditorAssignment} className="flex-1" data-testid="button-confirm-assignment">
                   Zuweisen
                 </Button>
               </div>
@@ -639,6 +617,6 @@ export default function QCQualityCheck() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </AdminLayout>
   );
 }
