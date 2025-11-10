@@ -43,14 +43,14 @@ export default function PixCaptureHome() {
       {menuOpen && (
         <div className="fixed top-20 right-8 z-50 bg-[var(--color-white)] border border-[var(--color-light-grey)] shadow-lg">
           <nav className="flex flex-col px-8 py-6 gap-6">
-            <Link href="/pixcapture/app">
+            <a href="/app">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 Upload
               </span>
-            </Link>
+            </a>
             <Link href="/pixcapture/help">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
@@ -67,14 +67,14 @@ export default function PixCaptureHome() {
                 About
               </span>
             </Link>
-            <Link href="/pixcapture-app/login">
+            <a href="/login">
               <span
                 className="text-[16px] text-[var(--color-black)] cursor-pointer tracking-[-0.02em] hover:text-[var(--color-grey)] transition-colors"
                 onClick={() => setMenuOpen(false)}
               >
                 Login
               </span>
-            </Link>
+            </a>
           </nav>
         </div>
       )}
@@ -94,11 +94,11 @@ export default function PixCaptureHome() {
 
         {/* Navigation Buttons - Above Strip (Desktop only) */}
         <nav className="hidden lg:flex items-center justify-start gap-6 pb-6 pl-8 bg-[var(--color-white)] h-[40px]">
-          <Link href="/pixcapture/app">
+          <a href="/app">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.12em]">
               Upload
             </span>
-          </Link>
+          </a>
           <Link href="/pixcapture/help">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
               Hilfe
@@ -109,11 +109,11 @@ export default function PixCaptureHome() {
               About
             </span>
           </Link>
-          <Link href="/pixcapture-app/login">
+          <a href="/login">
             <span className="text-[16px] text-[var(--color-black)] hover:text-[var(--color-grey)] transition-colors cursor-pointer tracking-[0.05em]">
               Login
             </span>
-          </Link>
+          </a>
         </nav>
 
         {/* Scrolling Image Strip */}

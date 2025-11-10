@@ -348,12 +348,12 @@ export default function PixCaptureDatenschutz() {
           <div className="px-6 py-4">
             {/* Top Row: Back Button and Logo */}
             <div className="flex items-center justify-between mb-3">
-              <Link href="/pixcapture-app/settings">
+              <a href="/app/settings">
                 <button className="flex items-center gap-2 text-[#74A4EA] active:opacity-70 transition-opacity">
                   <ArrowLeft size={20} strokeWidth={2} />
                   <span>{currentContent.back}</span>
                 </button>
-              </Link>
+              </a>
               
               <Link href="/pixcapture">
                 <span className="text-[var(--color-black)] tracking-tight cursor-pointer active:opacity-70 transition-opacity">

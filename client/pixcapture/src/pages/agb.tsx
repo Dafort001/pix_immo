@@ -16,12 +16,12 @@ export default function PixCaptureAGB() {
         {/* Header */}
         <div className="sticky top-0 z-50 bg-[var(--color-white)] border-b border-[#E5E5E5]" style={{ top: '59px' }}>
           <div className="px-6 py-4 flex items-center justify-between">
-            <Link href="/pixcapture-app/settings">
+            <a href="/app/settings">
               <button className="flex items-center gap-2 text-[#74A4EA] active:opacity-70 transition-opacity">
                 <ArrowLeft size={20} strokeWidth={2} />
                 <span>Zurück</span>
               </button>
-            </Link>
+            </a>
             <Link href="/pixcapture">
               <span className="text-[var(--color-black)] tracking-tight cursor-pointer active:opacity-70 transition-opacity">
                 pixcapture.app
