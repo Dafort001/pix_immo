@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
 import { SEOHead } from "@shared/components";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Pricing() {
   return (
@@ -10,25 +10,7 @@ export default function Pricing() {
         description="Professionelle Immobilienfotografie ab 180€. Drohnenaufnahmen, 360°-Touren, Videos und KI-gestützte Bildoptimierung für Hamburg."
         path="/preise"
       />
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="flex items-center justify-between px-[5vw] py-4">
-          <Link href="/">
-            <div className="text-base font-semibold tracking-wide cursor-pointer" data-testid="brand-logo">
-              PIX.IMMO
-            </div>
-          </Link>
-          <Link href="/">
-            <span
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Zurück</span>
-            </span>
-          </Link>
-        </div>
-      </header>
+      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">
@@ -41,8 +23,8 @@ export default function Pricing() {
           </p>
           <p className="text-base text-gray-600 mb-12 leading-relaxed">
             Professionelle Immobilienfotografie, Drohnenaufnahmen, Videos und 360°-Rundgänge für Exposés, Online-Präsentationen und soziale Medien.
-            Alle Aufnahmen werden individuell geplant, mit professioneller Ausrüstung umgesetzt und sorgfältig nachbearbeitet.
-            Auf Wunsch erfolgt die Optimierung zusätzlich durch ein internes KI-System zur automatischen Licht- und Farbkorrektur.
+            Alle Aufnahmen werden auftragsbezogen geplant, mit professioneller Kamera- und Lichttechnik umgesetzt und sorgfältig nachbearbeitet.
+            Optional kann eine KI-gestützte Optimierung zur automatischen Licht- und Farbkorrektur eingesetzt werden.
           </p>
 
           <div className="space-y-12">
@@ -53,7 +35,7 @@ export default function Pricing() {
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span>Aufnahmen von Innen- und Außenbereichen mit professioneller Kamera- und Lichttechnik</span>
+                  <span>Aufnahmen von Innen- und Außenbereichen</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -61,7 +43,7 @@ export default function Pricing() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span>Lieferung als hochauflösende Dateien, optimiert für Web und Druck</span>
+                  <span>Lieferung als hochauflösende JPG-Dateien, optimiert für Web und Druck</span>
                 </li>
               </ul>
               <p className="text-sm text-gray-600 italic">
@@ -73,7 +55,7 @@ export default function Pricing() {
             <section data-testid="section-drone">
               <h2 className="text-2xl font-semibold mb-3">Drohnenaufnahmen</h2>
               <p className="text-xl font-medium text-gray-900 mb-1">ab 150 € zzgl. MwSt.</p>
-              <p className="text-lg font-medium text-gray-700 mb-4">ab 100 €, wenn Teil eines Fotopakets</p>
+              <p className="text-lg font-medium text-gray-700 mb-4">ab 100 €, wenn Bestandteil eines Fotopakets</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
@@ -89,7 +71,7 @@ export default function Pricing() {
                 </li>
               </ul>
               <p className="text-sm text-gray-600 italic">
-                Empfohlen zur Ergänzung klassischer Immobilienfotografie.
+                Empfohlen als Ergänzung zur klassischen Immobilienfotografie.
               </p>
             </section>
 
@@ -127,19 +109,19 @@ export default function Pricing() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span><strong>Basis-Variante</strong> ab 100 € für die Nutzung in <strong>MLS- und CRM-Systemen</strong> (z. B. FIO, onOffice, Propstack)</span>
+                  <span>Basis-Variante ab 100 € für die Nutzung in CRM-Systemen (z. B. FIO, onOffice, Propstack)</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span><strong>Erweiterte Variante</strong> ab 239 € mit interaktiver Navigation, Grundriss-Verknüpfung und optionalem Hosting für sechs Monate</span>
+                  <span>Erweiterte Variante ab 239 € mit interaktiver Navigation, Grundriss-Verknüpfung und optionalem Hosting (6 Monate)</span>
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span>Lieferung in Formaten, die für gängige Maklersoftware und Portale geeignet sind</span>
+                  <span>Lieferung in Formaten, die mit gängiger Maklersoftware kompatibel sind</span>
                 </li>
               </ul>
               <p className="text-sm text-gray-600 italic">
-                Diese Leistung eignet sich ideal zur Integration in Exposés, Immobilienportale oder Kunden-Galerien.
+                Ideal zur Integration in Exposés, Immobilienportale oder Kunden-Galerien.
               </p>
             </section>
 
@@ -148,7 +130,7 @@ export default function Pricing() {
               <h2 className="text-2xl font-semibold mb-3">Virtuelles Staging</h2>
               <p className="text-xl font-medium text-gray-900 mb-4">auf Anfrage</p>
               <p className="text-gray-700 mb-4">
-                Virtuelles Staging wird ausschließlich auf Basis eines individuellen Briefings und Moodboards angeboten.
+                Virtuelles Staging wird individuell nach Briefing und Moodboard angeboten.
                 Die Preisgestaltung richtet sich nach Raumgröße, Stilrichtung und gewünschtem Detailgrad.
               </p>
               <p className="text-sm text-gray-600 italic">
@@ -171,11 +153,11 @@ export default function Pricing() {
                 </li>
                 <li className="flex gap-2">
                   <span className="text-gray-400">•</span>
-                  <span>Optional automatische Optimierung über internes KI-System</span>
+                  <span>Auf Wunsch automatische Optimierung über internes KI-System (separat berechnet)</span>
                 </li>
               </ul>
               <p className="text-sm text-gray-600 italic">
-                Für eine harmonische, natürliche Bildwirkung.
+                Für eine harmonische und technisch saubere Bildwirkung.
               </p>
             </section>
 
@@ -183,35 +165,48 @@ export default function Pricing() {
             <section data-testid="section-travel">
               <h2 className="text-2xl font-semibold mb-3">Anfahrt und Geltungsbereich</h2>
               <p className="text-gray-700 mb-4">
-                Unsere Leistungen werden im Großraum Hamburg angeboten.
-                Die Anfahrt ist innerhalb von <strong>30 Kilometern um Hamburg</strong> im Preis enthalten.
+                Die Leistungen werden im Großraum Hamburg angeboten.
+                Die Anfahrt ist innerhalb von 30 km um Hamburg im Preis enthalten (Entfernung ab Stadtgrenze).
               </p>
               <p className="text-gray-700 mb-4">
-                Für weiter entfernte Objekte werden <strong>0,80 € pro gefahrenem Kilometer</strong> (Hin- und Rückweg) berechnet.
-                Zusätzliche Reisezeiten oder Übernachtungen werden <strong>nach Absprache</strong> vereinbart.
+                Für weiter entfernte Objekte werden 0,60 € pro gefahrenem Kilometer (Hin- und Rückweg) berechnet.
+                Zusätzliche Reisezeiten oder Übernachtungen werden nach Absprache vereinbart.
               </p>
               <p className="text-gray-700">
-                Bei größeren Projekten oder mehreren Objekten pro Termin erfolgt die Berechnung individuell und transparent nach Aufwand.
+                Bei größeren Projekten oder mehreren Objekten an einem Termin erfolgt die Preisberechnung individuell nach Aufwand.
+              </p>
+            </section>
+
+            {/* Allgemeine Hinweise */}
+            <section data-testid="section-notes">
+              <h2 className="text-2xl font-semibold mb-3">Allgemeine Hinweise</h2>
+              <p className="text-gray-700 mb-2">
+                Alle Preise verstehen sich zzgl. 19 % MwSt.
+              </p>
+              <p className="text-gray-700 mb-2">
+                Preise gelten vorbehaltlich technischer Machbarkeit und aktueller Verfügbarkeit.
+              </p>
+              <p className="text-gray-700">
+                KI-gestützte Nachbearbeitungen erfolgen nur nach ausdrücklicher Freigabe und werden gesondert berechnet.
               </p>
             </section>
 
             {/* Anfrage und Buchung */}
             <section data-testid="section-booking" className="bg-gray-50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-3">Anfrage und Buchung</h2>
-              <p className="text-gray-700 mb-4">
-                Für ein individuelles Angebot oder zur direkten Buchung nutzen Sie bitte den{" "}
+              <p className="text-gray-700">
+                Für individuelle Angebote oder Buchungen nutzen Sie bitte den{" "}
                 <Link href="/login">
                   <span className="font-semibold text-black hover:underline cursor-pointer" data-testid="link-login">
                     Kunden-Login
                   </span>
                 </Link>
                 {" "}oder das{" "}
-                <Link href="/kontakt">
+                <Link href="/kontakt-formular">
                   <span className="font-semibold text-black hover:underline cursor-pointer" data-testid="link-contact">
                     Kontaktformular
                   </span>
                 </Link>
-                {" "}auf unserer Webseite.
+                {" "}auf unserer Website.
               </p>
             </section>
           </div>
