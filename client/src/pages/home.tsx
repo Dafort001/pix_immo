@@ -147,8 +147,8 @@ export default function Home() {
           <div>
             <h4 className="font-semibold text-black mb-4">Links</h4>
             <div className="flex flex-col gap-2">
-              <Link href="/about"><span className="text-sm hover:text-black cursor-pointer">Über uns</span></Link>
-              <Link href="/contact"><span className="text-sm hover:text-black cursor-pointer">Kontakt</span></Link>
+              <Link href="/blog"><span className="text-sm hover:text-black cursor-pointer">Blog</span></Link>
+              <Link href="/kontakt"><span className="text-sm hover:text-black cursor-pointer">Kontakt</span></Link>
               <Link href="/faq"><span className="text-sm hover:text-black cursor-pointer">FAQ</span></Link>
             </div>
           </div>

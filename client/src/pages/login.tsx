@@ -10,6 +10,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
+import { WebHeader } from "@/components/WebHeader";
+import { SEOHead } from "@shared/components";
 
 const loginSchema = z.object({
   email: z.string().email("Ungültige E-Mail-Adresse"),
@@ -59,22 +61,21 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 px-4">
-      <div className="w-full max-w-md">
-        <div className="mb-8 text-center">
-          <Link href="/">
-            <div className="inline-flex items-center cursor-pointer">
-              <span className="text-2xl font-semibold tracking-wide">PIX.IMMO</span>
-            </div>
-          </Link>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Willkommen zurück</CardTitle>
-            <CardDescription>Melden Sie sich an, um fortzufahren</CardDescription>
-          </CardHeader>
-          <CardContent>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-accent/5">
+      <SEOHead
+        title="Login - PIX.IMMO"
+        description="Melden Sie sich in Ihrem PIX.IMMO Account an."
+        path="/login"
+      />
+      <WebHeader />
+      <div className="flex items-center justify-center px-4 pt-24 pb-12">
+        <div className="w-full max-w-md">
+          <Card>
+            <CardHeader>
+              <CardTitle>Willkommen zurück</CardTitle>
+              <CardDescription>Melden Sie sich an, um fortzufahren</CardDescription>
+            </CardHeader>
+            <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
@@ -134,8 +135,9 @@ export default function Login() {
                 </span>
               </Link>
             </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
