@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { pgTable, varchar, text, bigint, boolean, jsonb, unique } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, bigint, boolean, jsonb, unique, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -131,6 +131,10 @@ export const uploadedFiles = pgTable("uploaded_files", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   finalizedAt: bigint("finalized_at", { mode: "number" }), // When finalize was called
   updatedAt: bigint("updated_at", { mode: "number" }), // Last modification timestamp
+  // Edit Workflow fields (Phase 2)
+  approved: boolean("approved").notNull().default(false), // Client approved for final delivery
+  approvedAt: bigint("approved_at", { mode: "number" }), // When client approved
+  completedAt: bigint("completed_at", { mode: "number" }), // When file processing fully completed
 }, (table) => ({
   // UNIQUE constraint: prevent duplicate file slots in same stack/version
   uniqueFilePosition: unique("unique_file_position").on(table.orderId, table.roomType, table.index, table.ver),
@@ -145,6 +149,49 @@ export const fileNotes = pgTable("file_notes", {
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   updatedAt: bigint("updated_at", { mode: "number" }),
 });
+
+// Edit Jobs - Tracks editing tasks for uploaded files (Phase 2)
+export const editJobs = pgTable("edit_jobs", {
+  id: varchar("id").primaryKey(),
+  fileId: varchar("file_id").notNull().references(() => uploadedFiles.id, { onDelete: "cascade" }),
+  orderId: varchar("order_id").references(() => orders.id, { onDelete: "cascade" }), // Nullable for legacy/ad-hoc files
+  status: varchar("status", { length: 50 }).notNull().default("queued"), // 'queued', 'in_progress', 'completed', 'failed'
+  express: boolean("express").notNull().default(false), // Express service requested
+  processingNotes: text("processing_notes"), // Internal processing notes
+  resultPath: text("result_path"), // R2 path to processed file
+  resultFileSize: bigint("result_file_size", { mode: "number" }), // Size of processed file
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  startedAt: bigint("started_at", { mode: "number" }), // When processing started
+  finishedAt: bigint("finished_at", { mode: "number" }), // When processing completed
+  failureReason: text("failure_reason"), // Error message if failed
+}, (table) => ({
+  // Index for queue processing
+  statusCreatedIdx: index("edit_jobs_status_created_idx").on(table.status, table.createdAt),
+  // Index for order lookup
+  orderIdIdx: index("edit_jobs_order_id_idx").on(table.orderId),
+  // Index for file-centric queries
+  fileIdIdx: index("edit_jobs_file_id_idx").on(table.fileId),
+}));
+
+// Notifications - System notifications for users (Phase 2)
+export const notifications = pgTable("notifications", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  type: varchar("type", { length: 50 }).notNull(), // 'job_submitted', 'job_completed', 'file_approved', 'file_revision', 'order_completed', 'invoice_ready'
+  title: varchar("title", { length: 255 }).notNull(), // Notification title
+  message: text("message").notNull(), // Notification body
+  link: varchar("link", { length: 500 }), // Optional link to relevant page
+  metadata: jsonb("metadata").$type<Record<string, any>>(), // Additional context (orderId, fileId, etc.)
+  read: boolean("read").notNull().default(false), // Read status
+  readAt: bigint("read_at", { mode: "number" }), // When notification was read
+  deletedAt: bigint("deleted_at", { mode: "number" }), // Soft-delete for retention policy
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+}, (table) => ({
+  // Index for user notifications lookup
+  userIdCreatedIdx: index("notifications_user_id_created_idx").on(table.userId, table.createdAt),
+  // Index for unread notifications
+  userIdReadIdx: index("notifications_user_id_read_idx").on(table.userId, table.read),
+}));
 
 export const images = pgTable("images", {
   id: varchar("id").primaryKey(),
@@ -1260,6 +1307,30 @@ export const insertFileNoteSchema = createInsertSchema(fileNotes).omit({
 
 export type FileNote = typeof fileNotes.$inferSelect;
 export type InsertFileNote = z.infer<typeof insertFileNoteSchema>;
+
+// Edit Jobs Schemas (Phase 2)
+export const insertEditJobSchema = createInsertSchema(editJobs).omit({
+  id: true,
+  createdAt: true,
+  startedAt: true,
+  finishedAt: true,
+  failureReason: true,
+});
+
+export type EditJob = typeof editJobs.$inferSelect;
+export type InsertEditJob = z.infer<typeof insertEditJobSchema>;
+
+// Notifications Schemas (Phase 2)
+export const insertNotificationSchema = createInsertSchema(notifications).omit({
+  id: true,
+  read: true,
+  readAt: true,
+  deletedAt: true,
+  createdAt: true,
+});
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 // PixCapture Upload API Schemas
 export const uploadIntentSchema = z.object({
