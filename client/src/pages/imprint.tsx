@@ -1,6 +1,5 @@
-import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
 import { SEOHead } from "@shared/components";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Imprint() {
   return (
@@ -10,25 +9,7 @@ export default function Imprint() {
         description="Rechtliche Informationen und Datenschutzerklärung von PIX.IMMO - Daniel Fortmann, Hamburg."
         path="/impressum"
       />
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="flex items-center justify-between px-[5vw] py-4">
-          <Link href="/">
-            <div className="text-base font-semibold tracking-wide cursor-pointer" data-testid="brand-logo">
-              PIX.IMMO
-            </div>
-          </Link>
-          <Link href="/">
-            <span
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Zurück</span>
-            </span>
-          </Link>
-        </div>
-      </header>
+      <SimplePageHeader />
 
       {/* Content */}
       <article className="py-12 md:py-20">

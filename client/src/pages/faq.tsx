@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { ArrowLeft } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -7,6 +6,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { SEOHead } from "@shared/components";
+import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function FAQ() {
   return (
@@ -16,25 +16,7 @@ export default function FAQ() {
         description="Antworten auf häufige Fragen zu Buchung, Ablauf, Bearbeitungszeiten, Rechten und Kosten der Immobilienfotografie."
         path="/faq"
       />
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="flex items-center justify-between px-[5vw] py-4">
-          <Link href="/">
-            <div className="text-base font-semibold tracking-wide cursor-pointer" data-testid="brand-logo">
-              PIX.IMMO
-            </div>
-          </Link>
-          <Link href="/">
-            <span
-              className="flex items-center gap-2 hover:opacity-70 transition-opacity cursor-pointer"
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm">Zurück</span>
-            </span>
-          </Link>
-        </div>
-      </header>
+      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">
