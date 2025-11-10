@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { ArrowLeft, Plus, FileText, Send, DollarSign, Calendar, Download } from 'lucide-react';
+import { Plus, FileText, Send, DollarSign, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -10,24 +9,34 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SEOHead } from '@shared/components';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, getQueryFn } from '@/lib/queryClient';
+import { AdminLayout } from '@/components/AdminLayout';
+import { AdminPageHeader } from '@/components/AdminPageHeader';
 import type { Invoice, InsertInvoice } from '@shared/schema';
+
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
 
 export default function AdminInvoices() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-
-  if (authLoading) return null;
   const [formData, setFormData] = useState({
     customerName: '',
     customerEmail: '',
     customerAddress: '',
     serviceDescription: '',
     netAmount: '',
+  });
+
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
   });
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
@@ -38,6 +47,9 @@ export default function AdminInvoices() {
     queryKey: ['/api/invoices/next-number'],
     enabled: showCreateDialog,
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
   const stats = {
     draft: invoices.filter(inv => inv.status === 'draft').length,
@@ -125,11 +137,11 @@ export default function AdminInvoices() {
   };
 
   const getStatusBadge = (status: Invoice['status']) => {
-    const styles: Record<Invoice['status'], string> = {
-      draft: 'bg-gray-500/10 text-gray-600 border-gray-500/20',
-      sent: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
-      paid: 'bg-green-500/10 text-green-600 border-green-500/20',
-      cancelled: 'bg-red-500/10 text-red-600 border-red-500/20',
+    const variants: Record<Invoice['status'], 'outline' | 'secondary' | 'default' | 'destructive'> = {
+      draft: 'secondary',
+      sent: 'default',
+      paid: 'outline',
+      cancelled: 'destructive',
     };
 
     const labels: Record<Invoice['status'], string> = {
@@ -139,138 +151,138 @@ export default function AdminInvoices() {
       cancelled: 'Storniert',
     };
 
-    return <Badge variant="outline" className={styles[status]}>{labels[status]}</Badge>;
+    return <Badge variant={variants[status]}>{labels[status]}</Badge>;
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <SEOHead title="Rechnungen – pix.immo Admin" description="Rechnungsverwaltung" path="/admin/invoices" />
-
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/dashboard')}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Rechnungen</h1>
-                <p className="text-gray-600">Erstelle und verwalte Rechnungen</p>
+  if (isLoading) {
+    return (
+      <AdminLayout userRole={userData.user.role}>
+        <div className="flex flex-col h-full">
+          <AdminPageHeader 
+            title="Rechnungen" 
+            showBackButton 
+          />
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-6xl mx-auto px-6 py-8">
+              <div className="grid gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-6 w-32" />
+                          <Skeleton className="h-4 w-48" />
+                        </div>
+                        <div className="space-y-2">
+                          <Skeleton className="h-8 w-24" />
+                          <Skeleton className="h-6 w-20" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
               </div>
-            </div>
-
-            <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-invoice">
-              <Plus className="h-5 w-5 mr-2" />
-              Neue Rechnung
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-gray-600" />
-              <span className="text-gray-600 text-sm">{stats.total} Rechnungen</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">Entwürfe: {stats.draft}</Badge>
-              <Badge variant="outline">Versendet: {stats.sent}</Badge>
-              <Badge variant="outline">Bezahlt: {stats.paid}</Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
-              <span className="text-gray-600 text-sm font-semibold">
-                {stats.totalRevenue.toFixed(2)}€ Gesamtumsatz
-              </span>
             </div>
           </div>
         </div>
-      </header>
+      </AdminLayout>
+    );
+  }
 
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {isLoading ? (
-          <div className="grid gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-2 flex-1">
-                      <Skeleton className="h-6 w-32" />
-                      <Skeleton className="h-4 w-48" />
-                    </div>
-                    <div className="space-y-2">
-                      <Skeleton className="h-8 w-24" />
-                      <Skeleton className="h-6 w-20" />
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        ) : invoices.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileText className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Noch keine Rechnungen</h3>
-              <p className="text-gray-600 text-center mb-6">
-                Erstelle deine erste Rechnung für abgeschlossene Aufträge
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-first">
-                <Plus className="h-4 w-4 mr-2" />
-                Erste Rechnung erstellen
+  return (
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title="Rechnungen" 
+          showBackButton
+          actions={
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 text-sm">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="text-muted-foreground">{stats.total} Rechnungen</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">Entwürfe: {stats.draft}</Badge>
+                <Badge variant="outline">Versendet: {stats.sent}</Badge>
+                <Badge variant="outline">Bezahlt: {stats.paid}</Badge>
+              </div>
+              <div className="flex items-center gap-2 text-sm font-semibold">
+                <DollarSign className="h-4 w-4" />
+                <span>{stats.totalRevenue.toFixed(2)}€</span>
+              </div>
+              <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-invoice">
+                <Plus className="h-5 w-5 mr-2" />
+                Neue Rechnung
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {invoices.map((invoice) => (
-              <Card key={invoice.id} data-testid={`invoice-card-${invoice.id}`}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{invoice.invoiceNumber}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">{invoice.customerName}</p>
-                      <p className="text-xs text-gray-500 mt-1">{invoice.serviceDescription}</p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <p className="text-lg font-bold text-gray-900">
-                          {(invoice.grossAmount / 100).toFixed(2)}€
-                        </p>
-                        {getStatusBadge(invoice.status)}
-                      </div>
-                      <div className="flex gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
-                          data-testid={`button-download-pdf-${invoice.id}`}
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          PDF
-                        </Button>
-                        <Button
-                          variant="default"
-                          size="sm"
-                          onClick={() => sendEmailMutation.mutate(invoice.id)}
-                          disabled={sendEmailMutation.isPending}
-                          data-testid={`button-send-email-${invoice.id}`}
-                        >
-                          <Send className="h-4 w-4 mr-2" />
-                          {sendEmailMutation.isPending ? 'Senden...' : 'E-Mail'}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </CardHeader>
+            </div>
+          }
+        />
+
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            {invoices.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <FileText className="h-16 w-16 text-muted mb-4" />
+                  <h3 className="text-base font-semibold mb-2">Noch keine Rechnungen</h3>
+                  <p className="text-muted-foreground text-center mb-6">
+                    Erstelle deine erste Rechnung für abgeschlossene Aufträge
+                  </p>
+                  <Button onClick={() => setShowCreateDialog(true)} data-testid="button-create-first">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Erste Rechnung erstellen
+                  </Button>
+                </CardContent>
               </Card>
-            ))}
+            ) : (
+              <div className="grid gap-4">
+                {invoices.map((invoice) => (
+                  <Card key={invoice.id} data-testid={`invoice-card-${invoice.id}`}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-lg">{invoice.invoiceNumber}</CardTitle>
+                          <p className="text-sm text-muted-foreground mt-1">{invoice.customerName}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{invoice.serviceDescription}</p>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                            <p className="text-lg font-bold">
+                              {(invoice.grossAmount / 100).toFixed(2)}€
+                            </p>
+                            {getStatusBadge(invoice.status)}
+                          </div>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => window.open(`/api/invoices/${invoice.id}/pdf`, '_blank')}
+                              data-testid={`button-download-pdf-${invoice.id}`}
+                            >
+                              <Download className="h-4 w-4 mr-2" />
+                              PDF
+                            </Button>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => sendEmailMutation.mutate(invoice.id)}
+                              disabled={sendEmailMutation.isPending}
+                              data-testid={`button-send-email-${invoice.id}`}
+                            >
+                              <Send className="h-4 w-4 mr-2" />
+                              {sendEmailMutation.isPending ? 'Senden...' : 'E-Mail'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-        )}
-      </main>
+        </div>
+      </div>
 
       {showCreateDialog && (
         <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -282,13 +294,13 @@ export default function AdminInvoices() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Rechnungsnummer
                   </label>
                   <Input value={getNextInvoiceNumber()} disabled />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Rechnungsdatum
                   </label>
                   <Input type="date" defaultValue={new Date().toISOString().split('T')[0]} />
@@ -296,7 +308,7 @@ export default function AdminInvoices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Kundenname *
                 </label>
                 <Input
@@ -308,7 +320,7 @@ export default function AdminInvoices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Kunden E-Mail *
                 </label>
                 <Input
@@ -321,7 +333,7 @@ export default function AdminInvoices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Rechnungsadresse
                 </label>
                 <Textarea
@@ -334,7 +346,7 @@ export default function AdminInvoices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Leistungsbeschreibung *
                 </label>
                 <Textarea
@@ -348,7 +360,7 @@ export default function AdminInvoices() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Nettobetrag (€) *
                   </label>
                   <Input
@@ -361,7 +373,7 @@ export default function AdminInvoices() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     MwSt. (19%)
                   </label>
                   <Input
@@ -370,7 +382,7 @@ export default function AdminInvoices() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Bruttobetrag
                   </label>
                   <Input
@@ -398,6 +410,6 @@ export default function AdminInvoices() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </AdminLayout>
   );
 }

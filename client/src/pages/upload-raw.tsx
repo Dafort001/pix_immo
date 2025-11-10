@@ -1,11 +1,21 @@
 import { useState, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { Upload, X, FileImage, CheckCircle2, AlertCircle } from "lucide-react";
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
+
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
 
 interface UploadFile {
   file: File;
@@ -24,10 +34,16 @@ interface Shoot {
 }
 
 export default function UploadRawPage() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [selectedShootId, setSelectedShootId] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
+
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
 
   const { data: shoots } = useQuery<Shoot[]>({
     queryKey: ["/api/shoots"],
@@ -150,7 +166,7 @@ export default function UploadRawPage() {
       });
 
       const { uploadId, presignedUrls, partCount } = initResponse;
-      const chunkSize = 10 * 1024 * 1024; // 10MB chunks
+      const chunkSize = 10 * 1024 * 1024;
       const etags: string[] = [];
 
       for (let i = 0; i < partCount; i++) {
@@ -214,150 +230,152 @@ export default function UploadRawPage() {
     }
   };
 
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
+
   return (
-    <div className="container mx-auto px-6 py-8 max-w-4xl">
-      <div className="mb-8">
-        <h1 className="text-lg font-semibold mb-2" data-testid="text-page-title">
-          RAW-Dateien hochladen
-        </h1>
-        <p className="text-secondary" data-testid="text-page-description">
-          Lade professionelle RAW-Dateien für deine Immobilien-Shoots hoch
-        </p>
-      </div>
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader title="RAW-Dateien hochladen" showBackButton />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Shoot auswählen</CardTitle>
-          <CardDescription>Wähle den Shoot aus, zu dem die Dateien gehören</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <select
-            className="w-full rounded-lg border px-4 py-3"
-            value={selectedShootId}
-            onChange={(e) => setSelectedShootId(e.target.value)}
-            data-testid="select-shoot"
-          >
-            <option value="">Bitte wählen...</option>
-            {shoots?.map((shoot) => (
-              <option key={shoot.id} value={shoot.id}>
-                {shoot.shootCode}
-              </option>
-            ))}
-          </select>
-        </CardContent>
-      </Card>
-
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Dateien hochladen</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div
-            onDragEnter={handleDragEnter}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-            className={`
-              border-2 border-dashed rounded-2xl min-h-64 flex flex-col items-center justify-center
-              transition-colors cursor-pointer
-              ${isDragActive ? "border-primary bg-primary/5" : "border-border"}
-            `}
-            data-testid="dropzone-upload"
-          >
-            <input
-              type="file"
-              multiple
-              accept=".cr2,.cr3,.crm,.crw,.nef,.nrw,.arw,.sr2,.srf,.raf,.rw2,.rwl,.dng,.orf,.pef,.braw,.r3d,.ari,.mxf,.cdng,.iiq,.3fr,.fff,.x3f,.erf,.srw,.mef,.mos,.cap,.kdc,.tiff,.tif,.jpg,.jpeg"
-              onChange={handleFileSelect}
-              className="hidden"
-              id="file-input"
-              data-testid="input-file"
-            />
-            <label
-              htmlFor="file-input"
-              className="flex flex-col items-center justify-center cursor-pointer w-full h-full p-8"
-            >
-              <Upload className="w-16 h-16 text-secondary mb-4" />
-              <p className="text-lg font-medium mb-2">
-                Dateien hierher ziehen oder klicken zum Auswählen
-              </p>
-              <p className="text-sm text-secondary">
-                RAW, Video-RAW, TIFF, JPG (alle gängigen Kamera-Formate)
-              </p>
-            </label>
-          </div>
-
-          {uploadFiles.length > 0 && (
-            <div className="mt-6 space-y-3">
-              {uploadFiles.map((file) => (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 p-4 border rounded-lg"
-                  data-testid={`upload-file-${file.id}`}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Shoot auswählen</CardTitle>
+                <CardDescription>Wähle den Shoot aus, zu dem die Dateien gehören</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <select
+                  className="w-full rounded-lg border px-4 py-3"
+                  value={selectedShootId}
+                  onChange={(e) => setSelectedShootId(e.target.value)}
+                  data-testid="select-shoot"
                 >
-                  <FileImage className="w-8 h-8 text-secondary flex-shrink-0" />
+                  <option value="">Bitte wählen...</option>
+                  {shoots?.map((shoot) => (
+                    <option key={shoot.id} value={shoot.id}>
+                      {shoot.shootCode}
+                    </option>
+                  ))}
+                </select>
+              </CardContent>
+            </Card>
 
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{file.file.name}</p>
-                    <p className="text-sm text-secondary">
-                      {(file.file.size / 1024 / 1024).toFixed(2)} MB
+            <Card className="mb-6">
+              <CardHeader>
+                <CardTitle>Dateien hochladen</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div
+                  onDragEnter={handleDragEnter}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`
+                    border-2 border-dashed rounded-2xl min-h-64 flex flex-col items-center justify-center
+                    transition-colors cursor-pointer
+                    ${isDragActive ? "border-primary bg-primary/5" : "border-border"}
+                  `}
+                  data-testid="dropzone-upload"
+                >
+                  <input
+                    type="file"
+                    multiple
+                    accept=".cr2,.cr3,.crm,.crw,.nef,.nrw,.arw,.sr2,.srf,.raf,.rw2,.rwl,.dng,.orf,.pef,.braw,.r3d,.ari,.mxf,.cdng,.iiq,.3fr,.fff,.x3f,.erf,.srw,.mef,.mos,.cap,.kdc,.tiff,.tif,.jpg,.jpeg"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                    id="file-input"
+                    data-testid="input-file"
+                  />
+                  <label
+                    htmlFor="file-input"
+                    className="flex flex-col items-center justify-center cursor-pointer w-full h-full p-8"
+                  >
+                    <Upload className="w-16 h-16 text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium mb-2">
+                      Dateien hierher ziehen oder klicken zum Auswählen
                     </p>
-
-                    {file.status === "uploading" && (
-                      <Progress value={file.progress} className="mt-2" />
-                    )}
-
-                    {file.status === "error" && (
-                      <p className="text-sm text-destructive mt-1">{file.error}</p>
-                    )}
-                  </div>
-
-                  {file.status === "completed" && (
-                    <CheckCircle2 className="w-6 h-6 text-success flex-shrink-0" />
-                  )}
-
-                  {file.status === "error" && (
-                    <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
-                  )}
-
-                  {file.status === "pending" && (
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => removeFile(file.id)}
-                      data-testid={`button-remove-${file.id}`}
-                    >
-                      <X className="w-5 h-5" />
-                    </Button>
-                  )}
+                    <p className="text-sm text-muted-foreground">
+                      RAW, Video-RAW, TIFF, JPG (alle gängigen Kamera-Formate)
+                    </p>
+                  </label>
                 </div>
-              ))}
-            </div>
-          )}
 
-          {uploadFiles.length > 0 && (
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setUploadFiles([])}
-                data-testid="button-clear-all"
-              >
-                Alle entfernen
-              </Button>
-              <Button
-                onClick={startUpload}
-                disabled={
-                  !selectedShootId ||
-                  uploadFiles.filter((f) => f.status === "pending").length === 0
-                }
-                data-testid="button-start-upload"
-              >
-                Upload starten ({uploadFiles.filter((f) => f.status === "pending").length})
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    </div>
+                {uploadFiles.length > 0 && (
+                  <div className="mt-6 space-y-3">
+                    {uploadFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center gap-3 p-4 border rounded-lg"
+                        data-testid={`upload-file-${file.id}`}
+                      >
+                        <FileImage className="w-8 h-8 text-muted-foreground flex-shrink-0" />
+
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium truncate">{file.file.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {(file.file.size / 1024 / 1024).toFixed(2)} MB
+                          </p>
+
+                          {file.status === "uploading" && (
+                            <Progress value={file.progress} className="mt-2" />
+                          )}
+
+                          {file.status === "error" && (
+                            <p className="text-sm text-destructive mt-1">{file.error}</p>
+                          )}
+                        </div>
+
+                        {file.status === "completed" && (
+                          <CheckCircle2 className="w-6 h-6 text-success flex-shrink-0" />
+                        )}
+
+                        {file.status === "error" && (
+                          <AlertCircle className="w-6 h-6 text-destructive flex-shrink-0" />
+                        )}
+
+                        {file.status === "pending" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeFile(file.id)}
+                            data-testid={`button-remove-${file.id}`}
+                          >
+                            <X className="w-5 h-5" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {uploadFiles.length > 0 && (
+                  <div className="mt-6 flex justify-end gap-3">
+                    <Button
+                      variant="outline"
+                      onClick={() => setUploadFiles([])}
+                      data-testid="button-clear-all"
+                    >
+                      Alle entfernen
+                    </Button>
+                    <Button
+                      onClick={startUpload}
+                      disabled={
+                        !selectedShootId ||
+                        uploadFiles.filter((f) => f.status === "pending").length === 0
+                      }
+                      data-testid="button-start-upload"
+                    >
+                      Upload starten ({uploadFiles.filter((f) => f.status === "pending").length})
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

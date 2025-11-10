@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, FolderOpen, Calendar, MapPin, Image } from "lucide-react";
 import { Link } from "wouter";
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import type { Job, Shoot } from "@shared/schema";
 import {
   Dialog,
@@ -19,7 +22,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-// Job card component with shoots
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
+
 function JobCard({ job }: { job: Job }) {
   const { data: shoots = [] } = useQuery<Shoot[]>({
     queryKey: ["/api/jobs", job.id, "shoots"],
@@ -70,7 +79,6 @@ function JobCard({ job }: { job: Job }) {
         <span>{formatDate(job.createdAt)}</span>
       </div>
 
-      {/* Shoots list */}
       {shoots.length > 0 && (
         <div className="mb-4 space-y-2">
           <p className="text-xs font-medium text-muted-foreground">Shoots:</p>
@@ -107,17 +115,21 @@ function JobCard({ job }: { job: Job }) {
 }
 
 export default function Jobs() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [propertyName, setPropertyName] = useState("");
   const [propertyAddress, setPropertyAddress] = useState("");
 
-  // Fetch all jobs
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
+
   const { data: jobs = [], isLoading } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],
   });
 
-  // Create job mutation
   const createJobMutation = useMutation({
     mutationFn: async (data: { propertyName: string; propertyAddress?: string }) => {
       const res = await apiRequest("POST", "/api/jobs", data);
@@ -152,99 +164,102 @@ export default function Jobs() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h1 className="text-lg font-bold mb-1">Workflow Jobs</h1>
-            <p className="text-muted-foreground">
-              Verwalten Sie Ihre Fotografie-Projekte
-            </p>
-          </div>
-          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-create-job">
-                <Plus className="w-4 h-4 mr-2" />
-                Neuer Job
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Neuen Job erstellen</DialogTitle>
-                <DialogDescription>
-                  Erstellen Sie einen neuen Job für ein Fotografie-Projekt
-                </DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handleCreateJob} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyName">Objektname*</Label>
-                  <Input
-                    id="propertyName"
-                    data-testid="input-property-name"
-                    placeholder="z.B. Villa am See"
-                    value={propertyName}
-                    onChange={(e) => setPropertyName(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="propertyAddress">Adresse (optional)</Label>
-                  <Input
-                    id="propertyAddress"
-                    data-testid="input-property-address"
-                    placeholder="z.B. Seestraße 123, 20095 Hamburg"
-                    value={propertyAddress}
-                    onChange={(e) => setPropertyAddress(e.target.value)}
-                  />
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setIsCreateDialogOpen(false)}
-                    data-testid="button-cancel"
-                  >
-                    Abbrechen
-                  </Button>
-                  <Button
-                    type="submit"
-                    data-testid="button-submit-job"
-                    disabled={!propertyName.trim() || createJobMutation.isPending}
-                  >
-                    {createJobMutation.isPending ? "Erstelle..." : "Job erstellen"}
-                  </Button>
-                </div>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
-        {/* Jobs List */}
-        {isLoading ? (
-          <div className="text-center py-12">
-            <p className="text-muted-foreground">Lädt Jobs...</p>
+  return (
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title="Workflow Jobs" 
+          showBackButton
+          actions={
+            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-create-job">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Neuer Job
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Neuen Job erstellen</DialogTitle>
+                  <DialogDescription>
+                    Erstellen Sie einen neuen Job für ein Fotografie-Projekt
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handleCreateJob} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyName">Objektname*</Label>
+                    <Input
+                      id="propertyName"
+                      data-testid="input-property-name"
+                      placeholder="z.B. Villa am See"
+                      value={propertyName}
+                      onChange={(e) => setPropertyName(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyAddress">Adresse (optional)</Label>
+                    <Input
+                      id="propertyAddress"
+                      data-testid="input-property-address"
+                      placeholder="z.B. Seestraße 123, 20095 Hamburg"
+                      value={propertyAddress}
+                      onChange={(e) => setPropertyAddress(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsCreateDialogOpen(false)}
+                      data-testid="button-cancel"
+                    >
+                      Abbrechen
+                    </Button>
+                    <Button
+                      type="submit"
+                      data-testid="button-submit-job"
+                      disabled={!propertyName.trim() || createJobMutation.isPending}
+                    >
+                      {createJobMutation.isPending ? "Erstelle..." : "Job erstellen"}
+                    </Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          }
+        />
+
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            {isLoading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Lädt Jobs...</p>
+              </div>
+            ) : jobs.length === 0 ? (
+              <Card className="p-12 text-center">
+                <FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Keine Jobs vorhanden</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Erstellen Sie Ihren ersten Job, um zu beginnen
+                </p>
+                <Button onClick={() => setIsCreateDialogOpen(true)} data-testid="button-create-first-job">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Neuer Job
+                </Button>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {jobs.map((job) => (
+                  <JobCard key={job.id} job={job} />
+                ))}
+              </div>
+            )}
           </div>
-        ) : jobs.length === 0 ? (
-          <Card className="p-12 text-center">
-            <FolderOpen className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">Keine Jobs vorhanden</h3>
-            <p className="text-sm text-muted-foreground mb-4">
-              Erstellen Sie Ihren ersten Job, um zu beginnen
-            </p>
-            <Button onClick={() => setIsCreateDialogOpen(true)} data-testid="button-create-first-job">
-              <Plus className="w-4 h-4 mr-2" />
-              Neuer Job
-            </Button>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
-          </div>
-        )}
+        </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
