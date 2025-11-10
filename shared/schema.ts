@@ -1227,3 +1227,29 @@ export const insertUploadedFileSchema = createInsertSchema(uploadedFiles).omit({
 
 export type UploadedFile = typeof uploadedFiles.$inferSelect;
 export type InsertUploadedFile = typeof uploadedFiles.$inferInsert;
+
+// PixCapture Upload API Schemas
+export const uploadIntentSchema = z.object({
+  filename: z.string().min(1).max(255),
+  mimeType: z.string().min(1).max(100),
+  fileSize: z.number().int().min(1).max(100 * 1024 * 1024), // Max 100 MB
+  checksum: z.string().length(64).optional(), // SHA256 checksum
+  orderId: z.string().uuid().optional(), // Optional order link
+  roomType: z.string().max(50).optional(),
+  stackId: z.string().max(20).optional(),
+});
+
+export const uploadFinalizeSchema = z.object({
+  objectKey: z.string().min(1),
+  checksum: z.string().length(64).optional(),
+  exifMeta: z.string().optional(), // JSON string
+});
+
+export type UploadIntentInput = z.infer<typeof uploadIntentSchema>;
+export type UploadFinalizeInput = z.infer<typeof uploadFinalizeSchema>;
+
+export interface UploadIntentResponse {
+  objectKey: string;
+  uploadUrl: string;
+  expiresIn: number; // seconds
+}

@@ -6,10 +6,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
 import { logger, generateRequestId, type LogContext } from "./logger";
-import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, insertBookingSchema, type InitUploadResponse, type PresignedUrlResponse } from "@shared/schema";
+import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, insertBookingSchema, uploadIntentSchema, uploadFinalizeSchema, type InitUploadResponse, type PresignedUrlResponse, type UploadIntentResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
-import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey } from "./r2-client";
+import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl } from "./r2-client";
 import { runAITool, getToolById, getAllTools } from "./replicate-adapter";
 import { z } from "zod";
 import { randomBytes } from "crypto";
@@ -2330,6 +2330,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error in mobile upload:", error);
       res.status(500).json({ error: "Failed to process upload" });
+    }
+  });
+
+  // PixCapture Upload Endpoints (Intent-based Upload System)
+  
+  // POST /api/pixcapture/upload/intent - Generate signed URL for direct R2 upload
+  app.post("/api/pixcapture/upload/intent", validateBody(uploadIntentSchema), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { filename, mimeType, fileSize, checksum, orderId, roomType, stackId } = req.body;
+
+      // Generate unique object key
+      const timestamp = Date.now();
+      const randomSuffix = randomBytes(8).toString('hex');
+      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
+      const objectKey = `pixcapture/${user.id}/${timestamp}-${randomSuffix}-${sanitizedFilename}`;
+
+      // Generate signed PUT URL (5 minutes expiry)
+      const uploadUrl = await generateSignedPutUrl(objectKey, mimeType, 300);
+
+      // Store intent in database (without finalizedAt)
+      await storage.createUploadedFile({
+        userId: user.id,
+        objectKey,
+        originalFilename: filename,
+        mimeType,
+        fileSize,
+        checksum,
+        orderId,
+        roomType,
+        stackId,
+      });
+
+      const response: UploadIntentResponse = {
+        objectKey,
+        uploadUrl,
+        expiresIn: 300,
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("Error creating upload intent:", error);
+      res.status(500).json({ error: "Failed to create upload intent" });
+    }
+  });
+
+  // POST /api/pixcapture/upload/finalize - Confirm successful R2 upload
+  app.post("/api/pixcapture/upload/finalize", validateBody(uploadFinalizeSchema), async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      if (!user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { objectKey, checksum, exifMeta } = req.body;
+
+      // Verify upload exists and belongs to user
+      const upload = await storage.getUploadedFileByObjectKey(objectKey);
+      if (!upload) {
+        return res.status(404).json({ error: "Upload not found" });
+      }
+
+      if (upload.userId !== user.id) {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+
+      // Mark as finalized
+      await storage.finalizeUploadedFile(objectKey, Date.now());
+
+      // Optionally update checksum & EXIF if provided
+      if (checksum && upload.id) {
+        await storage.updateUploadedFileStatus(upload.id, "uploaded");
+      }
+
+      res.json({
+        success: true,
+        fileId: upload.id,
+        objectKey,
+      });
+    } catch (error) {
+      console.error("Error finalizing upload:", error);
+      res.status(500).json({ error: "Failed to finalize upload" });
     }
   });
 
