@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, LogOut, Image as ImageIcon, ListOrdered, Briefcase, CalendarCheck, FileText, Upload, Sparkles, Download, Camera, Folder, ImagePlus, Key, Users, CheckSquare, Images, Receipt } from "lucide-react";
-import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useToast } from "@/hooks/use-toast";
+import { Plus, ListOrdered } from "lucide-react";
+import { getQueryFn } from "@/lib/queryClient";
+import { AdminLayout } from "@/components/AdminLayout";
+import { SidebarTrigger } from "@/components/ui/sidebar";
 
 type User = {
   id: string;
@@ -32,8 +32,6 @@ type Order = {
 
 export default function Dashboard() {
   const [, setLocation] = useLocation();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["/api/auth/me"],
@@ -46,20 +44,6 @@ export default function Dashboard() {
     enabled: !!userData,
   });
 
-  const logoutMutation = useMutation({
-    mutationFn: async () => {
-      await apiRequest("POST", "/api/auth/logout");
-    },
-    onSuccess: () => {
-      queryClient.clear();
-      toast({
-        title: "Abgemeldet",
-        description: "Bis bald!",
-      });
-      setLocation("/");
-    },
-  });
-
   if (!userData && !userLoading) {
     setLocation("/login");
     return null;
@@ -67,13 +51,7 @@ export default function Dashboard() {
 
   if (userLoading || !userData) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <header className="border-b bg-background">
-          <div className="container mx-auto flex h-16 items-center justify-between px-6">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-9 w-24" />
-          </div>
-        </header>
+      <AdminLayout userRole="client">
         <div className="container mx-auto px-6 py-12">
           <Skeleton className="mb-8 h-12 w-64" />
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -82,7 +60,7 @@ export default function Dashboard() {
             <Skeleton className="h-48" />
           </div>
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
@@ -120,251 +98,117 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md">
-        <div className="flex items-center justify-between px-[5vw] py-4">
-          <Link href="/">
-            <div className="text-base font-semibold tracking-wide cursor-pointer" data-testid="brand-logo">
-              PIX.IMMO
-            </div>
-          </Link>
+    <AdminLayout userRole={user.role}>
+      <div className="flex flex-col h-full">
+        <header className="border-b bg-background px-6 py-4">
           <div className="flex items-center gap-4">
-            {user.role === "admin" && (
-              <>
-                <Link href="/admin/editorial">
-                  <Button variant="ghost" data-testid="button-editorial">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Redaktionsplan
-                  </Button>
-                </Link>
-                <Link href="/admin/password">
-                  <Button variant="ghost" data-testid="button-password">
-                    <Key className="mr-2 h-4 w-4" />
-                    Passwort ändern
-                  </Button>
-                </Link>
-                <Link href="/admin/editor-management">
-                  <Button variant="ghost" data-testid="button-editor-management">
-                    <Users className="mr-2 h-4 w-4" />
-                    Editor Management
-                  </Button>
-                </Link>
-                <Link href="/qc-quality-check">
-                  <Button variant="ghost" data-testid="button-qc-check">
-                    <CheckSquare className="mr-2 h-4 w-4" />
-                    Quality Check
-                  </Button>
-                </Link>
-                <Link href="/admin/media-library">
-                  <Button variant="ghost" data-testid="button-media-library">
-                    <Images className="mr-2 h-4 w-4" />
-                    Media Library
-                  </Button>
-                </Link>
-                <Link href="/admin/invoices">
-                  <Button variant="ghost" data-testid="button-invoices">
-                    <Receipt className="mr-2 h-4 w-4" />
-                    Rechnungen
-                  </Button>
-                </Link>
-                <Link href="/admin/blog">
-                  <Button variant="ghost" data-testid="button-blog-admin">
-                    <FileText className="mr-2 h-4 w-4" />
-                    Blog-Verwaltung
-                  </Button>
-                </Link>
-                <Link href="/admin/bookings">
-                  <Button variant="ghost" data-testid="button-bookings-admin">
-                    <CalendarCheck className="mr-2 h-4 w-4" />
-                    Buchungen
-                  </Button>
-                </Link>
-              </>
-            )}
-            <Link href="/jobs">
-              <Button variant="ghost" data-testid="button-jobs">
-                <Briefcase className="mr-2 h-4 w-4" />
-                Workflow Jobs
-              </Button>
-            </Link>
-            <Link href="/preisliste">
-              <Button variant="ghost" data-testid="button-preisliste">
-                <ListOrdered className="mr-2 h-4 w-4" />
-                Preisliste
-              </Button>
-            </Link>
-            <Link href="/buchen">
-              <Button variant="ghost" data-testid="button-buchen">
-                <CalendarCheck className="mr-2 h-4 w-4" />
-                Buchen
-              </Button>
-            </Link>
-            <Link href="/galerie">
-              <Button variant="ghost" data-testid="button-galerie">
-                <ImageIcon className="mr-2 h-4 w-4" />
-                Galerie
-              </Button>
-            </Link>
-            <Link href="/gallery">
-              <Button variant="ghost" data-testid="button-gallery">
-                <ImageIcon className="mr-2 h-4 w-4" />
-                Portfolio
-              </Button>
-            </Link>
-            
-            {/* Gallery Upload System V1.0 */}
-            {user.role === "admin" ? (
-              <>
-                <Link href="/portal/gallery-photographer">
-                  <Button variant="ghost" data-testid="button-gallery-photographer">
-                    <Camera className="mr-2 h-4 w-4" />
-                    Photo Upload
-                  </Button>
-                </Link>
-                <Link href="/portal/gallery-editing">
-                  <Button variant="ghost" data-testid="button-gallery-editing">
-                    <ImagePlus className="mr-2 h-4 w-4" />
-                    Final Editing
-                  </Button>
-                </Link>
-                <Link href="/upload-raw">
-                  <Button variant="ghost" data-testid="button-upload-raw">
-                    <Upload className="mr-2 h-4 w-4" />
-                    RAW Upload
-                  </Button>
-                </Link>
-                <Link href="/ai-lab">
-                  <Button variant="ghost" data-testid="button-ai-lab">
-                    <Sparkles className="mr-2 h-4 w-4" />
-                    AI Lab
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <Link href="/portal/gallery-upload">
-                <Button variant="ghost" data-testid="button-gallery-upload">
-                  <Folder className="mr-2 h-4 w-4" />
-                  Bilder hochladen
+            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <h1 className="text-lg font-semibold">Dashboard</h1>
+          </div>
+        </header>
+
+        <div className="flex-1 overflow-auto">
+          <div className="container mx-auto px-6 py-12">
+            <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <h2 className="mb-2 text-lg font-bold" data-testid="text-welcome">
+                  Willkommen zurück, {user.email}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <p className="text-muted-foreground">Ihr Dashboard</p>
+                  <Badge variant="outline" data-testid="badge-role">
+                    {user.role === "admin" ? "Admin" : "Kunde"}
+                  </Badge>
+                </div>
+              </div>
+              <Link href="/order">
+                <Button size="lg" data-testid="button-new-order">
+                  <Plus className="mr-2 h-5 w-5" />
+                  Neuer Auftrag
                 </Button>
               </Link>
-            )}
-            <Link href="/downloads">
-              <Button variant="ghost" data-testid="button-downloads">
-                <Download className="mr-2 h-4 w-4" />
-                Downloads
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              onClick={() => logoutMutation.mutate()}
-              data-testid="button-logout"
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Abmelden
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-6 py-12">
-        <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="mb-2 text-lg font-bold" data-testid="text-welcome">
-              Willkommen zurück, {user.email}
-            </h1>
-            <div className="flex items-center gap-2">
-              <p className="text-muted-foreground">Ihr Dashboard</p>
-              <Badge variant="outline" data-testid="badge-role">
-                {user.role === "admin" ? "Admin" : "Kunde"}
-              </Badge>
             </div>
-          </div>
-          <Link href="/order">
-            <Button size="lg" data-testid="button-new-order">
-              <Plus className="mr-2 h-5 w-5" />
-              Neuer Auftrag
-            </Button>
-          </Link>
-        </div>
 
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-6">
-            <ListOrdered className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">
-              {user.role === "admin" ? "Alle Aufträge" : "Ihre Aufträge"}
-            </h2>
-          </div>
+            <div className="mb-8">
+              <div className="flex items-center gap-2 mb-6">
+                <ListOrdered className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">
+                  {user.role === "admin" ? "Alle Aufträge" : "Ihre Aufträge"}
+                </h3>
+              </div>
 
-          {ordersLoading ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              <Skeleton className="h-64" />
-              <Skeleton className="h-64" />
-              <Skeleton className="h-64" />
-            </div>
-          ) : orders.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <ListOrdered className="mb-4 h-16 w-16 text-muted-foreground" />
-                <h3 className="mb-2 text-base font-semibold">Noch keine Aufträge</h3>
-                <p className="mb-6 text-center text-muted-foreground">
-                  Erstellen Sie Ihren ersten Auftrag für Immobilienfotografie
-                </p>
-                <Link href="/order">
-                  <Button data-testid="button-create-first-order">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ersten Auftrag erstellen
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {orders.map((order) => (
-                <Card key={order.id} data-testid={`card-order-${order.id}`}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <CardTitle className="truncate">{order.propertyName}</CardTitle>
-                        <CardDescription className="truncate">
-                          {order.propertyAddress}
-                        </CardDescription>
-                      </div>
-                      <Badge
-                        variant={getStatusBadgeVariant(order.status)}
-                        data-testid={`badge-status-${order.id}`}
-                      >
-                        {getStatusLabel(order.status)}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm">
-                      <div>
-                        <span className="text-muted-foreground">Kontakt: </span>
-                        <span>{order.contactName}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Telefon: </span>
-                        <span>{order.contactPhone}</span>
-                      </div>
-                      <div>
-                        <span className="text-muted-foreground">Datum: </span>
-                        <span>{order.preferredDate}</span>
-                      </div>
-                      {order.notes && (
-                        <div className="pt-2 border-t">
-                          <span className="text-muted-foreground">Notizen: </span>
-                          <p className="mt-1 text-xs line-clamp-2">{order.notes}</p>
-                        </div>
-                      )}
-                    </div>
+              {ordersLoading ? (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  <Skeleton className="h-64" />
+                  <Skeleton className="h-64" />
+                  <Skeleton className="h-64" />
+                </div>
+              ) : orders.length === 0 ? (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-16">
+                    <ListOrdered className="mb-4 h-16 w-16 text-muted-foreground" />
+                    <h4 className="mb-2 text-base font-semibold">Noch keine Aufträge</h4>
+                    <p className="mb-6 text-center text-muted-foreground">
+                      Erstellen Sie Ihren ersten Auftrag für Immobilienfotografie
+                    </p>
+                    <Link href="/order">
+                      <Button data-testid="button-create-first-order">
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ersten Auftrag erstellen
+                      </Button>
+                    </Link>
                   </CardContent>
                 </Card>
-              ))}
+              ) : (
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {orders.map((order) => (
+                    <Card key={order.id} data-testid={`card-order-${order.id}`}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <CardTitle className="truncate">{order.propertyName}</CardTitle>
+                            <CardDescription className="truncate">
+                              {order.propertyAddress}
+                            </CardDescription>
+                          </div>
+                          <Badge
+                            variant={getStatusBadgeVariant(order.status)}
+                            data-testid={`badge-status-${order.id}`}
+                          >
+                            {getStatusLabel(order.status)}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-2 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Kontakt: </span>
+                            <span>{order.contactName}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Telefon: </span>
+                            <span>{order.contactPhone}</span>
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Datum: </span>
+                            <span>{order.preferredDate}</span>
+                          </div>
+                          {order.notes && (
+                            <div className="pt-2 border-t">
+                              <span className="text-muted-foreground">Notizen: </span>
+                              <p className="mt-1 text-xs line-clamp-2">{order.notes}</p>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
