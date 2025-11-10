@@ -65,7 +65,7 @@ export default function PixCaptureHome() {
                 Blog
               </span>
             </Link>
-            <a href="/login">
+            <Link href="/pixcapture/login">
               <span
                 className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
@@ -73,7 +73,7 @@ export default function PixCaptureHome() {
               >
                 Login
               </span>
-            </a>
+            </Link>
             <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
               <Link href="/pixcapture/impressum">
                 <span
@@ -138,14 +138,14 @@ export default function PixCaptureHome() {
               Blog
             </span>
           </Link>
-          <a href="/login">
+          <Link href="/pixcapture/login">
             <span 
               className="text-base text-black hover:text-gray-600 transition-colors cursor-pointer tracking-tight"
               data-testid="link-login"
             >
               Login
             </span>
-          </a>
+          </Link>
         </nav>
 
         {/* Scrolling Image Strip */}

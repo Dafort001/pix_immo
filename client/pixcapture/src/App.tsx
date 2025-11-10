@@ -6,6 +6,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import Home from "./pages/home";
 import About from "./pages/about";
 import Blog from "./pages/blog";
+import Login from "./pages/login";
 import AGB from "./pages/agb";
 import Datenschutz from "./pages/datenschutz";
 import Help from "./pages/help";
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/pixcapture" component={Home} />
       <Route path="/pixcapture/about" component={About} />
       <Route path="/pixcapture/blog" component={Blog} />
+      <Route path="/pixcapture/login" component={Login} />
       <Route path="/pixcapture/agb" component={AGB} />
       <Route path="/pixcapture/datenschutz" component={Datenschutz} />
       <Route path="/pixcapture/help" component={Help} />
