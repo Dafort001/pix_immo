@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "wouter";
 import { Menu, X } from "lucide-react";
 
 export function SimplePageHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu on escape key
   useEffect(() => {
@@ -16,16 +17,15 @@ export function SimplePageHeader() {
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isMenuOpen]);
 
-  // Prevent body scroll when menu is open
+  // Close menu when clicking outside
   useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
+    const handleClickOutside = (e: MouseEvent) => {
+      if (isMenuOpen && menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsMenuOpen(false);
+      }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isMenuOpen]);
 
   return (
@@ -38,146 +38,106 @@ export function SimplePageHeader() {
             </div>
           </Link>
           <button
-            onClick={() => setIsMenuOpen(true)}
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-            aria-label="Menü öffnen"
+            aria-label="Menü"
             aria-expanded={isMenuOpen}
-            data-testid="button-menu-open"
+            data-testid="button-menu-toggle"
           >
-            <Menu className="h-5 w-5" />
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
         </div>
       </header>
 
-      {/* Hamburger Menu Drawer */}
+      {/* Compact Dropdown Menu */}
       {isMenuOpen && (
-        <aside
-          className="fixed inset-0 z-50 bg-white"
-          aria-hidden={!isMenuOpen}
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsMenuOpen(false);
-          }}
-          data-testid="menu-drawer"
-        >
-          <div className="flex items-center justify-between px-[5vw] py-4 border-b">
-            <Link href="/">
-              <div className="text-base font-semibold tracking-wide cursor-pointer" onClick={() => setIsMenuOpen(false)}>
-                PIX.IMMO
-              </div>
+        <div ref={menuRef} className="fixed top-[72px] right-8 z-50 bg-white shadow-lg rounded-md" data-testid="menu-drawer">
+          <nav className="flex flex-col px-8 py-6 gap-6">
+            <Link href="/gallery">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-portfolio"
+              >
+                Portfolio
+              </span>
             </Link>
-            <button
-              onClick={() => setIsMenuOpen(false)}
-              className="hover:opacity-70"
-              aria-label="Menü schließen"
-              data-testid="button-menu-close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-          <nav className="px-[5vw] py-8">
-            <ul className="space-y-4">
-              <li>
-                <Link href="/gallery">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-portfolio"
-                  >
-                    Portfolio
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/preise">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-preise"
-                  >
-                    Preise
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/blog">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-blog"
-                  >
-                    Blog
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/kontakt">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-kontakt"
-                  >
-                    Kontakt
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-faq"
-                  >
-                    FAQ
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/login">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-login"
-                  >
-                    Login
-                  </span>
-                </Link>
-              </li>
-              <li className="pt-4 mt-4 border-t border-gray-200">
-                <Link href="/impressum">
-                  <span
-                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-impressum"
-                  >
-                    Impressum
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/datenschutz">
-                  <span
-                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-datenschutz"
-                  >
-                    Datenschutz
-                  </span>
-                </Link>
-              </li>
-              <li>
-                <Link href="/agb">
-                  <span
-                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-agb"
-                  >
-                    AGB
-                  </span>
-                </Link>
-              </li>
-            </ul>
+            <Link href="/preise">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-preise"
+              >
+                Preise
+              </span>
+            </Link>
+            <Link href="/blog">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-blog"
+              >
+                Blog
+              </span>
+            </Link>
+            <Link href="/kontakt">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-kontakt"
+              >
+                Kontakt
+              </span>
+            </Link>
+            <Link href="/faq">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-faq"
+              >
+                FAQ
+              </span>
+            </Link>
+            <Link href="/login">
+              <span
+                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+                data-testid="menu-link-login"
+              >
+                Login
+              </span>
+            </Link>
+            <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
+              <Link href="/impressum">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                  data-testid="menu-link-impressum"
+                >
+                  Impressum
+                </span>
+              </Link>
+              <Link href="/datenschutz">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                  data-testid="menu-link-datenschutz"
+                >
+                  Datenschutz
+                </span>
+              </Link>
+              <Link href="/agb">
+                <span
+                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  onClick={() => setIsMenuOpen(false)}
+                  data-testid="menu-link-agb"
+                >
+                  AGB
+                </span>
+              </Link>
+            </div>
           </nav>
-        </aside>
+        </div>
       )}
     </>
   );
