@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { ArrowLeft, Plus, Edit2, Trash2, DollarSign } from 'lucide-react';
+import { Plus, Edit2, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -11,9 +10,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SEOHead } from '@shared/components';
 import { useToast } from '@/hooks/use-toast';
-import { apiRequest, queryClient } from '@/lib/queryClient';
+import { apiRequest, queryClient, getQueryFn } from '@/lib/queryClient';
+import { AdminLayout } from '@/components/AdminLayout';
+import { AdminPageHeader } from '@/components/AdminPageHeader';
 import type { Service } from '@shared/schema';
 
 const CATEGORIES = [
@@ -26,14 +26,18 @@ const CATEGORIES = [
   { value: 'travel', label: 'Anfahrt' },
 ];
 
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
+
 export default function AdminServices() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-
-  if (authLoading) return null;
   const [formData, setFormData] = useState({
     serviceCode: '',
     category: 'photography',
@@ -45,9 +49,17 @@ export default function AdminServices() {
     isActive: 'true',
   });
 
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
+
   const { data: services = [], isLoading } = useQuery<Service[]>({
     queryKey: ['/api/services'],
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -185,110 +197,110 @@ export default function AdminServices() {
     return CATEGORIES.find(c => c.value === category)?.label || category;
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <SEOHead 
-        title="Services-Verwaltung | pix.immo Admin"
-        description="Dienstleistungskatalog verwalten"
-      />
-
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setLocation('/admin')}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <h1 className="text-lg font-bold text-gray-900">Services-Verwaltung</h1>
+  if (isLoading) {
+    return (
+      <AdminLayout userRole={userData.user.role}>
+        <div className="flex flex-col h-full">
+          <AdminPageHeader title="Services-Verwaltung" showBackButton />
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-6xl mx-auto px-6 py-8">
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} className="h-32" />
+                ))}
+              </div>
+            </div>
           </div>
-
-          <Button onClick={() => handleOpenDialog()} data-testid="button-new-service">
-            <Plus className="h-4 w-4 mr-2" />
-            Neuer Service
-          </Button>
         </div>
-      </header>
+      </AdminLayout>
+    );
+  }
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <Skeleton key={i} className="h-32" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {services.map((service) => (
-              <Card key={service.id} data-testid={`card-service-${service.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="outline" data-testid={`badge-code-${service.id}`}>
-                          {service.serviceCode}
-                        </Badge>
-                        <Badge variant="secondary" data-testid={`badge-category-${service.id}`}>
-                          {getCategoryLabel(service.category)}
-                        </Badge>
-                        {service.isActive === 'false' && (
-                          <Badge variant="destructive">Inaktiv</Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-xl" data-testid={`text-name-${service.id}`}>
-                        {service.name}
-                      </CardTitle>
-                      {service.description && (
-                        <p className="text-sm text-gray-600 mt-1">{service.description}</p>
-                      )}
-                    </div>
+  return (
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title="Services-Verwaltung" 
+          showBackButton
+          actions={
+            <Button onClick={() => handleOpenDialog()} data-testid="button-new-service">
+              <Plus className="h-4 w-4 mr-2" />
+              Neuer Service
+            </Button>
+          }
+        />
 
-                    <div className="flex items-center gap-2 ml-4">
-                      <div className="text-right">
-                        <div className="text-lg font-semibold text-gray-900" data-testid={`text-price-${service.id}`}>
-                          {formatPrice(service.netPrice, service.priceNote)}
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="space-y-4">
+              {services.map((service) => (
+                <Card key={service.id} data-testid={`card-service-${service.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="outline" data-testid={`badge-code-${service.id}`}>
+                            {service.serviceCode}
+                          </Badge>
+                          <Badge variant="secondary" data-testid={`badge-category-${service.id}`}>
+                            {getCategoryLabel(service.category)}
+                          </Badge>
+                          {service.isActive === 'false' && (
+                            <Badge variant="destructive">Inaktiv</Badge>
+                          )}
                         </div>
-                        {service.netPrice && service.priceNote && (
-                          <div className="text-xs text-gray-500">{service.priceNote}</div>
+                        <CardTitle className="text-lg" data-testid={`text-name-${service.id}`}>
+                          {service.name}
+                        </CardTitle>
+                        {service.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{service.description}</p>
                         )}
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenDialog(service)}
-                        data-testid={`button-edit-${service.id}`}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-2 ml-4">
+                        <div className="text-right">
+                          <div className="text-lg font-semibold" data-testid={`text-price-${service.id}`}>
+                            {formatPrice(service.netPrice, service.priceNote)}
+                          </div>
+                          {service.netPrice && service.priceNote && (
+                            <div className="text-xs text-muted-foreground">{service.priceNote}</div>
+                          )}
+                        </div>
 
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(service)}
-                        data-testid={`button-delete-${service.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenDialog(service)}
+                          data-testid={`button-edit-${service.id}`}
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(service)}
+                          data-testid={`button-delete-${service.id}`}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
+                  </CardHeader>
+                </Card>
+              ))}
 
-            {services.length === 0 && (
-              <Card>
-                <CardContent className="py-12 text-center text-gray-500">
-                  Noch keine Services vorhanden
-                </CardContent>
-              </Card>
-            )}
+              {services.length === 0 && (
+                <Card>
+                  <CardContent className="py-12 text-center text-muted-foreground">
+                    Noch keine Services vorhanden
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </div>
-        )}
-      </main>
+        </div>
+      </div>
 
       {showDialog && (
         <Dialog open={showDialog} onOpenChange={handleCloseDialog}>
@@ -300,7 +312,7 @@ export default function AdminServices() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Service-Code *
                   </label>
                   <Input
@@ -313,7 +325,7 @@ export default function AdminServices() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Kategorie *
                   </label>
                   <Select value={formData.category} onValueChange={(v) => setFormData({...formData, category: v})}>
@@ -332,7 +344,7 @@ export default function AdminServices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Name *
                 </label>
                 <Input
@@ -344,7 +356,7 @@ export default function AdminServices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Beschreibung
                 </label>
                 <Textarea
@@ -358,7 +370,7 @@ export default function AdminServices() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Netto-Preis (€)
                   </label>
                   <Input
@@ -369,11 +381,11 @@ export default function AdminServices() {
                     placeholder="0.00"
                     data-testid="input-net-price"
                   />
-                  <p className="text-xs text-gray-500 mt-1">Leer lassen für "auf Anfrage"</p>
+                  <p className="text-xs text-muted-foreground mt-1">Leer lassen für "auf Anfrage"</p>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">
+                  <label className="block text-sm font-medium mb-2">
                     Preis-Hinweis
                   </label>
                   <Input
@@ -386,7 +398,7 @@ export default function AdminServices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Interne Notizen
                 </label>
                 <Textarea
@@ -399,7 +411,7 @@ export default function AdminServices() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">
+                <label className="block text-sm font-medium mb-2">
                   Status
                 </label>
                 <Select value={formData.isActive} onValueChange={(v) => setFormData({...formData, isActive: v})}>
@@ -430,6 +442,6 @@ export default function AdminServices() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </AdminLayout>
   );
 }

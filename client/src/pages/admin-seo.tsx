@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { Link, useLocation } from "wouter";
 import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,9 +8,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, Edit, Trash2, Plus, Save, X } from "lucide-react";
+import { Edit, Trash2, Plus, Save, X } from "lucide-react";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
 import type { SeoMetadata } from "@shared/schema";
 
 const DEFAULT_PAGES = [
@@ -34,19 +35,31 @@ type EditingMetadata = {
   altText: string;
 };
 
+type User = {
+  id: string;
+  email: string;
+  role: "client" | "admin" | "editor";
+  createdAt: number;
+};
+
 export default function AdminSeo() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
-  const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editingData, setEditingData] = useState<EditingMetadata | null>(null);
 
-  if (authLoading) return null;
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
+  });
 
   const { data: metadataList, isLoading } = useQuery<{ metadata: SeoMetadata[] }>({
     queryKey: ["/api/seo-metadata"],
     queryFn: getQueryFn<{ metadata: SeoMetadata[] }>({ on401: "returnNull" }),
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
   const saveMutation = useMutation({
     mutationFn: async (data: EditingMetadata) => {
@@ -137,116 +150,113 @@ export default function AdminSeo() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-muted/30">
-        <header className="sticky top-0 z-50 bg-white border-b">
-          <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-base font-semibold">SEO Management</h1>
+      <AdminLayout userRole={userData.user.role}>
+        <div className="flex flex-col h-full">
+          <AdminPageHeader title="SEO Management" showBackButton />
+          <div className="flex-1 overflow-auto">
+            <div className="max-w-6xl mx-auto px-6 py-8">
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-24 w-full" />
+                ))}
+              </div>
+            </div>
           </div>
-        </header>
-        <div className="container mx-auto px-6 py-12 space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-24 w-full" />
-          ))}
         </div>
-      </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-50 bg-white border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Link href="/admin/editorial">
-              <Button variant="ghost" size="sm" data-testid="button-back">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back
-              </Button>
-            </Link>
-            <h1 className="text-base font-semibold" data-testid="heading-seo-admin">
-              SEO Management
-            </h1>
-          </div>
-          <Button
-            onClick={() => handleEdit()}
-            data-testid="button-add-seo"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Page
-          </Button>
-        </div>
-      </header>
+    <AdminLayout userRole={userData.user.role}>
+      <div className="flex flex-col h-full">
+        <AdminPageHeader 
+          title="SEO Management" 
+          showBackButton
+          actions={
+            <Button
+              onClick={() => handleEdit()}
+              data-testid="button-add-seo"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add New Page
+            </Button>
+          }
+        />
 
-      <div className="container mx-auto px-6 py-12">
-        <div className="space-y-4">
-          {allPagePaths.map((path) => {
-            const defaultPage = DEFAULT_PAGES.find(p => p.path === path);
-            const metadata = getMetadataForPage(path);
-            const name = defaultPage?.name || path;
-            
-            return (
-              <Card key={path} data-testid={`seo-card-${path}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <CardTitle className="text-lg">{name}</CardTitle>
-                      <CardDescription className="mt-1">
-                        Path: <code className="text-xs bg-muted px-1 py-0.5 rounded">{path}</code>
-                      </CardDescription>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(metadata)}
-                        data-testid={`button-edit-${path}`}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {metadata && (
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDelete(path)}
-                          data-testid={`button-delete-${path}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                {metadata && (
-                  <CardContent className="space-y-3">
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Page Title</Label>
-                      <p className="text-sm mt-1" data-testid={`title-${path}`}>{metadata.pageTitle}</p>
-                    </div>
-                    <div>
-                      <Label className="text-xs text-muted-foreground">Meta Description</Label>
-                      <p className="text-sm mt-1 text-muted-foreground" data-testid={`description-${path}`}>
-                        {metadata.metaDescription}
-                      </p>
-                    </div>
-                    {metadata.ogImage && (
-                      <div>
-                        <Label className="text-xs text-muted-foreground">OG Image</Label>
-                        <p className="text-sm mt-1 text-muted-foreground truncate">{metadata.ogImage}</p>
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="space-y-4">
+              {allPagePaths.map((path) => {
+                const defaultPage = DEFAULT_PAGES.find(p => p.path === path);
+                const metadata = getMetadataForPage(path);
+                const name = defaultPage?.name || path;
+                
+                return (
+                  <Card key={path} data-testid={`seo-card-${path}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{name}</CardTitle>
+                          <CardDescription className="mt-1">
+                            Path: <code className="text-xs bg-muted px-1 py-0.5 rounded">{path}</code>
+                          </CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleEdit(metadata)}
+                            data-testid={`button-edit-${path}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          {metadata && (
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleDelete(path)}
+                              data-testid={`button-delete-${path}`}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
+                    </CardHeader>
+                    {metadata && (
+                      <CardContent className="space-y-3">
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Page Title</Label>
+                          <p className="text-sm mt-1" data-testid={`title-${path}`}>{metadata.pageTitle}</p>
+                        </div>
+                        <div>
+                          <Label className="text-xs text-muted-foreground">Meta Description</Label>
+                          <p className="text-sm mt-1 text-muted-foreground" data-testid={`description-${path}`}>
+                            {metadata.metaDescription}
+                          </p>
+                        </div>
+                        {metadata.ogImage && (
+                          <div>
+                            <Label className="text-xs text-muted-foreground">OG Image</Label>
+                            <p className="text-sm mt-1 text-muted-foreground truncate">{metadata.ogImage}</p>
+                          </div>
+                        )}
+                        <div className="text-xs text-muted-foreground">
+                          Last updated: {new Date(metadata.updatedAt).toLocaleDateString("de-DE")}
+                        </div>
+                      </CardContent>
                     )}
-                    <div className="text-xs text-muted-foreground">
-                      Last updated: {new Date(metadata.updatedAt).toLocaleDateString("de-DE")}
-                    </div>
-                  </CardContent>
-                )}
-                {!metadata && (
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">No SEO metadata configured</p>
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
+                    {!metadata && (
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">No SEO metadata configured</p>
+                      </CardContent>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -359,6 +369,6 @@ export default function AdminSeo() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </AdminLayout>
   );
 }
