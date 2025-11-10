@@ -372,6 +372,46 @@ export interface IStorage {
   getUserUploadedFiles(userId: string): Promise<import("@shared/schema").UploadedFile[]>;
   updateUploadedFileStatus(id: string, status: string): Promise<void>;
   finalizeUploadedFile(objectKey: string, finalizedAt: number): Promise<void>;
+  
+  // Order Files Management (Phase 1)
+  getOrderFiles(orderId: string, actorUserId: string, options?: {
+    roomType?: string;
+    marked?: boolean;
+    status?: string;
+    includeDeleted?: boolean;
+    limit?: number;
+    offset?: number;
+    sortBy?: 'latest' | 'oldest' | 'filename';
+  }): Promise<{
+    files: import("@shared/schema").UploadedFile[];
+    total: number;
+  }>;
+  getOrderStacks(orderId: string, actorUserId: string, options?: {
+    includeDeleted?: boolean;
+    previewLimit?: number;
+  }): Promise<{
+    roomType: string;
+    totalFiles: number;
+    markedFiles: number;
+    deletedFiles?: number;
+    latestUpload: number;
+    earliestUpload: number;
+    previewFiles: import("@shared/schema").UploadedFile[];
+  }[]>;
+  bulkMarkFiles(fileIds: string[], marked: boolean, actorUserId: string): Promise<{ affectedCount: number }>;
+  bulkDeleteFiles(fileIds: string[], actorUserId: string, options?: {
+    allowMarked?: boolean;
+  }): Promise<{ affectedCount: number }>;
+  addFileNote(fileId: string, userId: string, text: string): Promise<import("@shared/schema").FileNote>;
+  getFileNotes(fileId: string, actorUserId: string, options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    notes: Array<import("@shared/schema").FileNote & { 
+      author: { id: string; email: string } 
+    }>;
+    total: number;
+  }>;
 
   // Editor Management Operations
   createEditor(data: {
@@ -3035,6 +3075,388 @@ export class DatabaseStorage implements IStorage {
       .update(uploadedFiles)
       .set({ finalizedAt })
       .where(eq(uploadedFiles.objectKey, objectKey));
+  }
+
+  // Order Files Management Authorization Helper
+  private async checkOrderAccess(orderId: string, actorUserId: string): Promise<void> {
+    // Get order to check ownership
+    const [order] = await db
+      .select({ userId: orders.userId })
+      .from(orders)
+      .where(eq(orders.id, orderId));
+
+    if (!order) {
+      throw new Error('Order not found');
+    }
+
+    // Get user to check role
+    const [user] = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, actorUserId));
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Allow if owner or admin
+    if (order.userId !== actorUserId && user.role !== 'admin') {
+      throw new Error('Unauthorized: You do not have access to this order');
+    }
+  }
+
+  // Order Files Management (Phase 1)
+  async getOrderFiles(orderId: string, actorUserId: string, options?: {
+    roomType?: string;
+    marked?: boolean;
+    status?: string;
+    includeDeleted?: boolean;
+    limit?: number;
+    offset?: number;
+    sortBy?: 'latest' | 'oldest' | 'filename';
+  }): Promise<{
+    files: import("@shared/schema").UploadedFile[];
+    total: number;
+  }> {
+    // Authorization check
+    await this.checkOrderAccess(orderId, actorUserId);
+
+    const { 
+      roomType, 
+      marked, 
+      status, 
+      includeDeleted = false, 
+      limit = 50, 
+      offset = 0,
+      sortBy = 'latest'
+    } = options || {};
+
+    // Build WHERE conditions
+    const conditions = [eq(uploadedFiles.orderId, orderId)];
+    if (!includeDeleted) {
+      conditions.push(sql`${uploadedFiles.deletedAt} IS NULL`);
+    }
+    if (roomType) {
+      conditions.push(eq(uploadedFiles.roomType, roomType));
+    }
+    if (marked !== undefined) {
+      conditions.push(eq(uploadedFiles.marked, marked));
+    }
+    if (status) {
+      conditions.push(eq(uploadedFiles.status, status));
+    }
+
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(uploadedFiles)
+      .where(and(...conditions));
+    const total = countResult?.count || 0;
+
+    // Build ORDER BY
+    let orderBy;
+    if (sortBy === 'oldest') {
+      orderBy = uploadedFiles.createdAt;
+    } else if (sortBy === 'filename') {
+      orderBy = uploadedFiles.originalFilename;
+    } else {
+      orderBy = desc(uploadedFiles.createdAt);
+    }
+
+    // Get paginated files
+    const files = await db
+      .select()
+      .from(uploadedFiles)
+      .where(and(...conditions))
+      .orderBy(orderBy)
+      .limit(limit)
+      .offset(offset);
+
+    return { files, total };
+  }
+
+  async getOrderStacks(orderId: string, actorUserId: string, options?: {
+    includeDeleted?: boolean;
+    previewLimit?: number;
+  }): Promise<{
+    roomType: string;
+    totalFiles: number;
+    markedFiles: number;
+    deletedFiles?: number;
+    latestUpload: number;
+    earliestUpload: number;
+    previewFiles: import("@shared/schema").UploadedFile[];
+  }[]> {
+    // Authorization check
+    await this.checkOrderAccess(orderId, actorUserId);
+
+    const { includeDeleted = false, previewLimit = 5 } = options || {};
+
+    // Aggregation query for stack metadata
+    const baseCondition = eq(uploadedFiles.orderId, orderId);
+    const whereCondition = includeDeleted 
+      ? baseCondition
+      : and(baseCondition, sql`${uploadedFiles.deletedAt} IS NULL`);
+
+    const aggregates = await db
+      .select({
+        roomType: uploadedFiles.roomType,
+        totalFiles: sql<number>`COUNT(*)::int`,
+        markedFiles: sql<number>`COUNT(*) FILTER (WHERE ${uploadedFiles.marked} = true)::int`,
+        deletedFiles: sql<number>`COUNT(*) FILTER (WHERE ${uploadedFiles.deletedAt} IS NOT NULL)::int`,
+        latestUpload: sql<number>`MAX(${uploadedFiles.createdAt})`,
+        earliestUpload: sql<number>`MIN(${uploadedFiles.createdAt})`,
+      })
+      .from(uploadedFiles)
+      .where(whereCondition)
+      .groupBy(uploadedFiles.roomType);
+
+    // Fetch preview files for each room type
+    const stacks = await Promise.all(
+      aggregates.map(async (agg) => {
+        const previewConditions = [
+          eq(uploadedFiles.orderId, orderId),
+          eq(uploadedFiles.roomType, agg.roomType),
+        ];
+        if (!includeDeleted) {
+          previewConditions.push(sql`${uploadedFiles.deletedAt} IS NULL`);
+        }
+
+        const previewFiles = await db
+          .select()
+          .from(uploadedFiles)
+          .where(and(...previewConditions))
+          .orderBy(desc(uploadedFiles.createdAt))
+          .limit(previewLimit);
+
+        return {
+          roomType: agg.roomType,
+          totalFiles: agg.totalFiles,
+          markedFiles: agg.markedFiles,
+          deletedFiles: includeDeleted ? agg.deletedFiles : undefined,
+          latestUpload: agg.latestUpload,
+          earliestUpload: agg.earliestUpload,
+          previewFiles,
+        };
+      })
+    );
+
+    return stacks;
+  }
+
+  async bulkMarkFiles(fileIds: string[], marked: boolean, actorUserId: string): Promise<{ affectedCount: number }> {
+    if (fileIds.length === 0) {
+      return { affectedCount: 0 };
+    }
+
+    // Validate all files belong to same order and user has access
+    const files = await db
+      .select({ orderId: uploadedFiles.orderId, userId: uploadedFiles.userId })
+      .from(uploadedFiles)
+      .where(
+        and(
+          inArray(uploadedFiles.id, fileIds),
+          sql`${uploadedFiles.deletedAt} IS NULL`
+        )
+      );
+
+    if (files.length === 0) {
+      return { affectedCount: 0 };
+    }
+
+    // Check if all files belong to same order
+    const uniqueOrderIds = new Set(files.map(f => f.orderId).filter((id): id is string => id !== null));
+    if (uniqueOrderIds.size > 1) {
+      throw new Error('All files must belong to the same order');
+    }
+    if (uniqueOrderIds.size === 0) {
+      throw new Error('Files must be associated with an order');
+    }
+
+    const orderId = Array.from(uniqueOrderIds)[0];
+    
+    // Authorization check
+    await this.checkOrderAccess(orderId, actorUserId);
+
+    const result = await db
+      .update(uploadedFiles)
+      .set({ marked, updatedAt: Date.now() })
+      .where(
+        and(
+          inArray(uploadedFiles.id, fileIds),
+          sql`${uploadedFiles.deletedAt} IS NULL`
+        )
+      );
+
+    return { affectedCount: result.rowCount || 0 };
+  }
+
+  async bulkDeleteFiles(fileIds: string[], actorUserId: string, options?: {
+    allowMarked?: boolean;
+  }): Promise<{ affectedCount: number }> {
+    if (fileIds.length === 0) {
+      return { affectedCount: 0 };
+    }
+
+    const { allowMarked = false } = options || {};
+
+    // Validate all files belong to same order
+    const files = await db
+      .select({ orderId: uploadedFiles.orderId })
+      .from(uploadedFiles)
+      .where(
+        and(
+          inArray(uploadedFiles.id, fileIds),
+          sql`${uploadedFiles.deletedAt} IS NULL`
+        )
+      );
+
+    if (files.length === 0) {
+      return { affectedCount: 0 };
+    }
+
+    const uniqueOrderIds = new Set(files.map(f => f.orderId).filter((id): id is string => id !== null));
+    if (uniqueOrderIds.size > 1) {
+      throw new Error('All files must belong to the same order');
+    }
+    if (uniqueOrderIds.size === 0) {
+      throw new Error('Files must be associated with an order');
+    }
+
+    const orderId = Array.from(uniqueOrderIds)[0];
+    
+    // Authorization check
+    await this.checkOrderAccess(orderId, actorUserId);
+
+    // Build conditions
+    const conditions = [
+      inArray(uploadedFiles.id, fileIds),
+      sql`${uploadedFiles.deletedAt} IS NULL`, // Only delete non-deleted files
+    ];
+
+    if (!allowMarked) {
+      conditions.push(eq(uploadedFiles.marked, false));
+    }
+
+    const result = await db
+      .update(uploadedFiles)
+      .set({ 
+        deletedAt: Date.now(),
+        updatedAt: Date.now(),
+      })
+      .where(and(...conditions));
+
+    return { affectedCount: result.rowCount || 0 };
+  }
+
+  async addFileNote(fileId: string, userId: string, text: string): Promise<import("@shared/schema").FileNote> {
+    // Validate text length (max 1000 chars)
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) {
+      throw new Error('Note text cannot be empty');
+    }
+    if (trimmedText.length > 1000) {
+      throw new Error('Note text cannot exceed 1000 characters');
+    }
+
+    // Get file's orderId and validate access
+    const [file] = await db
+      .select({ orderId: uploadedFiles.orderId })
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, fileId));
+
+    if (!file) {
+      throw new Error('File not found');
+    }
+    if (!file.orderId) {
+      throw new Error('File must be associated with an order');
+    }
+
+    // Authorization check
+    await this.checkOrderAccess(file.orderId, userId);
+
+    const id = randomUUID();
+    const [note] = await db
+      .insert(fileNotes)
+      .values({
+        id,
+        fileId,
+        userId,
+        text: trimmedText,
+        createdAt: Date.now(),
+      })
+      .returning();
+
+    return note;
+  }
+
+  async getFileNotes(fileId: string, actorUserId: string, options?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<{
+    notes: Array<import("@shared/schema").FileNote & { 
+      author: { id: string; email: string } 
+    }>;
+    total: number;
+  }> {
+    // Get file's orderId and validate access
+    const [file] = await db
+      .select({ orderId: uploadedFiles.orderId })
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, fileId));
+
+    if (!file) {
+      throw new Error('File not found');
+    }
+    if (!file.orderId) {
+      throw new Error('File must be associated with an order');
+    }
+
+    // Authorization check
+    await this.checkOrderAccess(file.orderId, actorUserId);
+
+    const { limit = 20, offset = 0 } = options || {};
+
+    // Get total count
+    const [countResult] = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(fileNotes)
+      .where(eq(fileNotes.fileId, fileId));
+    const total = countResult?.count || 0;
+
+    // Get notes with author info
+    const notesWithAuthor = await db
+      .select({
+        id: fileNotes.id,
+        fileId: fileNotes.fileId,
+        userId: fileNotes.userId,
+        text: fileNotes.text,
+        createdAt: fileNotes.createdAt,
+        updatedAt: fileNotes.updatedAt,
+        authorId: users.id,
+        authorEmail: users.email,
+      })
+      .from(fileNotes)
+      .leftJoin(users, eq(fileNotes.userId, users.id))
+      .where(eq(fileNotes.fileId, fileId))
+      .orderBy(desc(fileNotes.createdAt))
+      .limit(limit)
+      .offset(offset);
+
+    const notes = notesWithAuthor.map(row => ({
+      id: row.id,
+      fileId: row.fileId,
+      userId: row.userId,
+      text: row.text,
+      createdAt: row.createdAt,
+      updatedAt: row.updatedAt,
+      author: {
+        id: row.authorId || row.userId,
+        email: row.authorEmail || 'unknown',
+      },
+    }));
+
+    return { notes, total };
   }
 }
 
