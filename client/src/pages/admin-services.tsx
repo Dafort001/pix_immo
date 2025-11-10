@@ -58,9 +58,6 @@ export default function AdminServices() {
     queryKey: ['/api/services'],
   });
 
-  if (authLoading || userLoading) return null;
-  if (!userData) return null;
-
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       return await apiRequest('POST', '/api/services', data);
@@ -113,6 +110,9 @@ export default function AdminServices() {
       });
     },
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
   const handleOpenDialog = (service?: Service) => {
     if (service) {

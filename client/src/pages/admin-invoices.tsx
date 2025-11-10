@@ -48,17 +48,6 @@ export default function AdminInvoices() {
     enabled: showCreateDialog,
   });
 
-  if (authLoading || userLoading) return null;
-  if (!userData) return null;
-
-  const stats = {
-    draft: invoices.filter(inv => inv.status === 'draft').length,
-    sent: invoices.filter(inv => inv.status === 'sent').length,
-    paid: invoices.filter(inv => inv.status === 'paid').length,
-    total: invoices.length,
-    totalRevenue: invoices.reduce((sum, inv) => sum + (inv.grossAmount / 100), 0),
-  };
-
   const createMutation = useMutation({
     mutationFn: async (data: Omit<InsertInvoice, 'createdBy'>) => {
       return await apiRequest('POST', '/api/invoices', data);
@@ -104,6 +93,17 @@ export default function AdminInvoices() {
       });
     },
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
+
+  const stats = {
+    draft: invoices.filter(inv => inv.status === 'draft').length,
+    sent: invoices.filter(inv => inv.status === 'sent').length,
+    paid: invoices.filter(inv => inv.status === 'paid').length,
+    total: invoices.length,
+    totalRevenue: invoices.reduce((sum, inv) => sum + (inv.grossAmount / 100), 0),
+  };
 
   const handleCreateInvoice = () => {
     const netAmountFloat = parseFloat(formData.netAmount) || 0;

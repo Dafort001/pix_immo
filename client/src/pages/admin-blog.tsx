@@ -35,8 +35,6 @@ export default function AdminBlog() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
-
-  if (authLoading) return null;
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -172,6 +170,8 @@ export default function AdminBlog() {
       });
     },
   });
+
+  if (authLoading) return null;
 
   const handleOpenDialog = (post?: BlogPost) => {
     if (post) {

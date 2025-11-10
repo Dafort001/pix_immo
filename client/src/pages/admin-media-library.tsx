@@ -26,8 +26,6 @@ export default function AdminMediaLibrary() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadPage, setUploadPage] = useState<string>('home');
-
-  if (authLoading) return null;
   
   const { data: images = [], isLoading } = useQuery<PublicImage[]>({
     queryKey: ['/api/media-library'],
@@ -103,6 +101,8 @@ export default function AdminMediaLibrary() {
       });
     },
   });
+
+  if (authLoading) return null;
 
   const handleEditImage = (image: PublicImage) => {
     setEditingImage(image);

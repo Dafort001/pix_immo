@@ -1,0 +1,82 @@
+Replit-Briefing: Pix.Immo & PixCapture – Frontend-Abschluss und Cloudflare-Vorbereitung
+
+Ziel:
+Beide Frontends (pix.immo und pixcapture.app) sollen lokal in Replit vollständig fertiggestellt werden – inklusive Routing, Responsivität, Build-Stabilität und Environment-Konfiguration – bevor irgendetwas zu Cloudflare übertragen wird. Erst nach erfolgreichem Test folgt das gemeinsame Staging-Deployment auf Cloudflare.
+
+Aufgabenübersicht
+1️⃣ Frontend-Abschluss (jetzt)
+
+Pix.immo:
+
+Vollständige Seitenstruktur (Start, Leistungen, Upload-Demo, Galerie, Kontakt).
+
+Routing-Tests: keine 404-Fehler, Navigation vollständig funktionsfähig.
+
+Mobile & Desktop-Layout prüfen.
+
+Metadaten (Title, Description, OpenGraph) ergänzen.
+
+PixCapture:
+
+Landing-Page, Feature-Erklärung, Login-Button (noch ohne Funktion).
+
+Upload-Interface (Mock-Daten).
+
+Einheitliches Farb- und Typografie-System wie Pix.immo.
+
+Gemeinsam:
+
+.env.sample mit klaren Variablen (VITE_ENV=staging, API-URL etc.).
+
+Einheitliche Fehlerseiten (404/500).
+
+Keine externen Abhängigkeiten, die im Worker-Betrieb Probleme machen.
+
+Ergebnis:
+Beide Projekte laufen lokal stabil, Builds erzeugen keine Fehler, UI ist durchgängig.
+
+2️⃣ Review & Feinschliff
+
+Interne Durchsicht: Text, Buttons, Verlinkungen, Responsivität.
+
+Alle Konsolen-Warnungen und Build-Fehler beseitigen.
+
+robots.txt und <meta name="robots" content="noindex"> aktivieren (Staging bleibt unsichtbar).
+
+3️⃣ Vorbereitung für Cloudflare (ab nächster Woche)
+
+Sobald beide Frontends intern abgenommen sind:
+
+Projektordner in Replit bereinigen (/dist oder /build nur temporär).
+
+Deploy-Struktur für Cloudflare Pages einrichten.
+
+Subdomains planen:
+
+staging.pix.immo
+
+staging.pixcapture.app
+
+Caching-Header & CSP nur minimal, um Tests nicht zu blockieren.
+
+4️⃣ Deployment-Plan (Cloudflare-Etappe)
+
+Erst Pix.immo-Frontend auf Cloudflare Pages (Staging).
+
+Danach PixCapture-Frontend.
+
+API-Routen und Upload-Funktion folgen separat, sobald beide stabil laufen.
+
+Später gemeinsame Auth- und Upload-Integration über api.pix.immo.
+
+Hinweis:
+Kein öffentlicher Launch. Beide Staging-Versionen bleiben noindex und rein intern.
+Ziel dieser Phase ist Stabilität, nicht Reichweite.
+
+Was Replit liefern soll:
+
+Lokale Build-Ergebnisse beider Frontends (ohne Fehler).
+
+Kurzer Bericht: Build-Größe, Performance, offene Punkte.
+
+Freigabe für Cloudflare-Deployment.

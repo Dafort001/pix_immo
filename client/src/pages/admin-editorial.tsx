@@ -78,8 +78,6 @@ export default function AdminEditorial() {
   const [editingItem, setEditingItem] = useState<EditorialItem | null>(null);
   const [selectedTab, setSelectedTab] = useState("all");
 
-  if (authLoading) return null;
-
   const { data: itemsData, isLoading } = useQuery<{ items: EditorialItem[] }>({
     queryKey: ["/api/editorial"],
   });
@@ -172,6 +170,8 @@ export default function AdminEditorial() {
       });
     },
   });
+
+  if (authLoading) return null;
 
   const handleSubmit = (data: EditorialFormData) => {
     if (editingItem) {

@@ -76,6 +76,47 @@ The frontend is a React 18 SPA utilizing Wouter for routing, Shadcn UI component
 ### System Design Choices
 The architecture prioritizes Cloudflare Workers compatibility using Hono. It maintains separate development (Express+Vite) and production (Hono) environments. Security features include Scrypt hashing, HTTP-only cookies, and secure environment variable management. SEO is managed via a `SEOHead` component, Schema.org templates, sitemap, and robots.txt.
 
+### Frontend Patterns – Auth Guards
+
+**React Hook Order with useAuthGuard:**
+
+When using `useAuthGuard` or any other Hooks in React components, **ALL Hooks MUST be called BEFORE any conditional early returns** to comply with React's Rules of Hooks. Violating this pattern causes "Rendered more hooks than during the previous render" errors.
+
+**❌ INCORRECT (Hook after conditional return):**
+```typescript
+export default function AdminPage() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
+  
+  if (authLoading) return null;  // ❌ Early return BEFORE other Hooks
+  
+  const [state, setState] = useState(false);      // ❌ Hook after conditional return
+  const { data } = useQuery({ ... });             // ❌ Hook after conditional return
+  const mutation = useMutation({ ... });          // ❌ Hook after conditional return
+  
+  // Component logic...
+}
+```
+
+**✅ CORRECT (All Hooks before conditional returns):**
+```typescript
+export default function AdminPage() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
+  const [state, setState] = useState(false);      // ✅ All Hooks first
+  const { data } = useQuery({ ... });             // ✅ All Hooks first
+  const mutation = useMutation({ ... });          // ✅ All Hooks first
+  
+  if (authLoading) return null;  // ✅ Conditional returns AFTER all Hooks
+  if (!data) return null;
+  
+  // Component logic...
+}
+```
+
+**PR Review Checklist:**
+- [ ] All Hooks (`useState`, `useQuery`, `useMutation`, `useEffect`, `useAuthGuard`, etc.) are called BEFORE any conditional `return` statements
+- [ ] Admin pages reuse `AdminLayout` wrapper pattern (consistent sidebar + header)
+- [ ] No conditional Hook calls (e.g., Hooks inside `if` statements)
+
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
 - **Email Service**: Resend (API key stored in RESEND_API_KEY environment variable)

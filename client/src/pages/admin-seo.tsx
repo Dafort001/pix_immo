@@ -58,9 +58,6 @@ export default function AdminSeo() {
     queryFn: getQueryFn<{ metadata: SeoMetadata[] }>({ on401: "returnNull" }),
   });
 
-  if (authLoading || userLoading) return null;
-  if (!userData) return null;
-
   const saveMutation = useMutation({
     mutationFn: async (data: EditingMetadata) => {
       return await apiRequest("POST", "/api/seo-metadata", data);
@@ -102,6 +99,9 @@ export default function AdminSeo() {
       });
     },
   });
+
+  if (authLoading || userLoading) return null;
+  if (!userData) return null;
 
   const handleEdit = (metadata?: SeoMetadata) => {
     setEditingData({
