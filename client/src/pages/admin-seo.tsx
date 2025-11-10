@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,10 +35,13 @@ type EditingMetadata = {
 };
 
 export default function AdminSeo() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [editingData, setEditingData] = useState<EditingMetadata | null>(null);
+
+  if (authLoading) return null;
 
   const { data: metadataList, isLoading } = useQuery<{ metadata: SeoMetadata[] }>({
     queryKey: ["/api/seo-metadata"],

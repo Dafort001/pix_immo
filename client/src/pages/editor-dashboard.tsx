@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import {
   Search,
   Filter,
@@ -40,10 +41,13 @@ interface EnrichedAssignment extends EditorAssignment {
 }
 
 export default function EditorDashboard() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "editor" });
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<JobStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<Priority | 'all'>('all');
+
+  if (authLoading) return null;
 
   // Fetch assignments from API with server-side filtering
   const { data: assignments = [], isLoading, error } = useQuery<EnrichedAssignment[]>({

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -68,10 +69,13 @@ const priorityColors: Record<string, string> = {
 };
 
 export default function AdminEditorial() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EditorialItem | null>(null);
   const [selectedTab, setSelectedTab] = useState("all");
+
+  if (authLoading) return null;
 
   const { data: itemsData, isLoading } = useQuery<{ items: EditorialItem[] }>({
     queryKey: ["/api/editorial"],

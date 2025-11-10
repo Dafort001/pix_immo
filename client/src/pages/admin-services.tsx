@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ArrowLeft, Plus, Edit2, Trash2, DollarSign } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -26,10 +27,13 @@ const CATEGORIES = [
 ];
 
 export default function AdminServices() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showDialog, setShowDialog] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+
+  if (authLoading) return null;
   const [formData, setFormData] = useState({
     serviceCode: '',
     category: 'photography',

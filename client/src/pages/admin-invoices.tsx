@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ArrowLeft, Plus, FileText, Send, DollarSign, Calendar, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,9 +16,12 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { Invoice, InsertInvoice } from '@shared/schema';
 
 export default function AdminInvoices() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  if (authLoading) return null;
   const [formData, setFormData] = useState({
     customerName: '',
     customerEmail: '',

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ArrowLeft, Plus, Edit2, Trash2, FileText, Eye, EyeOff, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,11 +29,14 @@ function generateSlug(title: string): string {
 }
 
 export default function AdminBlog() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [showDialog, setShowDialog] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+
+  if (authLoading) return null;
   const [formData, setFormData] = useState({
     title: '',
     slug: '',

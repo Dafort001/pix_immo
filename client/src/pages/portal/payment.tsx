@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { ArrowLeft, CreditCard, Check } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,9 +28,12 @@ type PricingItem = {
 };
 
 export default function Payment() {
+  const { isLoading: authLoading } = useAuthGuard();
   const { jobId } = useParams<{ jobId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+
+  if (authLoading) return null;
 
   const { data: job, isLoading, isError } = useQuery<Job>({
     queryKey: ["/api/jobs", jobId],

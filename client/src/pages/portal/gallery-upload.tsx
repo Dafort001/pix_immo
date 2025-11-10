@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -23,11 +24,14 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
 export default function CustomerUploadGallery() {
+  const { isLoading: authLoading } = useAuthGuard();
   const { toast } = useToast();
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [selectedFileIds, setSelectedFileIds] = useState<number[]>([]);
   const [detailFile, setDetailFile] = useState<GalleryFile | null>(null);
   const [maskEditorFile, setMaskEditorFile] = useState<GalleryFile | null>(null);
+
+  if (authLoading) return null;
 
   // Get galleryId from URL parameters, or auto-create a new gallery
   const urlParams = new URLSearchParams(window.location.search);

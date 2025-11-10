@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import {
   ArrowLeft,
   Users,
@@ -43,12 +44,15 @@ import {
 import { useToast } from '@/hooks/use-toast';
 
 export default function AdminEditorManagement() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const [editors, setEditors] = useState<Editor[]>(EDITORS);
   const [statusFilter, setStatusFilter] = useState<'all' | EditorStatus>('all');
   const [selectedEditor, setSelectedEditor] = useState<Editor | null>(null);
   const [showEditorDialog, setShowEditorDialog] = useState(false);
   const { toast } = useToast();
+
+  if (authLoading) return null;
   
   const stats = getEditorStats();
   

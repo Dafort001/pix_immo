@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { Upload, Calendar, MapPin } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,10 @@ type Job = {
 };
 
 export default function UploadsOverview() {
+  const { isLoading: authLoading } = useAuthGuard();
   const [, setLocation] = useLocation();
+
+  if (authLoading) return null;
 
   const { data: jobs, isLoading, isError } = useQuery<Job[]>({
     queryKey: ["/api/jobs"],

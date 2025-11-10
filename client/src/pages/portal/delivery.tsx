@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { ArrowLeft, Download, CheckCircle, FileArchive, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,13 @@ type DeliveryPackage = {
 };
 
 export default function Delivery() {
+  const { isLoading: authLoading } = useAuthGuard();
   const { jobId } = useParams<{ jobId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [downloading, setDownloading] = useState<string | null>(null);
+
+  if (authLoading) return null;
 
   const { data: packages, isLoading, isError } = useQuery<DeliveryPackage[]>({
     queryKey: ["/api/jobs", jobId, "delivery"],

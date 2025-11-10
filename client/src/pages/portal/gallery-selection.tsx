@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { ArrowLeft, Check, Download, Trash2 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,10 +20,13 @@ type Image = {
 };
 
 export default function GallerySelection() {
+  const { isLoading: authLoading } = useAuthGuard();
   const { jobId } = useParams<{ jobId: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedImages, setSelectedImages] = useState<Set<string>>(new Set());
+
+  if (authLoading) return null;
 
   const { data: images, isLoading, isError } = useQuery<Image[]>({
     queryKey: ["/api/jobs", jobId, "images"],

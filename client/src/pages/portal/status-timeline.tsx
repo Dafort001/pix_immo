@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useLocation } from "wouter";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
 import { ArrowLeft, CheckCircle, Clock, Upload as UploadIcon, Sparkles, Package } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,8 +28,11 @@ type TimelineEvent = {
 };
 
 export default function StatusTimeline() {
+  const { isLoading: authLoading } = useAuthGuard();
   const { jobId } = useParams<{ jobId: string }>();
   const [, setLocation] = useLocation();
+
+  if (authLoading) return null;
 
   const { data: job, isLoading, isError } = useQuery<Job>({
     queryKey: ["/api/jobs", jobId],

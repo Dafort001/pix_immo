@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ArrowLeft, Eye, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,12 +39,15 @@ const REGION_LABELS: Record<string, string> = {
 };
 
 export default function AdminBookings() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [regionFilter, setRegionFilter] = useState<string>('all');
   const [selectedBooking, setSelectedBooking] = useState<{ booking: Booking; items: BookingItem[] } | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
+
+  if (authLoading) return null;
 
   const { data: bookings = [], isLoading } = useQuery<Booking[]>({
     queryKey: ['/api/bookings/all'],

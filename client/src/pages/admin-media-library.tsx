@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { ArrowLeft, Plus, Edit2, Trash2, Image as ImageIcon, Upload, Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +17,7 @@ import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { PublicImage } from '@shared/schema';
 
 export default function AdminMediaLibrary() {
+  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [selectedPage, setSelectedPage] = useState<string>('all');
@@ -24,6 +26,8 @@ export default function AdminMediaLibrary() {
   const [showUploadDialog, setShowUploadDialog] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploadPage, setUploadPage] = useState<string>('home');
+
+  if (authLoading) return null;
   
   const { data: images = [], isLoading } = useQuery<PublicImage[]>({
     queryKey: ['/api/media-library'],
