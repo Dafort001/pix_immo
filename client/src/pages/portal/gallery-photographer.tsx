@@ -147,7 +147,7 @@ export default function PhotographerUploadGallery() {
                 <Camera className="h-10 w-10 text-destructive" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold mb-1">
+                <h2 className="text-base font-semibold mb-1">
                   RAW-Galerie konnte nicht erstellt werden
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -239,7 +239,7 @@ export default function PhotographerUploadGallery() {
                 <AlertCircle className="h-10 w-10 text-destructive" />
               </div>
               <div className="flex-1">
-                <h2 className="text-xl font-semibold mb-1">
+                <h2 className="text-base font-semibold mb-1">
                   RAW-Galerie nicht verfügbar
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -294,7 +294,7 @@ export default function PhotographerUploadGallery() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2" data-testid="heading-photographer-gallery">
+                  <h1 className="text-lg font-bold mb-2" data-testid="heading-photographer-gallery">
                     Photographer Upload
                   </h1>
                   <p className="text-muted-foreground">

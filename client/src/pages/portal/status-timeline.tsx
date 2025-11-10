@@ -114,7 +114,7 @@ export default function StatusTimeline() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-2xl font-bold">Status</h1>
+              <h1 className="text-lg font-bold">Status</h1>
               {job && (
                 <p className="text-sm text-muted-foreground">
                   {job.propertyName} - #{job.jobNumber}
@@ -160,7 +160,7 @@ export default function StatusTimeline() {
         ) : isError ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-xl font-semibold mb-2 text-destructive" data-testid="text-error-title">
+              <h3 className="text-base font-semibold mb-2 text-destructive" data-testid="text-error-title">
                 Fehler beim Laden
               </h3>
               <p className="text-muted-foreground text-center max-w-md" data-testid="text-error-description">

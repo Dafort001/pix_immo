@@ -257,7 +257,7 @@ export default function EditingGallery() {
             <div className="mb-6">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2" data-testid="heading-editing-gallery">
+                  <h1 className="text-lg font-bold mb-2" data-testid="heading-editing-gallery">
                     Editing Gallery
                   </h1>
                   <p className="text-muted-foreground">
@@ -385,28 +385,28 @@ export default function EditingGallery() {
                     <div className="flex items-center justify-center mb-2">
                       <CheckCircle2 className="w-5 h-5 text-green-600" />
                     </div>
-                    <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
+                    <p className="text-lg font-bold text-green-600">{approvedCount}</p>
                     <p className="text-sm text-muted-foreground">Approved</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-2">
                       <XCircle className="w-5 h-5 text-destructive" />
                     </div>
-                    <p className="text-2xl font-bold text-destructive">{rejectedCount}</p>
+                    <p className="text-lg font-bold text-destructive">{rejectedCount}</p>
                     <p className="text-sm text-muted-foreground">Rejected</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Clock className="w-5 h-5 text-yellow-600" />
                     </div>
-                    <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
+                    <p className="text-lg font-bold text-yellow-600">{pendingCount}</p>
                     <p className="text-sm text-muted-foreground">Pending</p>
                   </div>
                   <div className="text-center">
                     <div className="flex items-center justify-center mb-2">
                       <Download className="w-5 h-5 text-muted-foreground" />
                     </div>
-                    <p className="text-2xl font-bold">
+                    <p className="text-lg font-bold">
                       {Math.round((approvedCount / files.length) * 100)}%
                     </p>
                     <p className="text-sm text-muted-foreground">Complete</p>

@@ -158,7 +158,7 @@ export default function Jobs() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-light mb-1">Workflow Jobs</h1>
+            <h1 className="text-lg font-bold mb-1">Workflow Jobs</h1>
             <p className="text-muted-foreground">
               Verwalten Sie Ihre Fotografie-Projekte
             </p>

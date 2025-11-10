@@ -54,7 +54,7 @@ export default function Datenschutz() {
             <section data-testid="section-data-collection">
               <h2 className="text-lg font-semibold mb-3 text-black">3. Erhebung und Speicherung personenbezogener Daten</h2>
               
-              <h3 className="text-xl font-semibold mb-2 mt-4">3.1 Websitebesuch</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">3.1 Websitebesuch</h3>
               <p className="mb-4">
                 Bei jedem Aufruf unserer Website erfasst unser System automatisiert Daten und Informationen vom Computersystem des aufrufenden Rechners. Folgende Daten werden dabei erhoben:
               </p>
@@ -69,7 +69,7 @@ export default function Datenschutz() {
                 Die Daten werden in den Logfiles unseres Systems gespeichert. Eine Speicherung dieser Daten zusammen mit anderen personenbezogenen Daten des Nutzers findet nicht statt.
               </p>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">3.2 Registrierung und Kundenlogin</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">3.2 Registrierung und Kundenlogin</h3>
               <p className="mb-4">
                 Bei der Registrierung für unseren Kundenbereich erheben wir folgende Daten:
               </p>
@@ -82,12 +82,12 @@ export default function Datenschutz() {
                 Diese Daten werden zur Durchführung des Vertragsverhältnisses und zur Bereitstellung unserer Dienstleistungen benötigt. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO.
               </p>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">3.3 Kontaktformular und E-Mail-Kontakt</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">3.3 Kontaktformular und E-Mail-Kontakt</h3>
               <p className="mb-4">
                 Bei der Nutzung unseres Kontaktformulars oder bei Kontaktaufnahme per E-Mail werden Ihre Angaben zur Bearbeitung der Anfrage und für den Fall von Anschlussfragen bei uns gespeichert. Diese Daten geben wir nicht ohne Ihre Einwilligung weiter.
               </p>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">3.4 Buchung von Fotografieleistungen</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">3.4 Buchung von Fotografieleistungen</h3>
               <p className="mb-4">
                 Bei der Buchung unserer Leistungen über das Kundenportal erheben wir:
               </p>
@@ -106,12 +106,12 @@ export default function Datenschutz() {
             <section data-testid="section-ai-processing" className="bg-gray-50 p-6 rounded-lg">
               <h2 className="text-lg font-semibold mb-3 text-black">4. Bildverarbeitung mit KI-Systemen (wichtiger Hinweis)</h2>
               
-              <h3 className="text-xl font-semibold mb-2 mt-4">4.1 Automatische Bildoptimierung</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">4.1 Automatische Bildoptimierung</h3>
               <p className="mb-4">
                 Zur Optimierung der von uns erstellten Immobilienfotos nutzen wir teilweise automatisierte KI-Systeme zur Bildanalyse, Beschriftung (Captioning) und Nachbearbeitung.
               </p>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">4.2 Verarbeitung außerhalb der EU</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">4.2 Verarbeitung außerhalb der EU</h3>
               <p className="mb-4 font-semibold">
                 Wichtig: Die KI-gestützte Bildverarbeitung erfolgt teilweise über externe Dienstleister mit Servern außerhalb der Europäischen Union.
               </p>
@@ -127,7 +127,7 @@ export default function Datenschutz() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">4.3 Anonymisierung und Datenschutzmaßnahmen</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">4.3 Anonymisierung und Datenschutzmaßnahmen</h3>
               <p className="mb-4">
                 Um Ihre Privatsphäre zu schützen, werden folgende Maßnahmen ergriffen:
               </p>
@@ -146,7 +146,7 @@ export default function Datenschutz() {
                 </li>
               </ul>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">4.4 Rechtsgrundlage und Einwilligung</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">4.4 Rechtsgrundlage und Einwilligung</h3>
               <p className="mb-4">
                 Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) sowie Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an effizienter Leistungserbringung).
               </p>
@@ -154,7 +154,7 @@ export default function Datenschutz() {
                 Sollten Sie der Nutzung von KI-Systemen zur Bildoptimierung widersprechen, teilen Sie uns dies bitte vor der Auftragserteilung mit. In diesem Fall erfolgt die Bildbearbeitung ausschließlich manuell, was zu längeren Bearbeitungszeiten führen kann.
               </p>
 
-              <h3 className="text-xl font-semibold mb-2 mt-4">4.5 Nur für PIX.IMMO-Produktionen</h3>
+              <h3 className="text-base font-semibold mb-2 mt-4">4.5 Nur für PIX.IMMO-Produktionen</h3>
               <p>
                 Die KI-gestützte Retusche über unser Kundenportal steht ausschließlich für Bilder zur Verfügung, die von PIX.IMMO erstellt wurden. Extern erstellte Bilder werden nicht verarbeitet.
               </p>
@@ -166,7 +166,7 @@ export default function Datenschutz() {
               <p className="mb-4">
                 Unsere Website verwendet Cookies. Cookies sind kleine Textdateien, die auf Ihrem Endgerät gespeichert werden und die Ihr Browser speichert.
               </p>
-              <h3 className="text-xl font-semibold mb-2">5.1 Technisch notwendige Cookies</h3>
+              <h3 className="text-base font-semibold mb-2">5.1 Technisch notwendige Cookies</h3>
               <p className="mb-4">
                 Wir verwenden Cookies, um unsere Website nutzerfreundlicher zu gestalten. Einige Elemente unserer Website erfordern es, dass der aufrufende Browser auch nach einem Seitenwechsel identifiziert werden kann (Session-Cookies für die Anmeldung).
               </p>

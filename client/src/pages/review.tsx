@@ -172,7 +172,7 @@ export default function Review() {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <div className="mb-8">
-          <h1 className="text-4xl font-normal mb-2" data-testid="text-page-title">
+          <h1 className="text-lg font-normal mb-2" data-testid="text-page-title">
             {data.job.propertyName}
           </h1>
           <p className="text-muted-foreground">

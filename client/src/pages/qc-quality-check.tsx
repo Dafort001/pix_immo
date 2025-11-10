@@ -268,7 +268,7 @@ export default function QCQualityCheck() {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-2xl font-bold">Quality Check</h1>
+              <h1 className="text-lg font-bold">Quality Check</h1>
             </div>
           </div>
         </header>
@@ -276,7 +276,7 @@ export default function QCQualityCheck() {
         <main className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <ImageIcon className="h-24 w-24 text-gray-300 mx-auto mb-6" />
-            <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Kein Job ausgewählt
             </h2>
             <p className="text-gray-600 mb-6">
@@ -309,7 +309,7 @@ export default function QCQualityCheck() {
               </Button>
               <div>
                 <div className="flex items-center gap-3 mb-1">
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-lg font-bold text-gray-900">
                     Quality Check · {job.jobId}
                   </h1>
                   {getSourceBadge(job.source)}

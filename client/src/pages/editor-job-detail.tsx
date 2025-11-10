@@ -163,7 +163,7 @@ export default function EditorJobDetail() {
             </Button>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-1">
-                <h1 className="text-3xl font-bold text-foreground" data-testid="text-job-number">
+                <h1 className="text-lg font-bold text-foreground" data-testid="text-job-number">
                   {assignment.job.jobNumber}
                 </h1>
                 {getStatusBadge(assignment.status)}
@@ -212,7 +212,7 @@ export default function EditorJobDetail() {
       {/* Main Content */}
       <main className="flex-1 max-w-[1400px] mx-auto w-full px-6 py-8">
         <div className="bg-card border rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-foreground mb-4">Job Details</h2>
+          <h2 className="text-base font-semibold text-foreground mb-4">Job Details</h2>
           <div className="space-y-3 text-muted-foreground">
             <div className="grid grid-cols-2 gap-4">
               <div>

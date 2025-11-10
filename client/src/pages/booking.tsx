@@ -362,7 +362,7 @@ export default function Booking() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               {step === 1 ? "Dashboard" : "Zurück"}
             </Button>
-            <h1 className="text-xl font-semibold" data-testid="heading-booking">Neue Bestellung</h1>
+            <h1 className="text-base font-semibold" data-testid="heading-booking">Neue Bestellung</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge 
@@ -497,7 +497,7 @@ export default function Booking() {
 
               return (
                 <div key={categoryKey} data-testid={`category-${categoryKey}`}>
-                  <h3 className="text-xl mb-4">{categoryLabels[categoryKey]}</h3>
+                  <h3 className="text-base mb-4">{categoryLabels[categoryKey]}</h3>
                   
                   <div className="space-y-3">
                     {categoryServices.map((service) => {

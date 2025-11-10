@@ -137,7 +137,7 @@ export default function OrderForm() {
 
       <div className="container mx-auto max-w-3xl px-6 py-12">
         <div className="mb-8 text-center">
-          <h1 className="mb-4 text-3xl font-bold md:text-4xl">Neuer Fotoauftrag</h1>
+          <h1 className="mb-4 text-lg font-bold md:text-lg">Neuer Fotoauftrag</h1>
           <p className="text-muted-foreground">
             Geben Sie die Immobiliendetails ein und wir planen eine professionelle Fotosession
           </p>

@@ -213,7 +213,7 @@ export default function UploadScreen() {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background border-b border-border p-4">
-        <h1 className="text-xl font-bold">Upload</h1>
+        <h1 className="text-base font-bold">Upload</h1>
         <p className="text-sm text-muted-foreground">
           {photos.length} {photos.length === 1 ? "Foto" : "Fotos"} bereit
         </p>

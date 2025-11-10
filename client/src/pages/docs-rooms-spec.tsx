@@ -132,7 +132,7 @@ export default function DocsRoomsSpec() {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <div className="flex items-center gap-3">
-                  <h1 className="text-3xl font-semibold tracking-tight">
+                  <h1 className="text-lg font-semibold tracking-tight">
                     Raumtypen-Spezifikation
                   </h1>
                   <Badge variant="secondary" className="text-xs">
@@ -176,25 +176,25 @@ export default function DocsRoomsSpec() {
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="text-xs font-medium">Kategorien</CardDescription>
-                <CardTitle className="text-2xl">{data.categories.length}</CardTitle>
+                <CardTitle className="text-lg">{data.categories.length}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="text-xs font-medium">Raumtypen</CardDescription>
-                <CardTitle className="text-2xl">{data.roomTypes.length}</CardTitle>
+                <CardTitle className="text-lg">{data.roomTypes.length}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="text-xs font-medium">Synonyme</CardDescription>
-                <CardTitle className="text-2xl">{Object.keys(data.synonyms).length}</CardTitle>
+                <CardTitle className="text-lg">{Object.keys(data.synonyms).length}</CardTitle>
               </CardHeader>
             </Card>
             <Card>
               <CardHeader className="pb-3">
                 <CardDescription className="text-xs font-medium">Shortcuts</CardDescription>
-                <CardTitle className="text-2xl">{Object.keys(data.shortcuts).length}</CardTitle>
+                <CardTitle className="text-lg">{Object.keys(data.shortcuts).length}</CardTitle>
               </CardHeader>
             </Card>
           </div>
@@ -203,7 +203,7 @@ export default function DocsRoomsSpec() {
           <div className="space-y-6">
             <div className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-xl font-semibold">Raumtypen nach Kategorien</h2>
+              <h2 className="text-base font-semibold">Raumtypen nach Kategorien</h2>
             </div>
 
             {data.categories.map((category) => {

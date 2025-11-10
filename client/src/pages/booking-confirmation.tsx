@@ -79,7 +79,7 @@ export default function BookingConfirmation() {
               <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
                 <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
-              <CardTitle className="text-2xl" data-testid="heading-confirmation">Buchung erfolgreich!</CardTitle>
+              <CardTitle className="text-lg" data-testid="heading-confirmation">Buchung erfolgreich!</CardTitle>
               <CardDescription>
                 Ihre Buchungsanfrage wurde erfolgreich übermittelt.
               </CardDescription>

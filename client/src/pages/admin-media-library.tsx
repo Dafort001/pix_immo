@@ -168,7 +168,7 @@ export default function AdminMediaLibrary() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Media Library</h1>
+                <h1 className="text-lg font-bold text-gray-900">Media Library</h1>
                 <p className="text-gray-600">Verwalte Bilder auf öffentlichen Seiten</p>
               </div>
             </div>

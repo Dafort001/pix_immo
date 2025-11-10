@@ -151,7 +151,7 @@ export default function AdminEditorManagement() {
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold mb-2">
+              <h1 className="text-lg font-bold mb-2">
                 Editor Management
               </h1>
               <p className="text-gray-400">
@@ -167,7 +167,7 @@ export default function AdminEditorManagement() {
                   <Users className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">{stats.availableEditors}</div>
+                  <div className="text-lg font-bold">{stats.availableEditors}</div>
                   <div className="text-gray-400 text-xs">Verfügbar</div>
                 </div>
               </div>
@@ -179,7 +179,7 @@ export default function AdminEditorManagement() {
                   <BarChart3 className="h-5 w-5 text-blue-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-lg font-bold">
                     {stats.totalCurrentJobs}/{stats.totalCapacity}
                   </div>
                   <div className="text-gray-400 text-xs">Workload</div>
@@ -193,7 +193,7 @@ export default function AdminEditorManagement() {
                   <TrendingUp className="h-5 w-5 text-purple-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-lg font-bold">
                     {stats.capacityUtilization.toFixed(0)}%
                   </div>
                   <div className="text-gray-400 text-xs">Auslastung</div>
@@ -207,7 +207,7 @@ export default function AdminEditorManagement() {
                   <Award className="h-5 w-5 text-yellow-400" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold">
+                  <div className="text-lg font-bold">
                     {stats.avgQualityScore.toFixed(0)}%
                   </div>
                   <div className="text-gray-400 text-xs">Avg. Quality</div>
@@ -252,7 +252,7 @@ export default function AdminEditorManagement() {
           {filteredEditors.map((editor) => (
             <div key={editor.id} className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow" data-testid={`editor-card-${editor.id}`}>
               <div className="flex items-start gap-6">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-blue-500 flex items-center justify-center text-white text-base font-bold">
                   {editor.name.split(' ').map((n) => n[0]).join('')}
                 </div>
 
@@ -260,7 +260,7 @@ export default function AdminEditorManagement() {
                   <div className="flex items-center justify-between mb-3">
                     <div>
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-xl font-semibold text-gray-900">
+                        <h3 className="text-base font-semibold text-gray-900">
                           {editor.name}
                         </h3>
                         {getStatusBadge(editor.status)}
@@ -392,17 +392,17 @@ export default function AdminEditorManagement() {
                 </div>
                 <div className="p-4 bg-gray-100 rounded-lg">
                   <p className="text-gray-600 text-xs mb-1">Aktuelle Jobs</p>
-                  <p className="text-xl font-bold">
+                  <p className="text-base font-bold">
                     {selectedEditor.currentJobs}/{selectedEditor.maxJobs}
                   </p>
                 </div>
                 <div className="p-4 bg-gray-100 rounded-lg">
                   <p className="text-gray-600 text-xs mb-1">Qualitätsscore</p>
-                  <p className="text-xl font-bold">{selectedEditor.qualityScore}%</p>
+                  <p className="text-base font-bold">{selectedEditor.qualityScore}%</p>
                 </div>
                 <div className="p-4 bg-gray-100 rounded-lg">
                   <p className="text-gray-600 text-xs mb-1">Avg. Bearbeitungszeit</p>
-                  <p className="text-xl font-bold">{selectedEditor.avgTurnaroundHours}h</p>
+                  <p className="text-base font-bold">{selectedEditor.avgTurnaroundHours}h</p>
                 </div>
               </div>
 

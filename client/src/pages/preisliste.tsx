@@ -86,7 +86,7 @@ export default function Preisliste() {
     return (
       <div className="container max-w-5xl py-8">
         <div className="space-y-2 mb-8">
-          <h1 className="text-3xl">Interne Preisliste</h1>
+          <h1 className="text-lg">Interne Preisliste</h1>
           <p className="text-muted-foreground">Laden...</p>
         </div>
       </div>
@@ -132,7 +132,7 @@ export default function Preisliste() {
   return (
     <div className="container max-w-5xl py-8" data-testid="page-preisliste">
       <div className="space-y-2 mb-8">
-        <h1 className="text-3xl" data-testid="heading-preisliste">Interne Preisliste</h1>
+        <h1 className="text-lg" data-testid="heading-preisliste">Interne Preisliste</h1>
         <p className="text-muted-foreground">
           Alle Preise netto. Für individuelle Pakete und Projektanfragen sprechen Sie uns gerne an.
         </p>
@@ -145,7 +145,7 @@ export default function Preisliste() {
 
           return (
             <div key={categoryKey} data-testid={`category-${categoryKey}`}>
-              <h2 className="text-2xl mb-4">{categoryLabels[categoryKey]}</h2>
+              <h2 className="text-lg mb-4">{categoryLabels[categoryKey]}</h2>
               
               <div className="space-y-4">
                 {categoryServices.map((service) => (

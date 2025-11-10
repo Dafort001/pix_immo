@@ -141,7 +141,7 @@ export default function EditorDashboard() {
         <div className="max-w-[1400px] mx-auto px-6 py-6">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h1 className="text-3xl font-bold mb-2">
+              <h1 className="text-lg font-bold mb-2">
                 Editor Dashboard
               </h1>
               <p className="text-muted-foreground">
@@ -165,7 +165,7 @@ export default function EditorDashboard() {
                   <Package className="h-5 w-5 text-blue-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" data-testid="stat-assigned-count">
+                  <div className="text-lg font-bold" data-testid="stat-assigned-count">
                     {stats.assigned}
                   </div>
                   <div className="text-muted-foreground text-sm">Zugewiesen</div>
@@ -179,7 +179,7 @@ export default function EditorDashboard() {
                   <Clock className="h-5 w-5 text-green-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" data-testid="stat-in-progress-count">
+                  <div className="text-lg font-bold" data-testid="stat-in-progress-count">
                     {stats.inProgress}
                   </div>
                   <div className="text-muted-foreground text-sm">In Bearbeitung</div>
@@ -193,7 +193,7 @@ export default function EditorDashboard() {
                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" data-testid="stat-completed-count">
+                  <div className="text-lg font-bold" data-testid="stat-completed-count">
                     {stats.completed}
                   </div>
                   <div className="text-muted-foreground text-sm">Fertig</div>
@@ -207,7 +207,7 @@ export default function EditorDashboard() {
                   <AlertCircle className="h-5 w-5 text-gray-500" />
                 </div>
                 <div>
-                  <div className="text-2xl font-bold" data-testid="stat-cancelled-count">
+                  <div className="text-lg font-bold" data-testid="stat-cancelled-count">
                     {stats.cancelled}
                   </div>
                   <div className="text-muted-foreground text-sm">Abgebrochen</div>

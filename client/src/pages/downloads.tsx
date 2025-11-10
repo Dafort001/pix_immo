@@ -206,7 +206,7 @@ export default function Downloads() {
 
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" data-testid="page-title">
+          <h1 className="text-lg font-bold mb-2" data-testid="page-title">
             Downloads
           </h1>
           <p className="text-muted-foreground" data-testid="page-description">

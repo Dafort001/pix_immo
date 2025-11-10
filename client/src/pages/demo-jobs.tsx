@@ -16,7 +16,7 @@ export default function DemoJobs() {
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-2">
           <Briefcase className="w-6 h-6 text-primary" data-testid="icon-jobs" />
-          <h1 className="text-2xl font-bold">Demo Jobs</h1>
+          <h1 className="text-lg font-bold">Demo Jobs</h1>
         </div>
         <Link href="/demo-upload">
           <Button data-testid="button-new-job">

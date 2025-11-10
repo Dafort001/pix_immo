@@ -159,7 +159,7 @@ export default function AdminInvoices() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Rechnungen</h1>
+                <h1 className="text-lg font-bold text-gray-900">Rechnungen</h1>
                 <p className="text-gray-600">Erstelle und verwalte Rechnungen</p>
               </div>
             </div>
@@ -214,7 +214,7 @@ export default function AdminInvoices() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <FileText className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Rechnungen</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Noch keine Rechnungen</h3>
               <p className="text-gray-600 text-center mb-6">
                 Erstelle deine erste Rechnung für abgeschlossene Aufträge
               </p>
@@ -237,7 +237,7 @@ export default function AdminInvoices() {
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-gray-900">
+                        <p className="text-lg font-bold text-gray-900">
                           {(invoice.grossAmount / 100).toFixed(2)}€
                         </p>
                         {getStatusBadge(invoice.status)}

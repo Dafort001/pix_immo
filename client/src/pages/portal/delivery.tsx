@@ -126,7 +126,7 @@ export default function Delivery() {
               <ArrowLeft className="w-5 h-5" />
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Download</h1>
+              <h1 className="text-lg font-bold">Download</h1>
               <p className="text-sm text-muted-foreground">
                 Ihre fertigen Bilder sind bereit
               </p>
@@ -159,7 +159,7 @@ export default function Delivery() {
         ) : isError ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-xl font-semibold mb-2 text-destructive" data-testid="text-error-title">
+              <h3 className="text-base font-semibold mb-2 text-destructive" data-testid="text-error-title">
                 Fehler beim Laden
               </h3>
               <p className="text-muted-foreground text-center max-w-md mb-6" data-testid="text-error-description">

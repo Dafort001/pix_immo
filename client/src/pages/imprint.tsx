@@ -58,7 +58,7 @@ export default function Imprint() {
                 Wir informieren Sie nachfolgend gemäß Art. 13 DSGVO darüber, wie Ihre personenbezogenen Daten verarbeitet werden, wenn Sie unsere Website besuchen oder unsere Online-Dienste nutzen.
               </p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-8">1. Verantwortlicher</h3>
+              <h3 className="text-base font-semibold mb-3 mt-8">1. Verantwortlicher</h3>
               <p className="mb-4">
                 Daniel Fortmann<br />
                 Kaiser-Wilhelm-Straße 47<br />
@@ -68,7 +68,7 @@ export default function Imprint() {
               </p>
               <p className="mb-6">Es besteht keine Verpflichtung zur Bestellung eines Datenschutzbeauftragten.</p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-8">2. Allgemeine Datenverarbeitung</h3>
+              <h3 className="text-base font-semibold mb-3 mt-8">2. Allgemeine Datenverarbeitung</h3>
               <p className="mb-4">Beim Aufrufen unserer Website werden automatisch folgende Daten verarbeitet (Server-Logfiles):</p>
               <ul className="list-disc pl-6 mb-4 space-y-1">
                 <li>Besuchte Seite oder Datei</li>
@@ -82,7 +82,7 @@ export default function Imprint() {
               <p className="mb-2">Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Stabilität und Sicherheit).</p>
               <p className="mb-6">Speicherdauer: in der Regel maximal 30 Tage.</p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-8">3. Cookies und lokale Speicherung</h3>
+              <h3 className="text-base font-semibold mb-3 mt-8">3. Cookies und lokale Speicherung</h3>
               <p className="mb-4">
                 Wir verwenden Cookies und ähnliche Technologien, um grundlegende Funktionen bereitzustellen, Nutzungsstatistiken zu erstellen und die Sicherheit zu gewährleisten.
               </p>
@@ -93,7 +93,7 @@ export default function Imprint() {
               </ul>
               <p className="mb-6">Sie können Cookies im Browser löschen oder blockieren. Einige Funktionen könnten dadurch eingeschränkt sein.</p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-8">8. Rechte der betroffenen Personen</h3>
+              <h3 className="text-base font-semibold mb-3 mt-8">8. Rechte der betroffenen Personen</h3>
               <p className="mb-4">Sie haben das Recht auf:</p>
               <ul className="list-disc pl-6 mb-4 space-y-1">
                 <li>Auskunft (Art. 15 DSGVO)</li>
@@ -108,7 +108,7 @@ export default function Imprint() {
                 Zudem haben Sie das Recht auf Beschwerde bei einer Datenschutzaufsichtsbehörde, z. B. Der Hamburgische Beauftragte für Datenschutz und Informationsfreiheit (HmbBfDI), Ludwig-Erhard-Str. 22, 20459 Hamburg.
               </p>
 
-              <h3 className="text-xl font-semibold mb-3 mt-8">13. Kontakt</h3>
+              <h3 className="text-base font-semibold mb-3 mt-8">13. Kontakt</h3>
               <p className="mb-6">
                 Daniel Fortmann<br />
                 Kaiser-Wilhelm-Straße 47<br />

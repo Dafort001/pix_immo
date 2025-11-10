@@ -137,7 +137,7 @@ export default function Blog() {
                     hoveredId === post.id ? "opacity-100" : "opacity-0"
                   }`}
                 >
-                  <h2 className="text-white text-lg md:text-xl font-semibold text-center leading-tight">
+                  <h2 className="text-white text-lg md:text-base font-semibold text-center leading-tight">
                     {post.title}
                   </h2>
                 </div>

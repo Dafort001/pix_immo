@@ -140,7 +140,7 @@ export default function AdminSeo() {
       <div className="min-h-screen bg-muted/30">
         <header className="sticky top-0 z-50 bg-white border-b">
           <div className="flex items-center justify-between px-6 py-4">
-            <h1 className="text-xl font-semibold">SEO Management</h1>
+            <h1 className="text-base font-semibold">SEO Management</h1>
           </div>
         </header>
         <div className="container mx-auto px-6 py-12 space-y-4">
@@ -163,7 +163,7 @@ export default function AdminSeo() {
                 Back
               </Button>
             </Link>
-            <h1 className="text-xl font-semibold" data-testid="heading-seo-admin">
+            <h1 className="text-base font-semibold" data-testid="heading-seo-admin">
               SEO Management
             </h1>
           </div>

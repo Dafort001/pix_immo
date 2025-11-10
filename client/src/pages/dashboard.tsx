@@ -269,7 +269,7 @@ export default function Dashboard() {
       <div className="container mx-auto px-6 py-12">
         <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 className="mb-2 text-3xl font-bold" data-testid="text-welcome">
+            <h1 className="mb-2 text-lg font-bold" data-testid="text-welcome">
               Willkommen zurück, {user.email}
             </h1>
             <div className="flex items-center gap-2">
@@ -290,7 +290,7 @@ export default function Dashboard() {
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-6">
             <ListOrdered className="h-5 w-5 text-primary" />
-            <h2 className="text-2xl font-semibold">
+            <h2 className="text-lg font-semibold">
               {user.role === "admin" ? "Alle Aufträge" : "Ihre Aufträge"}
             </h2>
           </div>
@@ -305,7 +305,7 @@ export default function Dashboard() {
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-16">
                 <ListOrdered className="mb-4 h-16 w-16 text-muted-foreground" />
-                <h3 className="mb-2 text-xl font-semibold">Noch keine Aufträge</h3>
+                <h3 className="mb-2 text-base font-semibold">Noch keine Aufträge</h3>
                 <p className="mb-6 text-center text-muted-foreground">
                   Erstellen Sie Ihren ersten Auftrag für Immobilienfotografie
                 </p>

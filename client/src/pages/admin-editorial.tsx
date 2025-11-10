@@ -223,7 +223,7 @@ export default function AdminEditorial() {
     <div className="container mx-auto py-8 px-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-normal mb-2">Redaktionsplan</h1>
+          <h1 className="text-lg font-normal mb-2">Redaktionsplan</h1>
           <p className="text-muted-foreground">
             Verwalte Blog-Beiträge, Website-Updates und Content-Strategie
           </p>

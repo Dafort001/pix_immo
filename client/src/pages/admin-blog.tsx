@@ -326,7 +326,7 @@ export default function AdminBlog() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Blog-Verwaltung</h1>
+                <h1 className="text-lg font-bold text-gray-900">Blog-Verwaltung</h1>
                 <p className="text-gray-600">Erstelle und verwalte Blog-Beiträge</p>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function AdminBlog() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <FileText className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Blog-Beiträge</h3>
+              <h3 className="text-base font-semibold text-gray-900 mb-2">Noch keine Blog-Beiträge</h3>
               <p className="text-gray-600 text-center mb-6">
                 Erstelle deinen ersten Blog-Beitrag
               </p>

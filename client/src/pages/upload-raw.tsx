@@ -217,7 +217,7 @@ export default function UploadRawPage() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-4xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold mb-2" data-testid="text-page-title">
+        <h1 className="text-lg font-semibold mb-2" data-testid="text-page-title">
           RAW-Dateien hochladen
         </h1>
         <p className="text-secondary" data-testid="text-page-description">

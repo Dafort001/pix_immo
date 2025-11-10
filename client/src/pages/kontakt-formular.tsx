@@ -282,7 +282,7 @@ export default function KontaktFormular() {
 
           {/* Alternative Contact Info */}
           <div className="mt-12 pt-8 border-t border-gray-200">
-            <h2 className="text-xl font-semibold mb-4">Weitere Kontaktmöglichkeiten</h2>
+            <h2 className="text-base font-semibold mb-4">Weitere Kontaktmöglichkeiten</h2>
             <div className="space-y-3 text-gray-700">
               <p>
                 <strong>E-Mail:</strong>{" "}

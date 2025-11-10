@@ -29,7 +29,7 @@ export default function CaptureIndex() {
 
           {/* Title */}
           <div className="space-y-2">
-            <h1 className="text-3xl font-bold">pix.immo Camera</h1>
+            <h1 className="text-lg font-bold">pix.immo Camera</h1>
             <p className="text-muted-foreground">
               Professionelle Immobilienfotografie direkt vom Smartphone
             </p>

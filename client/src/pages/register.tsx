@@ -72,7 +72,7 @@ export default function Register() {
         <div className="mb-8 text-center">
           <Link href="/">
             <div className="inline-flex items-center cursor-pointer">
-              <span className="text-2xl font-semibold tracking-wide">PIX.IMMO</span>
+              <span className="text-base font-semibold tracking-wide">PIX.IMMO</span>
             </div>
           </Link>
         </div>

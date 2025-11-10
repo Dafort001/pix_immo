@@ -135,7 +135,7 @@ export default function About() {
               <h2 className="text-lg font-semibold mb-4">Unser Standort</h2>
               
               <div className="bg-gray-50 p-6 rounded-lg max-w-lg">
-                <h3 className="text-xl font-semibold mb-2">Hamburg</h3>
+                <h3 className="text-base font-semibold mb-2">Hamburg</h3>
                 <p className="text-gray-700 mb-2">
                   <strong>Daniel Fortmann</strong>
                 </p>

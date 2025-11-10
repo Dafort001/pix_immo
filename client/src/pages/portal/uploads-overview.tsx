@@ -58,7 +58,7 @@ export default function UploadsOverview() {
       {/* Page Title */}
       <div className="border-b bg-card">
         <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold mb-2">Uploads</h1>
+          <h1 className="text-lg font-bold mb-2">Uploads</h1>
           <p className="text-muted-foreground">
             Übersicht aller Ihrer Fotoshootings
           </p>
@@ -84,7 +84,7 @@ export default function UploadsOverview() {
         ) : isError ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-xl font-semibold mb-2 text-destructive" data-testid="text-error-title">
+              <h3 className="text-base font-semibold mb-2 text-destructive" data-testid="text-error-title">
                 Fehler beim Laden
               </h3>
               <p className="text-muted-foreground text-center max-w-md mb-6" data-testid="text-error-description">
@@ -99,7 +99,7 @@ export default function UploadsOverview() {
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
               <Upload className="w-16 h-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2" data-testid="text-empty-title">
+              <h3 className="text-base font-semibold mb-2" data-testid="text-empty-title">
                 Keine Uploads
               </h3>
               <p className="text-muted-foreground text-center max-w-md mb-6" data-testid="text-empty-description">

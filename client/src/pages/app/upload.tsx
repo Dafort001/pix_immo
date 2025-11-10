@@ -867,7 +867,7 @@ export default function UploadScreen() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="text-2xl font-semibold text-gray-900 mb-2"
+            className="text-lg font-semibold text-gray-900 mb-2"
             style={{ fontSize: '24px' }}
             data-testid="text-success-headline"
           >

@@ -165,7 +165,7 @@ export default function AILabPage() {
   return (
     <div className="container mx-auto px-6 py-8 max-w-7xl">
       <div className="mb-8">
-        <h1 className="text-3xl font-semibold mb-2" data-testid="text-page-title">
+        <h1 className="text-lg font-semibold mb-2" data-testid="text-page-title">
           AI Lab
         </h1>
         <p className="text-secondary" data-testid="text-page-description">
@@ -181,7 +181,7 @@ export default function AILabPage() {
               <CardTitle>Credits</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-bold text-primary" data-testid="text-credits-balance">
+              <div className="text-lg font-bold text-primary" data-testid="text-credits-balance">
                 {credits?.credits || 0}
               </div>
               <p className="text-sm text-secondary mt-1">Verfügbare Credits</p>

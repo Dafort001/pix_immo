@@ -203,7 +203,7 @@ export default function AdminServices() {
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-gray-900">Services-Verwaltung</h1>
+            <h1 className="text-lg font-bold text-gray-900">Services-Verwaltung</h1>
           </div>
 
           <Button onClick={() => handleOpenDialog()} data-testid="button-new-service">

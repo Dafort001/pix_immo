@@ -130,7 +130,7 @@ export default function AdminBookings() {
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Zurück
               </Button>
-              <h1 className="text-3xl font-bold">Buchungsverwaltung</h1>
+              <h1 className="text-lg font-bold">Buchungsverwaltung</h1>
               <p className="text-muted-foreground mt-1">
                 {filteredBookings.length} von {bookings.length} Buchungen
               </p>

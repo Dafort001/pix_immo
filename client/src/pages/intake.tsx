@@ -195,7 +195,7 @@ export default function Intake() {
         <div className="container mx-auto px-4 py-16 max-w-md">
           <Card className="p-8">
             <div className="text-center mb-8">
-              <h1 className="text-3xl font-light mb-2">Photographer Intake</h1>
+              <h1 className="text-lg font-light mb-2">Photographer Intake</h1>
               <p className="text-muted-foreground">
                 Geben Sie Ihre Job-Nummer ein, um zu beginnen
               </p>
@@ -239,7 +239,7 @@ export default function Intake() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-light mb-1">Photo Upload</h1>
+              <h1 className="text-lg font-light mb-1">Photo Upload</h1>
               <p className="text-muted-foreground">
                 Job: {jobNumber} · Shoot-Code: {shootData.shootCode}
               </p>

@@ -93,7 +93,7 @@ export default function GallerySelection() {
                 <ArrowLeft className="w-5 h-5" />
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Bildauswahl</h1>
+                <h1 className="text-lg font-bold">Bildauswahl</h1>
                 <p className="text-sm text-muted-foreground" data-testid="text-selected-count">
                   {selectedImages.size} von {images?.length || 0} ausgewählt
                 </p>
@@ -122,7 +122,7 @@ export default function GallerySelection() {
         ) : isError ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-xl font-semibold mb-2 text-destructive" data-testid="text-error-title">
+              <h3 className="text-base font-semibold mb-2 text-destructive" data-testid="text-error-title">
                 Fehler beim Laden
               </h3>
               <p className="text-muted-foreground text-center max-w-md mb-6" data-testid="text-error-description">
@@ -136,7 +136,7 @@ export default function GallerySelection() {
         ) : !images || images.length === 0 ? (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <h3 className="text-xl font-semibold mb-2" data-testid="text-no-images">
+              <h3 className="text-base font-semibold mb-2" data-testid="text-no-images">
                 Keine Bilder gefunden
               </h3>
               <p className="text-muted-foreground">

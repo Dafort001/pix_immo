@@ -76,7 +76,7 @@ export default function SettingsScreen() {
 
       {/* Header */}
       <div className="safe-top-header bg-white border-b border-gray-200">
-        <h1 className="text-2xl font-bold text-[#4A5849] px-6 py-4" data-testid="heading-settings">
+        <h1 className="text-lg font-bold text-[#4A5849] px-6 py-4" data-testid="heading-settings">
           Manueller Modus
         </h1>
       </div>
@@ -334,7 +334,7 @@ export default function SettingsScreen() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl mx-6 overflow-hidden shadow-2xl max-w-sm w-full">
             <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2">
+              <h3 className="text-base font-bold text-gray-900 mb-2">
                 Auf Auto zurücksetzen?
               </h3>
               <p className="text-gray-600 text-sm">
