@@ -182,7 +182,7 @@ app.use("*", async (c, next) => {
     `style-src ${styleSrc}; ` +
     `img-src 'self' data: https: blob:; ` +
     `font-src 'self' data:; ` +
-    `connect-src 'self' https://storage.googleapis.com; ` +
+    `connect-src 'self' https://storage.googleapis.com https://*.r2.cloudflarestorage.com; ` +
     `frame-ancestors 'none';`
   );
   

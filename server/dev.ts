@@ -81,6 +81,35 @@ async function startDevServer() {
   // Parse JSON body for POST/PUT/PATCH requests
   app.use(express.json());
 
+  // Security headers middleware (matching server/index.ts CSP configuration)
+  app.use((req, res, next) => {
+    // Prevent clickjacking
+    res.setHeader("X-Frame-Options", "DENY");
+    
+    // Prevent MIME-type sniffing
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    
+    // Enable XSS filter in older browsers
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    
+    // Referrer policy
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    
+    // Content Security Policy - development mode (allows Vite HMR)
+    res.setHeader(
+      "Content-Security-Policy",
+      `default-src 'self'; ` +
+      `script-src 'self' 'unsafe-inline' 'unsafe-eval'; ` +
+      `style-src 'self' 'unsafe-inline'; ` +
+      `img-src 'self' data: https: blob:; ` +
+      `font-src 'self' data:; ` +
+      `connect-src 'self' https://storage.googleapis.com https://*.r2.cloudflarestorage.com ws: wss:; ` +
+      `frame-ancestors 'none';`
+    );
+    
+    next();
+  });
+
   // Register Sprint 1 workflow routes BEFORE Hono proxy
   // These routes handle /api/jobs, /api/uploads, etc.
   await registerRoutes(app);
