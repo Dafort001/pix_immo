@@ -112,7 +112,7 @@ export function UploadDropzone({
       );
 
       // Step 1: Request upload intent
-      const intent = await apiRequest<UploadIntentResponse>(
+      const intentRes = await apiRequest(
         "POST",
         "/api/pixcapture/upload/intent",
         {
@@ -121,6 +121,7 @@ export function UploadDropzone({
           fileSize: item.file.size,
         }
       );
+      const intent: UploadIntentResponse = await intentRes.json();
 
       // Update progress
       setFiles((prev) =>

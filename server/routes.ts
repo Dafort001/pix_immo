@@ -1297,6 +1297,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // POST /api/auth/signup - Create new user account
+  const signupSchema = z.object({
+    email: z.string().email("Invalid email format"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+  });
+
+  app.post("/api/auth/signup", authLimiter, validateBody(signupSchema), async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(409).json({ error: "Email already registered" });
+      }
+      
+      // Hash password and create user
+      const hashedPassword = await hashPassword(password);
+      const user = await storage.createUser(email, hashedPassword, "client");
+      
+      // Create session (default 24h for signup)
+      const expiresAt = Date.now() + (1000 * 60 * 60 * 24); // 24 hours
+      const session = await storage.createSession(user.id, expiresAt);
+      
+      // Set session cookie
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        ...SESSION_CONFIG.cookieOptions,
+        maxAge: 60 * 60 * 24 * 1000, // 24 hours in milliseconds
+      });
+      
+      res.status(201).json({
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Signup error:", error);
+      res.status(500).json({ error: "Signup failed" });
+    }
+  });
+
   // POST /api/auth/demo - Demo mode login (24h expiry)
   app.post("/api/auth/demo", authLimiter, async (req: Request, res: Response) => {
     try {
