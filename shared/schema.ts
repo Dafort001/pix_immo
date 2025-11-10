@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { pgTable, varchar, text, bigint, boolean } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, bigint, boolean, jsonb, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -118,20 +118,23 @@ export const uploadedFiles = pgTable("uploaded_files", {
   fileSize: bigint("file_size", { mode: "number" }).notNull(),
   checksum: varchar("checksum", { length: 64 }), // SHA256 hash
   status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'processing', 'completed', 'failed', 'queued'
-  roomType: varchar("room_type", { length: 50 }), // Room classification (e.g., 'wohnzimmer', 'kueche')
+  roomType: varchar("room_type", { length: 50 }).notNull().default("undefined_space"), // Room classification (e.g., 'wohnzimmer', 'kueche')
   stackId: varchar("stack_id", { length: 20 }), // Stack group ID (e.g., 'g003')
   // Filename Schema v3.1 fields
   index: bigint("index", { mode: "number" }).notNull().default(1), // Position index within room_type (e.g., 001, 002)
   ver: bigint("ver", { mode: "number" }).notNull().default(1), // Version number (for re-uploads)
   // Order Files Management fields
   marked: boolean("marked").notNull().default(false), // Marked for editing/processing
-  warnings: text("warnings").array(), // Array of warning codes (e.g., ['MISSING_FIELD', 'STACK_INCOMPLETE'])
+  warnings: jsonb("warnings").$type<string[]>().default([]), // Array of warning codes (e.g., ['MISSING_FIELD', 'STACK_INCOMPLETE'])
   deletedAt: bigint("deleted_at", { mode: "number" }), // Soft-delete timestamp (null = not deleted)
   exifMeta: text("exif_meta"), // JSON string: { make, model, focal, iso, shutter }
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   finalizedAt: bigint("finalized_at", { mode: "number" }), // When finalize was called
   updatedAt: bigint("updated_at", { mode: "number" }), // Last modification timestamp
-});
+}, (table) => ({
+  // UNIQUE constraint: prevent duplicate file slots in same stack/version
+  uniqueFilePosition: unique("unique_file_position").on(table.orderId, table.roomType, table.index, table.ver),
+}));
 
 // File Notes - User comments/annotations on uploaded files
 export const fileNotes = pgTable("file_notes", {

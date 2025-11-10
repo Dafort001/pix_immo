@@ -2915,19 +2915,81 @@ export class DatabaseStorage implements IStorage {
     exifMeta?: string;
   }): Promise<import("@shared/schema").UploadedFile> {
     const id = randomUUID();
+    
+    // Auto-increment index within (orderId, roomType) scope with advisory lock
+    if (data.orderId) {
+      const orderId = data.orderId; // Type narrowing for transaction scope
+      const effectiveRoomType = data.roomType || 'undefined_space';
+      
+      // Generate deterministic lock ID from (orderId, roomType) hash
+      const lockKey = `${orderId}_${effectiveRoomType}`;
+      const lockId = Math.abs(lockKey.split('').reduce((acc, char) => {
+        return ((acc << 5) - acc) + char.charCodeAt(0) | 0;
+      }, 0));
+      
+      // Wrap in transaction to ensure lock, MAX query, and INSERT share same connection
+      return await db.transaction(async (tx) => {
+        try {
+          // Acquire advisory lock to prevent concurrent index collision
+          await tx.execute(sql`SELECT pg_advisory_lock(${lockId})`);
+          
+          // Find next available index under lock
+          const [result] = await tx
+            .select({ maxIndex: sql<number>`COALESCE(MAX(${uploadedFiles.index}), 0)` })
+            .from(uploadedFiles)
+            .where(
+              and(
+                eq(uploadedFiles.orderId, orderId),
+                eq(uploadedFiles.roomType, effectiveRoomType)
+              )
+            );
+          const nextIndex = (result?.maxIndex || 0) + 1;
+          
+          // Insert with unique index
+          const [uploadedFile] = await tx
+            .insert(uploadedFiles)
+            .values({
+              id,
+              userId: data.userId,
+              orderId: orderId,
+              objectKey: data.objectKey,
+              originalFilename: data.originalFilename,
+              mimeType: data.mimeType,
+              fileSize: data.fileSize,
+              checksum: data.checksum || null,
+              status: 'uploaded',
+              roomType: data.roomType, // Let DB default apply if undefined
+              stackId: data.stackId || null,
+              exifMeta: data.exifMeta || null,
+              index: nextIndex,
+              ver: 1, // Always start at version 1
+              createdAt: Date.now(),
+              finalizedAt: null,
+            })
+            .returning();
+          
+          return uploadedFile;
+        } finally {
+          // Always release advisory lock (same connection)
+          await tx.execute(sql`SELECT pg_advisory_unlock(${lockId})`);
+        }
+      });
+    }
+    
+    // No orderId: skip index logic
     const [uploadedFile] = await db
       .insert(uploadedFiles)
       .values({
         id,
         userId: data.userId,
-        orderId: data.orderId || null,
+        orderId: null,
         objectKey: data.objectKey,
         originalFilename: data.originalFilename,
         mimeType: data.mimeType,
         fileSize: data.fileSize,
         checksum: data.checksum || null,
         status: 'uploaded',
-        roomType: data.roomType || null,
+        roomType: data.roomType,
         stackId: data.stackId || null,
         exifMeta: data.exifMeta || null,
         createdAt: Date.now(),
