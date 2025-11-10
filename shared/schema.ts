@@ -1286,3 +1286,45 @@ export interface UploadIntentResponse {
   uploadUrl: string;
   expiresIn: number; // seconds
 }
+
+// Order Files Management Schemas (Phase 1)
+export const orderFilesFilterSchema = z.object({
+  roomType: z.string().max(50).optional(),
+  marked: z.enum(['true', 'false']).optional(),
+  status: z.string().max(50).optional(),
+  includeDeleted: z.enum(['true', 'false']).optional(),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+  sortBy: z.enum(['latest', 'oldest', 'filename']).optional(),
+});
+
+export const bulkMarkFilesSchema = z.object({
+  fileIds: z.array(z.string().uuid()).min(1).max(100),
+  marked: z.boolean(),
+});
+
+export const bulkDeleteFilesSchema = z.object({
+  fileIds: z.array(z.string().uuid()).min(1).max(100),
+  allowMarked: z.boolean().optional(),
+});
+
+export const fileNoteSchema = z.object({
+  text: z.string().trim().min(1).max(1000),
+});
+
+export const orderStacksFilterSchema = z.object({
+  includeDeleted: z.enum(['true', 'false']).optional(),
+  previewLimit: z.coerce.number().int().min(1).max(20).optional(),
+});
+
+export const fileNotesFilterSchema = z.object({
+  limit: z.coerce.number().int().min(1).max(50).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+export type OrderFilesFilter = z.infer<typeof orderFilesFilterSchema>;
+export type OrderStacksFilter = z.infer<typeof orderStacksFilterSchema>;
+export type BulkMarkFiles = z.infer<typeof bulkMarkFilesSchema>;
+export type BulkDeleteFiles = z.infer<typeof bulkDeleteFilesSchema>;
+export type FileNoteInput = z.infer<typeof fileNoteSchema>;
+export type FileNotesFilter = z.infer<typeof fileNotesFilterSchema>;
