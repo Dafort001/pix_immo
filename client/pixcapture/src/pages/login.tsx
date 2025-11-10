@@ -45,8 +45,7 @@ export default function PixCaptureLogin() {
         title: "Login erfolgreich",
         description: "Willkommen bei pixcapture!",
       });
-      // TODO: Redirect to PixCapture dashboard when available
-      setLocation("/pixcapture");
+      setLocation("/pixcapture/dashboard");
     },
     onError: (error: Error) => {
       toast({
