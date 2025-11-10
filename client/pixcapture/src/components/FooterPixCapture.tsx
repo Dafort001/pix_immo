@@ -10,11 +10,6 @@ export function FooterPixCapture() {
               Hilfe
             </span>
           </Link>
-          <Link href="/pixcapture/expert-call">
-            <span className="text-[14px] text-[var(--color-grey)] hover:text-[var(--color-black)] cursor-pointer tracking-[-0.02em] transition-colors hover:underline">
-              Experten-Support
-            </span>
-          </Link>
           <span className="hidden md:block text-[var(--color-light-grey)]">|</span>
           <Link href="/pixcapture/impressum">
             <span className="text-[14px] text-[var(--color-grey)] hover:text-[var(--color-black)] cursor-pointer tracking-[-0.02em] transition-colors hover:underline">
@@ -32,12 +27,10 @@ export function FooterPixCapture() {
             </span>
           </Link>
           
-          {/* Cross-Domain Link */}
+          {/* Cross-SPA Link */}
           <span className="hidden md:block text-[var(--color-light-grey)]">|</span>
           <a 
-            href="https://pix.immo" 
-            target="_blank" 
-            rel="noopener noreferrer"
+            href="/"
             className="text-[14px] text-[var(--color-grey)] hover:text-[var(--color-black)] cursor-pointer tracking-[-0.02em] transition-colors hover:underline"
           >
             Professionelle Fotografie: pix.immo

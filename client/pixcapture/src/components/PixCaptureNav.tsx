@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'wouter';
-import { Menu, X, Phone, HelpCircle, Upload, User, Info } from 'lucide-react';
+import { Menu, X, HelpCircle, Info } from 'lucide-react';
 import { Button } from './ui/button';
 
 export function PixCaptureNav() {
@@ -10,7 +10,6 @@ export function PixCaptureNav() {
   const navItems = [
     { href: '/pixcapture', label: 'Start', icon: null },
     { href: '/pixcapture/help', label: 'Hilfe', icon: HelpCircle },
-    { href: '/pixcapture/expert-call', label: 'Experten-Call', icon: Phone },
     { href: '/pixcapture/about', label: 'About', icon: Info },
   ];
 
@@ -129,7 +128,6 @@ export function PixCaptureNavMinimal() {
   const navItems = [
     { href: '/pixcapture', label: 'Start' },
     { href: '/pixcapture/help', label: 'Hilfe' },
-    { href: '/pixcapture/expert-call', label: 'Experten-Call' },
   ];
 
   const isActive = (href: string) => location === href;
