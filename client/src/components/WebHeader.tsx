@@ -132,9 +132,31 @@ export function WebHeader() {
                 </Link>
               </li>
               <li>
-                <Link href="/impressum">
+                <Link href="/kontakt">
                   <span
                     className="block text-lg font-medium hover:underline cursor-pointer"
+                    onClick={() => setIsMenuOpen(false)}
+                    data-testid="menu-link-kontakt"
+                  >
+                    Kontakt
+                  </span>
+                </Link>
+              </li>
+              <li>
+                <Link href="/faq">
+                  <span
+                    className="block text-lg font-medium hover:underline cursor-pointer"
+                    onClick={() => setIsMenuOpen(false)}
+                    data-testid="menu-link-faq"
+                  >
+                    FAQ
+                  </span>
+                </Link>
+              </li>
+              <li className="pt-4 mt-4 border-t border-gray-200">
+                <Link href="/impressum">
+                  <span
+                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
                     data-testid="menu-link-impressum"
                   >
@@ -143,24 +165,24 @@ export function WebHeader() {
                 </Link>
               </li>
               <li>
-                <Link href="/agb">
+                <Link href="/datenschutz">
                   <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
+                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-agb"
+                    data-testid="menu-link-datenschutz"
                   >
-                    AGB & Datenschutz
+                    Datenschutz
                   </span>
                 </Link>
               </li>
               <li>
-                <Link href="/kontakt">
+                <Link href="/agb">
                   <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
+                    className="block text-sm text-gray-600 hover:underline cursor-pointer"
                     onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-kontakt"
+                    data-testid="menu-link-agb"
                   >
-                    Kontakt
+                    AGB
                   </span>
                 </Link>
               </li>
