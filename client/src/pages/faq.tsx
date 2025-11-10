@@ -173,34 +173,59 @@ export default function FAQ() {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Sonstiges */}
+            {/* Vorbereitung der Immobilie */}
             <AccordionItem value="preparation" className="border rounded-lg px-6" data-testid="faq-preparation">
               <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                Wie bereite ich die Immobilie am besten vor?
+                Vorbereitung der Immobilie
               </AccordionTrigger>
               <AccordionContent className="text-gray-700 leading-relaxed pt-2">
-                Für optimale Ergebnisse empfehlen wir:
-                <ul className="list-disc pl-6 mt-2 space-y-1">
-                  <li>Alle Räume aufräumen und reinigen</li>
-                  <li>Persönliche Gegenstände weitgehend entfernen</li>
-                  <li>Vorhänge öffnen und für gute Beleuchtung sorgen</li>
-                  <li>Bei Außenaufnahmen: Mülltonnen, Gartengeräte etc. wegräumen</li>
-                  <li>Eventuell Blumen oder Dekoration als Hingucker platzieren</li>
-                </ul>
-                <p className="mt-2">
-                  Wir beraten Sie gerne vorab, wie Sie Ihre Immobilie optimal in Szene setzen können.
+                <p className="mb-4">
+                  Damit Ihre Immobilie bestmöglich präsentiert werden kann, lohnt sich etwas Vorbereitung vor dem Fototermin. 
+                  Schon wenige Handgriffe machen oft einen großen Unterschied im Gesamteindruck.
                 </p>
-              </AccordionContent>
-            </AccordionItem>
+                
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Allgemeine Tipps:</h4>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Räume aufräumen und persönliche Gegenstände beiseitelegen</li>
+                      <li>Vorhänge öffnen und für ausreichend Licht sorgen</li>
+                      <li>Blumen, Pflanzen oder kleine Deko-Elemente setzen angenehme Akzente</li>
+                      <li>Haustiere, Mülltonnen und Fahrzeuge während der Aufnahmen außer Sicht bringen</li>
+                    </ul>
+                  </div>
 
-            <AccordionItem value="cancellation" className="border rounded-lg px-6" data-testid="faq-cancellation">
-              <AccordionTrigger className="text-lg font-semibold hover:no-underline">
-                Kann ich einen Termin verschieben oder stornieren?
-              </AccordionTrigger>
-              <AccordionContent className="text-gray-700 leading-relaxed pt-2">
-                Terminverschiebungen sind bis 48 Stunden vor dem geplanten Termin kostenfrei möglich. 
-                Bei kurzfristigeren Absagen oder Nichterscheinen können Ausfallkosten anfallen. 
-                Details finden Sie in unseren <Link href="/agb"><span className="underline cursor-pointer">AGB</span></Link>.
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Küche und Bad:</h4>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Oberflächen reinigen und freiräumen</li>
+                      <li>Handtücher, Putzmittel und Alltagsartikel wegräumen</li>
+                      <li>Einheitliche, dezente Farben wirken auf Fotos ruhiger</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Schlaf- und Wohnräume:</h4>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Betten ordentlich beziehen</li>
+                      <li>Kissen, Decken und Möbel gerade ausrichten</li>
+                      <li>Kleine Teppiche oder Wäschekörbe vorübergehend entfernen</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-black mb-2">Außenbereich:</h4>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Rasen mähen, Wege und Terrasse fegen</li>
+                      <li>Gartengeräte, Spielzeug und Mülltonnen verstauen</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <p className="mt-4 text-sm italic">
+                  Falls kurzfristig etwas nicht perfekt vorbereitet werden kann, ist das kein Problem – 
+                  kleinere Dinge lassen sich bei Bedarf im Rahmen der Bildbearbeitung anpassen.
+                </p>
               </AccordionContent>
             </AccordionItem>
           </Accordion>
