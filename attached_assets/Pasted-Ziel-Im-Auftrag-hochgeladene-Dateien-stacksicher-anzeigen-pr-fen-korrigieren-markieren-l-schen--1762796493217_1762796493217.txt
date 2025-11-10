@@ -1,0 +1,254 @@
+Ziel
+
+Im Auftrag hochgeladene Dateien stacksicher anzeigen, prüfen, korrigieren, markieren, löschen/wiederherstellen und für die Bearbeitung vorbereiten. Danach: Freigabe des Bearbeitungspakets, Status-Tracking, Alt-Text/Exports, Benachrichtigungen.
+
+Geltungsbereich (jetzt umsetzen)
+
+Anzeige aller Dateien gruppiert nach stack_id.
+
+Validator für Dateinamen (Schema v3.1), EXIF-Abgleich, Duplikate.
+
+Bulk-Aktionen: Markieren, Löschen (Papierkorb), Umbenennen (Auto-Fix), Raumtyp setzen, Re-Index.
+
+Notizen pro Bild/Stack.
+
+Kostenvorschau basierend auf markierten Bildern (ohne Style-Wahl).
+
+Papierkorb mit Restore & Purge.
+
+Performance: virtuelle Liste, Filter, Suche.
+
+Nicht-Ziele (jetzt nicht)
+
+Bezahlstrecke, Rollen jenseits von Owner/Editor, KI-Bearbeitung live. (Dafür unten „Weiterführung“.)
+
+Frontend (Routes & Komponenten)
+
+Route: /orders/:id/stacks
+
+Komponenten
+
+StackList (virtuell gerendert)
+
+StackCard
+Felder: stack_id, Count, Status-Badges (OK/WARN/FEHLER), Leitbild, Schnellaktionen (Markieren/Löschen/Detail)
+
+StackDetail
+Tabelle: Thumbnail, Dateiname, room_type, index, ver, Bytes, MIME, Status, Badges, Checkbox, Notiz
+
+Toolbar
+Aktionen: Markieren, Löschen, Umbenennen (Auto-Fix), Raumtyp setzen, Re-Index, Papierkorb zeigen
+
+Sidebar
+Filter: Raumtyp, Warnungstyp, Markiert, Version, Duplikate, Status; Zähler + Kostenvorschau
+
+TrashDrawer (Papierkorb)
+Liste gelöschter Dateien, Restore, Purge
+
+UI-Texte (DE, kurz)
+
+Badges: OK, Warnung, Fehler, Duplikat, Unvollständig, Version-Konflikt
+
+Aktionen: Markieren, Löschen, Wiederherstellen, Endgültig löschen, Auto-Umbenennen, Raumtyp setzen, Neu nummerieren
+
+Status: wartet, hochgeladen, in Bearbeitung, fertig, gesperrt
+
+Backend (Endpoints)
+
+Lesen
+
+GET /api/orders/:id/files
+
+Output: files[] mit
+id, order_id, user_id, object_key, filename, room_type, stack_id, index, ver, bytes, mime, hash, status, warnings[], marked, notes_count, deleted_at
+
+GET /api/orders/:id/stacks
+
+Aggregiert: stack_id, file_count, complete_count, expected_count?, lead_file_id, warnings[]
+
+Validierung
+
+POST /api/files/validate
+Input: { ids: string[] }
+Output je id: warnings[] (siehe Regeln unten)
+
+Mutationen
+
+POST /api/files/bulk-mark
+Input: { ids: string[], marked: boolean }
+
+POST /api/files/bulk-rename (Auto-Fix nach Schema v3.1)
+Input: { ids: string[] }
+Output: { results: [{id, old_name, new_name, status}] }
+
+POST /api/files/bulk-roomtype
+Input: { ids: string[], room_type: string }
+
+POST /api/files/bulk-reindex
+Input: { stack_id: string, start?: number }
+
+DELETE /api/files/bulk (Soft-Delete)
+Input: { ids: string[] }
+
+GET /api/trash?order_id=...
+Output: gelöschte Dateien
+
+POST /api/trash/restore
+Input: { ids: string[] }
+
+DELETE /api/trash/purge
+Input: { ids: string[] }
+
+POST /api/files/:id/note
+Input: { text: string } → notes_count++
+
+Sicherheit
+
+Jeder Schreib-Endpoint prüft: user_id besitzt order_id.
+
+Keine Mutation, wenn status in ('in_progress','locked').
+
+Datenmodell (zusammengefasst)
+
+File: id, order_id, user_id, object_key, filename, bytes, mime, room_type, stack_id, index, ver, hash, status, warnings[], marked:boolean, deleted_at, created_at, updated_at
+
+Note: id, file_id, user_id, text, created_at
+
+Stack (deriviert): keine eigene Tabelle nötig; aus File-Feldern aggregieren.
+
+Validierungsregeln
+
+Dateinamen (Schema v3.1)
+{date}-{shootcode}_{room_type}_{index}_v{ver}.jpg
+
+WARN/ERROR Codes
+
+MISSING_FIELD (date/shootcode/room_type/index/ver fehlt)
+
+STACK_INCOMPLETE (z. B. 2/5 Belichtungen)
+
+MIME_MISMATCH (Name .jpg, MIME heic)
+
+DUPLICATE_HASH (identischer Hash)
+
+NAME_EXIF_MISMATCH (room_type vs. Heuristik/EXIF)
+
+VERSION_CONFLICT (v niedriger als bereits vorhandene Version)
+
+ILLEGAL_CHARS
+
+Auto-Fix
+
+Fehlende Felder aus Meta ableiten, sonst Platzhalter; illegal chars entfernen; Index/Ver sicher hochzählen; .ext aus MIME setzen.
+
+Stack-Status
+
+complete wenn erwartete Belichtungsanzahl (3 oder 5) erreicht.
+
+lead_file = kleinste index oder explizit gesetztes Leitbild.
+
+Business-Regeln
+
+Markierung für Bearbeitung: bool pro Datei/Stack; beeinflusst Kostenvorschau.
+
+Papierkorb: deleted_at gesetzt; Restore möglich; Auto-Purge nach 30 Tagen.
+
+Gesperrt: Datei in Produktion → nicht lösch-/umbenennbar.
+
+Kostenvorschau: count(marked) * rate (rate aus Settings; keine Zahlung hier).
+
+Logging/Audit: Mutation schreibt Event (User, Aktion, ids, timestamp).
+
+Performance
+
+Server: Paginierte Abfragen (limit, cursor), voraggregierte Stack-Counts (Materialized View oder On-the-fly mit Indexen).
+
+Client: Virtuelle Liste ab >200 Items, Daumennagel-CDN / R2-signed GET, Debounce bei Filtern.
+
+Akzeptanzkriterien (prüfbar)
+
+1.000+ Dateien werden ohne UI-Freeze gelistet (Scroll FPS stabil).
+
+Validator labelt fehlerhafte Namen zuverlässig; bulk-rename korrigiert ≥100 Dateien <5 s.
+
+Duplikate (DUPLICATE_HASH) werden erkannt und bereinigt (Löschen/Keep-one).
+
+„Markiert“ persistiert und ist filterbar; Kostenvorschau aktualisiert sich live.
+
+Soft-Delete → Datei verschwindet aus Stack; Restore stellt ursprüngliche Position wieder her.
+
+Gesperrte Dateien lassen sich nicht löschen/umbenennen; UI zeigt Grund an.
+
+Alle Schreib-Operationen sind order-gebunden; Fremdzugriff führt zu 403.
+
+Weiterführung (direkt danach umsetzen)
+
+Diese Punkte bauen auf derselben Seite/Order auf – gleiche Endpunkt-Familie, zusätzliche Felder.
+
+A) Bearbeitungspaket zusammenstellen & freigeben
+
+UI: Button „Bearbeitungspaket prüfen“ → Dialog mit:
+
+Anzahl markierter Bilder, Kostenvorschau, optional express:boolean, notes (global).
+
+Endpoint: POST /api/orders/:id/submit-edits
+Input: { files: string[], express?: boolean, order_notes?: string }
+Effekt: status='submitted', files[].status='queued', Event „edits_submitted“.
+
+B) Status-Tracking (einfach)
+
+GET /api/orders/:id/status` → Counters: queued/in_progress/done.
+
+Dateien wechseln Status serverseitig (später durch Produktionssystem).
+
+C) Alt-Texte & Exporte (ohne KI-Pipeline jetzt)
+
+GET /api/orders/:id/alt-texts?lang=de|en` → Platzhalter/aus Meta generiert.
+
+**GET /api/orders/:id/export.txt** & export.json` (Datei→Alt-Text Map).
+
+Sichtbar als Download-Links in der Seite.
+
+D) Benachrichtigungen (schlank)
+
+Events: upload_received, edits_submitted, edit_done
+
+GET /api/notifications` → Liste; UI-Badge im Header.
+
+E) Versionierung & Restore
+
+Bei Neuupload zu gleicher object_key → ver hochzählen.
+
+GET /api/files/:id/versions**, **POST /api/files/:id/versions/restore
+
+F) Quoten & Grenzen
+
+GET /api/usage` → Speicher/Datei-Limits.
+
+UI: Balken „Speicher belegt / frei“.
+
+G) Rollen (leicht)
+
+owner, editor (editor darf markieren/kommentieren, nicht purgen).
+
+Durchsetzen in Mutations-Endpoints.
+
+Zusätzliche Akzeptanzkriterien (Weiterführung)
+
+„Bearbeitungspaket prüfen“ zeigt korrekte Tally; submit-edits setzt Status und erzeugt Event.
+
+Alt-Text-Downloads liefern .txt und .json gemäß CRM-Spez (Schlüssel = Dateiname).
+
+edit_done ändert Dateistatus und erzeugt sichtbare Benachrichtigung.
+
+Versionen sind einsehbar und wiederherstellbar ohne Datenverlust.
+
+Sicherheits-/DSGVO-Basics
+
+Alle Mutationen prüfen user_id ↔ order_id.
+
+Audit-Log für Delete/Purge/Restore/Umbenennen.
+
+Download-Links sind kurzlebig (signed GET).
+
+Papierkorb-Auto-Purge (30 Tage) konfigurierbar.

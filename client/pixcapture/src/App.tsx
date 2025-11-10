@@ -7,6 +7,7 @@ import Home from "./pages/home";
 import About from "./pages/about";
 import Blog from "./pages/blog";
 import Login from "./pages/login";
+import Register from "./pages/register";
 import Dashboard from "./pages/dashboard";
 import AGB from "./pages/agb";
 import Datenschutz from "./pages/datenschutz";
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/pixcapture/about" component={About} />
       <Route path="/pixcapture/blog" component={Blog} />
       <Route path="/pixcapture/login" component={Login} />
+      <Route path="/pixcapture/register" component={Register} />
       <Route path="/pixcapture/dashboard" component={Dashboard} />
       <Route path="/pixcapture/agb" component={AGB} />
       <Route path="/pixcapture/datenschutz" component={Datenschutz} />
