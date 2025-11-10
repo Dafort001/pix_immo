@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'wouter';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { ArrowLeft, Plus, Edit2, Trash2, FileText, Eye, EyeOff, Calendar } from 'lucide-react';
+import { Plus, Edit2, Trash2, FileText, Eye, EyeOff, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -16,6 +15,8 @@ import { SEOHead } from '@shared/components';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import type { BlogPost, InsertBlogPost } from '@shared/schema';
+import { AdminLayout } from '@/components/AdminLayout';
+import { AdminPageHeader } from '@/components/AdminPageHeader';
 
 function generateSlug(title: string): string {
   return title
@@ -29,8 +30,7 @@ function generateSlug(title: string): string {
 }
 
 export default function AdminBlog() {
-  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
-  const [, setLocation] = useLocation();
+  const { user, isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [showDialog, setShowDialog] = useState(false);
@@ -304,171 +304,157 @@ export default function AdminBlog() {
 
   const getStatusBadge = (status: string) => {
     if (status === 'published') {
-      return <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">Veröffentlicht</Badge>;
+      return <Badge variant="outline">Veröffentlicht</Badge>;
     }
-    return <Badge variant="outline" className="bg-gray-500/10 text-gray-600 border-gray-500/20">Entwurf</Badge>;
+    return <Badge variant="secondary">Entwurf</Badge>;
   };
 
+  if (!user) return null;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AdminLayout userRole={user.role}>
       <SEOHead title="Blog-Verwaltung – pix.immo Admin" description="Blog-Beiträge verwalten" path="/admin/blog" />
-
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-[1600px] mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setLocation('/dashboard')}
-                data-testid="button-back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">Blog-Verwaltung</h1>
-                <p className="text-gray-600">Erstelle und verwalte Blog-Beiträge</p>
-              </div>
-            </div>
-
+      
+      <div className="flex flex-col h-full">
+        <AdminPageHeader
+          title="Blog-Verwaltung"
+          actions={
             <Button onClick={() => handleOpenDialog()} data-testid="button-create-post">
-              <Plus className="h-5 w-5 mr-2" />
+              <Plus className="h-4 w-4 mr-2" />
               Neuer Beitrag
             </Button>
-          </div>
+          }
+        />
 
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <FileText className="h-4 w-4 text-gray-600" />
-              <span className="text-gray-600 text-sm">{stats.total} Beiträge gesamt</span>
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <div className="mb-6 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">{stats.total} Beiträge gesamt</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Entwürfe: {stats.draft}</Badge>
+                  <Badge variant="outline">Veröffentlicht: {stats.published}</Badge>
+                </div>
+              </div>
+              <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
+                <TabsList>
+                  <TabsTrigger value="all" data-testid="filter-all">Alle</TabsTrigger>
+                  <TabsTrigger value="draft" data-testid="filter-draft">Entwürfe</TabsTrigger>
+                  <TabsTrigger value="published" data-testid="filter-published">Veröffentlicht</TabsTrigger>
+                </TabsList>
+              </Tabs>
             </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="outline">Entwürfe: {stats.draft}</Badge>
-              <Badge variant="outline">Veröffentlicht: {stats.published}</Badge>
-            </div>
-          </div>
-        </div>
-      </header>
+            {isLoading ? (
+              <div className="grid gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Card key={i}>
+                    <CardHeader>
+                      <div className="space-y-2">
+                        <Skeleton className="h-6 w-2/3" />
+                        <Skeleton className="h-4 w-full" />
+                        <div className="flex items-center gap-4 mt-4">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-24" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            ) : filteredPosts.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16">
+                  <FileText className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                  <h3 className="text-base font-semibold mb-2">Noch keine Blog-Beiträge</h3>
+                  <p className="text-muted-foreground text-center mb-6">
+                    Erstelle deinen ersten Blog-Beitrag
+                  </p>
+                  <Button onClick={() => handleOpenDialog()} data-testid="button-create-first">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Ersten Beitrag erstellen
+                  </Button>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4">
+                {filteredPosts.map((post) => (
+                  <Card key={post.id} data-testid={`post-card-${post.id}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <CardTitle className="text-lg">{post.title}</CardTitle>
+                            {getStatusBadge(post.status)}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-3">{post.excerpt}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                            <span>{post.author}</span>
+                            <span>•</span>
+                            <Badge variant="outline" className="text-xs">{post.category}</Badge>
+                            {post.publishedAt && (
+                              <>
+                                <span>•</span>
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="h-3 w-3" />
+                                  {new Date(post.publishedAt).toLocaleDateString('de-DE')}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        </div>
 
-      <div className="bg-white border-b border-gray-200 sticky top-[104px] z-10">
-        <div className="max-w-[1600px] mx-auto px-6 py-3">
-          <Tabs value={statusFilter} onValueChange={(v) => setStatusFilter(v as any)}>
-            <TabsList>
-              <TabsTrigger value="all" data-testid="filter-all">Alle</TabsTrigger>
-              <TabsTrigger value="draft" data-testid="filter-draft">Entwürfe</TabsTrigger>
-              <TabsTrigger value="published" data-testid="filter-published">Veröffentlicht</TabsTrigger>
-            </TabsList>
-          </Tabs>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenDialog(post)}
+                            data-testid={`button-edit-${post.id}`}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          
+                          {post.status === 'draft' ? (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handlePublish(post)}
+                              data-testid={`button-publish-${post.id}`}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleUnpublish(post)}
+                              data-testid={`button-unpublish-${post.id}`}
+                            >
+                              <EyeOff className="h-4 w-4" />
+                            </Button>
+                          )}
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(post)}
+                            data-testid={`button-delete-${post.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardHeader>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      <main className="max-w-[1600px] mx-auto px-6 py-6">
-        {isLoading ? (
-          <div className="grid gap-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Card key={i}>
-                <CardHeader>
-                  <div className="space-y-2">
-                    <Skeleton className="h-6 w-2/3" />
-                    <Skeleton className="h-4 w-full" />
-                    <div className="flex items-center gap-4 mt-4">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-4 w-24" />
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        ) : filteredPosts.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileText className="h-16 w-16 text-gray-300 mb-4" />
-              <h3 className="text-base font-semibold text-gray-900 mb-2">Noch keine Blog-Beiträge</h3>
-              <p className="text-gray-600 text-center mb-6">
-                Erstelle deinen ersten Blog-Beitrag
-              </p>
-              <Button onClick={() => handleOpenDialog()} data-testid="button-create-first">
-                <Plus className="h-4 w-4 mr-2" />
-                Ersten Beitrag erstellen
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4">
-            {filteredPosts.map((post) => (
-              <Card key={post.id} data-testid={`post-card-${post.id}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <CardTitle className="text-lg">{post.title}</CardTitle>
-                        {getStatusBadge(post.status)}
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">{post.excerpt}</p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>{post.author}</span>
-                        <span>•</span>
-                        <Badge variant="outline" className="text-xs">{post.category}</Badge>
-                        {post.publishedAt && (
-                          <>
-                            <span>•</span>
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {new Date(post.publishedAt).toLocaleDateString('de-DE')}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenDialog(post)}
-                        data-testid={`button-edit-${post.id}`}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      
-                      {post.status === 'draft' ? (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handlePublish(post)}
-                          data-testid={`button-publish-${post.id}`}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleUnpublish(post)}
-                          data-testid={`button-unpublish-${post.id}`}
-                        >
-                          <EyeOff className="h-4 w-4" />
-                        </Button>
-                      )}
-
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(post)}
-                        data-testid={`button-delete-${post.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-        )}
-      </main>
 
       {showDialog && (
         <Dialog open={showDialog} onOpenChange={handleCloseDialog}>
@@ -634,6 +620,6 @@ export default function AdminBlog() {
           </DialogContent>
         </Dialog>
       )}
-    </div>
+    </AdminLayout>
   );
 }

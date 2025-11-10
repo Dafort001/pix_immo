@@ -18,6 +18,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
+import { AdminLayout } from "@/components/AdminLayout";
+import { AdminPageHeader } from "@/components/AdminPageHeader";
+import { SEOHead } from "@shared/components";
 
 type EditorialItem = {
   id: string;
@@ -62,14 +65,14 @@ const statusLabels: Record<string, string> = {
 };
 
 const priorityColors: Record<string, string> = {
-  low: "bg-[#4A5849]/10 text-[#6B8268] dark:text-[#8FA88B] border-[#4A5849]/20",
-  normal: "bg-gray-500/10 text-gray-600 dark:text-gray-400 border-gray-500/20",
-  high: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  urgent: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+  low: "",
+  normal: "",
+  high: "",
+  urgent: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 export default function AdminEditorial() {
-  const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
+  const { user, isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<EditorialItem | null>(null);
@@ -219,22 +222,23 @@ export default function AdminEditorial() {
 
   const filteredItems = filterItems(itemsData?.items || []);
 
+  if (!user) return null;
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-lg font-normal mb-2">Redaktionsplan</h1>
-          <p className="text-muted-foreground">
-            Verwalte Blog-Beiträge, Website-Updates und Content-Strategie
-          </p>
-        </div>
-        <Dialog open={isCreateOpen} onOpenChange={handleDialogOpenChange}>
-          <DialogTrigger asChild>
-            <Button data-testid="button-create-item">
-              <Plus className="w-4 h-4 mr-2" />
-              Neuer Eintrag
-            </Button>
-          </DialogTrigger>
+    <AdminLayout userRole={user.role}>
+      <SEOHead title="Redaktionsplan – pix.immo Admin" description="Content-Strategie verwalten" path="/admin/editorial" />
+      
+      <div className="flex flex-col h-full">
+        <AdminPageHeader
+          title="Redaktionsplan"
+          actions={
+            <Dialog open={isCreateOpen} onOpenChange={handleDialogOpenChange}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-create-item">
+                  <Plus className="w-4 h-4 mr-2" />
+                  Neuer Eintrag
+                </Button>
+              </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>
@@ -437,9 +441,12 @@ export default function AdminEditorial() {
             </Form>
           </DialogContent>
         </Dialog>
-      </div>
+          }
+        />
 
-      <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
+        <div className="flex-1 overflow-auto">
+          <div className="max-w-6xl mx-auto px-6 py-8">
+            <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
         <TabsList>
           <TabsTrigger value="all" data-testid="tab-all">Alle</TabsTrigger>
           <TabsTrigger value="blog" data-testid="tab-blog">Blog</TabsTrigger>
@@ -531,6 +538,9 @@ export default function AdminEditorial() {
           )}
         </TabsContent>
       </Tabs>
-    </div>
+          </div>
+        </div>
+      </div>
+    </AdminLayout>
   );
 }

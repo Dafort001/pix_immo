@@ -39,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 
 type AdminLayoutProps = {
   children: React.ReactNode;
-  userRole: "admin" | "client";
+  userRole: "admin" | "client" | "editor";
 };
 
 type NavigationItem = {
