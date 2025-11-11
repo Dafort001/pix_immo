@@ -1,0 +1,92 @@
+REPLIT-WEISUNG — HALT B0 (API Wiring & CORS für Cloudflare Pages) — NUR DIESEN HALT UMSETZEN
+
+Ziel:
+Das bereits deployte Frontend (Cloudflare Pages) soll stabil mit der bestehenden API sprechen. Dafür CORS, Cookies, Preflight und R2-CORS korrekt setzen. Keine neuen Features, kein Refactor der Endpoints.
+
+Leitplanken:
+- Nur Konfiguration/Middleware anpassen. Keine Routen-/Datenbank-Änderungen.
+- Session-Cookie-Flags für Cross-Site korrigieren (Pages-Domain ≠ API-Domain).
+- R2-CORS-Regeln für PUT/GET von signed URLs setzen.
+- Keine E2E-Tests.
+
+Scope (nur diese Dateien anlegen/ändern):
+- server/config/env.ts (ALLOWED_ORIGINS, COOKIE_SAMESITE, COOKIE_SECURE)
+- server/middleware/cors.ts (CORS + Preflight)
+- server/middleware/session.ts (Cookie-Flags)
+- server/index.ts (Middleware-Reihenfolge)
+- scripts/r2-cors-apply.md (Manueller Schritt für R2-Bucket)
+- tests/integration/cors.test.ts (leichte Tests)
+- README.md (Abschnitt „Pages ↔ API Konnektivität“)
+
+ENV (Beispiele, NICHT hardcoden):
+- ALLOWED_ORIGINS=https://pix-immo.pages.dev,https://www.pix.immo
+- COOKIE_SAMESITE=None
+- COOKIE_SECURE=true
+
+1) CORS-Middleware (server/middleware/cors.ts)
+- allow origins: parse ALLOWED_ORIGINS (Liste). Wenn Origin ∉ Liste → 403.
+- allow methods: GET, POST, PUT, DELETE, OPTIONS
+- allow headers: Content-Type, Authorization, X-Device-Token, X-Requested-With, Content-MD5, x-amz-acl, x-amz-content-sha256, x-amz-date
+- expose headers: ETag, Content-Length, Location
+- credentials: true
+- Preflight: OPTIONS /* → 204 mit o. g. Headern; keine weitere Verarbeitung
+
+2) Session-Cookie (server/middleware/session.ts)
+- HttpOnly=true, Secure=env(COOKIE_SECURE)=true, SameSite=env(COOKIE_SAMESITE)=None, Path="/", Domain=API-Domain (nicht Pages)
+- TTL wie bisher (z. B. 24h)
+- Hinweis: SameSite=None erzwingt Secure=true (HTTPS)
+
+3) Middleware-Reihenfolge (server/index.ts)
+- Reihenfolge sicherstellen:
+  - request-id/logger (falls vorhanden)
+  - CORS (vor allen Routen!)
+  - session
+  - routes (/api/*)
+  - 404/405 handler
+  - error handler
+- Bei Fehlern → keine sensiblen Details in Response (stack nicht leaken)
+
+4) R2 CORS (scripts/r2-cors-apply.md)
+- Für den R2-Bucket `piximmo-media` folgende CORS-Regeln setzen (Dokuschritt):
+  - AllowedOrigins: https://pix-immo.pages.dev, https://www.pix.immo
+  - AllowedMethods: GET, PUT
+  - AllowedHeaders: Content-Type, Content-MD5, x-amz-acl, x-amz-content-sha256, x-amz-date
+  - ExposeHeaders: ETag, Location
+  - MaxAgeSeconds: 300
+- Zweck: Browser-Uploads via signed PUT und Previews via signed GET
+
+5) Tests (leicht, ohne E2E) — tests/integration/cors.test.ts
+- Preflight:
+  - OPTIONS /api/orders/123/files mit Origin=https://pix-immo.pages.dev → 204 + Allow/Expose/Credentials= true
+  - OPTIONS gleich, aber mit Origin=unlisted → 403
+- Cookie:
+  - POST /api/auth/verify (Mock) setzt Set-Cookie mit SameSite=None; Secure; HttpOnly
+- Signed PUT (Mock):
+  - Prüfen, dass Response der /uploads/intent CORS-relevante Header nicht blockiert (clientseitiger PUT erlaubt)
+
+6) Fehler-/Fallback-Verhalten
+- Origin fehlt/ist leer → behandle wie unlisted → 403
+- Credentials-Requests ohne Cookie → erlauben (CORS true), aber Route authentifiziert separat
+- Bei 401/403 serverseitig: klare, kurze JSON-Fehler ohne Details
+
+7) README (Abschnitt „Pages ↔ API Konnektivität“)
+- Erkläre kurz:
+  - Frontend-Origin muss in ALLOWED_ORIGINS stehen (Preview + Prod).
+  - Cookies: SameSite=None + Secure.
+  - R2-CORS für PUT/GET.
+  - Bei CORS-Fehlern: Dev-Checkliste (Origin, Headers, Preflight, HTTPS).
+
+Definition of Done (DoD):
+- Preflight aus Pages-Domain funktioniert (204), aus Fremd-Domain geblockt (403).
+- Session-Cookie hat HttpOnly, Secure, SameSite=None; Login aus Pages funktioniert.
+- Signed PUT/GET funktionieren in Browser (kein CORS-Block).
+- Keine Änderung an bestehenden API-Routen/Business-Logik.
+- Integration-Tests grün.
+
+Cleanup:
+- Keine Secrets in README/Repo.
+- Prüfen, dass ALLOWED_ORIGINS nur die gewünschten Domains enthält (keine Wildcards).
+- Logs kontrollieren: keine Tokens/OTPs im Klartext.
+
+Hinweis (NICHT jetzt umsetzen):
+- Wenn API und Pages später auf derselben Apex/Subdomain laufen, kann SameSite=Lax reichen; bis dahin bei getrennten Domains unbedingt None+Secure.
