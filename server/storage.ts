@@ -574,6 +574,37 @@ export interface IStorage {
   getServicesByCategory(category: string): Promise<Service[]>;
   updateService(id: string, data: Partial<Service>): Promise<void>;
   deleteService(id: string): Promise<void>;
+  
+  // Edit Jobs operations (HALT F4a)
+  createEditJob(data: {
+    fileId: string;
+    orderId: string | null;
+    userId: string;
+    express?: boolean;
+  }): Promise<any>; // Returns EditJob
+  getEditJob(id: string): Promise<any | undefined>;
+  getEditJobsByStatus(status: string, limit?: number): Promise<any[]>;
+  getEditJobsByOrder(orderId: string): Promise<any[]>;
+  getEditJobsByFile(fileId: string): Promise<any[]>;
+  updateEditJobStatus(id: string, status: string, data?: {
+    startedAt?: number;
+    finishedAt?: number;
+    error?: string;
+    resultPath?: string;
+    previewPath?: string;
+    resultFileSize?: number;
+  }): Promise<void>;
+  retryEditJob(id: string): Promise<void>; // Increment retry count, reset to queued
+  
+  // File Locking operations (HALT F4a)
+  lockFile(fileId: string): Promise<void>;
+  unlockFile(fileId: string): Promise<void>;
+  isFileLocked(fileId: string): Promise<boolean>;
+  getLockedFiles(): Promise<any[]>;
+  
+  // Uploaded Files extended operations
+  getFilesByStatus(status: string): Promise<any[]>;
+  updateFileStatus(fileId: string, status: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3457,6 +3488,149 @@ export class DatabaseStorage implements IStorage {
     }));
 
     return { notes, total };
+  }
+
+  // ===================================================================
+  // Edit Jobs Operations (HALT F4a)
+  // ===================================================================
+  
+  async createEditJob(data: {
+    fileId: string;
+    orderId: string | null;
+    userId: string;
+    express?: boolean;
+  }): Promise<any> {
+    const id = randomUUID();
+    const [job] = await db.insert(editJobs).values({
+      id,
+      fileId: data.fileId,
+      orderId: data.orderId,
+      userId: data.userId,
+      status: 'queued',
+      express: data.express || false,
+      retryCount: 0,
+      createdAt: Date.now(),
+    }).returning();
+    return job;
+  }
+  
+  async getEditJob(id: string): Promise<any | undefined> {
+    const [job] = await db.select().from(editJobs).where(eq(editJobs.id, id)).limit(1);
+    return job;
+  }
+  
+  async getEditJobsByStatus(status: string, limit: number = 10): Promise<any[]> {
+    const jobs = await db
+      .select()
+      .from(editJobs)
+      .where(eq(editJobs.status, status))
+      .orderBy(editJobs.createdAt)
+      .limit(limit);
+    return jobs;
+  }
+  
+  async getEditJobsByOrder(orderId: string): Promise<any[]> {
+    const jobs = await db
+      .select()
+      .from(editJobs)
+      .where(eq(editJobs.orderId, orderId))
+      .orderBy(desc(editJobs.createdAt));
+    return jobs;
+  }
+  
+  async getEditJobsByFile(fileId: string): Promise<any[]> {
+    const jobs = await db
+      .select()
+      .from(editJobs)
+      .where(eq(editJobs.fileId, fileId))
+      .orderBy(desc(editJobs.createdAt));
+    return jobs;
+  }
+  
+  async updateEditJobStatus(id: string, status: string, data?: {
+    startedAt?: number;
+    finishedAt?: number;
+    error?: string;
+    resultPath?: string;
+    previewPath?: string;
+    resultFileSize?: number;
+  }): Promise<void> {
+    const updateData: any = { status };
+    if (data) {
+      if (data.startedAt) updateData.startedAt = data.startedAt;
+      if (data.finishedAt) updateData.finishedAt = data.finishedAt;
+      if (data.error) updateData.error = data.error;
+      if (data.resultPath) updateData.resultPath = data.resultPath;
+      if (data.previewPath) updateData.previewPath = data.previewPath;
+      if (data.resultFileSize) updateData.resultFileSize = data.resultFileSize;
+    }
+    await db.update(editJobs).set(updateData).where(eq(editJobs.id, id));
+  }
+  
+  async retryEditJob(id: string): Promise<void> {
+    await db
+      .update(editJobs)
+      .set({ 
+        status: 'queued',
+        retryCount: sql`${editJobs.retryCount} + 1`,
+        error: null,
+      })
+      .where(eq(editJobs.id, id));
+  }
+  
+  // ===================================================================
+  // File Locking Operations (HALT F4a)
+  // ===================================================================
+  
+  async lockFile(fileId: string): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ locked: true })
+      .where(eq(uploadedFiles.id, fileId));
+  }
+  
+  async unlockFile(fileId: string): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ locked: false })
+      .where(eq(uploadedFiles.id, fileId));
+  }
+  
+  async isFileLocked(fileId: string): Promise<boolean> {
+    const [file] = await db
+      .select({ locked: uploadedFiles.locked })
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, fileId))
+      .limit(1);
+    return file?.locked || false;
+  }
+  
+  async getLockedFiles(): Promise<any[]> {
+    const files = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.locked, true));
+    return files;
+  }
+  
+  // ===================================================================
+  // Uploaded Files Extended Operations
+  // ===================================================================
+  
+  async getFilesByStatus(status: string): Promise<any[]> {
+    const files = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.status, status))
+      .orderBy(desc(uploadedFiles.createdAt));
+    return files;
+  }
+  
+  async updateFileStatus(fileId: string, status: string): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ status, updatedAt: Date.now() })
+      .where(eq(uploadedFiles.id, fileId));
   }
 }
 

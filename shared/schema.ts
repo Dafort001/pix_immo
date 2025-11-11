@@ -117,7 +117,8 @@ export const uploadedFiles = pgTable("uploaded_files", {
   mimeType: varchar("mime_type", { length: 100 }).notNull(),
   fileSize: bigint("file_size", { mode: "number" }).notNull(),
   checksum: varchar("checksum", { length: 64 }), // SHA256 hash
-  status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'processing', 'completed', 'failed', 'queued'
+  status: varchar("status", { length: 50 }).notNull().default("uploaded"), // 'uploaded', 'processing', 'completed', 'failed', 'queued', 'in_progress', 'done'
+  locked: boolean("locked").notNull().default(false), // File locked during edit job processing
   roomType: varchar("room_type", { length: 50 }).notNull().default("undefined_space"), // Room classification (e.g., 'wohnzimmer', 'kueche')
   stackId: varchar("stack_id", { length: 20 }), // Stack group ID (e.g., 'g003')
   // Filename Schema v3.1 fields
@@ -155,15 +156,18 @@ export const editJobs = pgTable("edit_jobs", {
   id: varchar("id").primaryKey(),
   fileId: varchar("file_id").notNull().references(() => uploadedFiles.id, { onDelete: "cascade" }),
   orderId: varchar("order_id").references(() => orders.id, { onDelete: "cascade" }), // Nullable for legacy/ad-hoc files
-  status: varchar("status", { length: 50 }).notNull().default("queued"), // 'queued', 'in_progress', 'completed', 'failed'
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }), // Job owner
+  status: varchar("status", { length: 50 }).notNull().default("queued"), // 'queued', 'in_progress', 'done', 'failed'
   express: boolean("express").notNull().default(false), // Express service requested
+  retryCount: bigint("retry_count", { mode: "number" }).notNull().default(0), // Number of retry attempts (max 3)
   processingNotes: text("processing_notes"), // Internal processing notes
-  resultPath: text("result_path"), // R2 path to processed file
+  resultPath: text("result_path"), // R2 path to processed file (processed/)
+  previewPath: text("preview_path"), // R2 path to preview image (preview/)
   resultFileSize: bigint("result_file_size", { mode: "number" }), // Size of processed file
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
   startedAt: bigint("started_at", { mode: "number" }), // When processing started
   finishedAt: bigint("finished_at", { mode: "number" }), // When processing completed
-  failureReason: text("failure_reason"), // Error message if failed
+  error: text("error"), // Error message if failed
 }, (table) => ({
   // Index for queue processing
   statusCreatedIdx: index("edit_jobs_status_created_idx").on(table.status, table.createdAt),

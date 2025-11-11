@@ -1,0 +1,133 @@
+REPLIT-WEISUNG — HALT F4a (EDIT-QUEUE REAL, OHNE KI) — NUR DIESEN HALT UMSETZEN
+
+Leitplanken:
+- Arbeite ausschließlich an Halt F4a. Keine Frontend-Änderungen außerhalb der Previews. Keine neuen Features, keine E2E-Tests.
+- Ziel: Stub-Queue aus Halt F3 ersetzen durch reale, asynchrone Verarbeitung auf Cloudflare (Queues oder Cron).
+- Feature-Flags unverändert lassen (FEATURE_PRODUCTION=false, FEATURE_GALLERY=false).
+
+Ziel:
+Wenn der Kunde markierte Dateien über "submit-edits" sendet, sollen reale EditJobs erzeugt und automatisch verarbeitet werden:
+1️⃣ Datei sperren
+2️⃣ RAW aus R2 lesen → nach processed/ kopieren
+3️⃣ Preview-Bild erzeugen
+4️⃣ Status setzen (queued → in_progress → done)
+5️⃣ Previews im Frontend sichtbar machen (bestehender /preview Endpoint)
+
+---
+
+1️⃣ Job-Entitäten
+Neue Tabelle/EditJob-Store:
+EditJob {
+  id,
+  file_id,
+  order_id,
+  user_id,
+  status: "queued" | "in_progress" | "done" | "failed",
+  started_at,
+  finished_at,
+  error
+}
+
+Job-Logik:
+- Ein File hat max. 1 aktiven Job.
+- submit-edits erstellt pro markierter Datei ein EditJob (status='queued').
+- Consumer verarbeitet Jobs sequentiell (Cloudflare Queue oder Cron).
+
+---
+
+2️⃣ Processing Worker (Consumer)
+Zwei Varianten erlaubt:
+A) Cloudflare Queues  
+   - Producer: POST /api/orders/:id/submit-edits enqueuet Jobs.  
+   - Consumer Worker: nimmt Messages, ruft R2-API, führt Copy + Preview aus.
+B) Cron-Worker (Fallback)  
+   - Cron alle 2 Minuten, wählt 10 queued Jobs aus DB und verarbeitet sie.
+
+Verarbeitungsschritte:
+1️⃣ Setze job.status='in_progress', file.status='in_progress', locked=true.
+2️⃣ R2 copy:
+    RAW: user/{uid}/orders/{order_id}/raw/{name}
+    DEST: user/{uid}/orders/{order_id}/processed/{name}
+3️⃣ Preview:
+    - Ziel: user/{uid}/orders/{order_id}/preview/{basename}.jpg
+    - Wenn ImageTools vorhanden → auf 1280px lange Kante runterskalieren.
+    - Sonst identische Kopie (temporär als Platzhalter).
+4️⃣ job.status='done', job.finished_at=now()
+5️⃣ file.status='done', file.locked=false, file.preview_url="r2://.../preview/..."
+6️⃣ Notification: edit_done
+
+Fehlerpfade:
+- Fehlender RAW → job.status='failed', file bleibt 'queued', Notification 'revision_required'.
+- Retry: max. 3x, dann 'failed'.
+
+---
+
+3️⃣ Endpoints (Backend)
+Vorhandene Endpoints beibehalten, nur internes Verhalten erweitern:
+- POST /api/orders/:id/submit-edits  
+  → erzeugt pro markierter Datei einen EditJob (status='queued')
+- GET /api/orders/:id/status  
+  → zählt Dateien nach Status (queued, in_progress, done, failed)
+- GET /api/files/:id/preview  
+  → gibt signed GET URL auf preview-Datei zurück; 404, wenn nicht vorhanden
+- POST /api/files/:id/revision  
+  → legt neuen EditJob an (status='queued'), wenn Datei nicht gesperrt
+
+---
+
+4️⃣ Locking / Race Conditions
+- Datei während Jobstatus in_progress gesperrt (DELETE/RENAME → 409).
+- Lock lösen nach job.finished_at.
+- Consumer-Start prüft alte Jobs (>15min in_progress) → requeue.
+
+---
+
+5️⃣ R2-Integration
+Buckets:
+- piximmo-media/raw/
+- piximmo-media/processed/
+- piximmo-media/preview/
+
+Aktionen:
+- GET RAW via signed URL oder R2 API
+- PUT processed & preview (identische ACLs wie RAW)
+- TTL: 90 Tage (später archivieren)
+
+---
+
+6️⃣ Tests (nur Unit & Integration mit Mocks)
+Unit:
+- Job-Statemaschine (queued→in_progress→done/failed)
+- Lock-Handler (set/release)
+Integration:
+1. submit-edits → erzeugt Jobs
+2. Consumer verarbeitet 3 Dateien → Status done, Previews vorhanden
+3. /preview liefert URL → HTTP 200
+4. Fehlendes RAW → job failed, Notification revision_required
+5. DELETE während Lock → 409
+
+---
+
+7️⃣ Logs & Monitoring
+- Log: Job-ID, file_id, Dauer (s), Bytes kopiert, Ergebnis.
+- Counter pro Status (queued/in_progress/done/failed).
+- Fehler zentral loggen (JSON: timestamp, job_id, error).
+
+---
+
+8️⃣ Cleanup
+- Nach Tests: alle Test-Jobs & Testdateien löschen.
+- Locks resetten (falls Consumer abgebrochen).
+- Sicherstellen: kein Preview-Sonderverzeichnis verbleibt im Test-Bucket.
+
+---
+
+Definition of Done:
+- submit-edits erzeugt echte EditJobs.
+- Consumer verarbeitet Jobs → Dateien liegen unter processed/ und preview/.
+- /api/files/:id/preview liefert funktionierende URL.
+- Statuszählung korrekt (queued, in_progress, done, failed).
+- Locks funktionieren; keine Mutationen während Verarbeitung.
+- Logs zeigen Jobs und Fehler konsistent.
+- Keine Backend-API-Brüche oder neuen Routen.
+- Tests (unit + integration, ohne E2E) grün.
