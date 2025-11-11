@@ -1,0 +1,60 @@
+REPLIT-WEISUNG — HALT F3 (Integration & Deployment / Cloudflare Pages STAGING)
+
+Leitplanken:
+- Arbeite ausschließlich an Halt F3. Keine neuen Features oder API-Änderungen. Keine E2E-Tests.
+- Ziel: Frontend aus Halt F2 auf Cloudflare Pages deployen, API-Basis korrekt anbinden, CORS testen, Staging-Umgebung betriebsbereit machen.
+- Feature-Flags unverändert lassen (FEATURE_GALLERY=false, FEATURE_PRODUCTION=false).
+
+Ziel:
+Frontend-Funktionen aus Halt F2 (File Management, Edit-Workflow, Downloads, Notifications) auf Cloudflare Pages bereitstellen, damit das Gesamtsystem im Browser vollständig nutzbar ist.
+
+1️⃣ Projekt- und Build-Konfiguration
+- Datei wrangler.toml anlegen/ergänzen:
+  name = "pixcapture-frontend"
+  pages_build_output_dir = "dist"
+  compatibility_date = "2025-11-12"
+
+- `.env.production` im Root-Verzeichnis erstellen:
+  VITE_API_BASE_URL=https://api.pixcapture.dev
+  VITE_APP_ENV=production
+
+- CORS prüfen: Backend-Worker muss Origin https://pixcapture.pages.dev akzeptieren (Access-Control-Allow-Origin).
+
+2️⃣ Deployment-Schritte
+- Frontend builden:
+  npm run build
+- Danach veröffentlichen:
+  npx wrangler pages publish ./dist
+- Domain bestätigen: https://pixcapture.pages.dev
+- Überprüfen, dass Routes /login, /orders/:id/stacks, /orders/:id/exports erreichbar sind.
+
+3️⃣ Smoke-Test (manuell im Browser, keine Automatisierung)
+- Login-Flow: E-Mail → OTP → Session funktioniert.
+- Upload-Flow: Datei hochladen, finalize, Datei erscheint in Liste.
+- Markieren + Submit: Status „eingereicht“ sichtbar.
+- Downloads: ZIP + Alt-Texte (TXT/JSON) starten Downloads erfolgreich.
+- Notifications: Neue Events sichtbar (Poll aktiv).
+
+4️⃣ Fehlerbehandlung
+- 401/403 → Redirect /login
+- 404 → interne Fallback-Seite _error.html
+- Console darf keine kritischen Fehler werfen (nur Warnungen erlaubt).
+- Wenn CORS oder URLs fehlschlagen → Build abbrechen, Problem melden.
+
+5️⃣ Monitoring & Staging-Domain
+- Cloudflare Analytics aktivieren.
+- Pages-Dashboard prüfen: Traffic sichtbar.
+- `_error.html` hinzufügen mit einfachem Hinweis „Seite nicht gefunden oder aktuell nicht verfügbar.“
+
+6️⃣ Git & Branch
+- Branch `deploy/staging` erstellen.
+- Nach erfolgreichem Test Merge → main.
+- Datei `TESTS-HALT-F3.md` anlegen mit Stichproben-Ergebnissen (Login, Upload, Submit, Download).
+- Keine Änderungen am Backend-Repository vornehmen.
+
+Definition of Done:
+- Frontend unter https://pixcapture.pages.dev funktionsfähig.
+- API-Calls zu https://api.pixcapture.dev laufen korrekt (CORS geprüft).
+- Smoke-Test ohne Fehler abgeschlossen.
+- `TESTS-HALT-F3.md` dokumentiert erfolgreiche Prüfungen.
+- Keine ungeplanten Änderungen an Backend oder Flags.

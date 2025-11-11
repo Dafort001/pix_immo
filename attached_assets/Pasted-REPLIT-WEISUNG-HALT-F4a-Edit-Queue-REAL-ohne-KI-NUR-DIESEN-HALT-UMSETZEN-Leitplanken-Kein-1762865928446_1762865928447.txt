@@ -1,0 +1,68 @@
+REPLIT-WEISUNG — HALT F4a (Edit-Queue REAL, ohne KI) — NUR DIESEN HALT UMSETZEN
+
+Leitplanken:
+- Keine neuen Frontend-Features jenseits Status/Previews sichtbar machen.
+- Keine Zahlung, keine Galerie-Öffentlichkeit. Keine E2E-Tests.
+- Ziel: Stub-Queue ersetzen durch echte, asynchrone Verarbeitung (Worker/Queue), die Dateien von R2/raw nach R2/processed kopiert und Previews verfügbar macht. Endpoints bleiben gleich.
+
+Zielbild:
+submit-edits → Jobs angelegt → Consumer verarbeitet: lock file, copy raw→processed/, erzeugt kleine Preview (serverseitig skaliert), setzt status=done → UI zeigt Preview, Approve/Revision funktionieren.
+
+1) Infrastruktur (nur was nötig ist)
+- Cloudflare Queues oder Cron-Worker verwenden (eine Variante):
+  a) CF Queues:
+     - Producer: beim POST /api/orders/:id/submit-edits pro Datei Message enqueuen.
+     - Consumer Worker: liest Messages, verarbeitet Dateien sequenziell.
+  b) Alternativ Cron (falls Queues nicht aktivierbar): alle 2 Min. picke queued Files (limit 10) und verarbeite sie.
+
+2) Verarbeitungsschritte (Consumer)
+- Input: { file_id, order_id, object_key_raw }
+- Prüfen: file.status == 'queued' → setze 'in_progress' + lock.
+- R2: rawPfad = user/<uid>/orders/<order_id>/raw/<name>
+      procPfad = user/<uid>/orders/<order_id>/processed/<name>  (gleicher Name)
+- Kopieren: R2 GET raw → R2 PUT processed (nur Metadaten übernehmen).
+- Preview erzeugen: zusätzlich Thumbnail (z. B. 1280px lange Kante) nach:
+  user/<uid>/orders/<order_id>/preview/<basename>.jpg
+  (Skalierung: vorerst einfacher downscale-Stub; falls kein ImageMagick verfügbar, identische Kopie in preview/ schreiben und TODO markieren)
+- Datei aktualisieren: status='done', locked=false, preview_url setzen (pointer), job.finished_at.
+- Event: 'edit_done' + Notification anlegen.
+
+3) Backend-Änderungen (minimal, kompatibel)
+- Job-Entity persistieren:
+  EditJob { id, file_id, order_id, status('queued'|'in_progress'|'done'|'failed'), started_at, finished_at, error? }
+- submit-edits (bestehend): zusätzlich pro markierter Datei EditJob erzeugen (wenn noch keiner offen).
+- GET /api/orders/:id/status (bestehend): echte Counts aus EditJob/File ableiten.
+- GET /api/files/:id/preview (bestehend): gibt signed GET URL zu preview/ zurück. Falls nicht vorhanden, 404 → Frontend zeigt Placeholder.
+
+4) File-Locking & Revision
+- Während 'in_progress': File gesperrt (Mutationen DELETE/RENAME → 409).
+- POST /api/files/:id/approve: setzt file.approved=true (unverändert).
+- POST /api/files/:id/revision: setzt file.status='queued', approved=false, erhöht ver (falls neue Version produziert wird später), legt neuen EditJob an.
+
+5) Fehlerpfade
+- Wenn raw fehlt → job 'failed', file bleibt 'queued', Notification 'revision_required' mit Hinweis.
+- Retry-Strategie: Consumer darf failed Jobs max. 3× retryn (Backoff), dann als 'failed' belassen.
+
+6) Sicherheit & Quoten
+- Pro User max. N gleichzeitige 'in_progress' (z. B. 10), überschüssige bleiben 'queued'.
+- Rate-Limit submit-edits (z. B. 5/min/User).
+
+7) Logs & Metriken (leicht)
+- Log pro Job: start/finish/duration/bytes.
+- Counter: queued/in_progress/done/failed (für /status).
+
+8) Tests (leicht, keine E2E)
+- Unit: Job-State-Maschine (queued→in_progress→done/failed).
+- Integration (Mock R2): submit-edits legt Jobs an; Consumer verarbeitet 3 Dateien, setzt Previews und Status korrekt; Lock verhindert DELETE (409).
+- Negative: fehlendes raw → failed; /preview 404 bis Preview existiert.
+
+9) Cleanup
+- Test-Jobs und Test-Dateien nach Durchlauf entfernen.
+- Locks zurücksetzen, falls Consumer abstürzt (Watchdog beim Start: überfällige 'in_progress' >15 Min auf 'queued' zurücksetzen).
+
+Definition of Done:
+- submit-edits erzeugt echte Jobs; Consumer verarbeitet sie → Dateien erscheinen unter processed/ + preview/.
+- UI kann Previews anzeigen (GET /api/files/:id/preview liefert signed URL).
+- Statuszählung (/api/orders/:id/status) spiegelt realen Stand wider.
+- Während Verarbeitung sind Dateien gesperrt; Approve/Revision funktionieren danach.
+- Logs zeigen Dauer/Erfolg/Fehler; keine ungeplanten API-Änderungen; Tests grün.

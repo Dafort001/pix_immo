@@ -1,0 +1,18 @@
+# Cloudflare Pages Configuration for pix.immo Frontend
+# Deployment: npx wrangler pages deploy ./dist/client --config wrangler-pages.toml
+
+name = "pixcapture-frontend"
+compatibility_date = "2025-11-12"
+
+# Pages build output directory
+pages_build_output_dir = "dist/client"
+
+# Production environment variables (build-time only)
+[env.production]
+VITE_API_BASE_URL = "https://api.pixcapture.dev"
+VITE_APP_ENV = "production"
+
+# Staging/Preview environment variables
+[env.preview]
+VITE_API_BASE_URL = "https://api-staging.pixcapture.dev"
+VITE_APP_ENV = "staging"
