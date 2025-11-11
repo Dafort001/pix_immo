@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { getApiBaseUrl } from '@/config/runtime';
 
 export type CheckStatus = 'pending' | 'pass' | 'warn' | 'fail' | 'skipped';
@@ -17,7 +17,13 @@ interface SmokeCheckResult {
   runChecks: () => Promise<void>;
 }
 
-export function useSmokeChecks(): SmokeCheckResult {
+export interface UseSmokeChecksOptions {
+  autoRun?: boolean;
+  runIntervalMs?: number;
+}
+
+export function useSmokeChecks(options: UseSmokeChecksOptions = {}): SmokeCheckResult {
+  const { autoRun = true, runIntervalMs } = options;
   const [checks, setChecks] = useState<SmokeCheck[]>([
     { id: 'api-url', name: 'API Base URL', status: 'pending' },
     { id: 'cors-preflight', name: 'CORS Preflight', status: 'pending' },
@@ -151,6 +157,24 @@ export function useSmokeChecks(): SmokeCheckResult {
   };
 
   const hasFailures = checks.some((c) => c.status === 'fail');
+  const hasRunOnce = useRef(false);
+
+  useEffect(() => {
+    if (autoRun && !hasRunOnce.current) {
+      hasRunOnce.current = true;
+      runChecks();
+    }
+  }, [autoRun]);
+
+  useEffect(() => {
+    if (!runIntervalMs) return;
+
+    const interval = setInterval(() => {
+      runChecks();
+    }, runIntervalMs);
+
+    return () => clearInterval(interval);
+  }, [runIntervalMs]);
 
   return {
     checks,

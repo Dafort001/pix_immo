@@ -60,9 +60,9 @@ function CheckRow({ check }: { check: SmokeCheck }) {
 }
 
 export function HealthCheckPanel() {
-  const { checks, isRunning, hasFailures, runChecks } = useSmokeChecks();
+  const { checks, isRunning, hasFailures, runChecks } = useSmokeChecks({ autoRun: false });
 
-  // Auto-run on mount
+  // Manual run on mount (to control timing)
   useEffect(() => {
     runChecks();
   }, []);
