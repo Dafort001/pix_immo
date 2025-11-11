@@ -75,12 +75,35 @@ export function registerEditWorkflowRoutes(app: Express): void {
       // Validate files exist and belong to the order
       const fileIds = validatedData.files;
       const jobs = [];
+      const errors = [];
       
       for (const fileId of fileIds) {
+        // SECURITY: Validate file ownership & order association
+        const file = await storage.findFileById(fileId);
+        
+        if (!file) {
+          console.error(`[SECURITY] User ${userId} attempted to submit non-existent file ${fileId}`);
+          errors.push({ fileId, reason: 'File not found' });
+          continue;
+        }
+
+        if (file.orderId !== orderId) {
+          console.error(`[SECURITY] User ${userId} attempted to submit file ${fileId} belonging to different order (actual: ${file.orderId}, claimed: ${orderId})`);
+          errors.push({ fileId, reason: 'File does not belong to this order' });
+          continue;
+        }
+
+        if (file.userId !== userId) {
+          console.error(`[SECURITY] User ${userId} attempted to submit file ${fileId} owned by different user (${file.userId})`);
+          errors.push({ fileId, reason: 'Unauthorized access to file' });
+          continue;
+        }
+
         // Check if file is locked
         const isLocked = await storage.isFileLocked(fileId);
         if (isLocked) {
           console.warn(`File ${fileId} is locked, skipping EditJob creation`);
+          errors.push({ fileId, reason: 'File is currently locked' });
           continue;
         }
 
@@ -98,14 +121,23 @@ export function registerEditWorkflowRoutes(app: Express): void {
         jobs.push(job);
       }
 
+      // If all files failed validation, return error
+      if (jobs.length === 0 && errors.length > 0) {
+        return res.status(400).json({
+          error: 'No valid files could be processed',
+          details: errors,
+        });
+      }
+
       // Log submission
-      console.log(`[SUBMIT-EDITS] Created ${jobs.length} EditJobs for order ${orderId} (express: ${validatedData.express})`);
+      console.log(`[SUBMIT-EDITS] Created ${jobs.length} EditJobs for order ${orderId} (express: ${validatedData.express}, errors: ${errors.length})`);
 
       res.status(201).json({
         success: true,
         jobsCreated: jobs.length,
         jobs: jobs.map(j => ({ id: j.id, status: j.status })),
         express: validatedData.express || false,
+        ...(errors.length > 0 && { errors }), // Include errors if any files failed validation
       });
     } catch (error) {
       if (error instanceof z.ZodError) {
