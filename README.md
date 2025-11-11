@@ -37,85 +37,35 @@ npm run dev
 
 ### Production Build & Deployment
 
-**Cloudflare Workers (HALT B1 - Edge API):**
+**🚀 Vollständige Deployment-Dokumentation:** [**DEPLOYMENT.md**](./DEPLOYMENT.md)
+
+**Quick Deploy:**
 ```bash
-# Install wrangler CLI
-npm install -g wrangler
-
-# Set required secrets (one-time)
-wrangler secret put DATABASE_URL
-wrangler secret put SESSION_SECRET
-wrangler secret put JWT_SECRET
-
-# Deploy to preview (staging)
+# Preview zuerst deployen
 wrangler deploy --env preview
 
-# Deploy to production
+# QA-Check durchführen
+# → /qa Route aufrufen (VITE_FEATURE_QA_GUARD=true)
+# → PASS-Kriterien prüfen (API-URL, CORS, Credentials)
+
+# GO/NO-GO Entscheidung
+# → Bei PASS: Production deployen
+# → Bei FAIL: Fehler fixen, erneut Preview deployen
+
 wrangler deploy --env production
-
-# Verify deployment
-curl https://api-preview.pix.immo/healthz  # Preview
-curl https://api.pix.immo/healthz          # Production
 ```
 
-**Configuration:**
-- **wrangler.toml**: R2 Bindings (piximmo-media), CORS, Routes
-- **Canary Routing**: X-Canary: 1 header enables native handlers
-- **Proxy Fallback**: Origin API for non-canary traffic
+**Deployment-Flow:**
+1. **Preview** - Auto-Deploy bei Git Push → `/qa` prüfen
+2. **GO/NO-GO** - Checkliste in [DEPLOYMENT.md](./DEPLOYMENT.md#10-verifikation-checkliste-vor-production) durchgehen
+3. **Production** - Promote via Cloudflare Dashboard
 
-### Cloudflare Pages Frontend Deployment
+**Wichtigste Konfigurationen:**
+- **Workers:** `wrangler.toml` (R2 Bindings, CORS, Canary-Routes)
+- **Pages:** Environment Variables (Preview/Production getrennt)
+- **Secrets:** `JWT_SECRET`, `DATABASE_URL`, `ORIGIN_API_BASE` via `wrangler secret put`
 
-**Prerequisites:**
-- Cloudflare account with Pages enabled
-- GitHub repository connected to Cloudflare Pages
-
-**Build Configuration:**
-```
-Build command: npm run build
-Build output directory: dist/public
-Node version: 22.x
-```
-
-**Environment Variables (Cloudflare Pages Dashboard):**
-
-Production:
-```env
-VITE_API_BASE_URL=https://api.pix.immo
-VITE_APP_ENV=production
-VITE_STRIPE_PUBLIC_KEY=pk_live_...
-```
-
-Preview:
-```env
-VITE_API_BASE_URL=https://api-preview.pix.immo
-VITE_APP_ENV=preview
-VITE_STRIPE_PUBLIC_KEY=pk_test_...
-```
-
-**Local Verification:**
-```bash
-# Build frontend
-npm run build
-
-# Check build output
-node scripts/check-deploy.js
-
-# Preview production build (port 4173)
-npx vite preview --port 4173
-```
-
-**Deploy Checklist:**
-- ✅ `dist/public/index.html` exists
-- ✅ `dist/public/_redirects` exists (SPA routing)
-- ✅ `dist/public/_headers` exists (caching rules)
-- ✅ Environment variables configured in Cloudflare Pages
-- ✅ Custom domain configured (optional)
-
-**Troubleshooting:**
-- **404 on routes:** Verify `_redirects` file is deployed
-- **API calls fail:** Check `VITE_API_BASE_URL` environment variable
-- **Build fails:** Ensure Node version is 22.x
-- **CORS errors:** Backend needs CORS configuration for frontend domain
+Siehe [DEPLOYMENT.md](./DEPLOYMENT.md) für Details zu Canary-Rollout (B1a/B1b), CORS, Troubleshooting und Rollback-Strategien.
 
 ### QA0 - Preview Smoke Checks
 
