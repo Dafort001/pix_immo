@@ -23,6 +23,9 @@ ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://www.pix.immo,https://pix.i
 COOKIE_SAMESITE = "None"
 COOKIE_SECURE = "true"
 
+# Feature Flags (Canary-Rollout)
+PHASE_B1B_ENABLED = "true"  # Enable native upload handlers (B1b)
+
 # =============================================================================
 # R2 Bucket Bindings (Object Storage)
 # =============================================================================
@@ -85,7 +88,8 @@ name = "pixcapture-api-preview"
 vars = { 
   APP_ENV = "preview",
   ORIGIN_API_BASE = "https://api-preview.pix.immo",  # Preview proxy target
-  ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://preview.pix.immo"
+  ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://preview.pix.immo",
+  PHASE_B1B_ENABLED = "true"  # Enable upload handlers in preview
 }
 routes = [
   { pattern = "api-preview.pix.immo/api/*", zone_name = "pix.immo" }
@@ -97,7 +101,8 @@ name = "pixcapture-api"
 vars = { 
   APP_ENV = "production",
   ORIGIN_API_BASE = "https://api.pix.immo",  # Production proxy target
-  ALLOWED_ORIGINS = "https://www.pix.immo,https://pix.immo"
+  ALLOWED_ORIGINS = "https://www.pix.immo,https://pix.immo",
+  PHASE_B1B_ENABLED = "true"  # Enable upload handlers in production
 }
 routes = [
   { pattern = "api.pix.immo/api/*", zone_name = "pix.immo" }
