@@ -13,6 +13,7 @@ import {
   StarOff,
   ThumbsUp,
   MessageSquare,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { OrderFile } from '@/hooks/useOrderFiles';
@@ -23,6 +24,8 @@ interface FileListProps {
   selectedIds: string[];
   onSelectionChange: (ids: string[]) => void;
   onFileClick?: (file: OrderFile) => void;
+  onToggleFavorite?: (fileId: string, currentMarked: boolean) => void;
+  onDelete?: (fileId: string) => void;
   onApprove?: (fileId: string) => void;
   onRevision?: (fileId: string, note: string) => void;
   showApproveControls?: boolean;
@@ -35,6 +38,8 @@ export function FileList({
   selectedIds,
   onSelectionChange,
   onFileClick,
+  onToggleFavorite,
+  onDelete,
   onApprove,
   onRevision,
   showApproveControls = false,
@@ -217,8 +222,35 @@ export function FileList({
                         >
                           {file.filename}
                         </h4>
-                        {file.marked && (
-                          <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                        
+                        {/* Favorite Toggle */}
+                        {onToggleFavorite && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => onToggleFavorite(file.id, !!file.marked)}
+                            data-testid={`button-toggle-favorite-${file.id}`}
+                          >
+                            {file.marked ? (
+                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                            ) : (
+                              <StarOff className="w-3 h-3 text-muted-foreground" />
+                            )}
+                          </Button>
+                        )}
+                        
+                        {/* Delete Button */}
+                        {onDelete && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={() => onDelete(file.id)}
+                            data-testid={`button-delete-${file.id}`}
+                          >
+                            <Trash2 className="w-3 h-3 text-destructive" />
+                          </Button>
                         )}
                       </div>
 
