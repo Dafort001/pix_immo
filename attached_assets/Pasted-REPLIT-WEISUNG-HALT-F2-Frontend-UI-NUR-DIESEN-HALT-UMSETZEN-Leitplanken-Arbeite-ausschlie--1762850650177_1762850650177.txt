@@ -1,0 +1,137 @@
+REPLIT-WEISUNG — HALT F2 (Frontend UI) — NUR DIESEN HALT UMSETZEN
+
+Leitplanken:
+- Arbeite ausschließlich an Halt F2. Keine Backend-Änderungen. Keine neuen Endpoints. Keine E2E-Tests (nur Component/leichte Integration mit Mocks).
+- Feature-Flags: FEATURE_GALLERY=false, FEATURE_PRODUCTION=false lassen; nichts daran ändern.
+- Wenn Vorbedingungen fehlen: STOPPEN und melden, statt zu raten.
+
+Ziel:
+Vier UI-Bereiche gegen bestehende Endpoints anbinden: (1) File Management, (2) Edit-Workflow, (3) Downloads, (4) Notifications. Nur leichte Mutationen: Markieren, Löschen/Restore, Submit Edits, Approve/Revision. Keine Preis-/Zahlungslogik.
+
+Routen/Komponenten (nur diese Dateien ändern/anlegen):
+- Route /orders/:id/stacks
+  - components/UploadDropzone.tsx (falls vorhanden: nur einhängen)
+  - components/FileList.tsx (virtuell/paginiert)
+  - components/StackFilters.tsx
+  - components/TrashDrawer.tsx
+- Route /orders/:id/review (oder Modal aus Stacks)
+  - components/ReviewPackagePanel.tsx
+  - components/ApproveRevisionControls.tsx
+- Route /orders/:id/exports
+  - components/ExportsPanel.tsx
+- Header
+  - components/NotificationsBell.tsx
+
+Status & State-Management:
+- Hooks anlegen:
+  - hooks/useOrderFiles.ts (GET /api/orders/:id/files mit cursor/limit + Filter)
+  - hooks/useOrderStatus.ts (GET /api/orders/:id/status)
+  - hooks/useNotifications.ts (GET /api/notifications, Poll 10–15 s)
+- Optimistic Updates nur für Markieren/Restore/Löschen; kein Optimismus bei Submit/Approve/Revision.
+
+1) File Management UI 📁 (/orders/:id/stacks)
+Funktion:
+- UploadDropzone → POST /api/uploads/intent → PUT (signed_url) → POST /api/uploads/finalize → Liste aktualisieren.
+- FileList (virtuell): Thumbnail, Name, room_type, index, ver, Status, Badges, Checkbox.
+- Filter: room_type, marked, status, warnings, Suche.
+- TrashDrawer: GET /api/trash?order_id=..., Restore via POST /api/trash/restore; Löschen via DELETE /api/files/bulk (Soft-Delete).
+
+Verwendete Endpoints (nur aufrufen, nichts ändern):
+- POST /api/uploads/intent
+  Request: { filename, mime, order_id, room_type?, stack_id? }
+  Response: { signed_url, object_key, headers }
+- POST /api/uploads/finalize
+  Request: { object_key, bytes, checksum, exif_meta? }
+  Response: { file_id, status: "uploaded" }
+- GET /api/orders/:id/files?cursor=&limit=&filter=...
+  Response: { files: [...], next_cursor: "..." }
+- DELETE /api/files/bulk
+  Request: { ids: string[] }
+  Response: { ok: true, deleted: number }
+- GET /api/trash?order_id=...
+  Response: { files: [...] }
+- POST /api/trash/restore
+  Request: { ids: string[] }
+  Response: { ok: true, restored: number }
+- POST /api/files/bulk-mark
+  Request: { ids: string[], marked: boolean }
+  Response: { ok: true }
+
+Fehler/Toasts:
+- 401/403 → Redirect /login + "error.session_expired"
+- 409 (locked) → "error.file_locked"
+- Abgelaufene signed URL → erneuter intent, max. 2 Retries → "error.url_expired"
+
+2) Edit-Workflow UI ⚙️ (/orders/:id/review oder Modal)
+Funktion:
+- ReviewPackagePanel: zählt marked=true aus useOrderFiles; Checkbox express, Textarea order_notes; Submit-Button.
+- ApproveRevisionControls: in FileList-Zeile sichtbar, wenn Preview verfügbar (status='done').
+
+Verwendete Endpoints:
+- POST /api/orders/:id/submit-edits
+  Request: { files: string[], express?: boolean, order_notes?: string }
+  Response: { ok: true }
+- GET /api/orders/:id/status
+  Response: { queued: number, in_progress: number, done: number, total: number }
+- GET /api/files/:id/preview
+  Response: { url: "signed-get-url" } (einfach als <img/> / Link verwenden)
+- POST /api/files/:id/approve
+  Request: {}
+  Response: { ok: true, status: "approved" }
+- POST /api/files/:id/revision
+  Request: { note: string }
+  Response: { ok: true, status: "queued" }
+
+UI-Erwartung:
+- Nach Submit: Badge/Hint "status.submitted" via useOrderStatus aktualisieren.
+- Approve/Revision: Zeilenstatus aktualisieren (kein Optimistic bei Revision; warte Response).
+
+3) Downloads UI 📦 (/orders/:id/exports)
+Funktion:
+- Sprache Toggle (de|en) lokal im State.
+- Buttons:
+  - ZIP → GET /api/orders/:id/download.zip → Response { url } → window.location = url
+  - Alt-Texte .txt/.json → GET /api/orders/:id/alt-texts.txt?lang=de|en / ...json?lang=de|en → direkte Navigation
+
+Verwendete Endpoints:
+- GET /api/orders/:id/download.zip
+  Response: { url: "signed-get-url" }
+- GET /api/orders/:id/alt-texts.txt?lang=de|en
+  → Direkt-Download (Content-Type text/plain)
+- GET /api/orders/:id/alt-texts.json?lang=de|en
+  → Direkt-Download (application/json)
+
+Fehler:
+- 401/403 sauber anzeigen ("error.unauthorized"), keine Retries.
+
+4) Notifications Feed 🔔 (Header)
+Funktion:
+- Bell mit Badge = ungefilterte Anzahl (clientseitig unread zählen).
+- Dropdown der letzten 10 Einträge; Klick navigiert zur passenden Order/File.
+
+Verwendete Endpoints:
+- GET /api/notifications
+  Response: { items: [{ id, type, created_at, order_id?, file_id?, message }] }
+
+Polling:
+- 10–15 s; bei Tab-Hidden pausieren (Visibility API).
+
+i18n:
+- Alle Beschriftungen aus src/locales/de.json (vorhandene Schlüssel verwenden). Keine harten Strings in Komponenten.
+
+Tests (leicht, ohne E2E):
+- components/FileList.test.tsx: rendert 200 Items virtuell, Markieren/Unmark ruft richtigen Endpoint (Mock-Fetch).
+- components/ReviewPackagePanel.test.tsx: Submit payload korrekt; Status-Hook aktualisiert Badge "status.submitted".
+- components/ExportsPanel.test.tsx: Sprachauswahl beeinflusst URL der Downloads.
+- components/NotificationsBell.test.tsx: zeigt Badge und Listeneinträge; Klick navigiert.
+
+Definition of Done:
+- Vier UI-Bereiche funktionieren gegen die genannten Endpoints.
+- Kein ungewollter Schreibzugriff außerhalb Mark/Delete/Restore/Submit/Approve/Revision.
+- i18n-Schlüssel genutzt; Responsive ≥360px.
+- Component/Integration-Tests grün; keine E2E.
+- Keine Änderungen an Backend oder weiteren Features.
+
+Cleanup:
+- Mocks/Fixtures aufräumen, temporäre Testdateien entfernen.
+- Keine neue Konfiguration jenseits dieser Weisung.
