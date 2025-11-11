@@ -41,6 +41,60 @@ npm run build
 wrangler deploy  # Cloudflare Workers
 ```
 
+### Cloudflare Pages Frontend Deployment
+
+**Prerequisites:**
+- Cloudflare account with Pages enabled
+- GitHub repository connected to Cloudflare Pages
+
+**Build Configuration:**
+```
+Build command: npm run build
+Build output directory: dist/public
+Node version: 22.x
+```
+
+**Environment Variables (Cloudflare Pages Dashboard):**
+
+Production:
+```env
+VITE_API_BASE_URL=https://api.pix.immo
+VITE_APP_ENV=production
+VITE_STRIPE_PUBLIC_KEY=pk_live_...
+```
+
+Preview:
+```env
+VITE_API_BASE_URL=https://api-preview.pix.immo
+VITE_APP_ENV=preview
+VITE_STRIPE_PUBLIC_KEY=pk_test_...
+```
+
+**Local Verification:**
+```bash
+# Build frontend
+npm run build
+
+# Check build output
+node scripts/check-deploy.js
+
+# Preview production build (port 4173)
+npx vite preview --port 4173
+```
+
+**Deploy Checklist:**
+- ✅ `dist/public/index.html` exists
+- ✅ `dist/public/_redirects` exists (SPA routing)
+- ✅ `dist/public/_headers` exists (caching rules)
+- ✅ Environment variables configured in Cloudflare Pages
+- ✅ Custom domain configured (optional)
+
+**Troubleshooting:**
+- **404 on routes:** Verify `_redirects` file is deployed
+- **API calls fail:** Check `VITE_API_BASE_URL` environment variable
+- **Build fails:** Ensure Node version is 22.x
+- **CORS errors:** Backend needs CORS configuration for frontend domain
+
 ---
 
 ## 📚 Dokumentation
