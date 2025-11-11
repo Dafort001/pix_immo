@@ -1,0 +1,92 @@
+REPLIT-WEISUNG — HALT B1 (Cloudflare Workers Migration — Staged Rollout) — NUR DIESEN HALT UMSETZEN
+
+Ziel:
+Backend schrittweise auf Cloudflare Workers heben, ohne Downtime. Zuerst Read-only Endpoints (GET) migrieren, dann die Upload-Endpoints (intent/finalize). Schreibende „Edit“-Endpoints bleiben vorerst beim Alt-Backend (Proxy). Alles hinter einem Canary-Flag.
+
+Leitplanken:
+- KEINE Funktionsänderungen. Paritätsprinzip: Responses identisch zum Alt-Backend.
+- Rollout kontrolliert über Header-Flag: X-Canary: 1
+- Keine DB-Migration in diesem Halt. Nur Routing + Bindings + Paritäts-Checks.
+- Keine E2E-Tests. Nur leichte Integration-Checks mit Mocks.
+
+Scope (nur diese Dateien anlegen/ändern):
+- workers/edge.ts (Hono-App – neuer Entry)
+- wrangler.toml (Bindings & Routes)
+- server/proxy/originClient.ts (HTTP-Client zum Alt-Backend)
+- server/handlers/* (nur, falls nötig: dünne Wrapper für GET-Routen)
+- tests/integration/b1.routes.test.ts (leichte Paritäts-Checks)
+- README.md (Abschnitt „B1 Staged Migration“)
+
+ENV/Bindings (wrangler.toml – Beispiel):
+- R2_BUCKET = piximmo-media (binding: R2_BUCKET)
+- JWT_SECRET (gleich zum Alt-Backend)
+- ORIGIN_API_BASE = https://api.alt-backend.example (Alt-Backend)
+- OPTIONAL: KV_SESSIONS (wenn benötigt; hier NICHT migrieren)
+- Routes (Pages/Workers): /api/* → workers/edge.ts
+
+Canary-Strategie:
+- Standard: Requests gehen zum Alt-Backend (Reverse-Proxy).
+- Wenn Header X-Canary: 1 → Worker bedient NUR die folgenden Routen nativ:
+  1) GET /api/orders/:id/files
+  2) GET /api/orders/:id/stacks
+  3) GET /api/orders/:id/status
+  4) GET /api/notifications
+- Phase B1b (im selben Halt, nach B1a): zusätzlich nativ
+  5) POST /api/uploads/intent
+  6) POST /api/uploads/finalize
+- Alle anderen Routen → Proxy an ORIGIN_API_BASE (inkl. Credentials/Headers durchreichen).
+
+Authentifizierung:
+- Session-JWT aus HttpOnly-Cookie lesen, mit JWT_SECRET verifizieren.
+- Bei fehlender/ungültiger Session → dieselben Statuscodes/Fehlertexte wie Alt-Backend liefern.
+- Keine Änderung am Cookie-Setup (SameSite=None, Secure, Path="/").
+
+Uploads (B1b):
+- /api/uploads/intent erstellt signed URL gegen R2_BUCKET.
+- object_key-Schema unverändert vom Alt-Backend übernehmen (Server generiert Pfad).
+- /api/uploads/finalize: HEAD gegen R2 prüfen, dann DB-Eintrag via Alt-Backend-Origin (bis DB-Migration).
+
+Proxy-Regeln:
+- Erhalte Headers: Authorization, Cookie, X-Device-Token, Content-Type, X-Requested-With, Content-MD5, x-amz-*
+- Timeouts/Fehler: identische Statuscodes forwarden; keine Stack-Traces leaken.
+
+CORS:
+- CORS/Preflight identisch zu B0 (allow Origins aus ALLOWED_ORIGINS).
+- credentials:true; expose/allow headers wie definiert.
+
+Routing-Beispiele (workers/edge.ts – verbal, kein Code):
+- app.use(corsMiddleware)
+- app.get("/api/orders/:id/files", canaryOnly(nativeFilesHandler), otherwise(proxyToOrigin))
+- app.post("/api/uploads/intent", canaryPhaseB1b(nativeIntentHandler), otherwise(proxyToOrigin))
+- default: proxyToOrigin
+
+Tests (leicht, ohne E2E) — tests/integration/b1.routes.test.ts:
+- Mit X-Canary:1 & GET /api/orders/123/files → Response-Schema == Origin (Snapshot/Schema-Test).
+- Ohne Canary: gleicher Request → wird 1:1 an Origin proxied.
+- POST /api/uploads/intent:
+  - Ohne Canary → proxied
+  - Mit Canary (B1b aktiv) → signed_url und object_key vorhanden; TTL/Headers enthalten.
+- 401/403 Cases: identisch zu Origin.
+
+Rollout-Checkliste:
+1) B1a aktivieren (nur GET-Routen nativ): Canary-Header in Preview-Frontend setzen (nur für interne Tester).
+2) Parität prüfen (3–5 Requests je Route, Vergleich mit Origin).
+3) B1b aktivieren (intent/finalize nativ): nur Canary-Traffic.
+4) 24h Canary-Beobachtung (Logs: Fehlerquote, Latenz).
+5) Wenn stabil: Canary-Header schrittweise für 10%/50%/100% Traffic setzen (separates Halt B2).
+
+Logging & Observability:
+- Strukturiertes Log pro Request: req_id, route, canary=true|false, status, latency_ms, origin_proxy=true|false.
+- Keine Tokens/OTPs loggen.
+
+Definition of Done:
+- Workers-App deployed; /api/* wird durch Workers erreicht.
+- GET-Routen (B1a) liefern bei Canary identische Antworten (Schema-Parität).
+- Upload intent/finalize (B1b) erstellen/prüfen signed URLs gegen R2 und registrieren via Origin (Finalize).
+- Proxy funktioniert für alle nicht-migrierten Routen.
+- Tests grün; README-Abschnitt „B1 Staged Migration“ vorhanden.
+- Keine funktionalen Abweichungen gegenüber Alt-Backend.
+
+Cleanup:
+- Keine Alt-Backend-Konfiguration löschen.
+- Canary nur für interne Tester aktiv lassen (Frontend setzt X-Canary: 1 bei QA-Flag).
