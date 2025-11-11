@@ -50,16 +50,21 @@ npx wrangler pages deploy ./dist/client \
 
 ### CORS Configuration
 
-Backend must allow Pages origin:
+Backend must allow Pages origin (production and previews):
 
 ```typescript
-// server/utils/cors.ts
-const allowedOrigins = [
+// server/routes.ts + server/index.ts
+const productionOrigins = [
   'https://pixcapture.pages.dev',
-  'https://*.pages.dev', // Preview deployments
-  'http://localhost:5000', // Development
+  'https://pixcapture.app',
+  'https://pix.immo',
 ];
+
+// Also accepts *.pixcapture.pages.dev for preview deployments
+// SECURITY: Never use *.pages.dev wildcard (allows arbitrary CF Pages sites)
 ```
+
+**Preview URL pattern:** `https://<commit-hash>.pixcapture.pages.dev`
 
 ### Smoke Test Checklist
 

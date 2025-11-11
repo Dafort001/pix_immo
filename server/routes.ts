@@ -1130,8 +1130,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return callback(null, true);
       }
       
-      // Allow Cloudflare Pages preview deployments (*.pages.dev)
-      if (origin.endsWith('.pages.dev')) {
+      // Allow Cloudflare Pages preview deployments (project-specific only)
+      if (origin.endsWith('.pixcapture.pages.dev')) {
         return callback(null, true);
       }
       

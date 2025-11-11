@@ -74,8 +74,8 @@ app.use(
     origin: (origin) => {
       const allowedOrigins = getAllowedOrigins();
       
-      // Allow Cloudflare Pages preview deployments (*.pages.dev)
-      if (origin && origin.endsWith('.pages.dev')) {
+      // Allow Cloudflare Pages preview deployments (project-specific only)
+      if (origin && origin.endsWith('.pixcapture.pages.dev')) {
         return origin;
       }
       
