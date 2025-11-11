@@ -27,6 +27,7 @@ export interface CanaryConfig {
 
 /**
  * Default canary config - matches actual Worker routes
+ * NOTE: /api/notifications excluded from B1a (no storage implementation yet)
  */
 export const DEFAULT_CANARY_CONFIG: CanaryConfig = {
   phaseB1a: {
@@ -36,7 +37,7 @@ export const DEFAULT_CANARY_CONFIG: CanaryConfig = {
       'GET /api/shoots/:id/images',
       'GET /api/jobs',
       'GET /api/jobs/:id',
-      'GET /api/notifications',
+      // NOTE: /api/notifications NOT included - proxies to origin
     ]),
   },
   phaseB1b: {

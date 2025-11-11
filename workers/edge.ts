@@ -8,6 +8,7 @@ import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { canaryMiddleware, DEFAULT_CANARY_CONFIG } from '../server/middleware/canary';
 import { proxyToOrigin } from '../server/proxy/originClient';
+import { createDb, WorkerStorage } from './db';
 import type { Context } from 'hono';
 
 /**
@@ -15,6 +16,7 @@ import type { Context } from 'hono';
  */
 export interface Env {
   R2_BUCKET: any; // R2Bucket type from @cloudflare/workers-types
+  DATABASE_URL: string;
   SESSION_SECRET: string;
   ORIGIN_API_BASE: string;
   ALLOWED_ORIGINS?: string;
@@ -180,7 +182,30 @@ export default {
     const app = createWorkerApp();
     const proxyHandler = createProxyHandler();
 
-    // ========== Phase B1a: Read-only GET routes ==========
+    // Lazy storage initialization (only for native handlers)
+    let storage: WorkerStorage | null = null;
+    const getStorage = () => {
+      if (!storage) {
+        const db = createDb(env.DATABASE_URL);
+        storage = new WorkerStorage(db);
+      }
+      return storage;
+    };
+
+    // ========== Phase B1a: Read-only GET routes (4 routes, NO auth - matches Express) ==========
+
+    // ========== Health check (native, MUST be before catch-all) ==========
+    app.get('/healthz', (c) => {
+      return c.json({
+        status: 'ok',
+        worker: 'edge',
+        phase: {
+          b1a: true,
+          b1b: env.PHASE_B1B_ENABLED === 'true',
+        },
+        timestamp: new Date().toISOString(),
+      });
+    });
 
     // GET /api/shoots/:id/stacks
     app.get('/api/shoots/:id/stacks', async (c) => {
@@ -188,8 +213,16 @@ export default {
         return proxyHandler(c);
       }
 
-      // Native handler (stub - will be implemented in next task)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
+      try {
+        const shootId = c.req.param('id');
+        const stacks = await getStorage().getShootStacks(shootId);
+        
+        c.set('nativeHandler', true); // Mark as native for logging
+        return c.json(stacks);
+      } catch (error) {
+        console.error('[B1a] Error getting stacks:', error);
+        return c.json({ error: 'Failed to get stacks' }, 500);
+      }
     });
 
     // GET /api/shoots/:id/images
@@ -198,18 +231,35 @@ export default {
         return proxyHandler(c);
       }
 
-      // Native handler (stub)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
+      try {
+        const shootId = c.req.param('id');
+        const images = await getStorage().getShootImages(shootId);
+        
+        c.set('nativeHandler', true);
+        return c.json(images);
+      } catch (error) {
+        console.error('[B1a] Error getting images:', error);
+        return c.json({ error: 'Failed to get images' }, 500);
+      }
     });
 
-    // GET /api/jobs
+    // GET /api/jobs (no auth - matches Express behavior)
     app.get('/api/jobs', async (c) => {
       if (!c.get('nativeHandler')) {
         return proxyHandler(c);
       }
 
-      // Native handler (stub)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
+      try {
+        // TODO: Add auth - filter by userId for clients, show all for admins
+        // For now, show all jobs (matches Express: "demo user is admin")
+        const jobs = await getStorage().getAllJobs();
+        
+        c.set('nativeHandler', true);
+        return c.json(jobs);
+      } catch (error) {
+        console.error('[B1a] Error getting jobs:', error);
+        return c.json({ error: 'Failed to get jobs' }, 500);
+      }
     });
 
     // GET /api/jobs/:id
@@ -218,19 +268,24 @@ export default {
         return proxyHandler(c);
       }
 
-      // Native handler (stub)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
-    });
-
-    // GET /api/notifications
-    app.get('/api/notifications', async (c) => {
-      if (!c.get('nativeHandler')) {
-        return proxyHandler(c);
+      try {
+        const jobId = c.req.param('id');
+        const job = await getStorage().getJob(jobId);
+        
+        if (!job) {
+          return c.json({ error: 'Job not found' }, 404);
+        }
+        
+        c.set('nativeHandler', true);
+        return c.json(job);
+      } catch (error) {
+        console.error('[B1a] Error getting job:', error);
+        return c.json({ error: 'Failed to get job' }, 500);
       }
-
-      // Native handler (stub)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
     });
+
+    // NOTE: GET /api/notifications NOT included in B1a (no storage implementation)
+    // Will proxy to origin until storage + route design is completed
 
     // ========== Phase B1b: Upload routes ==========
 
@@ -259,21 +314,8 @@ export default {
       return c.json({ error: 'Not implemented - proxying to origin' }, 501);
     });
 
-    // ========== Default: Proxy all other routes ==========
+    // ========== Default: Proxy all other routes (MUST be last) ==========
     app.all('*', proxyHandler);
-
-    // ========== Health check (native, no proxy) ==========
-    app.get('/healthz', (c) => {
-      return c.json({
-        status: 'ok',
-        worker: 'edge',
-        phase: {
-          b1a: true,
-          b1b: env.PHASE_B1B_ENABLED === 'true',
-        },
-        timestamp: new Date().toISOString(),
-      });
-    });
 
     return app.fetch(request, env, ctx);
   },
