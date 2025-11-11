@@ -1,0 +1,62 @@
+REPLIT-WEISUNG — TASK 6 (B1b Upload-Routes: POST intent/finalize mit R2)
+
+Ziel:
+Die Upload-Endpunkte /api/uploads/intent und /api/uploads/finalize nativ im Worker implementieren. Nur bei X-Canary: 1 aktiv; sonst weiterhin Proxy. Parität zum Alt-Backend.
+
+Leitplanken:
+- Kein neues Verhalten. Response-Schema identisch wie bisher.
+- Signed URL gegen R2_BUCKET erzeugen (PUT), TTL kurz (z. B. 300s).
+- object_key ausschließlich serverseitig bauen (Schema v3.1).
+- finalize schreibt (vorerst) den DB-Eintrag via Origin-API (Proxy-Call), nicht direkt in DB.
+
+Scope (nur diese Dateien/Teile):
+- workers/edge.ts: Canary-Routing für POST /api/uploads/intent und /api/uploads/finalize aktivieren
+- workers/handlers/uploads.ts: nativeIntentHandler, nativeFinalizeHandler (neu)
+- server/proxy/originClient.ts: add finalizeForward(fileMeta) (falls nicht vorhanden)
+- tests/integration/b1.uploads.test.ts: leichte Tests (Schema/Headers/TTL)
+
+Spezifikation:
+1) POST /api/uploads/intent (Canary-only)
+   Input JSON: { filename, mime, order_id, room_type?, stack_id? }
+   Schritte:
+   - Session prüfen (Cookie/JWT) ODER device_token Header
+   - Ownership: order_id ∈ user_id
+   - object_key generieren: user/{user_id}/orders/{order_id}/raw/{date}-{shootcode}_{room_type}_{index}_v{ver}.{ext}
+   - Signed PUT URL für R2_BUCKET erstellen (Content-Type, Content-MD5 optional)
+   Output JSON:
+   { signed_url, object_key, headers: { "Content-Type": mime } }
+
+2) POST /api/uploads/finalize (Canary-only)
+   Input JSON: { object_key, bytes, checksum, exif_meta? }
+   Schritte:
+   - Session/Ownership prüfen
+   - HEAD gegen R2 auf object_key (existiert?)
+   - Via originClient.finalizeForward(): DB-Eintrag anlegen (status='uploaded', bytes, mime, meta)
+   Output JSON:
+   { file_id, status: "uploaded" }
+
+CORS/Headers:
+- Gleich zu B0 (allow credentials, expose etag/location)
+- Keine zusätzlichen Custom-Header erfinden
+
+Fehlerfälle:
+- 401/403: wie Alt-Backend
+- 409: finalize ohne existierendes Objekt
+- 410/403: signed_url abgelaufen (Client holt neue via intent)
+- 429: Rate-Limit intent (optional, wenn bereits vorhanden)
+
+Tests (leicht):
+- intent liefert signed_url + object_key, TTL plausibel (keine genaue Uhrzeit prüfen)
+- finalize ohne R2-Objekt → 409
+- finalize mit R2-Objekt → 200 + status uploaded
+- Ohne Canary: beide Routen werden proxied (Schema-Parität)
+
+Definition of Done:
+- intent/finalize nativ funktionsfähig mit R2_BUCKET (Canary-Traffic)
+- Proxy-Fallback unverändert
+- Tests grün
+- README-Abschnitt „B1b Upload-Routes (Canary)“ kurz ergänzt
+
+Cleanup:
+- Keine Debug-Logs mit Tokens/URLs
+- Kein clientseitiger Pfadbau (hart prüfen)

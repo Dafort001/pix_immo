@@ -35,11 +35,33 @@ npm run dev
 # App: http://localhost:5000
 ```
 
-### Production Build
+### Production Build & Deployment
+
+**Cloudflare Workers (HALT B1 - Edge API):**
 ```bash
-npm run build
-wrangler deploy  # Cloudflare Workers
+# Install wrangler CLI
+npm install -g wrangler
+
+# Set required secrets (one-time)
+wrangler secret put DATABASE_URL
+wrangler secret put SESSION_SECRET
+wrangler secret put JWT_SECRET
+
+# Deploy to preview (staging)
+wrangler deploy --env preview
+
+# Deploy to production
+wrangler deploy --env production
+
+# Verify deployment
+curl https://api-preview.pix.immo/healthz  # Preview
+curl https://api.pix.immo/healthz          # Production
 ```
+
+**Configuration:**
+- **wrangler.toml**: R2 Bindings (piximmo-media), CORS, Routes
+- **Canary Routing**: X-Canary: 1 header enables native handlers
+- **Proxy Fallback**: Origin API for non-canary traffic
 
 ### Cloudflare Pages Frontend Deployment
 

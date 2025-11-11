@@ -1,46 +1,121 @@
-name = "piximmo-app"
-main = "server/index.ts"
-compatibility_date = "2025-10-01"
+# =============================================================================
+# HALT B1 - Cloudflare Workers Configuration (Edge API)
+# =============================================================================
+# Migration von Express (server/index.ts) zu Hono Workers (workers/edge.ts)
+# Staged Rollout: Canary-Header steuert native Handlers vs. Proxy-Fallback
+
+name = "pixcapture-api"
+main = "workers/edge.ts"
+compatibility_date = "2025-11-01"
 node_compat = true
 
+# =============================================================================
+# Environment Variables (non-secret)
+# =============================================================================
 [vars]
-NODE_ENV = "production"
+# Proxy-Fallback: Alt-Backend URL (DO NOT hardcode production URLs in repo)
+ORIGIN_API_BASE = "https://api-origin.example.com"
 
-# Development environment
-[env.development]
-name = "piximmo-app-dev"
-vars = { APP_ENV = "development", NODE_ENV = "development" }
+# CORS: Comma-separated allowed origins (Pages Preview + Production)
+ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://www.pix.immo,https://pix.immo"
 
-# Production environment
-[env.production]
-name = "piximmo-app"
-vars = { APP_ENV = "production", NODE_ENV = "production" }
+# Cookie Settings (required for cross-domain auth)
+COOKIE_SAMESITE = "None"
+COOKIE_SECURE = "true"
 
-# R2 Bucket bindings (for object storage)
+# =============================================================================
+# R2 Bucket Bindings (Object Storage)
+# =============================================================================
 [[r2_buckets]]
-binding = "R2_BUCKET"
-bucket_name = "piximmo"
-preview_bucket_name = "piximmo-dev"
+binding = "R2_BUCKET"           # MUST match workers/edge.ts usage
+bucket_name = "piximmo-media"   # Production bucket
+preview_bucket_name = "piximmo-media"  # Preview uses same bucket (staging data)
 
-# Observability configuration
+# =============================================================================
+# Cloudflare Routes (API Endpoints)
+# =============================================================================
+# Preview Environment (for testing before production)
+[[routes]]
+pattern = "api-preview.pix.immo/api/*"
+zone_name = "pix.immo"
+
+# Production Environment
+[[routes]]
+pattern = "api.pix.immo/api/*"
+zone_name = "pix.immo"
+
+# =============================================================================
+# Observability (Logs & Analytics)
+# =============================================================================
 [observability]
 enabled = true
 
-# Build configuration
-[build]
-command = "npm run build"
+# =============================================================================
+# Secrets (DO NOT commit values - set via wrangler CLI)
+# =============================================================================
+# Required Secrets (set via: wrangler secret put SECRET_NAME):
+#
+# - DATABASE_URL          PostgreSQL connection string (Neon)
+# - SESSION_SECRET        Express session encryption key
+# - JWT_SECRET            JSON Web Token signing key (if used)
+# - ORIGIN_API_BASE       (Optional as secret) Alt-backend URL for proxy fallback
+#
+# Optional Secrets:
+# - REPLICATE_API_TOKEN   AI image processing (captioning, upscaling)
+# - RESEND_API_KEY        Email service (notifications)
+# - STRIPE_SECRET_KEY     Payment processing (prod)
+# - TESTING_STRIPE_SECRET_KEY  Payment processing (test mode)
+#
+# Set secrets in production:
+#   wrangler secret put DATABASE_URL
+#   wrangler secret put SESSION_SECRET
+#   wrangler secret put JWT_SECRET
+#
+# Set secrets in preview:
+#   wrangler secret put DATABASE_URL --env preview
+#   wrangler secret put SESSION_SECRET --env preview
 
-# Environment secrets (set via: wrangler secret put SECRET_NAME)
-# Required secrets:
-# - DATABASE_URL
-# - SESSION_SECRET
-# - JWT_SECRET
-# - MAILGUN_API_KEY (optional, for email notifications)
-# - REPLICATE_API_KEY (optional, for AI captioning)
-# - MODAL_API_KEY (optional, for image analysis)
-# - TIDYCAL_WEBHOOK_URL (optional, for scheduling integration)
+# =============================================================================
+# Environment-Specific Overrides
+# =============================================================================
 
-# Routes (configure your custom domain here)
-# [[env.production.routes]]
-# pattern = "pix.immo/*"
-# zone_name = "pix.immo"
+# Preview Environment (for staging/testing)
+[env.preview]
+name = "pixcapture-api-preview"
+vars = { 
+  APP_ENV = "preview",
+  ORIGIN_API_BASE = "https://api-preview.pix.immo",  # Preview proxy target
+  ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://preview.pix.immo"
+}
+routes = [
+  { pattern = "api-preview.pix.immo/api/*", zone_name = "pix.immo" }
+]
+
+# Production Environment
+[env.production]
+name = "pixcapture-api"
+vars = { 
+  APP_ENV = "production",
+  ORIGIN_API_BASE = "https://api.pix.immo",  # Production proxy target
+  ALLOWED_ORIGINS = "https://www.pix.immo,https://pix.immo"
+}
+routes = [
+  { pattern = "api.pix.immo/api/*", zone_name = "pix.immo" }
+]
+
+# =============================================================================
+# Legacy Config (OLD: server/index.ts - kept for reference)
+# =============================================================================
+# Uncomment below to revert to Express-based deployment:
+#
+# name = "piximmo-app"
+# main = "server/index.ts"
+# compatibility_date = "2025-10-01"
+# 
+# [[r2_buckets]]
+# binding = "R2_BUCKET"
+# bucket_name = "piximmo"
+# preview_bucket_name = "piximmo-dev"
+#
+# [build]
+# command = "npm run build"
