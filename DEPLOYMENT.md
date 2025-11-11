@@ -1,59 +1,89 @@
-# Deployment Anleitung für pix.immo
+# Deployment Guide - pix.immo Platform
 
-## Problem mit Replit Publishing
+## HALT F3: Cloudflare Pages Frontend Deployment
 
-Beim Versuch, die App zu publishen, schlägt die Validierung mit folgender Fehlermeldung fehl:
+## Architecture Overview
+
+**Dual Deployment Strategy:**
+- **Frontend (SPA)**: Cloudflare Pages → `https://pixcapture.pages.dev`
+- **Backend (API)**: Cloudflare Workers → `https://api.pixcapture.dev`
+
+Both deployments share:
+- PostgreSQL database (Neon)
+- R2 object storage (Cloudflare)
+- Session authentication system
+
+---
+
+## Frontend Deployment (Cloudflare Pages)
+
+### Build & Deploy Scripts
+
+**Shell Scripts (Workaround for blocked package.json):**
+
+```bash
+# Build frontend only
+./scripts/build-frontend.sh
+
+# Build + Deploy to Pages
+./scripts/deploy-frontend.sh
 ```
-Failed to validate database migrations
+
+**What these scripts do:**
+1. Set environment variables: `VITE_APP_ENV=production`, `VITE_API_BASE_URL=https://api.pixcapture.dev`
+2. Build React SPA: `vite build --outDir dist/client`
+3. Deploy to Cloudflare Pages: `wrangler pages deploy ./dist/client`
+
+### Manual Deployment
+
+```bash
+# Build
+VITE_APP_ENV=production \
+VITE_API_BASE_URL=https://api.pixcapture.dev \
+  npx vite build --outDir dist/client
+
+# Deploy
+npx wrangler pages deploy ./dist/client \
+  --project-name=pixcapture-frontend \
+  --branch=main
 ```
 
-### Ursache
+### CORS Configuration
 
-Das Problem liegt daran, dass `npm run db:push` (welches `drizzle-kit push` ausführt) beim "Pulling schema from database"-Schritt hängt und ein Timeout verursacht. Dies passiert, obwohl:
-- Die Datenbankverbindung funktioniert ✅
-- Alle Tabellen bereits existieren ✅  
-- Die Datenbank korrekt konfiguriert ist ✅
+Backend must allow Pages origin:
 
-### Lösung
+```typescript
+// server/utils/cors.ts
+const allowedOrigins = [
+  'https://pixcapture.pages.dev',
+  'https://*.pages.dev', // Preview deployments
+  'http://localhost:5000', // Development
+];
+```
 
-#### Option 1: Publishing ohne Migrations-Check (Empfohlen)
+### Smoke Test Checklist
 
-Da die Datenbank bereits korrekt eingerichtet ist, können Sie das Publishing durchführen, ohne die Migrations-Validierung zu verwenden:
+- [ ] Homepage loads: `https://pixcapture.pages.dev/`
+- [ ] Routes work: `/login`, `/orders/:id/stacks`, `/orders/:id/review`, `/orders/:id/exports`
+- [ ] API calls successful (check Network tab)
+- [ ] CORS headers present
+- [ ] No console errors
 
-1. **Öffnen Sie die Replit Shell** und fügen Sie folgendes zum `package.json` hinzu:
-   ```json
-   "scripts": {
-     "db:push": "tsx scripts/db-push-wrapper.ts"
-   }
-   ```
+---
 
-2. **Testen Sie das wrapper-Script**:
-   ```bash
-   npm run db:push
-   ```
-   
-   Sie sollten sehen:
-   ```
-   ✅ Database schema validated (5/5 core tables exist)
-   ```
+## Backend Deployment (Cloudflare Workers)
 
-3. **Versuchen Sie erneut zu publishen** - der Migrations-Check sollte jetzt erfolgreich sein.
+### Workers Deployment
 
-#### Option 2: Manuelles Deployment
+```bash
+# Build backend
+esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist/server
 
-Falls Option 1 nicht funktioniert, können Sie die App manuell deployen:
+# Deploy
+wrangler deploy
+```
 
-1. **Build erstellen**:
-   ```bash
-   npm run build
-   ```
-
-2. **Production-Start testen**:
-   ```bash
-   NODE_ENV=production npm start
-   ```
-
-3. **Mit Replit Support Kontakt aufnehmen** bezüglich des Migrations-Validierungs-Problems.
+Configuration in `wrangler.toml` (unchanged).
 
 ## Verfügbare Scripts
 
