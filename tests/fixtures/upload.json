@@ -3,14 +3,14 @@
     "filename": "test-photo.jpg",
     "mimeType": "image/jpeg",
     "fileSize": 2048576,
-    "checksum": "abc123def456",
-    "orderId": "order_test_123",
+    "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "orderId": "550e8400-e29b-41d4-a716-446655440000",
     "roomType": "wohnzimmer",
     "stackId": "stack_test_001"
   },
   "validFinalize": {
     "objectKey": "pixcapture/uploads/1234567890-abcd1234-test-photo.jpg",
-    "checksum": "abc123def456",
+    "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
     "exifMeta": {
       "width": 4032,
       "height": 3024,

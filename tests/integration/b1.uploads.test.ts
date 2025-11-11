@@ -58,6 +58,10 @@ describe('B1 Upload Routes - Integration Tests', () => {
       );
 
       // Validate response
+      if (response.status !== 200) {
+        const errorData = await response.json();
+        console.error('Unexpected error response:', JSON.stringify(errorData, null, 2));
+      }
       expect(response.status).toBe(200);
       const data = await response.json();
       

@@ -27,10 +27,12 @@ export interface WorkerTestContext {
 
 /**
  * Create a Hono worker instance with mocked bindings
+ * Uses the complete Worker fetch() handler (includes route definitions)
  */
 export async function createWorkerTestApp(context: WorkerTestContext) {
   // Dynamic import to avoid circular dependencies
-  const { createWorkerApp } = await import('../../workers/edge');
+  const workerModule = await import('../../workers/edge');
+  const workerDefault = workerModule.default;
 
   // Create mock environment
   const mockEnv: TestWorkerEnv = {
@@ -44,16 +46,10 @@ export async function createWorkerTestApp(context: WorkerTestContext) {
   const originalFetch = global.fetch;
   global.fetch = context.fetchMock.fetch as any;
 
-  // Create Hono app
-  const app = createWorkerApp();
-
-  // Restore global fetch after app creation
-  global.fetch = originalFetch;
-
   return {
-    app,
     /**
      * Execute a request against the worker
+     * Calls the complete worker fetch() handler with routes
      */
     request: async (path: string, init?: RequestInit): Promise<Response> => {
       // Override fetch again for request execution
@@ -62,8 +58,8 @@ export async function createWorkerTestApp(context: WorkerTestContext) {
       try {
         const request = new Request(`http://localhost${path}`, init);
         
-        // Execute request through Hono with mocked env
-        const response = await app.fetch(request, mockEnv as any);
+        // Execute request through worker's fetch() handler (includes routes)
+        const response = await workerDefault.fetch(request, mockEnv as any, {} as any);
         
         return response;
       } finally {
