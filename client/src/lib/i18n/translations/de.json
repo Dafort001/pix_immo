@@ -319,7 +319,11 @@
     },
     "revision": {
       "title": "Revision anfordern",
-      "text": "Bitte kurze Begründung für die Überarbeitung."
+      "description": "Beschreiben Sie die gewünschten Änderungen.",
+      "text": "Bitte kurze Begründung für die Überarbeitung.",
+      "note_label": "Überarbeitungshinweis",
+      "note_placeholder": "Bitte ändern Sie die Helligkeit, entfernen Sie das Objekt im Hintergrund...",
+      "note_required": "Überarbeitungshinweis erforderlich."
     },
     "approve": {
       "title": "Freigabe bestätigen",

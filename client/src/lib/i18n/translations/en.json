@@ -319,7 +319,11 @@
     },
     "revision": {
       "title": "Request Revision",
-      "text": "Please provide a brief reason for the revision."
+      "description": "Describe the changes you would like.",
+      "text": "Please provide a brief reason for the revision.",
+      "note_label": "Revision Note",
+      "note_placeholder": "Please adjust brightness, remove background object...",
+      "note_required": "Revision note required."
     },
     "approve": {
       "title": "Confirm Approval",

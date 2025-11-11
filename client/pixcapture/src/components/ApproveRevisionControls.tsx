@@ -89,7 +89,7 @@ export function ApproveRevisionControls({
         data-testid="button-approve"
       >
         <Check className="w-4 h-4 mr-2" />
-        {t("actions.approve")}
+        {t("button.approve")}
       </Button>
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -100,7 +100,7 @@ export function ApproveRevisionControls({
             data-testid="button-request-revision"
           >
             <MessageSquare className="w-4 h-4 mr-2" />
-            {t("actions.request_revision")}
+            {t("button.revision")}
           </Button>
         </DialogTrigger>
 
@@ -138,7 +138,7 @@ export function ApproveRevisionControls({
               data-testid="button-cancel-revision"
             >
               <X className="w-4 h-4 mr-2" />
-              {t("actions.cancel")}
+              {t("common.cancel")}
             </Button>
             <Button
               onClick={handleRequestRevision}
@@ -146,7 +146,7 @@ export function ApproveRevisionControls({
               data-testid="button-submit-revision"
             >
               <MessageSquare className="w-4 h-4 mr-2" />
-              {t("actions.submit")}
+              {t("button.submit_package")}
             </Button>
           </DialogFooter>
         </DialogContent>
