@@ -178,8 +178,23 @@ Native Worker-Handler für Upload-Flow:
 - `POST /api/pixcapture/upload/finalize` - Verify R2 + DB Finalization
 
 **Aktivierung:**
-- ENV: `PHASE_B1B_ENABLED=true`
-- Header: `X-Canary: 1`
+- ENV: `PHASE_B1B_ENABLED=true` (bereits in `wrangler.toml` hardcoded für alle Environments)
+- Header: `X-Canary: 1` (erforderlich für native Handler-Nutzung)
+
+**Deaktivierung (falls erforderlich):**
+```bash
+# 1. wrangler.toml editieren
+PHASE_B1B_ENABLED = "false"  # In [vars] Sektion ändern
+
+# 2. Re-deploy
+wrangler deploy --env preview   # oder --env production
+
+# 3. Verifizieren
+curl https://api-preview.pix.immo/healthz
+# Expected: {"phase":{"b1a":true,"b1b":false}}
+```
+
+**Wichtig:** Flag ist NICHT runtime-togglebar - Änderungen erfordern Code-Edit + Re-Deploy.
 
 **Parity-Garantie:**
 - Antworten identisch zu Origin (Schema, Status, Headers)
@@ -283,18 +298,24 @@ Set-Cookie: auth_session=<token>; HttpOnly; Secure; SameSite=None; Path=/; Max-A
 - Keine Code-Änderungen nötig
 
 ### Workers-Rollback (Canary deaktivieren)
-**Option 1: Canary-Header entfernen (0% native)**
-- Alle Requests proxied an `ORIGIN_API_BASE`
-- Kein Deployment erforderlich
-
-**Option 2: PHASE_B1B_ENABLED deaktivieren**
+**Option 1: PHASE_B1B_ENABLED deaktivieren (empfohlen)**
 ```bash
-# wrangler.toml anpassen
+# 1. wrangler.toml editieren
+# [vars] Sektion:
 PHASE_B1B_ENABLED = "false"
 
-# Re-deploy
+# 2. Re-deploy
 wrangler deploy --env production
+
+# 3. Verifizieren
+curl https://api.pix.immo/healthz
+# Expected: {"phase":{"b1a":true,"b1b":false}}
 ```
+
+**Option 2: Client-seitiger Canary-Header entfernen**
+- Entferne `X-Canary: 1` Header im Frontend-Code
+- Alle Requests werden an `ORIGIN_API_BASE` proxied
+- Kein Worker-Deployment erforderlich (schnellster Rollback)
 
 **Option 3: Vorherige Worker-Version deployen**
 ```bash
