@@ -95,6 +95,45 @@ npx vite preview --port 4173
 - **Build fails:** Ensure Node version is 22.x
 - **CORS errors:** Backend needs CORS configuration for frontend domain
 
+### QA0 - Preview Smoke Checks
+
+**Purpose:** Verify API connectivity and CORS configuration before deploying to production.
+
+**Access:**  
+- Route: `/qa` (only visible when `VITE_FEATURE_QA_GUARD=true`)
+- Enable in Preview: Set `VITE_FEATURE_QA_GUARD=true` in Cloudflare Pages environment variables
+
+**What it checks:**
+1. **API Base URL**: Verifies `VITE_API_BASE_URL` is configured correctly
+2. **CORS Preflight**: Tests basic CORS configuration without credentials (expects 200/401/403, not CORS block)
+3. **Cookie Credentials**: Tests authenticated requests with `credentials:include` (expects 200/401, not CORS block)
+4. **Signed URL Format**: Validates upload endpoint URL structure (dry-run only)
+5. **Download Endpoints**: Validates download URL structure (dry-run only)
+
+**Expected Results:**
+- ✅ **PASS**: Check succeeded
+- ⚠️ **WARN**: Minor issue, may still work
+- ❌ **FAIL**: Critical error, deployment not recommended
+- ⏭️ **SKIPPED**: Check not applicable (e.g., no login)
+
+**Rollback Banner:**
+- Appears automatically when checks FAIL
+- Warns against publishing preview
+- Provides link to `/qa` for details
+
+**Common Issues:**
+
+| Issue | Cause | Fix |
+|-------|-------|-----|
+| Missing API URL | `VITE_API_BASE_URL` not set | Configure in Cloudflare Pages → Settings → Environment Variables |
+| CORS Blocked | Backend missing CORS headers | Add `Access-Control-Allow-Origin` header for frontend domain |
+| Cookie Issues | SameSite policy mismatch | Ensure backend uses `SameSite=None; Secure` for HTTPS cross-origin |
+| Network Errors | Backend not running/accessible | Check backend health and firewall rules |
+
+**Production:**  
+- QA checks are **disabled by default** in production (`VITE_FEATURE_QA_GUARD` not set)
+- `/qa` route will return 404 in production builds
+
 ---
 
 ## 📚 Dokumentation

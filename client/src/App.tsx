@@ -4,6 +4,9 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { I18nProvider } from "@/lib/i18n";
+import { FEATURE_QA_GUARD } from "@/config/flags";
+import { RollbackBanner } from "@/components/RollbackBanner";
+import { useSmokeChecks } from "@/hooks/useSmokeChecks";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import Register from "@/pages/register";
@@ -67,6 +70,7 @@ import AdminInvoices from "@/pages/admin-invoices";
 import AdminBlog from "@/pages/admin-blog";
 import AdminServices from "@/pages/admin-services";
 import AdminBookings from "@/pages/admin-bookings";
+import QAPage from "@/routes/qa";
 
 function Router() {
   return (
@@ -133,6 +137,7 @@ function Router() {
       <Route path="/editor-dashboard" component={EditorDashboard} />
       <Route path="/editor-job-detail" component={EditorJobDetail} />
       <Route path="/test" component={TestDebug} />
+      {FEATURE_QA_GUARD && <Route path="/qa" component={QAPage} />}
       <Route component={NotFound} />
     </Switch>
   );
@@ -142,10 +147,13 @@ function App() {
   // Note: Device capability detection moved to Camera View
   // to ensure camera permission is already granted
   
+  const { hasFailures } = useSmokeChecks();
+  
   return (
     <QueryClientProvider client={queryClient}>
       <I18nProvider>
         <TooltipProvider>
+          {FEATURE_QA_GUARD && <RollbackBanner visible={hasFailures} />}
           <Toaster />
           <Router />
         </TooltipProvider>

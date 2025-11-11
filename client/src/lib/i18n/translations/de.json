@@ -447,5 +447,20 @@
   "legal": {
     "trash_hint": "Dateien werden nach 30 Tagen automatisch gelöscht.",
     "download_hint": "Download-Links sind aus Sicherheitsgründen nur zeitlich begrenzt gültig."
+  },
+  
+  "qa": {
+    "title": "Preview Qualitätschecks",
+    "subtitle": "API-Konnektivität und CORS-Konfiguration vor Deployment prüfen",
+    "run_checks": "Checks erneut ausführen",
+    "running": "Checks werden ausgeführt...",
+    "api_url": "API Base URL",
+    "environment": "Umgebung",
+    "last_run": "Letzte Ausführung",
+    "deployment_warning": "⚠️ Deployment nicht empfohlen - Fehler zuerst beheben",
+    "rollback_title": "QA-Fehler erkannt",
+    "rollback_message": "Bitte diese Preview nicht veröffentlichen. Prüfe CORS/ENV/API-Konfiguration.",
+    "view_details": "QA-Details ansehen",
+    "reload": "Neu laden"
   }
 }
