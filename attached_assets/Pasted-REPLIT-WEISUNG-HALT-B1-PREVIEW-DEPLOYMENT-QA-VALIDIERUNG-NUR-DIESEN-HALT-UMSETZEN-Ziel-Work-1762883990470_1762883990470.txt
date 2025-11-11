@@ -1,0 +1,67 @@
+REPLIT-WEISUNG — HALT B1 PREVIEW-DEPLOYMENT + /QA VALIDIERUNG — NUR DIESEN HALT UMSETZEN
+
+Ziel:
+Workers (B1 Canary) + Pages-Preview deployen und /qa Smoke-Checks validieren. Keine Code-Änderungen, nur Deploy + Prüfung + kurzer GO/NO-GO-Report.
+
+Leitplanken:
+- Keine neuen Features. Kein Refactor. Keine E2E-Tests.
+- Canary ist aktiv NUR mit Header `X-Canary: 1`. Ohne Header → Proxy zum Alt-Backend.
+
+Voraussetzungen (müssen bereits erfüllt sein):
+- `wrangler.toml` mit R2-Binding, Routes, Vars (aus Task 7)
+- Secrets gesetzt: `JWT_SECRET` (und optional `ORIGIN_API_BASE`, falls als Secret)
+- Pages-ENV für Preview vorhanden (API-URL, QA-Flag)
+
+SCHRITT 1 — ENV prüfen
+- Backend (Workers):
+  - `ALLOWED_ORIGINS`: enthält **Preview-Pages-Domain**
+  - `COOKIE_SAMESITE=None`, `COOKIE_SECURE=true`
+- Frontend (Pages Preview):
+  - `VITE_API_BASE_URL=<API-Preview-URL>`
+  - `VITE_APP_ENV=preview`
+  - `VITE_FEATURE_QA_GUARD=true` (sorgt auch für Canary-Header, falls im Fetch-Wrapper verdrahtet)
+
+SCHRITT 2 — Workers Preview-Deploy
+- `wrangler deploy` (Preview-Route)
+- Erwartung:
+  - `GET https://<api-preview-domain>/api/healthz` → **200**
+  - Mit `X-Canary: 1`: `GET /api/orders/<id>/files` → native Handler
+  - Ohne Canary: gleicher Call → Proxy (Origin) antwortet
+
+SCHRITT 3 — Pages Preview-Deploy
+- `./scripts/deploy-frontend.sh`
+- Ergebnis: **Preview-URL** notieren
+- Frontend muss alle API-Calls gegen `VITE_API_BASE_URL` richten (kein Hardcode)
+
+SCHRITT 4 — /qa Smoke-Checks (Preview-URL im Browser)
+- `/qa` öffnen (Flag-basiert sichtbar)
+- PASS-Kriterien:
+  1) API-URL erkannt (kein „API-Basis-URL fehlt“)
+  2) CORS/Preflight **kein** TypeError (401/403 ist ok)
+  3) Credentials-Check: 200/401 (kein CORS-Block)
+  4) Signed-URL Dryrun: **SKIP** wenn nicht eingeloggt (kein FAIL)
+- Rollback-Banner darf **nicht** erscheinen, wenn alles PASS.
+
+SCHRITT 5 — Kurzreport schreiben (≤ 300 Wörter)
+- Datei: `QA/GO_NO_GO_FINAL.md`
+- Inhalt:
+  - Ergebnis der /qa-Checks (Pass/Warn/Fail)
+  - CORS/Cookies ok? SPA-Routing ok?
+  - Canary aktiv geprüft? (ja/nein)
+  - Entscheidung: **GO** oder **NO-GO**
+  - Falls NO-GO: **max. 3** Fixes mit Aufwand (Minuten)
+
+Hinweise/Checks:
+- Canary manuell per `curl` gegen Worker testen (optional):
+  - `curl -H "X-Canary: 1" https://<api-preview-domain>/api/orders/<id>/files`
+- Ohne Canary muss derselbe Request über den Proxy gleiches Schema liefern (Parität).
+
+Definition of Done:
+- Workers Preview live (`/api/healthz` = 200)
+- Pages Preview live (SPA-Routing ok)
+- `/qa` zeigt **keinen** FAIL
+- `QA/GO_NO_GO_FINAL.md` erstellt mit klarer GO/NO-GO-Empfehlung
+
+Cleanup:
+- Keine Secrets ins Repo schreiben
+- Keine neuen Abhängigkeiten hinzufügen
