@@ -5,14 +5,19 @@
 
 /**
  * Get API Base URL from environment
- * @throws Error if VITE_API_BASE_URL is not set
+ * In development, falls back to same-origin (relative URLs)
  */
 export function getApiBaseUrl(): string {
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL;
   
+  // Development fallback: use empty string for relative URLs
   if (!apiBaseUrl || apiBaseUrl === '') {
+    if (import.meta.env.DEV) {
+      // Development: use relative URLs (same-origin)
+      return '';
+    }
     throw new Error(
-      'VITE_API_BASE_URL is not set. Please configure environment variables for API connectivity.'
+      'VITE_API_BASE_URL is not set. Please configure environment variables for production deployment.'
     );
   }
   

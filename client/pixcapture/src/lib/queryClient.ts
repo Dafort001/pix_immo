@@ -10,13 +10,36 @@ async function throwIfResNotOk(res: Response) {
 
 /**
  * Build full API URL from relative path
- * @param path - Relative API path (e.g., "/api/orders")
+ * Absolute URLs (e.g., presigned R2 URLs) are returned unchanged
+ * @param path - API path (e.g., "/api/orders" or "https://...")
  */
 function buildApiUrl(path: string): string {
-  const baseUrl = getApiBaseUrl();
-  // Remove leading slash from path if present to avoid double slashes
-  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
-  return `${baseUrl}/${cleanPath}`;
+  // Check if already absolute URL (presigned R2 URLs, etc.)
+  try {
+    new URL(path);
+    // Valid absolute URL - return unchanged
+    return path;
+  } catch {
+    // Relative path - build with base URL
+    const baseUrl = getApiBaseUrl();
+    
+    // Normalize path: remove duplicate slashes ONLY in path portion (before query string)
+    // Split on '?' to preserve query parameters containing URLs
+    const [pathPart, ...queryParts] = path.split('?');
+    const normalizedPathPart = pathPart.replace(/\/+/g, '/');
+    const normalizedPath = queryParts.length > 0 
+      ? `${normalizedPathPart}?${queryParts.join('?')}`
+      : normalizedPathPart;
+    
+    // If no base URL (development), return normalized path for same-origin requests
+    if (baseUrl === '') {
+      return normalizedPath;
+    }
+    
+    // Remove leading slash from path if present to avoid double slashes
+    const cleanPath = normalizedPath.startsWith('/') ? normalizedPath.slice(1) : normalizedPath;
+    return `${baseUrl}/${cleanPath}`;
+  }
 }
 
 export async function apiRequest(
