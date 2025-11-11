@@ -1,0 +1,98 @@
+REPLIT-WEISUNG — HALT QA0 (Preview-Smoketests & Rollback-Guard) — NUR DIESEN HALT UMSETZEN
+
+Ziel:
+Vor dem eigentlichen Backend-Umzug stellen wir sicher, dass das bereits deployte Frontend (Cloudflare Pages) stabil mit der bestehenden API funktioniert. Wir fügen eine kleine, sichtbare QA-Schicht hinzu: Smoke-Check-Seite, einfache Laufzeitchecks, saubere Fehlermeldungen, Rollback-Hinweis. Keine neuen Features, kein Backend-Refactor, keine E2E-Tests.
+
+Leitplanken:
+- Nur Frontend-Änderungen + minimale Konfig. Keine Backend-Routen verändern.
+- Keine neuen Dependencies, wenn vermeidbar.
+- Tests nur leicht (Komponenten/Mocks). Keine E2E.
+
+Scope (nur diese Dateien anlegen/ändern):
+- src/config/flags.ts → FEATURE_QA_GUARD=true (Default nur für Preview-Build)
+- src/config/runtime.ts → getApiBaseUrl(), getAppEnv() werden genutzt
+- src/qa/HealthCheckPanel.tsx → UI für Smoke-Checks
+- src/routes/qa.tsx → Route /qa (nur bei FEATURE_QA_GUARD sichtbar)
+- src/components/RollbackBanner.tsx → Banner bei Fehlern
+- src/hooks/useSmokeChecks.ts → Checks gebündelt
+- public/_headers (falls noch nicht): no-cache für /index.html sicherstellen
+- README.md → Abschnitt „QA0 Smoke-Checks“
+
+ENV:
+- VITE_APP_ENV=preview (Pages Preview) / production (Prod)
+- VITE_FEATURE_QA_GUARD=true in Preview, false in Prod (via Pages-ENV)
+
+Implementierung:
+
+1) Feature-Flag
+- src/config/flags.ts:
+  - export const FEATURE_QA_GUARD = import.meta.env.VITE_FEATURE_QA_GUARD === 'true';
+
+2) Route /qa (nur Preview/Flag)
+- src/routes/qa.tsx:
+  - Wenn FEATURE_QA_GUARD=false → diese Route nicht im Router registrieren.
+  - Seite zeigt <HealthCheckPanel/> und Ergebnisliste.
+
+3) HealthCheckPanel (src/qa/HealthCheckPanel.tsx)
+- Führt nacheinander folgende Checks aus (Timeout je 5s, keine Retries):
+  a) API-Basis-URL gesetzt:
+     - Prüfen, ob getApiBaseUrl() eine https/ http URL liefert.
+  b) CORS/Preflight grob:
+     - Fetch GET auf `${API}/api/notifications` ohne Credentials:
+       Erwartung: 401/403 ODER 200 – Hauptsache kein „TypeError: CORS blocked“.
+  c) Credentials-Cookie:
+     - Wenn Session vorhanden: Fetch GET `${API}/api/notifications` mit credentials:'include' → 200/401 akzeptabel (keine CORS-Blockade).
+     - Wenn keine Session: Test als „übersprungen“ markieren.
+  d) Signed-URL Nutzbarkeit (trocken):
+     - POST `${API}/api/uploads/intent` mit Dummy-Body (mock nur UI-seitig; Request NICHT senden, wenn kein Login).
+     - Wenn nicht eingeloggt → als „übersprungen“ markieren; Hinweis anzeigen.
+  e) Downloads erreichbar (trocken):
+     - HEAD/GET auf `${API}/api/orders/TEST/alt-texts.txt?lang=de` NICHT senden (kein TEST-Order) → nur URL-Format prüfen.
+- Ergebnisse als Liste mit Status: PASS / WARN / FAIL. Bei FAIL → RollbackBanner einblenden.
+- Anzeigen: API-URL, AppEnv, Datum/Zeit.
+
+4) RollbackBanner (src/components/RollbackBanner.tsx)
+- Sichtbar, wenn irgendein Check FAIL.
+- Text (aus i18n): „QA-Fehler erkannt. Bitte Preview nicht veröffentlichen. Prüfe CORS/ENV/API.“
+- Link-Buttons:
+  - „QA-Seite öffnen“ (/qa)
+  - „Neu laden“
+
+5) Header/_headers
+- Sicherstellen, dass /index.html no-cache hat (damit QA-Änderungen sofort reflektiert werden).
+  - /index.html
+    Cache-Control: no-cache
+
+6) Sichtbarkeit im UI
+- Wenn FEATURE_QA_GUARD=true:
+  - Header/Nutzer-Menü: kleiner Link „QA“ → /qa
+  - RollbackBanner am oberen Rand, wenn Checks FAIL.
+
+7) Tests (leicht, ohne E2E)
+- components/HealthCheckPanel.test.tsx:
+  - Mock getApiBaseUrl(): liefert gültige URL → Check (a) PASS.
+  - Mock fetch auf /api/notifications wirft CORS-TypeError → Check (b) FAIL → Banner sichtbar.
+- components/RollbackBanner.test.tsx:
+  - Rendert bei FAIL=true, versteckt bei FAIL=false.
+
+8) README.md – QA0
+- Kurz beschrieben:
+  - Ziel der /qa-Seite
+  - FEATURE_QA_GUARD nur in Preview aktivieren (Pages ENV: VITE_FEATURE_QA_GUARD=true).
+  - Typische Fehlerbilder: fehlende API-URL, CORS-Blockade, Cookies (SameSite=None/HTTPS).
+
+Fehler-/Edge-Cases:
+- Kein Login: Checks zu credentials/intent werden als „übersprungen“ markiert (kein FAIL).
+- Offline: Zeige „Netzwerkfehler – QA erneut ausführen“ (kein Auto-Retry).
+- API-URL fehlt: Sofort FAIL mit klarer Meldung.
+
+Definition of Done:
+- /qa ist in Preview erreichbar (Flag-basiert), in Prod unsichtbar.
+- HealthCheckPanel listet Ergebnisse (PASS/WARN/FAIL) ohne App-Absturz.
+- RollbackBanner erscheint bei FAIL und verschwindet bei PASS.
+- Keine Backend-Änderungen. Keine E2E-Tests.
+- README-Abschnitt vorhanden.
+
+Cleanup:
+- Keine Secrets in Logs/Console.
+- Sicherstellen, dass Flag in Production standardmäßig false ist (kein /qa in Prod).

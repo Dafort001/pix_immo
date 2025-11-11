@@ -1,4 +1,5 @@
 import { QueryClient, QueryFunction } from "@tanstack/react-query";
+import { getApiBaseUrl } from "@/config/runtime";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
@@ -7,12 +8,26 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Build full API URL from relative path
+ * @param path - Relative API path (e.g., "/api/orders")
+ */
+function buildApiUrl(path: string): string {
+  const baseUrl = getApiBaseUrl();
+  // Remove leading slash from path if present to avoid double slashes
+  const cleanPath = path.startsWith('/') ? path.slice(1) : path;
+  return `${baseUrl}/${cleanPath}`;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  const res = await fetch(url, {
+  // Build full URL if it's a relative path
+  const fullUrl = url.startsWith('http') ? url : buildApiUrl(url);
+  
+  const res = await fetch(fullUrl, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
     body: data ? JSON.stringify(data) : undefined,
@@ -29,7 +44,12 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
+    // Query keys are relative paths like ["/api/orders", "123", "files"]
+    // Build full URL from queryKey segments
+    const path = queryKey.join("/") as string;
+    const fullUrl = buildApiUrl(path);
+    
+    const res = await fetch(fullUrl, {
       credentials: "include",
     });
 
