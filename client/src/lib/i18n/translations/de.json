@@ -233,5 +233,173 @@
     "attic": "Dachboden",
     "exterior": "Außenansicht",
     "entrance": "Eingang"
+  },
+
+  "button": {
+    "upload": "Dateien auswählen",
+    "start_upload": "Hochladen",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "mark": "Markieren",
+    "unmark": "Markierung entfernen",
+    "auto_rename": "Auto-Umbenennen",
+    "set_roomtype": "Raumtyp setzen",
+    "reindex": "Neu nummerieren",
+    "delete": "Löschen",
+    "restore": "Wiederherstellen",
+    "delete_permanent": "Endgültig löschen",
+    "open_trash": "Papierkorb öffnen",
+    "review_package": "Bearbeitungspaket prüfen",
+    "submit_package": "Bearbeitungspaket absenden",
+    "approve": "Freigeben",
+    "revision": "Revision anfordern",
+    "approve_all": "Alle freigeben",
+    "download_zip": "Download-ZIP",
+    "download_txt": "Alt-Texte (.txt)",
+    "download_json": "Alt-Texte (.json)",
+    "complete_order": "Auftrag abschließen"
+  },
+
+  "status": {
+    "waiting": "wartet",
+    "uploading": "lädt hoch…",
+    "uploaded": "hochgeladen",
+    "registered": "registriert",
+    "in_progress": "in Bearbeitung",
+    "awaiting_approval": "wartet auf Freigabe",
+    "approved": "freigegeben",
+    "revision": "Revision angefordert",
+    "done": "fertig",
+    "locked": "gesperrt",
+    "deleted": "gelöscht",
+    "submitted": "eingereicht",
+    "completed": "abgeschlossen"
+  },
+
+  "badge": {
+    "ok": "OK",
+    "warning": "Warnung",
+    "error": "Fehler",
+    "incomplete": "Unvollständig",
+    "duplicate": "Duplikat",
+    "version_conflict": "Version-Konflikt",
+    "mime_mismatch": "MIME passt nicht",
+    "name_exif_mismatch": "Name/EXIF abweichend"
+  },
+
+  "dialog": {
+    "review_package": {
+      "title": "Bearbeitungspaket prüfen",
+      "text": "{count} Dateien markiert. Express bearbeiten?"
+    },
+    "delete": {
+      "title": "Dateien löschen",
+      "text": "{count} Datei(en) in den Papierkorb verschieben?"
+    },
+    "delete_permanent": {
+      "title": "Endgültig löschen",
+      "text": "{count} Datei(en) dauerhaft entfernen? Dies kann nicht rückgängig gemacht werden."
+    },
+    "trash": {
+      "title": "Papierkorb"
+    },
+    "revision": {
+      "title": "Revision anfordern",
+      "text": "Bitte kurze Begründung für die Überarbeitung."
+    },
+    "approve": {
+      "title": "Freigabe bestätigen",
+      "text": "Diese Datei als final freigeben?"
+    },
+    "complete_order": {
+      "title": "Auftrag abschließen",
+      "text": "Auftrag als abgeschlossen markieren und weitere Änderungen sperren?"
+    }
+  },
+
+  "label": {
+    "roomtype": "Raumtyp",
+    "stack": "Stack",
+    "index": "Index",
+    "version": "Version",
+    "filename": "Dateiname",
+    "filesize": "Dateigröße",
+    "format": "Format",
+    "note": "Notiz",
+    "express": "Express",
+    "summary": "Gesamtvorschau"
+  },
+
+  "tooltip": {
+    "auto_rename": "Passt Dateinamen an Schema v3.1 an.",
+    "reindex": "Vergibt die Indexe im Stack neu (g001, g002 …).",
+    "locked": "In Produktion – nicht lösch- oder umbenennbar.",
+    "duplicate": "Gleicher Bildinhalt (Hash). Bitte bereinigen.",
+    "incomplete": "Belichtungsreihe nicht vollständig (erwartet 3/5)."
+  },
+
+  "toast": {
+    "upload_started": "Upload gestartet.",
+    "upload_done": "Upload abgeschlossen.",
+    "registered": "Registriert.",
+    "renamed": "Umbenannt.",
+    "marked": "Markierung gesetzt.",
+    "unmarked": "Markierung entfernt.",
+    "deleted": "In den Papierkorb verschoben.",
+    "restored": "Wiederhergestellt.",
+    "permanently_deleted": "Dauerhaft gelöscht.",
+    "package_submitted": "Bearbeitungspaket eingereicht.",
+    "approved": "Freigegeben.",
+    "revision": "Revision erfasst.",
+    "zip_creating": "ZIP wird erstellt…",
+    "zip_ready": "ZIP bereit.",
+    "order_completed": "Auftrag abgeschlossen."
+  },
+
+  "error": {
+    "unauthorized": "Nicht berechtigt.",
+    "session_expired": "Session abgelaufen – bitte erneut anmelden.",
+    "order_ownership": "Zielauftrag gehört nicht zu Ihrem Konto.",
+    "url_expired": "Signed URL abgelaufen – erneut versuchen.",
+    "object_missing": "Objekt nicht gefunden – Upload unvollständig.",
+    "file_locked": "Datei gesperrt – Aktion nicht möglich.",
+    "version_conflict": "Konflikt: Version niedriger als vorhanden.",
+    "network": "Netzwerkfehler – später erneut versuchen."
+  },
+
+  "empty": {
+    "no_files": "Keine Dateien gefunden. Laden Sie erste Bilder hoch, um Ihren Auftrag zu starten.",
+    "no_marked": "Keine markierten Dateien. Markieren Sie Dateien, um ein Bearbeitungspaket zu erstellen.",
+    "trash": "Papierkorb leer. Gelöschte Dateien erscheinen hier für 30 Tage."
+  },
+
+  "filter": {
+    "title": "Filter",
+    "roomtype": "Raumtyp",
+    "status": "Status",
+    "warnings": "Warnungen",
+    "version": "Version",
+    "marked": "Markiert",
+    "duplicates": "Duplikate",
+    "search": "Suche…"
+  },
+
+  "notify": {
+    "upload_received": "Upload erhalten",
+    "edit_started": "Bearbeitung gestartet",
+    "edit_done": "Bearbeitung fertig",
+    "revision_required": "Revision nötig",
+    "order_completed": "Auftrag abgeschlossen"
+  },
+
+  "download": {
+    "zip": "Download-ZIP (freigegebene Dateien)",
+    "alt_txt": "Alt-Texte als .txt herunterladen",
+    "alt_json": "Alt-Texte als .json herunterladen"
+  },
+
+  "legal": {
+    "trash_hint": "Dateien werden nach 30 Tagen automatisch gelöscht.",
+    "download_hint": "Download-Links sind aus Sicherheitsgründen nur zeitlich begrenzt gültig."
   }
 }
