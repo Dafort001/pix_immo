@@ -9,6 +9,7 @@ import { logger } from 'hono/logger';
 import { canaryMiddleware, DEFAULT_CANARY_CONFIG } from '../server/middleware/canary';
 import { proxyToOrigin } from '../server/proxy/originClient';
 import { createDb, WorkerStorage } from './db';
+import { nativeIntentHandler, nativeFinalizeHandler } from './handlers/uploads';
 import type { Context } from 'hono';
 
 /**
@@ -21,12 +22,17 @@ export interface Env {
   ORIGIN_API_BASE: string;
   ALLOWED_ORIGINS?: string;
   PHASE_B1B_ENABLED?: string; // "true" to enable upload routes
+  
+  // R2 Credentials (for S3-compatible operations like signed URLs)
+  CF_R2_ACCOUNT_ID?: string;
+  CF_R2_ACCESS_KEY?: string;
+  CF_R2_SECRET_KEY?: string;
 }
 
 /**
  * Context variables set by middleware
  */
-type Variables = {
+export type Variables = {
   reqId: string;
   startTime: number;
   canary: boolean;
@@ -298,8 +304,8 @@ export default {
         return proxyHandler(c);
       }
 
-      // Native handler (stub - will be implemented in Task 6)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
+      // Native handler: Generate signed R2 URL
+      return nativeIntentHandler(c);
     });
 
     // POST /api/pixcapture/upload/finalize
@@ -310,8 +316,8 @@ export default {
         return proxyHandler(c);
       }
 
-      // Native handler (stub)
-      return c.json({ error: 'Not implemented - proxying to origin' }, 501);
+      // Native handler: Verify R2 upload & finalize
+      return nativeFinalizeHandler(c);
     });
 
     // ========== Default: Proxy all other routes (MUST be last) ==========

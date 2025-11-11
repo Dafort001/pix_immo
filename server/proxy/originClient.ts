@@ -195,3 +195,106 @@ export async function checkOriginHealth(originBaseUrl: string): Promise<boolean>
     return false;
   }
 }
+
+/**
+ * Forward upload intent to origin (creates uploadedFile record)
+ * Returns signed URL + file metadata from origin
+ */
+export async function forwardUploadIntent(
+  originBaseUrl: string,
+  objectKey: string,
+  filename: string,
+  mimeType: string, // Match shared schema field name
+  fileSize: number,
+  headers: Headers, // Must contain auth cookie
+  reqId?: string
+): Promise<{ signedUrl: string; fileId: string; expiresAt: string }> {
+  const body = JSON.stringify({
+    objectKey,
+    filename,
+    mimeType, // Use mimeType to match uploadIntentSchema
+    fileSize,
+  });
+
+  const response = await proxyToOrigin(
+    {
+      method: 'POST',
+      path: '/api/pixcapture/upload/intent',
+      headers,
+      body,
+    },
+    originBaseUrl,
+    {
+      logContext: reqId ? { reqId, route: 'upload-intent' } : undefined,
+    }
+  );
+
+  if (response.status !== 200) {
+    throw new Error(`Origin intent failed with status ${response.status}`);
+  }
+
+  const text = await streamToText(response.body);
+  return JSON.parse(text);
+}
+
+/**
+ * Forward upload finalize to origin (finalizes uploadedFile record)
+ * Returns finalized file metadata from origin
+ */
+export async function forwardUploadFinalize(
+  originBaseUrl: string,
+  objectKey: string,
+  checksum: string,
+  exifMeta: Record<string, any> | undefined,
+  headers: Headers, // Must contain auth cookie
+  reqId?: string
+): Promise<{ fileId: string; url: string; status: string }> {
+  const body = JSON.stringify({
+    objectKey,
+    checksum,
+    exifMeta,
+  });
+
+  const response = await proxyToOrigin(
+    {
+      method: 'POST',
+      path: '/api/pixcapture/upload/finalize',
+      headers,
+      body,
+    },
+    originBaseUrl,
+    {
+      logContext: reqId ? { reqId, route: 'upload-finalize' } : undefined,
+    }
+  );
+
+  if (response.status !== 200) {
+    throw new Error(`Origin finalize failed with status ${response.status}`);
+  }
+
+  const text = await streamToText(response.body);
+  return JSON.parse(text);
+}
+
+/**
+ * Helper: Convert ReadableStream to text
+ */
+async function streamToText(stream: ReadableStream<Uint8Array> | null): Promise<string> {
+  if (!stream) return '';
+  
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let result = '';
+  
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      result += decoder.decode(value, { stream: true });
+    }
+    result += decoder.decode(); // Flush
+    return result;
+  } finally {
+    reader.releaseLock();
+  }
+}
