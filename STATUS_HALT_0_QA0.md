@@ -1,5 +1,12 @@
-# Statuscheck HALT 0–QA0
-**Datum:** 11. November 2025  
+# ⚠️ VERALTET - Statuscheck HALT 0–QA0
+
+**⚠️ DIESER REPORT IST VERALTET**  
+**Grund:** QA0 wurde nach Erstellung dieses Reports vollständig abgeschlossen (siehe `QA/HALT_QA0_COMPLETE.md`)  
+**Aktueller Status:** Siehe `REPLIT_STATUS_CURRENT.md` (Stand: 11. Nov 2025, 14:47 UTC)
+
+---
+
+**Original-Datum:** 11. November 2025  
 **Branch:** main  
 **Ziel:** Vollständige Erfassung des Umsetzungsstands aller Halte (0–QA0)
 
