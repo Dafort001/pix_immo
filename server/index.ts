@@ -21,6 +21,7 @@ import { uploadFile, downloadFile, generateObjectPath, generatePresignedPutUrl }
 import { extractStackNumberFromFilename, extractRoomTypeFromFilename } from "./raw-upload-helpers";
 import { scheduleCleanup } from "./cleanup";
 import { logger, generateRequestId, type LogContext } from "./logger";
+import { startEditQueueWorker } from "./edit-queue-worker";
 
 const app = new Hono();
 
@@ -2932,6 +2933,9 @@ async function startServer() {
 
   // Initialize storage before starting server
   await storage.ready();
+  
+  // Start Edit Queue Worker (HALT F4a)
+  startEditQueueWorker();
 
   // Schedule cleanup job to remove orphaned temp files every 6 hours
   scheduleCleanup(6, 6);

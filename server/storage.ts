@@ -605,6 +605,7 @@ export interface IStorage {
   // Uploaded Files extended operations
   getFilesByStatus(status: string): Promise<any[]>;
   updateFileStatus(fileId: string, status: string): Promise<void>;
+  getUploadedFile(fileId: string): Promise<any | undefined>; // Get single uploaded file
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3631,6 +3632,15 @@ export class DatabaseStorage implements IStorage {
       .update(uploadedFiles)
       .set({ status, updatedAt: Date.now() })
       .where(eq(uploadedFiles.id, fileId));
+  }
+  
+  async getUploadedFile(fileId: string): Promise<any | undefined> {
+    const [file] = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, fileId))
+      .limit(1);
+    return file;
   }
 }
 
