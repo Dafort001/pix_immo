@@ -243,7 +243,48 @@ npm run check                # TypeScript
 
 # Deployment
 wrangler deploy              # Deploy to Cloudflare
+
+# Testing (Task 8 - B1 Integration Tests)
+npm test                     # Run all tests
+npm run test:watch           # Watch mode
+npm run test:ui              # Vitest UI
+npm run test:integration     # B1 upload parity tests only
 ```
+
+---
+
+## 🧪 Testing
+
+### HALT B1 Integration Tests (Task 8)
+
+Integration tests validating **canary parity** between native Cloudflare Workers handlers and origin (Express) API delegation.
+
+**Test Coverage:**
+- ✅ Upload Intent (POST /api/pixcapture/upload/intent) - Canary vs Proxy
+- ✅ Upload Finalize (POST /api/pixcapture/upload/finalize) - R2 verification + DB delegation
+- ✅ Auth validation (Session cookies + X-Device-Token)
+- ✅ Response schema parity (status codes, headers, JSON fields)
+- ✅ Error handling (400/401/409/429)
+
+**Test Infrastructure:**
+- **Framework**: Vitest (Node.js integration tests)
+- **Mocking**: R2 HEAD mock + Origin API mock (fetch-mock)
+- **Auth**: Session cookie generator (JWT-based)
+- **Fixtures**: `tests/fixtures/upload.json` (test payloads)
+
+**Run Tests:**
+```bash
+npm run test:integration  # Run B1 upload parity tests
+npm run test:watch        # Watch mode for TDD
+npm run test:ui           # Interactive Vitest UI
+```
+
+**Test Files:**
+- `tests/integration/b1.uploads.test.ts` - 8+ test cases (canary vs proxy)
+- `tests/helpers/workerTestRunner.ts` - Hono worker execution with mocked bindings
+- `tests/helpers/r2Mock.ts` - R2 Bucket HEAD mock
+- `tests/helpers/fetchMock.ts` - Origin API HTTP mock
+- `tests/helpers/jwtSession.ts` - Session cookie generator
 
 ---
 

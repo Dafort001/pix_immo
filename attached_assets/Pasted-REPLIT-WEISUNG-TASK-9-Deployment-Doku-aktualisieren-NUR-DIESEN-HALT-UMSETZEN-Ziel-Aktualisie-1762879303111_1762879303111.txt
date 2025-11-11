@@ -1,0 +1,110 @@
+REPLIT-WEISUNG — TASK 9 (Deployment-Doku aktualisieren) — NUR DIESEN HALT UMSETZEN
+
+Ziel:
+Aktualisiere die Deploy-Dokumentation für Preview/Prod inkl. Canary-Rollout (B1a/B1b), ENV/Secrets, CORS, Smoke-/QA-Checks und Rollback. Kein Code-Change, nur Doku.
+
+Leitplanken:
+- Keine neuen Features, keine Tests.
+- Nur Markdown-Dateien anpassen/neu anlegen.
+
+Dateien (nur diese ändern/anlegen):
+1) DEPLOYMENT.md (neu oder überschreiben)
+2) README.md (Abschnitt „Deployment“ kurz anpassen/verlinken)
+3) QA/GO_NO_GO_FINAL.md (nur verlinken, nicht neu schreiben)
+
+Inhalt DEPLOYMENT.md (Struktur genau so):
+
+# 1. Übersicht
+- Frontend: Cloudflare Pages (Preview/Prod)
+- Backend: Cloudflare Workers (Canary: B1a GET, B1b Uploads), Proxy zum Alt-Backend für den Rest
+- R2: piximmo-media (Signed PUT/GET)
+- Kein E2E nötig für Deploy
+
+# 2. Voraussetzungen
+- wrangler.toml vorhanden (Routes, R2_BINDING=R2_BUCKET)
+- Secrets gesetzt: JWT_SECRET, ORIGIN_API_BASE (falls als Secret)
+- ALLOWED_ORIGINS: Preview + Prod Domains eingetragen
+- COOKIE_SAMESITE=None, COOKIE_SECURE=true
+
+# 3. ENV-Variablen
+## Pages Preview
+- VITE_API_BASE_URL=<API-Preview-URL>
+- VITE_APP_ENV=preview
+- VITE_FEATURE_QA_GUARD=true
+## Pages Production
+- VITE_API_BASE_URL=<API-Prod-URL>
+- VITE_APP_ENV=production
+- VITE_FEATURE_QA_GUARD=false
+## Workers (wrangler.toml [vars])
+- ORIGIN_API_BASE=<Alt-Backend-URL> (oder Secret)
+- ALLOWED_ORIGINS="https://pix-immo.pages.dev,https://www.pix.immo"
+- COOKIE_SAMESITE="None"
+- COOKIE_SECURE="true"
+
+# 4. Build & Deploy
+## Frontend (Preview)
+- ./scripts/deploy-frontend.sh
+- Ergebnis: Preview-URL
+## Workers (Preview/Canary)
+- wrangler deploy (Preview-Route)
+- Health: GET /api/healthz → 200
+- Canary nur intern: Header `X-Canary: 1` im Client setzen (QA-Flag)
+## Produktionsdeploy (erst nach GO)
+- Frontend: Pages → Production promote
+- Workers: Canary-Quote schrittweise erhöhen (10% → 50% → 100%) in separatem Halt
+
+# 5. Canary-Rollout (B1)
+- B1a (GET): /api/orders/:id/files, /stacks, /status, /notifications nativ
+- B1b (Uploads): /api/uploads/intent, /finalize nativ
+- Ohne Canary: Proxy an ORIGIN_API_BASE
+- Parität: Antworten identisch (Schema/Status/Headers)
+
+# 6. Smoke-/QA-Checks (Preview)
+- /qa aufrufen (nur bei VITE_FEATURE_QA_GUARD=true)
+- PASS-Kriterien:
+  - API-URL erkannt
+  - CORS/Preflight kein TypeError (401/403 ok)
+  - Credentials-Check 200/401 ok
+  - Signed-URL Dry-Run: SKIP ohne Login
+- Ergebnis unter QA/GO_NO_GO_FINAL.md dokumentieren
+
+# 7. CORS & Cookies
+- CORS: Origins laut ALLOWED_ORIGINS whitelisten
+- Allow: GET, POST, PUT, DELETE, OPTIONS
+- Headers: Content-Type, Authorization, X-Device-Token, X-Requested-With, Content-MD5, x-amz-*
+- Credentials: true; SameSite=None; Secure=true
+- R2-CORS: GET/PUT erlaubt; Expose: ETag, Location
+
+# 8. Rollback
+- Frontend: Pages „Revert to previous deployment“
+- Workers: Canary-Header entfernen (0% native), alles via Proxy
+- Alt-Backend bleibt unverändert erreichbar
+
+# 9. Troubleshooting
+- 401/403 in Preview: Session/Cookies prüfen (SameSite=None, Secure, Domain)
+- CORS-TypeError: Origin fehlt in ALLOWED_ORIGINS, Preflight nicht korrekt
+- Upload 409 bei finalize: Objekt fehlt in R2 → intent neu ausführen
+- Signed URL 410/403: TTL abgelaufen → intent neu anfordern
+- 5xx Spike: Proxy-Timeout/Origin down → Canary auf 0%
+
+# 10. Verifikation (Checkliste vor Prod)
+- [ ] /qa = PASS (kein RollbackBanner)
+- [ ] GET-Routen Parität ok (Canary vs Proxy)
+- [ ] intent/finalize Parität ok (Schema + Status)
+- [ ] ALLOWED_ORIGINS korrekt
+- [ ] Secrets gesetzt (JWT_SECRET)
+- [ ] README/DEPLOYMENT aktuell
+
+README.md – Anpassung:
+- Abschnitt „Deployment“ auf DEPLOYMENT.md verlinken (ein Absatz, keine Duplikate).
+- Kurz erwähnen: „Preview zuerst, /qa prüfen, dann GO/NO-GO.“
+
+Definition of Done:
+- DEPLOYMENT.md vorhanden, vollständig, aktuell (wie oben).
+- README verlinkt korrekt.
+- Keine Codeänderungen, nur Doku.
+- Keine Secrets im Repo offengelegt.
+
+Cleanup:
+- Prüfen, dass wrangler.toml im Repo keine echten URLs/Secrets enthält.
+- Keine temporären Dateien/Notizen einchecken.

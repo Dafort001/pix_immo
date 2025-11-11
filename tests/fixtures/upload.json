@@ -1,0 +1,38 @@
+{
+  "validIntent": {
+    "filename": "test-photo.jpg",
+    "mimeType": "image/jpeg",
+    "fileSize": 2048576,
+    "checksum": "abc123def456",
+    "orderId": "order_test_123",
+    "roomType": "wohnzimmer",
+    "stackId": "stack_test_001"
+  },
+  "validFinalize": {
+    "objectKey": "pixcapture/uploads/1234567890-abcd1234-test-photo.jpg",
+    "checksum": "abc123def456",
+    "exifMeta": {
+      "width": 4032,
+      "height": 3024,
+      "orientation": "landscape",
+      "captureTime": "2025-01-15T14:30:00Z"
+    }
+  },
+  "invalidIntent": {
+    "filename": "test.jpg",
+    "mimeType": "invalid/mime",
+    "fileSize": -100
+  },
+  "originResponses": {
+    "intentSuccess": {
+      "signedUrl": "https://r2.example.com/presigned-put-url?expires=300",
+      "fileId": "file_test_12345",
+      "expiresAt": "2025-01-15T15:00:00Z"
+    },
+    "finalizeSuccess": {
+      "fileId": "file_test_12345",
+      "status": "uploaded",
+      "objectKey": "pixcapture/uploads/1234567890-abcd1234-test-photo.jpg"
+    }
+  }
+}

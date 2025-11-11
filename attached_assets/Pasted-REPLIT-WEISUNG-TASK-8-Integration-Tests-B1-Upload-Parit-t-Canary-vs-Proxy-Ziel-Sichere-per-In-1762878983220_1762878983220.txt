@@ -1,0 +1,97 @@
+REPLIT-WEISUNG — TASK 8 (Integration-Tests: B1 Upload-Parität Canary vs Proxy)
+
+Ziel:
+Sichere per Integration-Tests ab, dass die nativen Worker-Routen (/api/uploads/intent, /api/uploads/finalize) bei X-Canary: 1 identisch zur Origin-API antworten (Schema/Status/Header) und dass ohne Canary weiterhin korrekt an die Origin-API proxied wird.
+
+Leitplanken:
+- KEINE neuen Features. Nur Tests und minimale Test-Mocks.
+- Keine E2E-Tests. Nur Integration mit gemockter Origin-API und gemocktem R2-HEAD.
+- Response-Parität prüfen: Statuscodes, Felder, Pflicht-Header.
+
+Dateien (nur diese anlegen/ändern):
+- tests/integration/b1.uploads.test.ts
+- tests/helpers/fetchMock.ts (HTTP-Mock für Origin)
+- tests/helpers/r2Mock.ts (HEAD-Check-Mock)
+- tests/helpers/jwtSession.ts (valides Session-Cookie erzeugen)
+- tests/fixtures/upload.json (Beispielpayloads)
+- package.json (falls nötig: NPM-Skript "test:integration")
+- README.md (kurzer Abschnitt „Task 8 – Integration-Tests“)
+
+Test-Setup (Vorgaben):
+- Mock Origin (ORIGIN_API_BASE) für:
+  - POST /api/uploads/finalize (liefert { file_id, status: "uploaded" })
+- Mock R2 HEAD:
+  - HEAD auf object_key → 200 (existiert) oder 404 (nicht gefunden)
+- Session:
+  - Verwende jwtSession.create(email) → Cookie "session=..." (HttpOnly simuliert via fetch-cookie/Headers)
+- Device-Token:
+  - Header "X-Device-Token" optional nutzen; ein Testfall ohne Session, mit gültigem Token.
+
+Testfälle (mindestens diese):
+1) intent_canary_ok
+   - Request: POST /api/uploads/intent mit Header X-Canary: 1 + Session-Cookie
+   - Body: { filename, mime, order_id, room_type, stack_id }
+   - Erwartung:
+     - 200
+     - JSON-Felder: signed_url (string), object_key (string), headers.Content-Type == mime
+     - object_key enthält user/{user_id}/orders/{order_id}/raw/ und Schema v3.1
+     - Keine überflüssigen Felder
+
+2) intent_proxy_fallback
+   - Gleich wie (1), aber OHNE X-Canary
+   - Erwartung:
+     - Request wird an Origin weitergeleitet (per Fetch-Mock verifizierbar)
+     - Response-Schema == Origin-Schema
+
+3) finalize_canary_not_found
+   - Request: POST /api/uploads/finalize mit X-Canary: 1 + Session
+   - Body: { object_key: "...", bytes, checksum }
+   - Mock R2 HEAD → 404
+   - Erwartung: 409 (Konflikt), Fehlermeldung kurz & generisch
+
+4) finalize_canary_ok
+   - Wie (3), aber R2 HEAD → 200
+   - Mock Origin finalize → { file_id, status: "uploaded" }
+   - Erwartung:
+     - 200
+     - JSON: { file_id, status: "uploaded" }
+     - Pflicht-Header (Content-Type: application/json; keine sensiblen Header leaken)
+
+5) auth_required
+   - intent/finalize mit X-Canary: 1 OHNE Session/Device-Token
+   - Erwartung: 401/403 identisch zur Origin-Policy
+
+6) device_token_flow
+   - intent mit gültigem X-Device-Token, aber ohne Session
+   - Erwartung: 200 wie (1)
+   - finalize mit gleichem Token und bestehendem R2-Objekt → 200
+
+7) parity_headers
+   - Vergleiche für intent/finalize (Canary vs Proxy):
+     - Statuscodes gleich
+     - Content-Type
+     - Kein zusätzliches, nicht dokumentiertes Header-Leak
+
+8) rate_limit_optional (falls Rate-Limit implementiert)
+   - Mehrfach intent-Requests → letzter mit 429
+   - Erwartung: Fehlermeldung kurz, Header Retry-After falls vorhanden
+
+Negativ-/Robustheit:
+- Ungültiges MIME oder fehlende Felder → 400 (wie Origin)
+- Falscher order_id (nicht zum user) → 403
+
+Technische Hinweise:
+- Tests isoliert ausführen; keine echten R2- oder Origin-Requests.
+- Canary-Header nur dort setzen, wo der native Pfad geprüft wird.
+- Zeitabhängigkeiten (TTL) nicht auf Sekunden genau prüfen; nur „vorhanden/Format plausibel“.
+
+Definition of Done:
+- Alle o. g. Testfälle in tests/integration/b1.uploads.test.ts vorhanden und grün.
+- Mock-Origin & Mock-R2 in helpers gekapselt, wiederverwendbar.
+- README um kurzen Abschnitt „Task 8 – Integration-Tests (Canary-Parität)“ ergänzt (2–3 Sätze).
+- Keine Änderungen an Produktionscode außer ggf. injizierbarer Fetch- oder R2-Client-Factory für Tests.
+
+Cleanup:
+- Keine Secrets in Test-Logs.
+- Mocks nach jedem Testfall resetten.
+- Kein globaler State (Tests unabhängig ausführbar).

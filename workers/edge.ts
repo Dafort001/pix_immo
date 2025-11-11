@@ -42,8 +42,9 @@ export type Variables = {
 
 /**
  * Create Hono app for Workers
+ * Exported for testing
  */
-function createWorkerApp() {
+export function createWorkerApp() {
   const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
   // Structured logging middleware
