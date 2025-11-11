@@ -1094,6 +1094,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Production domains for CORS
   const productionOrigins = [
     "https://pixcapture.app",
+    "https://pixcapture.pages.dev", // Cloudflare Pages deployment
     "https://pix.immo",
     "https://www.pix.immo",
   ];
@@ -1126,6 +1127,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Allow Replit preview domains (*.replit.dev)
       if (origin.endsWith('.replit.dev')) {
+        return callback(null, true);
+      }
+      
+      // Allow Cloudflare Pages preview deployments (*.pages.dev)
+      if (origin.endsWith('.pages.dev')) {
         return callback(null, true);
       }
       

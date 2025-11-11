@@ -53,6 +53,8 @@ const getAllowedOrigins = () => {
     return [
       "https://pix.immo",
       "https://www.pix.immo",
+      "https://pixcapture.app",
+      "https://pixcapture.pages.dev", // Cloudflare Pages deployment
       process.env.PRODUCTION_URL || "",
     ].filter(Boolean);
   }
@@ -71,6 +73,12 @@ app.use(
   cors({
     origin: (origin) => {
       const allowedOrigins = getAllowedOrigins();
+      
+      // Allow Cloudflare Pages preview deployments (*.pages.dev)
+      if (origin && origin.endsWith('.pages.dev')) {
+        return origin;
+      }
+      
       // If no origin header (same-origin request) or origin is in allowlist, allow it
       if (!origin || allowedOrigins.includes(origin)) {
         return origin || allowedOrigins[0];

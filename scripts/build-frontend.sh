@@ -10,8 +10,8 @@ echo "🏗️  Building Frontend for Cloudflare Pages..."
 export VITE_APP_ENV=production
 export VITE_API_BASE_URL=https://api.pixcapture.dev
 
-# Build with Vite
-npx vite build --outDir dist/client
+# Build with Vite (use absolute path to avoid client/dist/client nesting)
+npx vite build --outDir "$(pwd)/dist/client"
 
 echo "✅ Frontend build complete → dist/client/"
 echo "📦 Ready for deployment to Cloudflare Pages"
