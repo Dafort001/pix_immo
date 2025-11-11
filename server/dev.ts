@@ -5,6 +5,7 @@ import { registerRoutes } from "./routes";
 import { scheduleCleanup } from "./cleanup";
 import { storage } from "./storage";
 import { seedDemoJobs } from "./seed-demo-jobs";
+import { startEditQueueWorker } from "./edit-queue-worker";
 import { createServer as createViteServer, createLogger } from "vite";
 import viteConfig from "../vite.config";
 import fs from "fs";
@@ -170,6 +171,9 @@ async function startDevServer() {
 
   // Schedule cleanup job to remove orphaned temp files every 6 hours
   scheduleCleanup(6, 6);
+
+  // Start Edit Queue Worker (HALT F4a)
+  startEditQueueWorker();
 
   // Seed demo jobs on startup (only if database is empty)
   await seedDemoJobs(storage);
