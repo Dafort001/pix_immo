@@ -1,0 +1,113 @@
+REPLIT-WEISUNG — HALT F3 (Cloudflare Pages Deployment — Frontend only) — NUR DIESEN HALT UMSETZEN
+
+Leitplanken:
+- Arbeite ausschließlich am Frontend-Deployment zu Cloudflare Pages. Kein Backend ändern/migrieren. Keine neuen Features. Keine E2E-Tests.
+- Ziel: Build produziert ein SPA-Bundle, das auf Cloudflare Pages (Preview & Prod) funktioniert und sauber gegen die bestehenden API-Endpoints spricht.
+
+Ziel:
+Frontend der Pix Capture App als SPA auf Cloudflare Pages deployen (Preview + Prod). API-Basis-URL per ENV konfigurierbar, SPA-Routing korrekt, Cache-Header sinnvoll.
+
+Scope (nur diese Dateien anlegen/ändern):
+- package.json (Build/Preview-Skripte)
+- .env.production.example (Frontend-ENV)
+- src/config/runtime.ts (liest ENV → API-Basis-URL)
+- public/_redirects (SPA-Fallback)
+- public/_headers (Caching/Security-Header)
+- README.md (kurze Deploy-Anleitung)
+- (falls Vite o. ä.) vite.config.ts (Base/Output prüfen)
+
+ENV/Konfiguration:
+- Frontend braucht API-Basis-URL:
+  - DEV: VITE_API_BASE_URL=http://localhost:8787
+  - PREVIEW: VITE_API_BASE_URL=https://api-preview.pix.immo (Platzhalter)
+  - PROD: VITE_API_BASE_URL=https://api.pix.immo (Platzhalter)
+- In Replit/Build: ENV injizieren, kein Hardcoding.
+
+Konkrete Änderungen:
+
+1) package.json — Skripte
+- Sicherstellen:
+  - "build": Framework-spezifischer Build (z. B. "vite build")
+  - "preview": "vite preview --port 4173" (oder analog)
+  - "check:deploy": kleines Skript, das existence von dist/ und index.html prüft (Node one-liner akzeptabel)
+- Keine zusätzlichen Tools installieren, falls nicht nötig.
+
+2) .env.production.example
+- Inhalt:
+  - VITE_API_BASE_URL=https://api.pix.immo
+  - VITE_APP_ENV=production
+
+3) src/config/runtime.ts
+- Exportiere getApiBaseUrl():
+  - liest import.meta.env.VITE_API_BASE_URL
+  - wirft klaren Fehler, wenn nicht gesetzt
+- Exportiere getAppEnv():
+  - import.meta.env.VITE_APP_ENV || 'development'
+
+4) SPA-Routing — public/_redirects
+- Inhalt:
+  - /*    /index.html    200
+- Zweck: Jede Route der SPA (z. B. /orders/:id/stacks) wird an index.html geroutet.
+
+5) Header — public/_headers
+- Sinnvolle Defaults:
+  - /* 
+    Cache-Control: public, max-age=31536000, immutable
+  - /index.html
+    Cache-Control: no-cache
+  - /assets/*
+    Cache-Control: public, max-age=31536000, immutable
+  - Security (minimal, kompatibel mit SPA):
+    X-Content-Type-Options: nosniff
+    Referrer-Policy: strict-origin-when-cross-origin
+
+6) README.md — Deploy-Hinweise (kurz)
+- Schritte:
+  - Build: npm run build → dist/
+  - Cloudflare Pages: Neues Projekt → Framework: "Other" → Build Command: npm run build → Build Output: dist
+  - Environment Variables:
+    - Production: VITE_API_BASE_URL=https://api.pix.immo
+    - Preview: VITE_API_BASE_URL=https://api-preview.pix.immo
+  - SPA: _redirects im public/ vorhanden lassen
+  - CORS-Hinweis: Backend muss die jeweilige Origin freigeben (späterer Halt).
+
+7) (Optional) vite.config.ts (nur prüfen)
+- base: "/" (Standard) belassen
+- build.outDir: "dist"
+- assetsInlineLimit: Standard
+- Keine experimentellen Flags setzen.
+
+Verwendung der API in Code:
+- Alle Fetches importieren getApiBaseUrl() und bilden URLs wie `${getApiBaseUrl()}/api/orders/${id}/files`.
+- Keine absoluten Hardcodes mehr im Code.
+
+Checks/Tests (leicht, lokal):
+- npm run build → Erfolgreich, dist/ enthält index.html und assets/.
+- npm run preview → Manuelles Routing testen:
+  - / (Dashboard/Login)
+  - /orders/:id/stacks (Seite lädt via SPA)
+- Laufzeit: Fetch-Calls nutzen getApiBaseUrl(); bei fehlendem ENV klarer Konsolenfehler.
+- Headers: _headers und _redirects sind in dist/ (Vite kopiert public/ → dist/).
+
+Fehler-/Fallback-Verhalten:
+- Wenn VITE_API_BASE_URL nicht gesetzt → App zeigt deutlichen Hinweis „API-Basis-URL fehlt“ und blockiert Requests (kein Silent-Fail).
+- 401/403 vom Backend → UI-Toast "error.session_expired" + Redirect /login.
+- CORS-Fehler → Kurzer Hinweis in UI: „CORS blockiert – API-Origin prüfen“ (nur wenn detectbar).
+
+Definition of Done:
+- Build erstellt lauffähiges SPA-Bundle (dist/).
+- SPA-Routing funktioniert lokal via preview (index.html-Fallback ok).
+- Alle API-Aufrufe gehen über getApiBaseUrl() (keine Hardcodes).
+- _redirects und _headers sind im Output und enthalten die o. g. Regeln.
+- README dokumentiert den Pages-Deploy-Schritt (kurz).
+- Keine Änderungen außerhalb des Scopes. Keine Backend-Anpassungen.
+
+Cleanup:
+- Keine temporären Dateien zurücklassen.
+- Sicherstellen, dass .env.production.example keine Secrets enthält.
+- Prüfen, dass keine zusätzlichen Dependencies addiert wurden.
+
+Hinweise für später (NICHT jetzt umsetzen):
+- Backend-CORS: Erlaube Origins für Pages-Preview und Prod-Domain.
+- Separate Preview-API (api-preview.pix.immo) oder Routing-Header-Lösung.
+- Fehlerseite 404/500 können später per _redirects/_headers verfeinert werden.

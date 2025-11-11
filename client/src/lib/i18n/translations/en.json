@@ -213,7 +213,10 @@
     "success": "Success",
     "confirm": "Confirm",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "all": "All",
+    "file": "file",
+    "files": "files"
   },
   
   "rooms": {
@@ -289,8 +292,19 @@
 
   "dialog": {
     "review_package": {
-      "title": "Review Package",
-      "text": "{count} files marked. Process with Express?"
+      "title": "Submit Package for Editing",
+      "subtitle": "Review your selection before submission.",
+      "text": "{count} files marked. Process with Express?",
+      "files_by_room": "Files by Room Type",
+      "notes_label": "Notes (optional)",
+      "notes_placeholder": "Additional instructions or editing requests...",
+      "notes_hint": "e.g., special editing requests, color adjustments, etc.",
+      "confirm_label": "I confirm submission for editing",
+      "confirm_hint": "After submission, files will be locked and cannot be changed.",
+      "confirm_required": "Please confirm submission.",
+      "confirm_title": "Submit Package?",
+      "confirm_text": "Do you want to submit {count} files for editing? This action cannot be undone.",
+      "success": "{count} files successfully submitted."
     },
     "delete": {
       "title": "Delete Files",
@@ -353,7 +367,9 @@
     "revision": "Revision recorded.",
     "zip_creating": "Creating ZIP…",
     "zip_ready": "ZIP ready.",
-    "order_completed": "Order completed."
+    "order_completed": "Order completed.",
+    "download_started": "Download started.",
+    "submitted": "Submitted."
   },
 
   "error": {
@@ -364,13 +380,39 @@
     "object_missing": "Object not found – upload incomplete.",
     "file_locked": "File locked – action not possible.",
     "version_conflict": "Conflict: version lower than existing.",
-    "network": "Network error – retry later."
+    "network": "Network error – retry later.",
+    "restore_failed": "Restore failed.",
+    "delete_failed": "Delete failed."
   },
 
   "empty": {
     "no_files": "No files found. Upload your first images to start your order.",
     "no_marked": "No marked files. Mark files to create an edit package.",
-    "trash": "Trash empty. Deleted files appear here for 30 days."
+    "trash": "Trash empty. Deleted files appear here for 30 days.",
+    "no_exports": "No download packages available. Packages appear here after editing.",
+    "no_notifications": "No notifications."
+  },
+
+  "export": {
+    "title": "Downloads",
+    "subtitle": "Download your finished edits.",
+    "package": "package",
+    "packages": "packages",
+    "type": {
+      "originals": "Originals",
+      "edited": "Edited",
+      "final": "Final",
+      "custom": "Custom"
+    },
+    "downloaded": "Downloaded",
+    "expired": "Expired",
+    "expires": "Expires"
+  },
+
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all read",
+    "mark_read": "Mark read"
   },
 
   "filter": {

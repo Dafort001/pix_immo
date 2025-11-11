@@ -213,7 +213,10 @@
     "success": "Erfolgreich",
     "confirm": "Bestätigen",
     "yes": "Ja",
-    "no": "Nein"
+    "no": "Nein",
+    "all": "Alle",
+    "file": "Datei",
+    "files": "Dateien"
   },
   
   "rooms": {
@@ -289,8 +292,19 @@
 
   "dialog": {
     "review_package": {
-      "title": "Bearbeitungspaket prüfen",
-      "text": "{count} Dateien markiert. Express bearbeiten?"
+      "title": "Paket zur Bearbeitung einreichen",
+      "subtitle": "Überprüfen Sie Ihre Auswahl vor der Einreichung.",
+      "text": "{count} Dateien markiert. Express bearbeiten?",
+      "files_by_room": "Dateien nach Raumtyp",
+      "notes_label": "Notizen (optional)",
+      "notes_placeholder": "Zusätzliche Anweisungen oder Wünsche für die Bearbeitung...",
+      "notes_hint": "z.B. spezielle Bearbeitungswünsche, Farbanpassungen, etc.",
+      "confirm_label": "Ich bestätige die Einreichung zur Bearbeitung",
+      "confirm_hint": "Nach der Einreichung werden die Dateien gesperrt und können nicht mehr geändert werden.",
+      "confirm_required": "Bitte bestätigen Sie die Einreichung.",
+      "confirm_title": "Paket einreichen?",
+      "confirm_text": "Möchten Sie {count} Dateien zur Bearbeitung einreichen? Diese Aktion kann nicht rückgängig gemacht werden.",
+      "success": "{count} Dateien erfolgreich eingereicht."
     },
     "delete": {
       "title": "Dateien löschen",
@@ -353,7 +367,9 @@
     "revision": "Revision erfasst.",
     "zip_creating": "ZIP wird erstellt…",
     "zip_ready": "ZIP bereit.",
-    "order_completed": "Auftrag abgeschlossen."
+    "order_completed": "Auftrag abgeschlossen.",
+    "download_started": "Download gestartet.",
+    "submitted": "Eingereicht."
   },
 
   "error": {
@@ -364,13 +380,39 @@
     "object_missing": "Objekt nicht gefunden – Upload unvollständig.",
     "file_locked": "Datei gesperrt – Aktion nicht möglich.",
     "version_conflict": "Konflikt: Version niedriger als vorhanden.",
-    "network": "Netzwerkfehler – später erneut versuchen."
+    "network": "Netzwerkfehler – später erneut versuchen.",
+    "restore_failed": "Wiederherstellen fehlgeschlagen.",
+    "delete_failed": "Löschen fehlgeschlagen."
   },
 
   "empty": {
     "no_files": "Keine Dateien gefunden. Laden Sie erste Bilder hoch, um Ihren Auftrag zu starten.",
     "no_marked": "Keine markierten Dateien. Markieren Sie Dateien, um ein Bearbeitungspaket zu erstellen.",
-    "trash": "Papierkorb leer. Gelöschte Dateien erscheinen hier für 30 Tage."
+    "trash": "Papierkorb leer. Gelöschte Dateien erscheinen hier für 30 Tage.",
+    "no_exports": "Keine Download-Pakete verfügbar. Pakete erscheinen hier nach der Bearbeitung.",
+    "no_notifications": "Keine Benachrichtigungen."
+  },
+
+  "export": {
+    "title": "Downloads",
+    "subtitle": "Laden Sie Ihre fertigen Bearbeitungen herunter.",
+    "package": "Paket",
+    "packages": "Pakete",
+    "type": {
+      "originals": "Originale",
+      "edited": "Bearbeitet",
+      "final": "Final",
+      "custom": "Custom"
+    },
+    "downloaded": "Heruntergeladen",
+    "expired": "Abgelaufen",
+    "expires": "Läuft ab"
+  },
+
+  "notifications": {
+    "title": "Benachrichtigungen",
+    "mark_all_read": "Alle gelesen",
+    "mark_read": "Gelesen"
   },
 
   "filter": {

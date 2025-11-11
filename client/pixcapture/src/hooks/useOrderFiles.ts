@@ -148,3 +148,46 @@ export function useRestoreFiles() {
     },
   });
 }
+
+/**
+ * useMarkedFiles Hook
+ * GET /api/orders/:id/files?marked=true
+ */
+export function useMarkedFiles(orderId: string) {
+  return useOrderFiles(orderId, { marked: true });
+}
+
+/**
+ * useSubmitForEditing Mutation
+ * POST /api/orders/:orderId/submit-edits
+ */
+export function useSubmitForEditing() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      orderId,
+      files,
+      orderNotes,
+    }: {
+      orderId: string;
+      files: string[];
+      orderNotes?: string;
+    }) => {
+      const res = await apiRequest(
+        "POST",
+        `/api/orders/${orderId}/submit-edits`,
+        { files, orderNotes }
+      );
+      return res.json();
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["/api/orders", variables.orderId, "files"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["/api/orders", variables.orderId],
+      });
+    },
+  });
+}

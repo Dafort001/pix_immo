@@ -20,3 +20,26 @@ export function useOrderStatus(orderId: string, enabled: boolean = true) {
     staleTime: 10000, // 10s
   });
 }
+
+/**
+ * useDownloads Hook
+ * GET /api/orders/:id/downloads
+ */
+export function useDownloads(orderId: string) {
+  return useQuery<{
+    packages: Array<{
+      id: string;
+      packageType: "originals" | "edited" | "final" | "custom";
+      filename: string;
+      sizeBytes: number;
+      createdAt: string;
+      expiresAt?: string;
+      downloadUrl: string;
+      downloaded: boolean;
+    }>;
+  }>({
+    queryKey: ["/api/orders", orderId, "downloads"],
+    enabled: !!orderId,
+    staleTime: 30000, // 30s
+  });
+}
