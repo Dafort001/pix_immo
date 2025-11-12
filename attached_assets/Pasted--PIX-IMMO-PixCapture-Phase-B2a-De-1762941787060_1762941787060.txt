@@ -1,0 +1,187 @@
+# ==========================================================
+# PIX.IMMO / PixCapture — Phase B2a (Design v2)
+# B2a.5  Integration Tests – Middleware & /qa
+# (anschließend) B2a.6  Rollback-Dokumentation – Notfallverfahren
+# Voraussetzung: B2a.1–B2a.4 abgeschlossen (KV, Middleware, /qa, Logpush)
+# ==========================================================
+
+# Ziel B2a.5:
+#  - Verifizieren, dass Sticky-Cohorts, Header-Override, Emergency-Switch
+#    und /qa-Ausgaben korrekt funktionieren.
+#  - Prüfen, dass Logs & Dashboards Daten liefern.
+#  - Upload-Intent/Finalize bleibt in derselben Cohort (Session-Konsistenz).
+
+# Ziel B2a.6:
+#  - Sofort abrufbare Notfall-Prozeduren (ohne Redeploy).
+#  - Klarer Entscheidungsbaum, Kommandos und Rückkehr zum Normalbetrieb.
+
+
+──────────────────────────────────────────────
+1) Basis-Check /qa + Header + Cookie
+──────────────────────────────────────────────
+
+# /qa am Worker-Root (falls abweichend, Route anpassen):
+curl -i https://<preview-oder-prod-domain>/qa
+
+# Erwartet:
+#  - "X-Pix-Canary: 1;tag=B2a;cohort=native|proxy;reason=sampled|cookie|header|emergency"
+#  - bei neuem Sampling zusätzlich: "Set-Cookie: _canary_cohort=...; Max-Age=86400; ..."
+#  - JSON-Body mit canary.percent == 10, emergency_proxy == false
+
+# Sticky überprüfen (gleichbleibende Cohort bei Folge-Request):
+curl -i --cookie "_canary_cohort=native" https://<domain>/qa
+# Erwartet: cohort=native; reason=cookie
+
+curl -i --cookie "_canary_cohort=proxy" https://<domain>/qa
+# Erwartet: cohort=proxy; reason=cookie
+
+
+──────────────────────────────────────────────
+2) Header-Override (erzwingt 100 % native)
+──────────────────────────────────────────────
+
+curl -i -H "X-Canary: 1" https://<domain>/qa
+# Erwartet: cohort=native; reason=header
+# Hinweis: Cookie bleibt unberührt; Override gilt nur für diesen Request.
+
+
+──────────────────────────────────────────────
+3) Emergency-Switch (100 % Proxy, sofort – KV)
+──────────────────────────────────────────────
+
+# NOTFALL ZUM TESTEN (sofort danach wieder zurückstellen):
+wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+  --value '{"canary_percent":10,"canary_tag":"B2a","emergency_proxy":true,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+
+curl -i https://<domain>/qa
+# Erwartet: cohort=proxy; reason=emergency
+
+# Zurück auf Normalbetrieb:
+wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+  --value '{"canary_percent":10,"canary_tag":"B2a","emergency_proxy":false,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%H:%SZ)"'"}'
+
+
+──────────────────────────────────────────────
+4) Upload-Flow Konsistenz (Intent → Finalize)
+──────────────────────────────────────────────
+
+# Simuliere Session mit PROXY-Cookie:
+curl -i --cookie "_canary_cohort=proxy" -X POST https://<domain>/api/pixcapture/upload/intent
+# -> 201/200 erwartet, Intent-ID merken
+
+curl -i --cookie "_canary_cohort=proxy" -X POST https://<domain>/api/pixcapture/upload/finalize -d '{"intentId":"<ID>"}'
+# -> 200 erwartet, Finalize findet Intent (gleiche Cohort)
+
+# Simuliere Session mit NATIVE-Cookie:
+curl -i --cookie "_canary_cohort=native" -X POST https://<domain>/api/pixcapture/upload/intent
+
+curl -i --cookie "_canary_cohort=native" -X POST https://<domain>/api/pixcapture/upload/finalize -d '{"intentId":"<ID>"}'
+# -> 200 erwartet
+
+# Akzeptanz:
+# - Kein "Not Found / Intent mismatch" zwischen intent/finalize
+# - Beide Pfade liefern Status 2xx in derselben Cohort
+
+
+──────────────────────────────────────────────
+5) Rate-Limit /qa (Soft-Guard)
+──────────────────────────────────────────────
+
+# 10+ schnelle Aufrufe nacheinander (gleiche IP):
+for i in $(seq 1 12); do curl -s -o /dev/null -w "%{http_code}\n" https://<domain>/qa; done
+
+# Erwartet: mindestens ein 429 ({"error":"rate_limited"})
+# (Soft-Guard; kein harter Schutz – ausreichend für diesen Zweck)
+
+
+──────────────────────────────────────────────
+6) Logs & Dashboards
+──────────────────────────────────────────────
+
+# workers_trace_events sollten JSON-Einträge zeigen (console.log/error):
+# - Erfolge: ~10 % gesampelt (level=info, type=success)
+# - Fehler: 100 % (level=error, type=exception)
+
+# R2-Objektliste prüfen (nach 5–15 Minuten):
+wrangler r2 object list logs-canary --prefix b2a/http_requests/ | head
+wrangler r2 object list logs-canary --prefix b2a/workers_trace_events/ | head
+
+# Cloudflare Analytics:
+# - Panel "Requests by cohort": Verhältnis ca. 10:90
+# - Panel "Error rate by cohort": native < 1.5 %, proxy < 1 %
+# - Panel "Latency p90": native < 600 ms; nicht > +20 % vs proxy
+
+
+──────────────────────────────────────────────
+7) Abnahme-Kriterien B2a.5
+──────────────────────────────────────────────
+
+# Häkchen setzen, wenn erfüllt:
+# ☑ X-Pix-Canary-Header korrekt (cohort+reason) + Sticky-Cookie gesetzt
+# ☑ Header-Override (X-Canary: 1) erzwingt native
+# ☑ Emergency-Switch via KV wirkt sofort (cohort=proxy; reason=emergency)
+# ☑ Upload intent→finalize bleibt konsistent pro Cohort (keine Orphans)
+# ☑ /qa Soft-Rate-Limit greift (429 bei Spam)
+# ☑ Logpush liefert Dateien nach R2; Dashboards zeigen Daten
+
+# Dokumentation (kurz):
+#  - docs/QA/GO_NO_GO_PROD.md: Abschnitt B2a.5
+#    • Datum/Zeit (Europe/Berlin)
+#    • Screenshots /qa & Analytics
+#    • Kurzfazit „PASS/FAIL“ + ToDo bei FAIL
+
+
+==============================================================
+=== NÄCHSTER TASK (AUTOMATISCH ANSCHLIESSEN): B2a.6 – ROLLBACK-DOKS
+==============================================================
+
+# Ziel:
+# - Eine sofort nutzbare, klare Anleitung für Incident-Responder.
+# - Ohne Redeploy handlungsfähig (KV-gestützt).
+# - Mit Entscheidungsbaum und Rückkehr zum Normalbetrieb.
+
+──────────────────────────────────────────────
+8) Rollback-Entscheidungsbaum (kopieren in docs/runbooks/rollback_b2a.md)
+──────────────────────────────────────────────
+
+# Trigger (eine Bedingung reicht):
+# - Error Rate (native) > 1.5 % über 5 min
+# - p90 Latency (native) > 600 ms über 10 min ODER > +20 % vs proxy
+# - R2 Upload Failures > 5/min über 3 min
+# - Orphaned Upload Intents > 10/h
+
+# Maßnahmen (in dieser Reihenfolge prüfen/ziehen):
+# A) Not-Aus – 100 % Proxy SOFORT:
+#    wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+#      --value '{"canary_percent":0,"canary_tag":"B2a","emergency_proxy":true,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+#
+# B) Sampling reduzieren (z. B. 10 % → 5 %):
+#    wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+#      --value '{"canary_percent":5,"canary_tag":"B2a","emergency_proxy":false,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+#
+# C) Sampling aus (0 %, kein Not-Aus):
+#    wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+#      --value '{"canary_percent":0,"canary_tag":"B2a","emergency_proxy":false,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+
+# Validierung nach jeder Maßnahme:
+#  - curl -i https://<domain>/qa → emergency_proxy / percent prüfen
+#  - Analytics → Error/Latency Trend beobachten (5–10 min)
+
+# Rückkehr zum Normalbetrieb:
+#  - Ursache behoben? → emergency_proxy=false, canary_percent zurück auf 10
+#  - docs/INCIDENTS/<YYYY-MM-DD>_postmortem.md anlegen:
+#    • Timeline, Impact, Root Cause, Fix, Prevention
+
+
+──────────────────────────────────────────────
+9) Abnahme B2a.6
+──────────────────────────────────────────────
+
+# ☑ rollback_b2a.md existiert (Runbook, inkl. Kommandos & Schwellen)
+# ☑ /qa zeigt KV-Änderungen korrekt an
+# ☑ Team weiß: Not-Aus (A), Reduktion (B), Aus (C), Rückkehr-Prozess
+# → Nächster Halt: B2a.7 – Production Deploy (10 % live auf Prod)
+
+# ==========================================================
+# ENDE — B2a.5 (Tests) + B2a.6 (Rollback-Dokus) – eine Datei
+# ==========================================================
