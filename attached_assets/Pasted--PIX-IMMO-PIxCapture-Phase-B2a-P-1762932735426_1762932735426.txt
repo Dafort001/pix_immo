@@ -1,0 +1,171 @@
+# ==========================================================
+# PIX.IMMO / PIxCapture – Phase B2a
+# Production Migration & Canary Ramp-Up (10 % Traffic)
+# ==========================================================
+# Ziel:
+#   - 10 % des Traffics läuft nativ über Cloudflare Workers
+#   - 90 % weiterhin über Proxy-Fallback (Origin)
+#   - Monitoring, Logpush und QA-Checks aktivieren
+# ==========================================================
+
+
+──────────────────────────────────────────────
+1️⃣  ENV-VARS UND FLAGS SETZEN
+──────────────────────────────────────────────
+
+In wrangler.toml (vars-Block) einfügen oder in Replit-Env hinterlegen:
+
+[vars]
+CANARY_PERCENT = "10"
+FEATURE_QA_GUARD = "true"
+CANARY_TAG = "B2a"
+
+→ Diese Werte steuern, welcher Anteil der Requests
+   nativ über den Worker verarbeitet wird.
+
+
+──────────────────────────────────────────────
+2️⃣  CANARY-LOGIK IM WORKER ERGÄNZEN
+──────────────────────────────────────────────
+
+Im zentralen Entry-Point des Workers
+(Vor der Proxy-Weitergabe an den Origin) einsetzen:
+
+// ---- Canary-Gating – Phase B2a ----
+const pct = Number(env.CANARY_PERCENT || 0) / 100;
+const inCanary = Math.random() < pct;
+
+// Header setzen, um Routing sichtbar zu machen
+ctx.resHeaders.set(
+  "X-Pix-Canary",
+  inCanary ? `1;tag=${env.CANARY_TAG}` : `0;tag=${env.CANARY_TAG}`
+);
+
+try {
+  if (inCanary) {
+    // NATIVE Worker-Pfad (kein Proxy)
+    return await handleNativeRequest(ctx, env);
+  } else {
+    // PROXY-Pfad (bestehendes Verhalten)
+    return await proxyToOrigin(ctx, env);
+  }
+} catch (err) {
+  ctx.resHeaders.set("X-Pix-Error", "1");
+  console.error("Worker Error:", { inCanary, tag: env.CANARY_TAG, err });
+  return new Response("Internal Error", { status: 500 });
+}
+
+
+──────────────────────────────────────────────
+3️⃣  QA-ENDPOINT AUF PROD AKTIVIEREN
+──────────────────────────────────────────────
+
+/**
+ * /qa – Production Validation
+ * prüft Worker-Routing, Latenz und Header
+ */
+
+export async function onRequestGet(ctx) {
+  const start = Date.now();
+  const resp = new Response(
+    JSON.stringify(
+      {
+        canary: ctx.req.headers.get("X-Pix-Canary") || "unknown",
+        duration_ms: Date.now() - start,
+        endpoint: "prod /qa",
+        timestamp: new Date().toISOString(),
+      },
+      null,
+      2
+    ),
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return resp;
+}
+
+
+──────────────────────────────────────────────
+4️⃣  MONITORING & LOGPUSH EINRICHTEN
+──────────────────────────────────────────────
+
+Cloudflare Dashboard → Analytics → Workers & Pages
+1. Panels hinzufügen:
+   • Requests by X-Pix-Canary  
+   • Error Rate by X-Pix-Canary  
+   • Duration p50/p90  
+
+2. Logpush aktivieren:
+   Dataset: http_requests + workers_trace_events  
+   Ziel: r2://logs-canary/b2a/  
+   Felder:
+     - ClientIP  
+     - EdgeStartTimestamp  
+     - Status / OriginStatus  
+     - RayID  
+     - ScriptName  
+     - UserAgent  
+     - HTTP-Header: X-Pix-Canary, X-Pix-Error  
+
+3. Optional – Analytics-Counter:
+   canary_requests_total  
+   canary_errors_total  
+   canary_duration_ms_sum
+
+
+──────────────────────────────────────────────
+5️⃣  CANARY-AKTIVIERUNG (10 %)
+──────────────────────────────────────────────
+
+1. Commit & Deploy:
+   git commit -am "b2a/canary-10-and-monitoring"
+   wrangler deploy
+
+2. Smoke-Test Prod:
+   curl -I https://<prod-domain>/qa
+   → X-Pix-Canary sichtbar  
+   Erwartung: ca. 10 % mit "X-Pix-Canary: 1"
+
+3. QA-Protokoll aktualisieren:
+   Datei: docs/QA/GO_NO_GO_PROD.md  
+   Eintragen:
+     - Datum/Uhrzeit (Europe/Berlin)
+     - Screenshots aus /qa
+     - Metrik-Screenshots aus Analytics
+     - Bewertung: GO oder NO-GO
+
+
+──────────────────────────────────────────────
+6️⃣  ROLLBACK-PROZEDUR
+──────────────────────────────────────────────
+
+1. In wrangler.toml:
+   CANARY_PERCENT = "0"
+
+2. Deploy:
+   wrangler deploy
+
+3. Bei Bedarf:
+   Cloudflare Pages → „Revert to previous deployment“
+
+4. Schwellwerte für Rollback:
+   - Fehlerquote > 5 %
+   - Timeouts > 20 % (im Canary-Traffic über 10 min)
+
+
+──────────────────────────────────────────────
+7️⃣  ABNAHME-CHECKLISTE B2a
+──────────────────────────────────────────────
+
+☑ X-Pix-Canary Header sauber verteilt (~10 %)  
+☑ Fehlerquote Canary < 1.5 %  
+☑ p90-Latenz ≤ +20 % vs Proxy  
+☑ Logpush-Dateien in r2://logs-canary/b2a vorhanden  
+☑ QA-Protokoll aktualisiert (Screenshots, Metriken)  
+☑ Bewertung: GO für Ramp-Up 50 %
+
+Nächster Schritt: Phase B2b → Erhöhung auf 50 % Traffic.
+
+
+# ==========================================================
+# ENDE – PHASE B2a (10 % CANARY + MONITORING)
+# ==========================================================
