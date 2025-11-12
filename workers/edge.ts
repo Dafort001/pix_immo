@@ -40,7 +40,7 @@ export interface Env {
   FEATURE_QA_GUARD?: string;  // "true" to enable /qa endpoint
   
   // B2a - KV Namespace for canary configuration (instant rollback)
-  CANARY_CONFIG?: any; // KVNamespace type
+  KV_CANARY_CONFIG?: any; // KVNamespace type
   
   // R2 Credentials (for S3-compatible operations like signed URLs)
   CF_R2_ACCOUNT_ID?: string;

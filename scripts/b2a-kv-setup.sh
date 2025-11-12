@@ -9,7 +9,7 @@ set -e  # Exit on error
 
 # 1) Grundvariablen (bitte anpassen)
 export CF_ACCOUNT_ID="${CF_ACCOUNT_ID:-DEIN_CLOUDFLARE_ACCOUNT_ID}"   # <- eintragen oder via env var
-export KV_BINDING="CANARY_CONFIG"
+export KV_BINDING="KV_CANARY_CONFIG"
 export KV_NAMESPACE_NAME="canary-config"
 export CANARY_TAG="B2a"
 export CANARY_PERCENT=10

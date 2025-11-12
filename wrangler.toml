@@ -28,8 +28,9 @@ PHASE_B1B_ENABLED = "true"  # Enable native upload handlers (B1b)
 
 # B2a - Production Canary Configuration
 # NOTE: CANARY_PERCENT moved to Workers KV for instant rollback (no redeploy)
-# Access KV at runtime via env.CANARY_CONFIG
+# Access KV at runtime via env.KV_CANARY_CONFIG
 FEATURE_QA_GUARD = "true"   # Enable /qa endpoint for production validation
+CANARY_TAG = "B2a"          # Rollout phase identifier (for observability)
 
 # =============================================================================
 # R2 Bucket Bindings (Object Storage)
@@ -43,13 +44,13 @@ preview_bucket_name = "piximmo-media"  # Preview uses same bucket (staging data)
 # Workers KV Namespaces (B2a - Canary Configuration)
 # =============================================================================
 # KV stores canary_percent, canary_tag, emergency_proxy for instant rollback
-# Create namespace: wrangler kv:namespace create "CANARY_CONFIG"
-# Seed data: wrangler kv:key put --namespace-id=<ID> "config" '{"canary_percent":10,"canary_tag":"B2a","emergency_proxy":false}'
+# Create namespace: wrangler kv:namespace create "canary-config"
+# Seed data: wrangler kv:key put --binding=KV_CANARY_CONFIG config --value '{"canary_percent":10,"canary_tag":"B2a","emergency_proxy":false}'
 
 [[kv_namespaces]]
-binding = "CANARY_CONFIG"
-id = "placeholder_replace_after_creation"  # Run: wrangler kv:namespace create "CANARY_CONFIG"
-preview_id = "placeholder_replace_after_creation"  # Run: wrangler kv:namespace create "CANARY_CONFIG" --preview
+binding = "KV_CANARY_CONFIG"
+id = "placeholder_replace_after_creation"  # Run: wrangler kv:namespace create "canary-config"
+preview_id = "placeholder_replace_after_creation"  # Run: wrangler kv:namespace create "canary-config" --preview
 
 # =============================================================================
 # Cloudflare Routes (API Endpoints)

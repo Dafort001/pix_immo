@@ -157,7 +157,7 @@ export interface CanaryDecision {
  */
 export async function getCanaryConfig(env: any): Promise<CanaryKVConfig> {
   // KV not bound or missing
-  if (!env?.CANARY_CONFIG) {
+  if (!env?.KV_CANARY_CONFIG) {
     return {
       canary_percent: 0,
       canary_tag: 'kv-disabled',
@@ -166,7 +166,7 @@ export async function getCanaryConfig(env: any): Promise<CanaryKVConfig> {
   }
 
   try {
-    const raw = await env.CANARY_CONFIG.get('config', { type: 'json' });
+    const raw = await env.KV_CANARY_CONFIG.get('config', { type: 'json' });
     if (!raw) {
       return {
         canary_percent: 0,
