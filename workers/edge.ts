@@ -14,6 +14,7 @@ import {
 import { proxyToOrigin } from '../server/proxy/originClient';
 import { createDb, WorkerStorage } from './db';
 import { nativeIntentHandler, nativeFinalizeHandler } from './handlers/uploads';
+import { qaHandler } from './handlers/qa';
 import type { Context } from 'hono';
 
 /**
@@ -311,6 +312,11 @@ export default {
 
     // NOTE: GET /api/notifications NOT included in B1a (no storage implementation)
     // Will proxy to origin until storage + route design is completed
+
+    // ========== B2a: QA Endpoint (Production Validation) ==========
+
+    // GET /api/qa - Worker health check and canary config
+    app.get('/api/qa', qaHandler);
 
     // ========== Phase B1b: Upload routes ==========
 

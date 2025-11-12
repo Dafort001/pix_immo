@@ -2735,6 +2735,41 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   });
 
+  // B2a - QA endpoint for production validation (Express dev mode)
+  app.get("/api/qa", async (req, res) => {
+    try {
+      // Simplified QA response for dev mode (no KV config in Express)
+      const response = {
+        endpoint: "express /api/qa (dev mode)",
+        timestamp: new Date().toISOString(),
+        canary: {
+          sampling_active: false,
+          percent: 0,
+          tag: "express-dev",
+          cohort: "proxy",
+          decision_reason: "express-no-kv",
+          emergency_proxy: false,
+        },
+        health: {
+          native: {
+            status: "n/a",
+            note: "Native handlers only available in Workers deployment",
+          },
+          proxy: {
+            status: "healthy",
+            note: "Express dev server running",
+          },
+        },
+        note: "Full QA functionality available in Workers deployment at api.pix.immo/api/qa",
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error("[QA] Error:", error);
+      res.status(500).json({ error: "QA endpoint error" });
+    }
+  });
+
   // Register Gallery System V1.0 routes
   registerGalleryRoutes(app);
 

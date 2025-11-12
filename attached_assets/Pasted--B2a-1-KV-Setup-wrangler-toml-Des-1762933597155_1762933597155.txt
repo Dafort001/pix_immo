@@ -1,0 +1,68 @@
+# ==========================================================
+# B2a.1 — KV-Setup + wrangler.toml (Design v2)
+# Ziel: Sticky Cohorts + sofortiger Rollback ohne Redeploy
+# ==========================================================
+
+1) KV-Namespace anlegen (Preview + Prod)
+   # Falls noch nicht vorhanden:
+   wrangler kv:namespace create canary-config --preview
+   wrangler kv:namespace create canary-config
+
+   # IDs notieren. Beispielausgabe:
+   # Preview ID:  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+   # Prod ID:     yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy
+
+2) wrangler.toml anpassen
+   # Öffne wrangler.toml und füge Folgendes hinzu/aktualisiere:
+
+   [[kv_namespaces]]
+   binding = "KV_CANARY_CONFIG"
+   id = "yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy"        # Prod-ID
+   preview_id = "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" # Preview-ID
+
+   [vars]
+   FEATURE_QA_GUARD = "true"   # /qa intern aktiv halten
+   CANARY_TAG = "B2a"          # Kennzeichnung für Header/Logs
+
+   # (Kein CANARY_PERCENT hier! Prozent kommt aus KV, nicht aus vars.)
+
+3) KV-Config initial befüllen (Preview zuerst testen)
+   # JSON lokal anlegen (ohne Zeilenumbrüche, damit Shell nicht zickt):
+   echo '{"canary_percent":10,"canary_tag":"B2a","emergency_proxy":false,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}' > kv_config.json
+
+   # In PREVIEW schreiben:
+   wrangler kv:key put --binding=KV_CANARY_CONFIG config --preview --path kv_config.json
+
+   # Prüfen:
+   wrangler kv:key get --binding=KV_CANARY_CONFIG config --preview
+
+   # Wenn ok → PROD schreiben:
+   wrangler kv:key put --binding=KV_CANARY_CONFIG config --path kv_config.json
+
+   # Prüfen:
+   wrangler kv:key get --binding=KV_CANARY_CONFIG config
+
+4) Minimaler Smoke-Deploy (damit Worker das Binding hat)
+   # (Kein Code-Change nötig, reines Deploy zur Binding-Aktivierung)
+   wrangler deploy
+
+5) Funktionscheck in Preview (optional) und Prod
+   # Erwartung: Keys sind lesbar, kein Fehler vom Worker wegen fehlender Bindings.
+   # (Der eigentliche Cohort-Effekt kommt erst mit B2a.2 Middleware.)
+
+6) Sofort-Rollback-Shortcuts (für später notieren)
+   # 6.1 Prozent auf 0 (Sampling aus):
+   wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+     --value '{"canary_percent":0,"canary_tag":"B2a","emergency_proxy":false,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+
+   # 6.2 Not-Aus (100 % Proxy sofort):
+   wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+     --value '{"canary_percent":0,"canary_tag":"B2a","emergency_proxy":true,"last_updated":"'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"}'
+
+7) Abnahme für B2a.1
+   ☑ KV-Namespace existiert (Preview + Prod)
+   ☑ wrangler.toml mit KV_CANARY_CONFIG (id/preview_id korrekt)
+   ☑ KV-Key "config" vorhanden (Preview + Prod)
+   ☑ Deploy erfolgreich (Bindings aktiv)
+   → Nächster Schritt: B2a.2 (Sticky Canary Middleware + Cookies)
+# ==========================================================
