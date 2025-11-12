@@ -7,7 +7,7 @@
 name = "pixcapture-api"
 main = "workers/edge.ts"
 compatibility_date = "2025-11-01"
-node_compat = true
+compatibility_flags = ["nodejs_compat"]
 
 # =============================================================================
 # Environment Variables (non-secret)
@@ -102,28 +102,32 @@ enabled = true
 # Preview Environment (for staging/testing)
 [env.preview]
 name = "pixcapture-api-preview"
-vars = { 
-  APP_ENV = "preview",
-  ORIGIN_API_BASE = "https://api-preview.pix.immo",  # Preview proxy target
-  ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://preview.pix.immo",
-  PHASE_B1B_ENABLED = "true"  # Enable upload handlers in preview
-}
-routes = [
-  { pattern = "api-preview.pix.immo/api/*", zone_name = "pix.immo" }
-]
+
+[env.preview.vars]
+APP_ENV = "preview"
+ORIGIN_API_BASE = "https://api-preview.pix.immo"
+ALLOWED_ORIGINS = "https://pix-immo.pages.dev,https://preview.pix.immo"
+PHASE_B1B_ENABLED = "true"
+FEATURE_QA_GUARD = "true"
+
+[[env.preview.routes]]
+pattern = "api-preview.pix.immo/api/*"
+zone_name = "pix.immo"
 
 # Production Environment
 [env.production]
 name = "pixcapture-api"
-vars = { 
-  APP_ENV = "production",
-  ORIGIN_API_BASE = "https://api.pix.immo",  # Production proxy target
-  ALLOWED_ORIGINS = "https://www.pix.immo,https://pix.immo",
-  PHASE_B1B_ENABLED = "true"  # Enable upload handlers in production
-}
-routes = [
-  { pattern = "api.pix.immo/api/*", zone_name = "pix.immo" }
-]
+
+[env.production.vars]
+APP_ENV = "production"
+ORIGIN_API_BASE = "https://api.pix.immo"
+ALLOWED_ORIGINS = "https://www.pix.immo,https://pix.immo"
+PHASE_B1B_ENABLED = "true"
+FEATURE_QA_GUARD = "true"
+
+[[env.production.routes]]
+pattern = "api.pix.immo/api/*"
+zone_name = "pix.immo"
 
 # =============================================================================
 # Legacy Config (OLD: server/index.ts - kept for reference)
