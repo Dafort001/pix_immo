@@ -1,0 +1,86 @@
+# ==========================================================
+# B2a.1 — KV-Setup + wrangler.toml (Design v2, manuell)
+# Ziel: Sticky Cohorts + sofortiger Rollback ohne Redeploy
+# Voraussetzung: wrangler eingeloggt (wrangler login)
+# ==========================================================
+
+# 1) Grundvariablen (bitte anpassen)
+export CF_ACCOUNT_ID="DEIN_CLOUDFLARE_ACCOUNT_ID"   # <- eintragen
+export KV_BINDING="KV_CANARY_CONFIG"
+export KV_NAMESPACE_NAME="canary-config"
+export CANARY_TAG="B2a"
+export CANARY_PERCENT=10
+
+# 2) wrangler.toml: account_id sicherstellen
+#    Falls kein account_id vorhanden, Zeile ergänzen (einmalig).
+if ! grep -q "account_id" wrangler.toml; then
+  printf '\naccount_id = "%s"\n' "$CF_ACCOUNT_ID" >> wrangler.toml
+  echo "[info] account_id in wrangler.toml ergänzt."
+else
+  echo "[ok] account_id bereits vorhanden."
+fi
+
+# 3) KV Namespaces anlegen (Preview + Prod)
+#    Die Befehle liefern jeweils eine ID zurück – beide IDs merken.
+echo "[cmd] Erzeuge PREVIEW Namespace…"
+wrangler kv:namespace create "$KV_NAMESPACE_NAME" --preview
+
+echo "[cmd] Erzeuge PROD Namespace…"
+wrangler kv:namespace create "$KV_NAMESPACE_NAME"
+
+echo ""
+echo ">>> Notiere Preview-ID und Prod-ID aus der Ausgabe oben."
+echo ">>> Öffne jetzt wrangler.toml und füge/aktualisiere den Block:"
+cat <<'TOML_EXAMPLE'
+
+[[kv_namespaces]]
+binding    = "KV_CANARY_CONFIG"
+id         = "<PROD_ID_EINFÜGEN>"
+preview_id = "<PREVIEW_ID_EINFÜGEN>"
+
+[vars]
+FEATURE_QA_GUARD = "true"
+CANARY_TAG       = "B2a"
+
+# (Kein CANARY_PERCENT hier – Prozentwert kommt aus KV!)
+TOML_EXAMPLE
+echo ">>> Speichere wrangler.toml und fahre dann hier fort."
+read -p "Weiter mit <Enter> …" _
+
+# 4) KV-Config initial befüllen (Preview zuerst)
+#    (ISO-Zeitstempel ohne Zeilenumbruch)
+STAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+echo "{\"canary_percent\":$CANARY_PERCENT,\"canary_tag\":\"$CANARY_TAG\",\"emergency_proxy\":false,\"last_updated\":\"$STAMP\"}" > kv_config.json
+
+echo "[cmd] Schreibe PREVIEW-Konfiguration…"
+wrangler kv:key put --binding="$KV_BINDING" config --preview --path kv_config.json
+echo "[cmd] Prüfe PREVIEW-Konfiguration…"
+wrangler kv:key get --binding="$KV_BINDING" config --preview
+
+echo "[cmd] Schreibe PROD-Konfiguration…"
+wrangler kv:key put --binding="$KV_BINDING" config --path kv_config.json
+echo "[cmd] Prüfe PROD-Konfiguration…"
+wrangler kv:key get --binding="$KV_BINDING" config
+
+# 5) Minimal-Deploy (Bindings aktivieren)
+wrangler deploy
+
+# 6) Sofort-Rollback-Shortcuts (nur notieren; bei Bedarf ausführen)
+# 6.1 Sampling AUS (0 %):
+# wrangler kv:key put --binding="$KV_BINDING" config \
+#   --value "{\"canary_percent\":0,\"canary_tag\":\"$CANARY_TAG\",\"emergency_proxy\":false,\"last_updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+# 6.2 Not-Aus (100 % Proxy):
+# wrangler kv:key put --binding="$KV_BINDING" config \
+#   --value "{\"canary_percent\":0,\"canary_tag\":\"$CANARY_TAG\",\"emergency_proxy\":true,\"last_updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}"
+
+# 7) Abnahme B2a.1
+echo "-----------------------------------------------"
+echo "B2a.1 Check:"
+echo "☑ KV Namespace Preview + Prod existiert"
+echo "☑ wrangler.toml enthält KV_CANARY_CONFIG mit IDs"
+echo "☑ KV-Key 'config' in Preview + Prod vorhanden"
+echo "☑ Deploy erfolgreich (Bindings aktiv)"
+echo "→ Nächster Schritt: B2a.2 (Sticky Middleware + Cookies)"
+echo "-----------------------------------------------"
+# ==========================================================
