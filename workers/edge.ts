@@ -13,6 +13,16 @@ import { nativeIntentHandler, nativeFinalizeHandler } from './handlers/uploads';
 import type { Context } from 'hono';
 
 /**
+ * B2a - KV Canary Configuration Schema
+ */
+export interface CanaryKVConfig {
+  canary_percent: number;      // 0-100: Percentage of traffic routed to native handlers
+  canary_tag: string;          // "B2a", "B2b", etc. - for observability
+  emergency_proxy: boolean;    // true = instant 100% proxy rollback
+  last_updated?: string;       // ISO timestamp of last config change
+}
+
+/**
  * Cloudflare Workers bindings
  */
 export interface Env {
@@ -22,6 +32,10 @@ export interface Env {
   ORIGIN_API_BASE: string;
   ALLOWED_ORIGINS?: string;
   PHASE_B1B_ENABLED?: string; // "true" to enable upload routes
+  FEATURE_QA_GUARD?: string;  // "true" to enable /qa endpoint
+  
+  // B2a - KV Namespace for canary configuration (instant rollback)
+  CANARY_CONFIG?: any; // KVNamespace type
   
   // R2 Credentials (for S3-compatible operations like signed URLs)
   CF_R2_ACCOUNT_ID?: string;
