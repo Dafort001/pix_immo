@@ -5,6 +5,7 @@
 
 import type { Context, Next } from 'hono';
 import { getCookie, setCookie } from 'hono/cookie';
+import { logCanaryRequest, logCanaryError, generateRequestId } from '@shared/observability';
 import type { CanaryKVConfig } from '../../workers/edge';
 
 /**
@@ -288,38 +289,88 @@ export function setCanaryResponseHeader(c: Context, decision: CanaryDecision) {
 /**
  * B2a Canary Middleware
  * Combines sticky cohort decision with route-based native handling
+ * Includes structured logging for observability
  */
 export function canaryMiddlewareV2(config: CanaryConfig = DEFAULT_CANARY_CONFIG) {
   return async (c: Context, next: Next) => {
-    // Get environment bindings (Workers only - Express uses env vars)
-    const env = c.env || {};
+    // Generate request ID for correlation
+    const requestId = generateRequestId();
+    c.set('requestId', requestId);
 
-    // Get sticky cohort decision
-    const decision = await getCanaryDecision(c, env);
+    // Measure request duration
+    const startTime = Date.now();
 
-    // Set cookie if new sampling occurred
-    if (decision.sampledNew) {
-      setCanaryCohortCookie(c, decision.cohort, env);
+    // Persist decision outside try for catch block access
+    let decision: CanaryDecision | undefined;
+    let canaryTag = 'unknown';
+
+    try {
+      // Get environment bindings (Workers only - Express uses env vars)
+      const env = c.env || {};
+
+      // Get sticky cohort decision
+      decision = await getCanaryDecision(c, env);
+      canaryTag = decision.kvConfig?.canary_tag || 'unknown';
+
+      // Set cookie if new sampling occurred
+      if (decision.sampledNew) {
+        setCanaryCohortCookie(c, decision.cohort, env);
+      }
+
+      // Set observability header
+      setCanaryResponseHeader(c, decision);
+
+      // Store cohort in context
+      c.set('canary', decision.cohort === 'native');
+      c.set('canaryDecision', decision);
+
+      // Route-based eligibility (B1a/B1b phases)
+      const method = c.req.method;
+      const path = c.req.path;
+      const canaryEnabled = decision.cohort === 'native';
+
+      const routeDecision = shouldHandleNatively(method, path, config, canaryEnabled);
+
+      // Store route decision in context
+      c.set('canaryPhase', routeDecision.phase);
+      c.set('nativeHandler', routeDecision.native);
+
+      await next();
+
+      // Log successful request (after response)
+      const duration = Date.now() - startTime;
+      const statusCode = c.res.status;
+
+      logCanaryRequest(
+        decision.cohort,
+        decision.reason,
+        canaryTag,
+        path,
+        method,
+        statusCode,
+        duration,
+        requestId
+      );
+    } catch (err) {
+      // Log error with actual cohort (not hardcoded 'proxy')
+      const duration = Date.now() - startTime;
+      const method = c.req.method;
+      const path = c.req.path;
+      const errorMsg = err instanceof Error ? err.message : String(err);
+
+      logCanaryError(
+        decision?.cohort || 'proxy', // Use actual cohort if available
+        decision?.reason || 'middleware-error',
+        canaryTag,
+        path,
+        errorMsg,
+        method,
+        500,
+        duration,
+        requestId
+      );
+
+      throw err; // Re-throw for global error handler
     }
-
-    // Set observability header
-    setCanaryResponseHeader(c, decision);
-
-    // Store cohort in context
-    c.set('canary', decision.cohort === 'native');
-    c.set('canaryDecision', decision);
-
-    // Route-based eligibility (B1a/B1b phases)
-    const method = c.req.method;
-    const path = c.req.path;
-    const canaryEnabled = decision.cohort === 'native';
-
-    const routeDecision = shouldHandleNatively(method, path, config, canaryEnabled);
-
-    // Store route decision in context
-    c.set('canaryPhase', routeDecision.phase);
-    c.set('nativeHandler', routeDecision.native);
-
-    await next();
   };
 }
