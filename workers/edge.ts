@@ -6,7 +6,11 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
-import { canaryMiddleware, DEFAULT_CANARY_CONFIG } from '../server/middleware/canary';
+import { 
+  canaryMiddleware, 
+  canaryMiddlewareV2, 
+  DEFAULT_CANARY_CONFIG 
+} from '../server/middleware/canary';
 import { proxyToOrigin } from '../server/proxy/originClient';
 import { createDb, WorkerStorage } from './db';
 import { nativeIntentHandler, nativeFinalizeHandler } from './handlers/uploads';
@@ -113,7 +117,7 @@ export function createWorkerApp() {
     await next();
   });
 
-  // Canary detection middleware - apply config dynamically
+  // B2a - Sticky canary middleware with KV config
   app.use('*', async (c, next) => {
     // Get B1b phase toggle from environment
     const b1bEnabled = c.env.PHASE_B1B_ENABLED === 'true';
@@ -127,8 +131,8 @@ export function createWorkerApp() {
       },
     };
     
-    // Apply canary middleware with dynamic config
-    return canaryMiddleware(config)(c, next);
+    // Apply V2 canary middleware (sticky cohort + KV config)
+    return canaryMiddlewareV2(config)(c, next);
   });
 
   // Request logging middleware
