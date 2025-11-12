@@ -1,0 +1,67 @@
+# ==========================================================
+# PIX.IMMO / PixCapture — B2a.7 DURCHLAUF + CHECKPOINT
+# Ziel: Erst-Deploy zu Cloudflare, kurze Verifikation, dann Freeze
+# Annahmen (wie bisher verwendet):
+#   - API PROD:      https://api.pix.immo
+#   - API PREVIEW:   https://api-preview.pix.immo
+#   - /qa liegt am Worker-Root (nicht /api/qa)
+# ==========================================================
+
+set -e
+
+echo "==[1/7] Worker deployen (Preview, falls vorhanden)…"
+if grep -q "^\[env.preview\]" wrangler.toml 2>/dev/null; then
+  npx wrangler deploy --env preview
+else
+  echo "[skip] Kein preview-Env definiert."
+fi
+
+echo "==[2/7] Worker deployen (Production)…"
+npx wrangler deploy
+
+echo "==[3/7] Canary 10% sicherstellen (KV)…"
+STAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+wrangler kv:key put --binding=KV_CANARY_CONFIG config \
+  --value "{\"canary_percent\":10,\"canary_tag\":\"B2a\",\"emergency_proxy\":false,\"last_updated\":\"$STAMP\"}"
+wrangler kv:key get --binding=KV_CANARY_CONFIG config
+
+echo "==[4/7] Smoke-Tests /qa (Preview & Prod)…"
+# Preview (falls DNS/Route aktiv):
+curl -si --max-time 10 https://api-preview.pix.immo/qa || echo "[warn] Preview /qa nicht erreichbar (ok, falls bewusst)."
+# Production:
+curl -si --max-time 10 https://api.pix.immo/qa | tee /tmp/qa_prod_headers.txt
+
+echo "→ Erwartet in Headern: X-Pix-Canary: 1;tag=B2a;cohort=…;reason=…"
+grep -i "^x-pix-canary:" /tmp/qa_prod_headers.txt || echo "[warn] X-Pix-Canary Header nicht gefunden."
+
+echo "==[5/7] Replit-Checkpoint setzen (lokaler Freeze)…"
+# Lokaler Tag / Marker; Replit-spezifisch einfach Datei + Git-Tag
+mkdir -p docs/checkpoints
+echo "B2a.7 completed at $STAMP (Europe/Berlin notiert separat in Doku)" > docs/checkpoints/B2a.7_DONE.txt
+
+echo "==[6/7] Doku aktualisieren…"
+mkdir -p docs/QA
+BERLIN_TS=$(TZ=Europe/Berlin date "+%Y-%m-%d %H:%M:%S %Z")
+cat > docs/QA/GO_NO_GO_PROD.md <<EOF
+# QA / GO-NO-GO – Production (B2a.7)
+
+- Zeitpunkt (Europe/Berlin): ${BERLIN_TS}
+- KV config: canary_percent=10, emergency_proxy=false
+- /qa Reachability: OK (Prod)
+- Header X-Pix-Canary: geprüft (Log siehe /tmp/qa_prod_headers.txt)
+- Nächster Schritt: 24h Anlaufphase für erste Metriken (Analytics/Logpush)
+
+Status: GO (B2a.7 abgeschlossen, Pause eingelegt)
+EOF
+
+echo "==[7/7] Git sichern (Commit + Tag)…"
+git add -A
+git commit -m "B2a.7: Erst-Deploy Cloudflare + /qa Smoke + Checkpoint + QA-Doku"
+git tag -a B2a.7-DONE -m "B2a.7 abgeschlossen – bereit für 24h Datenanlauf"
+git push
+git push --tags
+
+echo "==[PAUSE] System läuft. Logpush im Dashboard aktivieren/prüfen."
+echo "Nach 5–15 Min: R2 prüfen -> 'wrangler r2 object list logs-canary --prefix b2a/http_requests/'"
+echo "Nach ~24h: Analytics-Dashboards bewerten, dann B2b (50%) planen."
+# ==========================================================
