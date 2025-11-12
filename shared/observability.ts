@@ -46,6 +46,11 @@ export function createLogEntry(
 
 /**
  * Log canary request (INFO level)
+ * 
+ * B2a Cost Optimization: 10% sampling for successful requests ONLY
+ * - 100% logging for errors (4xx/5xx status codes)
+ * - 10% sampling for success (2xx/3xx status codes)
+ * - Reduces log volume by ~90% while maintaining full error visibility
  */
 export function logCanaryRequest(
   cohort: 'native' | 'proxy',
@@ -57,6 +62,14 @@ export function logCanaryRequest(
   durationMs?: number,
   requestId?: string
 ): void {
+  // Determine if this is an error response (4xx/5xx)
+  const isError = statusCode !== undefined && statusCode >= 400;
+  
+  // 100% logging for errors, 10% sampling for success
+  if (!isError && Math.random() >= 0.1) {
+    return; // Skip 90% of success logs only
+  }
+
   const entry = createLogEntry(
     'INFO',
     'Canary request processed',

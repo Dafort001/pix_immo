@@ -1,0 +1,119 @@
+# ==========================================================
+# PIX.IMMO / PixCapture — Phase B2a (Design v2)
+# B2a.4  Monitoring + Logpush (R2) + Alerts
+# Voraussetzung: B2a.2 (Middleware) + B2a.3 (/qa) deployed
+# Ziel: Sichtbarkeit (Requests/Errors/Latency by cohort), strukturierte Logs
+# ==========================================================
+
+
+──────────────────────────────────────────────
+1) R2-Bucket für Logs anlegen (einmalig)
+──────────────────────────────────────────────
+
+# Falls noch nicht vorhanden, in Replit/Terminal:
+wrangler r2 bucket create logs-canary
+
+# Optional: Prefix-Ordnerstruktur im Kopf behalten
+#   r2://logs-canary/b2a/http_requests/…
+#   r2://logs-canary/b2a/workers_trace_events/…
+
+
+──────────────────────────────────────────────
+2) Logpush aktivieren (über Dashboard, ohne Token)
+──────────────────────────────────────────────
+
+# KLICKPFAD (empfohlen, da ohne API-Token):
+#  - Cloudflare Dashboard → Account → Analytics & Logs → Logpush
+#  - "Create job" → Dataset auswählen:
+#      • "HTTP requests" (http_requests)
+#      • (zusätzlich) "Workers Trace Events" (workers_trace_events)
+#  - Destination: "R2" auswählen
+#  - Bucket: logs-canary
+#  - Prefix: b2a/http_requests/  (bzw. b2a/workers_trace_events/)
+#  - Format: JSON (Newline-delimited)
+#  - Save/Enable
+
+# HINWEIS FELDER:
+#  - Mindestfelder (http_requests):
+#      ClientIP, EdgeStartTimestamp, RayID, Status, OriginStatus,
+#      RequestHeaders (Whitelist: X-Pix-Canary, X-Pix-Error),
+#      UserAgent, Host, Path, Method, EdgeTimeToFirstByteMs
+#  - Mindestfelder (workers_trace_events):
+#      ScriptName, EventTimestampMs, Logs.Message, Logs.Level
+
+# Warten: Erste Dateien i. d. R. innerhalb 5–15 Minuten.
+
+
+──────────────────────────────────────────────
+3) Dashboards in Cloudflare Analytics anlegen
+──────────────────────────────────────────────
+
+# KLICKPFAD:
+#  - Zone → Workers & Pages → Analytics
+#  - Custom Panels anlegen:
+
+# Panel A: Requests by cohort
+#   Filter/Group: Header "X-Pix-Canary" → cohort (native|proxy) extrahieren
+#   Ziel: Verhältnis ~10:90 prüfen
+
+# Panel B: Error Rate by cohort
+#   Metric: Error Rate (%)
+#   Group by: cohort (aus X-Pix-Canary)
+#   Ziel: native < 1.5 %, proxy < 1 %
+
+# Panel C: Latency (p50/p90/p99)
+#   Metric: Duration
+#   Group by: cohort
+#   Ziel: p90 native < 600 ms, nicht > +20 % vs. proxy
+
+# Panel D: Rollout Timeline
+#   Metric: Requests total
+#   Annotation: B2a Start, evtl. KV-Änderungen (percent)
+
+
+──────────────────────────────────────────────
+4) Strukturierte Logs im Worker (10 % Success, 100 % Errors)
+──────────────────────────────────────────────
+
+# Ziel: JSON-Logs, die in workers_trace_events landen.
+#  - Bei Erfolg nur 1 von 10 Requests loggen (sampling 10 %)
+#  - Bei Fehler immer loggen (100 %)
+#  - Enthält: cohort, reason, status, duration, path
+
+# Ergänzung in deiner canaryMiddleware (oder zentralem Handler):
+
+function logSampledSuccess(req: Request, meta: any) {
+  // 10 % Sampling für Erfolg
+  if (Math.random() < 0.1) {
+    console.log(JSON.stringify({
+      level: 'info',
+      type: 'success',
+      path: new URL(req.url).pathname,
+      cohort: meta.cohort,
+      reason: meta.reason,
+      tag: meta.tag,
+      duration_ms: meta.duration_ms || null,
+      ts: new Date().toISOString()
+    }));
+  }
+}
+
+function logError(req: Request, meta: any, err: any) {
+  console.error(JSON.stringify({
+    level: 'error',
+    type: 'exception',
+    path: new URL(req.url).pathname,
+    cohort: meta.cohort,
+    reason: meta.reason,
+    tag: meta.tag,
+    msg: String(err?.message || err),
+    ts: new Date().toISOString()
+  }));
+}
+
+# Beispiel-Aufruf im Handler-Kontext:
+#  - Nach erfolgreicher Response: logSampledSuccess(req, {cohort, reason, tag, duration_ms})
+#  - Im catch-Zweig: logError(req, {cohort, reason, tag}, err)
+
+
+────────────────
