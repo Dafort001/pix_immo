@@ -1088,6 +1088,13 @@ function registerServiceRoutes(app: Express) {
   });
 }
 
+// P1: Test Helper Routes - COMMENTED OUT (require storage-backed methods)
+// See docs/P1_IMPLEMENTATION_STATUS.md for implementation plan
+// function registerTestHelperRoutes(app: Express) {
+//   console.log('[TEST] Registering test helper endpoints');
+//   // Implementation blocked - requires storage.createJobForTests() and storage.createUploadedFileForTests()
+// }
+
 // Gallery Package & Selection Routes
 function registerGalleryPackageRoutes(app: Express) {
   // GET /api/jobs/:id/gallery - Get job gallery with package info
@@ -3279,6 +3286,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Edit Workflow routes (Phase 2 - Stubs)
   registerEditWorkflowRoutes(app);
+
+  // P1: Test Helper routes commented out - require storage-backed methods
+  // See docs/P1_IMPLEMENTATION_STATUS.md for implementation plan
+  // if (process.env.NODE_ENV === 'test') {
+  //   registerTestHelperRoutes(app);
+  // }
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
