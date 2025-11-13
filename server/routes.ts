@@ -1238,9 +1238,10 @@ function registerGalleryPackageRoutes(app: Express) {
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
       
       const { id } = req.params;
-      const settings = req.body;
+      const { reason, reasonCode, ...settings } = req.body; // P1: Extract audit fields
       
-      await storage.updateJobPackageSettings(id, settings);
+      // P1: Pass adminUserId + optional reason/reasonCode for audit logging
+      await storage.updateJobPackageSettings(id, settings, req.user.id, reason, reasonCode);
       
       const job = await storage.getJob(id);
       res.json({ success: true, job });
@@ -1257,6 +1258,7 @@ function registerGalleryPackageRoutes(app: Express) {
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
       
       const { id } = req.params;
+      const { reason, reasonCode } = req.body; // P1: Extract audit fields
       
       // SECURITY: Verify file exists and is a candidate
       const file = await storage.getUploadedFile(id);
@@ -1268,7 +1270,8 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(400).json({ error: "File is not a candidate" });
       }
       
-      await storage.setFileKulanzFree(id);
+      // P1: Pass adminUserId + optional reason/reasonCode for audit logging
+      await storage.setFileKulanzFree(id, req.user.id, reason, reasonCode);
       
       const updatedFile = await storage.getUploadedFile(id);
       res.json({ success: true, file: updatedFile });
@@ -1285,7 +1288,7 @@ function registerGalleryPackageRoutes(app: Express) {
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
       
       const { id } = req.params;
-      const { enabled } = req.body;
+      const { enabled, reason, reasonCode } = req.body; // P1: Extract audit fields
       
       if (typeof enabled !== 'boolean') {
         return res.status(400).json({ error: "enabled must be boolean" });
@@ -1297,7 +1300,8 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(404).json({ error: "Job not found" });
       }
       
-      await storage.enableAllImagesKulanz(id, enabled);
+      // P1: Pass adminUserId + optional reason/reasonCode for audit logging
+      await storage.enableAllImagesKulanz(id, enabled, req.user.id, reason, reasonCode);
       
       const updatedJob = await storage.getJob(id);
       res.json({ success: true, job: updatedJob });

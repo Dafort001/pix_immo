@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -615,7 +615,7 @@ export interface IStorage {
     allowFreeExtras?: boolean;
     freeExtraQuota?: number;
     allImagesIncluded?: boolean;
-  }): Promise<void>;
+  }, adminUserId: string, reason?: string, reasonCode?: string): Promise<void>;
   getJobSelectionStats(jobId: string): Promise<{
     totalCandidates: number;
     includedCount: number;
@@ -628,8 +628,8 @@ export interface IStorage {
   updateFileSelectionState(fileId: string, state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'): Promise<void>;
   getJobCandidateFiles(jobId: string): Promise<any[]>; // Files with isCandidate=true
   getJobDownloadableFiles(jobId: string, userId: string, role?: string): Promise<any[]>; // Files that can be downloaded (P0: ownership + selection_state validated, admins bypass)
-  setFileKulanzFree(fileId: string): Promise<void>; // Set file to extra_free
-  enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void>; // Toggle allImagesIncluded
+  setFileKulanzFree(fileId: string, adminUserId: string, reason?: string, reasonCode?: string): Promise<void>; // Set file to extra_free (P1: audit log)
+  enableAllImagesKulanz(jobId: string, enabled: boolean, adminUserId: string, reason?: string, reasonCode?: string): Promise<void>; // Toggle allImagesIncluded (P1: audit log)
 
   // Upload Manifest Session operations (client-manifest-based upload tracking)
   createManifestSession(data: {
@@ -651,6 +651,20 @@ export interface IStorage {
   incrementManifestSessionErrors(sessionId: string): Promise<void>;
   completeManifestSession(sessionId: string): Promise<void>;
   getManifestItemByObjectKey(objectKey: string): Promise<import("@shared/schema").UploadManifestItem | undefined>;
+
+  // Audit Log operations (P1: Admin action tracking)
+  createAuditLog(params: {
+    adminUserId: string;
+    jobId: string;
+    actionType: 'update_included_images' | 'set_all_images_included' | 'change_selection_state_extra_free' | 'update_max_selectable' | 'update_extra_price_per_image' | 'update_free_extra_quota' | 'bulk_selection_change' | 'update_allow_free_extras';
+    entityScope: 'job' | 'uploaded_file' | 'legacy_image';
+    affectedUploadedFileId?: string;
+    affectedLegacyImageId?: string;
+    oldValue?: Record<string, unknown>;
+    newValue?: Record<string, unknown>;
+    reason?: string;
+    reasonCode?: string;
+  }): Promise<AuditLog>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3690,19 +3704,73 @@ export class DatabaseStorage implements IStorage {
     allowFreeExtras?: boolean;
     freeExtraQuota?: number;
     allImagesIncluded?: boolean;
-  }): Promise<void> {
-    const updateData: any = {};
-    if (settings.includedImages !== undefined) updateData.includedImages = settings.includedImages;
-    if (settings.maxSelectable !== undefined) updateData.maxSelectable = settings.maxSelectable;
-    if (settings.extraPricePerImage !== undefined) updateData.extraPricePerImage = settings.extraPricePerImage;
-    if (settings.allowFreeExtras !== undefined) updateData.allowFreeExtras = settings.allowFreeExtras;
-    if (settings.freeExtraQuota !== undefined) updateData.freeExtraQuota = settings.freeExtraQuota;
-    if (settings.allImagesIncluded !== undefined) updateData.allImagesIncluded = settings.allImagesIncluded;
+  }, adminUserId: string, reason?: string, reasonCode?: string): Promise<void> {
+    // P1: Fetch current state for audit log
+    const [job] = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, jobId))
+      .limit(1);
     
-    await db
-      .update(jobs)
-      .set(updateData)
-      .where(eq(jobs.id, jobId));
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+    
+    // P1: Build aggregated diff (oldValue/newValue)
+    const oldValue: Record<string, unknown> = {};
+    const newValue: Record<string, unknown> = {};
+    const updateData: any = {};
+    
+    if (settings.includedImages !== undefined && settings.includedImages !== job.includedImages) {
+      oldValue.includedImages = job.includedImages;
+      newValue.includedImages = settings.includedImages;
+      updateData.includedImages = settings.includedImages;
+    }
+    if (settings.maxSelectable !== undefined && settings.maxSelectable !== job.maxSelectable) {
+      oldValue.maxSelectable = job.maxSelectable;
+      newValue.maxSelectable = settings.maxSelectable;
+      updateData.maxSelectable = settings.maxSelectable;
+    }
+    if (settings.extraPricePerImage !== undefined && settings.extraPricePerImage !== job.extraPricePerImage) {
+      oldValue.extraPricePerImage = job.extraPricePerImage;
+      newValue.extraPricePerImage = settings.extraPricePerImage;
+      updateData.extraPricePerImage = settings.extraPricePerImage;
+    }
+    if (settings.allowFreeExtras !== undefined && settings.allowFreeExtras !== job.allowFreeExtras) {
+      oldValue.allowFreeExtras = job.allowFreeExtras;
+      newValue.allowFreeExtras = settings.allowFreeExtras;
+      updateData.allowFreeExtras = settings.allowFreeExtras;
+    }
+    if (settings.freeExtraQuota !== undefined && settings.freeExtraQuota !== job.freeExtraQuota) {
+      oldValue.freeExtraQuota = job.freeExtraQuota;
+      newValue.freeExtraQuota = settings.freeExtraQuota;
+      updateData.freeExtraQuota = settings.freeExtraQuota;
+    }
+    if (settings.allImagesIncluded !== undefined && settings.allImagesIncluded !== job.allImagesIncluded) {
+      oldValue.allImagesIncluded = job.allImagesIncluded;
+      newValue.allImagesIncluded = settings.allImagesIncluded;
+      updateData.allImagesIncluded = settings.allImagesIncluded;
+    }
+    
+    // Perform update only if there are changes
+    if (Object.keys(updateData).length > 0) {
+      await db
+        .update(jobs)
+        .set(updateData)
+        .where(eq(jobs.id, jobId));
+      
+      // P1: Emit single aggregated audit log
+      await this.createAuditLog({
+        adminUserId,
+        jobId,
+        actionType: 'update_included_images', // Primary action type
+        entityScope: 'job',
+        oldValue,
+        newValue,
+        reason,
+        reasonCode,
+      });
+    }
   }
   
   async getJobSelectionStats(jobId: string): Promise<{
@@ -3815,18 +3883,107 @@ export class DatabaseStorage implements IStorage {
     return files;
   }
   
-  async setFileKulanzFree(fileId: string): Promise<void> {
+  async setFileKulanzFree(fileId: string, adminUserId: string, reason?: string, reasonCode?: string): Promise<void> {
+    // P1: Fetch current state for audit log
+    const [file] = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, fileId))
+      .limit(1);
+    
+    if (!file) {
+      throw new Error(`File ${fileId} not found`);
+    }
+    
+    const oldState = file.selectionState;
+    
+    // Perform update
     await db
       .update(uploadedFiles)
       .set({ selectionState: 'extra_free', updatedAt: Date.now() })
       .where(eq(uploadedFiles.id, fileId));
+    
+    // P1: Emit audit log (uploadedFiles.orderId can be null, skip audit if no job)
+    if (file.orderId) {
+      await this.createAuditLog({
+        adminUserId,
+        jobId: file.orderId, // uploadedFiles.orderId is the job reference
+        actionType: 'change_selection_state_extra_free',
+        entityScope: 'uploaded_file',
+        affectedUploadedFileId: fileId,
+        oldValue: { selectionState: oldState },
+        newValue: { selectionState: 'extra_free' },
+        reason,
+        reasonCode,
+      });
+    }
   }
   
-  async enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void> {
+  async enableAllImagesKulanz(jobId: string, enabled: boolean, adminUserId: string, reason?: string, reasonCode?: string): Promise<void> {
+    // P1: Fetch current state for audit log
+    const [job] = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, jobId))
+      .limit(1);
+    
+    if (!job) {
+      throw new Error(`Job ${jobId} not found`);
+    }
+    
+    const oldValue = job.allImagesIncluded;
+    
+    // Perform update
     await db
       .update(jobs)
       .set({ allImagesIncluded: enabled })
       .where(eq(jobs.id, jobId));
+    
+    // P1: Emit audit log
+    await this.createAuditLog({
+      adminUserId,
+      jobId,
+      actionType: 'set_all_images_included',
+      entityScope: 'job',
+      oldValue: { allImagesIncluded: oldValue },
+      newValue: { allImagesIncluded: enabled },
+      reason,
+      reasonCode,
+    });
+  }
+
+  // P1: Audit Log operations
+  async createAuditLog(params: {
+    adminUserId: string;
+    jobId: string;
+    actionType: 'update_included_images' | 'set_all_images_included' | 'change_selection_state_extra_free' | 'update_max_selectable' | 'update_extra_price_per_image' | 'update_free_extra_quota' | 'bulk_selection_change' | 'update_allow_free_extras';
+    entityScope: 'job' | 'uploaded_file' | 'legacy_image';
+    affectedUploadedFileId?: string;
+    affectedLegacyImageId?: string;
+    oldValue?: Record<string, unknown>;
+    newValue?: Record<string, unknown>;
+    reason?: string;
+    reasonCode?: string;
+  }): Promise<AuditLog> {
+    const id = randomUUID();
+    const [log] = await db
+      .insert(auditLogs)
+      .values({
+        id,
+        timestamp: Date.now(),
+        adminUserId: params.adminUserId,
+        jobId: params.jobId,
+        affectedUploadedFileId: params.affectedUploadedFileId || null,
+        affectedLegacyImageId: params.affectedLegacyImageId || null,
+        entityScope: params.entityScope,
+        actionType: params.actionType,
+        oldValue: params.oldValue || null,
+        newValue: params.newValue || null,
+        reason: params.reason || null,
+        reasonCode: params.reasonCode || null,
+      })
+      .returning();
+    return log;
   }
 
   // Upload Manifest Session operations
