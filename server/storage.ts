@@ -627,7 +627,7 @@ export interface IStorage {
   }>;
   updateFileSelectionState(fileId: string, state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'): Promise<void>;
   getJobCandidateFiles(jobId: string): Promise<any[]>; // Files with isCandidate=true
-  getJobDownloadableFiles(jobId: string): Promise<any[]>; // Files that can be downloaded (included, extra_paid, extra_free, or allImagesIncluded)
+  getJobDownloadableFiles(jobId: string, userId: string, role?: string): Promise<any[]>; // Files that can be downloaded (P0: ownership + selection_state validated, admins bypass)
   setFileKulanzFree(fileId: string): Promise<void>; // Set file to extra_free
   enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void>; // Toggle allImagesIncluded
 
@@ -3768,8 +3768,8 @@ export class DatabaseStorage implements IStorage {
     return files;
   }
   
-  async getJobDownloadableFiles(jobId: string): Promise<any[]> {
-    // First check if job has allImagesIncluded
+  async getJobDownloadableFiles(jobId: string, userId: string, role?: string): Promise<any[]> {
+    // P0 SECURITY: Verify job ownership FIRST
     const [job] = await db
       .select()
       .from(jobs)
@@ -3777,6 +3777,11 @@ export class DatabaseStorage implements IStorage {
       .limit(1);
     
     if (!job) {
+      return [];
+    }
+    
+    // P0 SECURITY: Reject if user doesn't own this job (admins bypass)
+    if (job.userId !== userId && role !== 'admin') {
       return [];
     }
     

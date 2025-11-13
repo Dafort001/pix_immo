@@ -47,17 +47,18 @@ app.use("*", async (c, next) => {
   logger.info(`Request completed`, logContext);
 });
 
-// CORS Configuration - Explicit allowlist, no wildcards on protected routes
+// CORS Configuration - P0 HARDENED: Explicit allowlist, NO wildcards
 const getAllowedOrigins = () => {
   if (process.env.NODE_ENV === "production") {
-    // Production: Add your production domain(s) here
+    // Production: ONLY these exact origins (P0 requirement - NO wildcards)
     return [
       "https://pix.immo",
       "https://www.pix.immo",
       "https://pixcapture.app",
-      "https://pixcapture.pages.dev", // Cloudflare Pages deployment
-      process.env.PRODUCTION_URL || "",
-    ].filter(Boolean);
+      // Staging deployments (explicit domains, NO wildcards)
+      "https://staging.pixcapture.pages.dev",
+      "https://preview.pixcapture.pages.dev",
+    ];
   }
   // Development: Allow localhost and Replit domains
   return [
@@ -75,16 +76,13 @@ app.use(
     origin: (origin) => {
       const allowedOrigins = getAllowedOrigins();
       
-      // Allow Cloudflare Pages preview deployments (project-specific only)
-      if (origin && origin.endsWith('.pixcapture.pages.dev')) {
-        return origin;
-      }
-      
+      // P0 SECURITY: NO WILDCARDS - only exact matches
       // If no origin header (same-origin request) or origin is in allowlist, allow it
       if (!origin || allowedOrigins.includes(origin)) {
         return origin || allowedOrigins[0];
       }
-      // Reject other origins
+      
+      // Reject all other origins (no wildcards, no preview deployments)
       return allowedOrigins[0];
     },
     allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -147,7 +145,7 @@ const signupLimiter = rateLimiter({
 
 const passwordResetLimiter = rateLimiter({
   windowMs: 60 * 60 * 1000, // 1 hour
-  limit: 10, // 10 password reset requests per hour per IP
+  limit: 3, // 3 password reset requests per hour per IP (P0 requirement)
   standardHeaders: "draft-6",
   keyGenerator: (c) => getClientIP(c),
 });
@@ -2129,8 +2127,8 @@ app.get("/api/jobs/:id", async (c) => {
   }
 });
 
-// POST /api/uploads/init - Initialize upload
-app.post("/api/uploads/init", async (c) => {
+// POST /api/uploads/init - Initialize upload (P0: Rate-limited to prevent abuse)
+app.post("/api/uploads/init", iosUploadLimiter, async (c) => {
   try {
     const body = await c.req.json();
     const validation = initUploadSchema.safeParse(body);
@@ -2354,7 +2352,7 @@ app.get("/api/handoff/download/:token", async (c) => {
 });
 
 // POST /api/editor/:token/upload - Editor upload endpoint
-app.post("/api/editor/:token/upload", async (c) => {
+app.post("/api/editor/:token/upload", iosUploadLimiter, async (c) => {
   try {
     const token = c.req.param("token");
     

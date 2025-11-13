@@ -348,7 +348,7 @@ function registerMediaLibraryRoutes(app: Express) {
   });
 
   // POST /api/media-library/upload - Upload images to Object Storage (admin auth required)
-  app.post("/api/media-library/upload", upload.array("files", 20), async (req: Request, res: Response) => {
+  app.post("/api/media-library/upload", uploadLimiter, upload.array("files", 20), async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
@@ -1197,23 +1197,19 @@ function registerGalleryPackageRoutes(app: Express) {
   });
   
   // GET /api/jobs/:id/download-zip - Download only selected images as ZIP
-  app.get("/api/jobs/:id/download-zip", validateUuidParam("id"), async (req: Request, res: Response) => {
+  app.get("/api/jobs/:id/download-zip", validateUuidParam("id"), async (req: Request, res: Response, next: any) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       
       const { id } = req.params;
       const job = await storage.getJob(id);
       
-      if (!job) {
-        return res.status(404).json({ error: "Job not found" });
-      }
+      // P0 Security: Use centralized auth guard (throws DownloadUnauthorizedError)
+      assertJobAccessOrThrow(job || null, { userId: req.user.id, role: req.user.role }, id);
       
-      if (job.userId !== req.user.id && req.user.role !== "admin") {
-        return res.status(403).json({ error: "Forbidden" });
-      }
-      
-      // Get ONLY downloadable files (respects package limits + kulanz)
-      const downloadableFiles = await storage.getJobDownloadableFiles(id);
+      // Get ONLY downloadable files (P0: ownership + selection_state validated, admins bypass)
+      // This filters by selection_state ∈ {included, extra_paid, extra_free} + verifies userId
+      const downloadableFiles = await storage.getJobDownloadableFiles(id, req.user.id, req.user.role);
       
       if (downloadableFiles.length === 0) {
         return res.status(400).json({ error: "No images selected for download" });
@@ -1230,8 +1226,8 @@ function registerGalleryPackageRoutes(app: Express) {
         })),
       });
     } catch (error) {
-      console.error("Error generating download ZIP:", error);
-      res.status(500).json({ error: "Failed to generate download ZIP" });
+      // Let error middleware handle DownloadUnauthorizedError
+      next(error);
     }
   });
   
@@ -1315,7 +1311,7 @@ function registerGalleryPackageRoutes(app: Express) {
 // Upload Manifest Routes (Client-manifest-based upload tracking)
 function registerUploadManifestRoutes(app: Express) {
   // POST /api/upload/sessions - Create manifest upload session
-  app.post("/api/upload/sessions", async (req: Request, res: Response) => {
+  app.post("/api/upload/sessions", uploadLimiter, async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       
@@ -1357,7 +1353,7 @@ function registerUploadManifestRoutes(app: Express) {
   });
   
   // POST /api/upload/sessions/:id/files/:itemId - Mark file upload status
-  app.post("/api/upload/sessions/:sessionId/files/:itemId", async (req: Request, res: Response) => {
+  app.post("/api/upload/sessions/:sessionId/files/:itemId", uploadLimiter, async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       
@@ -1404,7 +1400,7 @@ function registerUploadManifestRoutes(app: Express) {
   });
   
   // POST /api/upload/sessions/:id/complete - Complete session
-  app.post("/api/upload/sessions/:sessionId/complete", async (req: Request, res: Response) => {
+  app.post("/api/upload/sessions/:sessionId/complete", uploadLimiter, async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       
@@ -1486,12 +1482,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set to 1 to trust only the first proxy (Replit's reverse proxy)
   app.set('trust proxy', 1);
   
-  // Production domains for CORS
+  // Production domains for CORS (P0 HARDENED - NO wildcards)
   const productionOrigins = [
-    "https://pixcapture.app",
-    "https://pixcapture.pages.dev", // Cloudflare Pages deployment
     "https://pix.immo",
     "https://www.pix.immo",
+    "https://pixcapture.app",
+    // Staging deployments (explicit domains, NO wildcards)
+    "https://staging.pixcapture.pages.dev",
+    "https://preview.pixcapture.pages.dev",
   ];
   
   // Development origins
@@ -1514,21 +1512,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ? productionOrigins 
     : [...productionOrigins, ...devOrigins];
 
-  // CORS middleware with strict origin validation
+  // CORS middleware with strict origin validation (P0 HARDENED)
   app.use(cors({
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
       
-      // Allow Replit preview domains (*.replit.dev)
-      if (origin.endsWith('.replit.dev')) {
+      // P0 SECURITY: Only allow Replit preview domains in DEVELOPMENT
+      if (process.env.NODE_ENV === "development" && origin.endsWith('.replit.dev')) {
         return callback(null, true);
       }
       
-      // Allow Cloudflare Pages preview deployments (project-specific only)
-      if (origin.endsWith('.pixcapture.pages.dev')) {
-        return callback(null, true);
-      }
+      // P0 SECURITY: NO wildcards in production (removed .pixcapture.pages.dev)
       
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -2015,7 +2010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // POST /api/uploads/init - Initialize a shoot for uploading
-  app.post("/api/uploads/init", validateBody(initUploadSchema), async (req: Request, res: Response) => {
+  app.post("/api/uploads/init", uploadLimiter, validateBody(initUploadSchema), async (req: Request, res: Response) => {
     try {
       const { jobNumber } = req.body;
       
@@ -2275,7 +2270,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // POST /api/editor/:token/upload - Editor upload endpoint
-  app.post("/api/editor/:token/upload", upload.single("package"), async (req: Request, res: Response) => {
+  app.post("/api/editor/:token/upload", uploadLimiter, upload.single("package"), async (req: Request, res: Response) => {
     try {
       const { token } = req.params;
       const file = req.file;
@@ -2435,7 +2430,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     stackCount: z.number().int().min(3).max(5),
   });
 
-  app.post("/api/raw-uploads/init", validateBody(initRawUploadSchema), async (req: Request, res: Response) => {
+  app.post("/api/raw-uploads/init", uploadLimiter, validateBody(initRawUploadSchema), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {
@@ -2490,7 +2485,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     partNumbers: z.array(z.number().int().positive()),
   });
 
-  app.post("/api/raw-uploads/:uploadId/parts", validateBody(getPresignedUrlsSchema), async (req: Request, res: Response) => {
+  app.post("/api/raw-uploads/:uploadId/parts", presignLimiter, validateBody(getPresignedUrlsSchema), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {
@@ -2534,7 +2529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     })),
   });
 
-  app.post("/api/raw-uploads/:uploadId/complete", validateBody(completeUploadSchema), async (req: Request, res: Response) => {
+  app.post("/api/raw-uploads/:uploadId/complete", uploadLimiter, validateBody(completeUploadSchema), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {
@@ -2589,7 +2584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Mobile photo upload endpoint with sidecar support (object_meta.json + alt_text.txt)
-  app.post("/api/mobile-uploads", upload.fields([
+  app.post("/api/mobile-uploads", uploadLimiter, upload.fields([
     { name: 'photo', maxCount: 1 },
     { name: 'metadata', maxCount: 1 },  // object_meta.json
     { name: 'alt_text', maxCount: 1 },  // alt_text.txt
@@ -2782,7 +2777,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // PixCapture Upload Endpoints (Intent-based Upload System)
   
   // POST /api/pixcapture/upload/intent - Generate signed URL for direct R2 upload
-  app.post("/api/pixcapture/upload/intent", validateBody(uploadIntentSchema), async (req: Request, res: Response) => {
+  app.post("/api/pixcapture/upload/intent", uploadLimiter, validateBody(uploadIntentSchema), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {
@@ -2827,7 +2822,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // POST /api/pixcapture/upload/finalize - Confirm successful R2 upload
-  app.post("/api/pixcapture/upload/finalize", validateBody(uploadFinalizeSchema), async (req: Request, res: Response) => {
+  app.post("/api/pixcapture/upload/finalize", uploadLimiter, validateBody(uploadFinalizeSchema), async (req: Request, res: Response) => {
     try {
       const user = (req as any).user;
       if (!user) {

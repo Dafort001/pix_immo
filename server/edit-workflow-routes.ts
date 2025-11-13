@@ -1,6 +1,8 @@
 import type { Express, Request, Response } from "express";
 import { z } from "zod";
 import { storage } from "./storage";
+import { assertJobAccessOrThrow, assertFileDownloadableOrThrow } from "./download-auth";
+import { generatePresignedDownloadUrl } from "./r2-client";
 
 /**
  * Edit Workflow Routes (Phase 2 → F4a Real Implementation)
@@ -182,8 +184,9 @@ export function registerEditWorkflowRoutes(app: Express): void {
   // =================================================================
   // GET /api/files/:id/preview
   // Get signed URL for processed preview (REAL IMPLEMENTATION)
+  // P0 SECURITY: Enforces job ownership + selection_state authorization
   // =================================================================
-  app.get("/api/files/:fileId/preview", async (req: Request, res: Response) => {
+  app.get("/api/files/:fileId/preview", async (req: Request, res: Response, next: any) => {
     if (!req.user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
@@ -191,24 +194,44 @@ export function registerEditWorkflowRoutes(app: Express): void {
     try {
       const { fileId } = req.params;
       
-      // Get latest EditJob for this file (done status)
+      // P0 Security Step 1: Get uploadedFile to check ownership + selection_state
+      const file = await storage.getUploadedFile(fileId);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+
+      // P0 Security Step 2: Validate file has orderId (orphaned files cannot be accessed)
+      if (!file.orderId) {
+        return res.status(400).json({ error: "File is not linked to a job" });
+      }
+
+      // P0 Security Step 3: Get job for ownership check
+      const job = await storage.getJob(file.orderId);
+      
+      // P0 Security Step 4: Assert job access (throws DownloadUnauthorizedError)
+      assertJobAccessOrThrow(job || null, { userId: req.user.id, role: req.user.role }, file.orderId);
+      
+      // P0 Security Step 5: Assert file downloadable (checks selection_state)
+      assertFileDownloadableOrThrow(file, job!, fileId);
+      
+      // AUTHORIZATION PASSED - proceed with preview lookup
       const jobs = await storage.getEditJobsByFile(fileId);
       const doneJob = jobs.find(j => j.status === 'done' && j.previewPath);
 
       if (!doneJob || !doneJob.previewPath) {
-        // No preview yet, return 404
         return res.status(404).json({ error: "Preview not available yet" });
       }
 
-      // TODO: Generate R2 signed URL for preview
-      // For now, return the path - will be replaced with signed URL in R2 integration
+      // P0 Security: Generate presigned R2 URL with 5-minute expiry
+      const signedUrl = await generatePresignedDownloadUrl(doneJob.previewPath, 300);
+      
       res.json({
-        url: `/r2-preview/${doneJob.previewPath}`, // Placeholder URL
-        expiresAt: Date.now() + 3600000, // 1 hour
+        url: signedUrl,
+        expiresAt: Date.now() + 300000, // 5 minutes (P0 requirement)
       });
     } catch (error) {
-      console.error("Get preview error:", error);
-      res.status(500).json({ error: "Failed to generate preview URL" });
+      // Let error middleware handle DownloadUnauthorizedError
+      next(error);
     }
   });
 

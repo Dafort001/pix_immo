@@ -211,6 +211,28 @@ export async function headObject(key: string): Promise<{
   };
 }
 
+/**
+ * Generate a presigned download URL for R2 objects (P0 Security)
+ * 
+ * Security: MUST call authorization checks BEFORE using this function!
+ * This function only generates the URL - it does NOT verify permissions.
+ * 
+ * @param key - R2 object key
+ * @param expiresIn - URL expiry in seconds (default: 300 = 5 minutes per P0 requirement)
+ * @returns Presigned download URL
+ */
+export async function generatePresignedDownloadUrl(
+  key: string,
+  expiresIn: number = 300 // 5 minutes default (P0 requirement)
+): Promise<string> {
+  const command = new GetObjectCommand({
+    Bucket: R2_BUCKET,
+    Key: key,
+  });
+
+  return await getSignedUrl(r2Client, command, { expiresIn });
+}
+
 export async function listObjects(prefix: string, maxKeys: number = 1000): Promise<{
   keys: string[];
   isTruncated: boolean;
