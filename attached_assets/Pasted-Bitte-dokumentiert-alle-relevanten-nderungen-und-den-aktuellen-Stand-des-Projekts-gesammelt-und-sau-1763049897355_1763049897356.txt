@@ -1,0 +1,114 @@
+Bitte dokumentiert alle relevanten Änderungen und den aktuellen Stand des Projekts gesammelt und sauber strukturiert in GitHub, damit ich die Daten später vollständig an ChatGPT übergeben kann.
+
+Ich benötige eine komplette technische Zusammenfassung in einer neuen Datei in unserem Repo unter:
+
+/docs/IMPLEMENTATION_STATUS.md
+
+
+Diese Datei muss folgende Abschnitte enthalten:
+
+1. Aktueller Backend-Stand
+
+Bitte auflisten:
+
+alle existierenden API-Endpunkte (Route, Methode, Zweck)
+
+welche Endpunkte vollständig implementiert sind
+
+welche nur teilweise implementiert sind
+
+welche noch fehlen
+
+alle Upload-bezogenen APIs, inkl.:
+
+uploadManifestSessions
+
+UploadSession / UploadItem Status-Flows
+
+finalize-Endpunkt (falls schon existiert oder geplant)
+
+2. Aktueller Frontend-Stand
+
+Welche Seiten sind fertig?
+
+Welche Seiten fehlen?
+
+Welche Seiten funktionieren bereits mit echten Backend-Daten?
+
+Wo existieren noch Simulationen / Mock-States?
+
+Für jede Seite bitte:
+
+Datei/Komponente
+
+Zweck
+
+Status (fertig / teilweise / fehlt)
+
+3. Datenmodelle (Backend / DB / Schema)
+
+Bitte die vollständigen aktuellen Modell-Definitionen dokumentieren:
+
+Job / Shoot
+
+UploadSession
+
+UploadItem
+
+GalleryImage oder vergleichbare Tabellen
+
+Ausführliche Felder + kurze Beschreibung je Feld
+
+Auflisten aller Tabellen/Collections und Beziehungen (Relationen)
+
+4. Logik für Bild-Auswahl & Paketgrößen
+
+Bitte dokumentieren:
+
+Felder wie included_images, all_images_included, extra_free, extra_paid
+
+Wie die Logik aktuell implementiert ist
+
+Welche Status-Werte pro Bild möglich sind (selection_state)
+
+Wie der ZIP-Download derzeit mit diesen Feldern umgeht
+
+5. Sicherheitsfeatures (Stand heute)
+
+Bitte dokumentieren:
+
+Was aktuell schon existiert (Rate-Limits? CORS? 403-Checks?)
+
+Was implementiert wurde
+
+Was fehlt noch
+
+Ob die Download-Berechtigung bereits serverseitig geprüft wird
+
+6. Offene Punkte / bekannte Lücken
+
+Bitte hier ausdrücklich aufführen:
+
+Alles, was noch TODO ist
+
+Alles, was unklar ist
+
+Alles, was ihr noch nicht umgesetzt habt
+
+Jede Abweichung von meinen Anforderungen
+
+7. Letzte Änderungen (Changelog der letzten 7 Tage)
+
+Für Nachvollziehbarkeit:
+
+Welche Dateien wurden geändert?
+
+Kurzbeschreibung warum.
+
+Welche Features wurden hinzugefügt/angepasst?
+
+WICHTIG:
+
+Die Datei IMPLEMENTATION_STATUS.md muss vollständig und verständlich sein – so, dass ich sie direkt an ChatGPT geben kann, ohne weitere Erklärungen.
+
+Bitte zuerst diese Dokumentation erstellen, bevor weitere Features gebaut werden.
