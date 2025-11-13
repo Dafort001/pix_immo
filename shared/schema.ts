@@ -13,6 +13,22 @@ export const selectionStateEnum = pgEnum("selection_state", [
   "blocked",
 ]);
 
+export const uploadSessionStateEnum = pgEnum("upload_session_state", [
+  "pending",
+  "in_progress",
+  "complete",
+  "error",
+  "stale",
+]);
+
+export const uploadItemStatusEnum = pgEnum("upload_item_status", [
+  "pending",
+  "uploading",
+  "uploaded",
+  "verified",
+  "failed",
+]);
+
 // Drizzle Tables
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
@@ -195,6 +211,50 @@ export const editJobs = pgTable("edit_jobs", {
   orderIdIdx: index("edit_jobs_order_id_idx").on(table.orderId),
   // Index for file-centric queries
   fileIdIdx: index("edit_jobs_file_id_idx").on(table.fileId),
+}));
+
+// Manifest Upload Sessions - Client-manifest-based upload tracking for immediate error feedback
+export const uploadManifestSessions = pgTable("upload_manifest_sessions", {
+  id: varchar("id").primaryKey(),
+  jobId: varchar("job_id").references(() => jobs.id, { onDelete: "cascade" }), // Optional: link to job
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  clientType: varchar("client_type", { length: 50 }).notNull(), // 'pixcapture_ios', 'pixcapture_android', 'web_uploader'
+  expectedFiles: integer("expected_files").notNull(), // Number of files in manifest
+  totalBytesExpected: bigint("total_bytes_expected", { mode: "number" }).notNull(), // Total size from manifest
+  state: uploadSessionStateEnum("state").notNull().default("pending"), // Session state
+  errorCount: integer("error_count").notNull().default(0), // Number of failed items
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  lastActivityAt: bigint("last_activity_at", { mode: "number" }).notNull(), // Last upload activity
+  completedAt: bigint("completed_at", { mode: "number" }), // When session was marked complete
+}, (table) => ({
+  // Index for job lookup
+  jobIdIdx: index("upload_manifest_sessions_job_id_idx").on(table.jobId),
+  // Index for user lookup
+  userIdIdx: index("upload_manifest_sessions_user_id_idx").on(table.userId),
+  // Index for stale session cleanup
+  stateActivityIdx: index("upload_manifest_sessions_state_activity_idx").on(table.state, table.lastActivityAt),
+}));
+
+// Manifest Upload Items - Individual files within a manifest upload session
+export const uploadManifestItems = pgTable("upload_manifest_items", {
+  id: varchar("id").primaryKey(),
+  sessionId: varchar("session_id").notNull().references(() => uploadManifestSessions.id, { onDelete: "cascade" }),
+  objectKey: text("object_key").notNull(), // Expected R2 key (e.g., {shoot_id}/{filename})
+  sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(), // Expected file size
+  checksum: varchar("checksum", { length: 64 }), // MD5/SHA256 from client (for verification)
+  status: uploadItemStatusEnum("status").notNull().default("pending"), // Item upload status
+  errorMessage: text("error_message"), // Error details if failed
+  retryCount: integer("retry_count").notNull().default(0), // Number of retry attempts
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  uploadedAt: bigint("uploaded_at", { mode: "number" }), // When file upload completed
+  verifiedAt: bigint("verified_at", { mode: "number" }), // When file was verified on R2
+}, (table) => ({
+  // Index for session lookup
+  sessionIdIdx: index("upload_manifest_items_session_id_idx").on(table.sessionId),
+  // Index for status queries
+  sessionIdStatusIdx: index("upload_manifest_items_session_id_status_idx").on(table.sessionId, table.status),
+  // Unique constraint: prevent duplicate object keys
+  uniqueObjectKey: unique("upload_manifest_items_object_key_unique").on(table.objectKey),
 }));
 
 // Notifications - System notifications for users (Phase 2)
@@ -1423,3 +1483,53 @@ export type BulkMarkFiles = z.infer<typeof bulkMarkFilesSchema>;
 export type BulkDeleteFiles = z.infer<typeof bulkDeleteFilesSchema>;
 export type FileNoteInput = z.infer<typeof fileNoteSchema>;
 export type FileNotesFilter = z.infer<typeof fileNotesFilterSchema>;
+
+// Upload Manifest Session Schemas
+export const insertUploadManifestSessionSchema = createInsertSchema(uploadManifestSessions).omit({
+  id: true,
+  errorCount: true,
+  createdAt: true,
+  lastActivityAt: true,
+  completedAt: true,
+});
+
+export type UploadManifestSession = typeof uploadManifestSessions.$inferSelect;
+export type InsertUploadManifestSession = z.infer<typeof insertUploadManifestSessionSchema>;
+
+// Upload Manifest Item Schemas
+export const insertUploadManifestItemSchema = createInsertSchema(uploadManifestItems).omit({
+  id: true,
+  errorMessage: true,
+  retryCount: true,
+  createdAt: true,
+  uploadedAt: true,
+  verifiedAt: true,
+});
+
+export type UploadManifestItem = typeof uploadManifestItems.$inferSelect;
+export type InsertUploadManifestItem = z.infer<typeof insertUploadManifestItemSchema>;
+
+// Manifest Upload API Schemas
+export const createManifestSessionSchema = z.object({
+  jobId: z.string().optional(),
+  clientType: z.enum(['pixcapture_ios', 'pixcapture_android', 'web_uploader']),
+  files: z.array(z.object({
+    objectKey: z.string().min(1),
+    sizeBytes: z.number().int().min(1).max(500 * 1024 * 1024), // Max 500MB per file
+    checksum: z.string().length(64).optional(), // SHA256
+  })).min(1).max(100), // Max 100 files per session
+});
+
+export const uploadFileToSessionSchema = z.object({
+  sessionId: z.string().uuid(),
+  itemId: z.string().uuid(),
+  checksum: z.string().length(64).optional(),
+});
+
+export const completeSessionSchema = z.object({
+  sessionId: z.string().uuid(),
+});
+
+export type CreateManifestSession = z.infer<typeof createManifestSessionSchema>;
+export type UploadFileToSession = z.infer<typeof uploadFileToSessionSchema>;
+export type CompleteSession = z.infer<typeof completeSessionSchema>;
