@@ -61,10 +61,10 @@ export default function GallerySelection() {
   });
 
   const selectMutation = useMutation({
-    mutationFn: async ({ fileId, asExtra }: { fileId: number; asExtra: boolean }) => {
+    mutationFn: async (fileId: string) => {
       const response = await apiRequest("POST", `/api/jobs/${jobId}/select-image`, { 
         fileId, 
-        asExtra 
+        action: 'select'
       });
       return response.json();
     },
@@ -81,11 +81,10 @@ export default function GallerySelection() {
   });
 
   const deselectMutation = useMutation({
-    mutationFn: async (fileId: number) => {
+    mutationFn: async (fileId: string) => {
       const response = await apiRequest("POST", `/api/jobs/${jobId}/select-image`, { 
         fileId, 
-        asExtra: false,
-        deselect: true
+        action: 'deselect'
       });
       return response.json();
     },
@@ -101,15 +100,11 @@ export default function GallerySelection() {
     },
   });
 
-  const handleSelectAsIncluded = (fileId: number) => {
-    selectMutation.mutate({ fileId, asExtra: false });
+  const handleSelectAsIncluded = (fileId: string) => {
+    selectMutation.mutate(fileId);
   };
 
-  const handleSelectAsExtra = (fileId: number) => {
-    selectMutation.mutate({ fileId, asExtra: true });
-  };
-
-  const handleDeselect = (fileId: number) => {
+  const handleDeselect = (fileId: string) => {
     deselectMutation.mutate(fileId);
   };
 
@@ -323,35 +318,30 @@ export default function GallerySelection() {
                     {/* Action Buttons */}
                     <div className="mt-2 flex gap-2">
                       {!isSelected ? (
-                        <>
-                          <Button
-                            size="sm"
-                            onClick={() => handleSelectAsIncluded(file.id)}
-                            disabled={!canInclude || selectMutation.isPending}
-                            className="flex-1"
-                            data-testid={`button-include-${file.id}`}
-                          >
-                            <Check className="w-3 h-3 mr-1" />
-                            {canInclude ? "Auswählen" : "Paket voll"}
-                          </Button>
-                          {job && job.extraPricePerImage && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleSelectAsExtra(file.id)}
-                              disabled={selectMutation.isPending}
-                              data-testid={`button-extra-${file.id}`}
-                            >
+                        <Button
+                          size="sm"
+                          onClick={() => handleSelectAsIncluded(String(file.id))}
+                          disabled={selectMutation.isPending}
+                          className="flex-1"
+                          data-testid={`button-select-${file.id}`}
+                        >
+                          {canInclude ? (
+                            <>
+                              <Check className="w-3 h-3 mr-1" />
+                              Auswählen
+                            </>
+                          ) : (
+                            <>
                               <Plus className="w-3 h-3 mr-1" />
-                              {formatPrice(job.extraPricePerImage)} €
-                            </Button>
+                              {job && job.extraPricePerImage ? `${formatPrice(job.extraPricePerImage)} €` : 'Extra'}
+                            </>
                           )}
-                        </>
+                        </Button>
                       ) : (
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleDeselect(file.id)}
+                          onClick={() => handleDeselect(String(file.id))}
                           disabled={deselectMutation.isPending}
                           className="flex-1"
                           data-testid={`button-deselect-${file.id}`}

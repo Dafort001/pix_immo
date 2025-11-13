@@ -108,7 +108,7 @@ export default function AdminJobs() {
 
   const enableAllKulanzMutation = useMutation({
     mutationFn: async (jobId: number) => {
-      return await apiRequest('PATCH', `/api/admin/jobs/${jobId}/kulanz-all`, { enable: true });
+      return await apiRequest('PATCH', `/api/admin/jobs/${jobId}/kulanz-all`, { enabled: true });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/jobs/all'] });
@@ -125,8 +125,8 @@ export default function AdminJobs() {
   });
 
   const fileKulanzMutation = useMutation({
-    mutationFn: async (fileId: number) => {
-      return await apiRequest('PATCH', `/api/admin/files/${fileId}/kulanz`, { enable: true });
+    mutationFn: async (fileId: string) => {
+      return await apiRequest('PATCH', `/api/admin/files/${fileId}/kulanz`, {});
     },
     onSuccess: () => {
       refetchGallery();
@@ -179,7 +179,7 @@ export default function AdminJobs() {
   };
 
   const handleFileKulanz = (fileId: number) => {
-    fileKulanzMutation.mutate(fileId);
+    fileKulanzMutation.mutate(String(fileId));
   };
 
   const formatPrice = (cents?: number) => {
