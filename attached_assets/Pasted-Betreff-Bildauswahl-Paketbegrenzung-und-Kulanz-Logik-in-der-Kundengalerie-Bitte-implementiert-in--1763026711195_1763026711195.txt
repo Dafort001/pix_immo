@@ -1,0 +1,231 @@
+Betreff: Bildauswahl, Paketbegrenzung und Kulanz-Logik in der Kundengalerie
+
+Bitte implementiert in der pix.immo Galerie folgende Logik für Bildauswahl, Paketbegrenzung und Downloads. Ziel:
+
+Der Kunde darf nur so viele Bilder herunterladen, wie in seinem Paket enthalten sind.
+
+Er kann aus einer größeren Menge finaler Bilder auswählen.
+
+Zusätzliche Bilder können als „Extra“ gekauft oder von mir manuell als Kulanz freigeschaltet werden.
+
+Die Begrenzung muss serverseitig durchgesetzt werden (nicht nur im Frontend).
+
+1. Erweiterung Datenmodell Job / Auftrag
+
+Pro Auftrag brauchen wir folgende Felder:
+
+included_images: number
+Anzahl Bilder, die im gebuchten Paket enthalten sind (z. B. 20).
+
+max_selectable: number | null
+Hartes Limit, wie viele Bilder der Kunde überhaupt auswählen darf.
+Standard: = included_images. Optional: größer (z. B. 25) für Paket + Puffer.
+
+extra_price_per_image: number | null
+Preis pro zusätzlichem Bild (z. B. 8.00).
+Hinweis: vorerst nur als Anzeige, noch keine Zahlungsintegration nötig.
+
+allow_free_extras: boolean
+Ob ich für diesen Auftrag überhaupt Kulanz-Extras vergeben darf.
+
+free_extra_quota: number | null
+Wie viele zusätzliche Bilder ich kostenlos freigeben kann (z. B. 3).
+Nur als Orientierung / Limit im Admin – harte Prüfung optional.
+
+all_images_included: boolean
+Wenn true, sind alle finalen Bilder für diesen Auftrag voll freigegeben (kein Paket-Limit, kein Upsell).
+Das ist die „Alles freigeben“-Kulanz-Option für Stammkunden / Sonderfälle.
+
+2. Zustände pro Bild in der Kundengalerie
+
+Jedes Bild, das in der Galerie eines Auftrags sichtbar ist, bekommt folgende Felder:
+
+is_candidate: boolean
+Ob das Bild im Auswahl-Pool für den Kunden auftaucht.
+
+selection_state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'
+
+Bedeutung:
+
+none
+Bild ist zwar im Auftrag vorhanden, aber nicht als ausgewähltes/gekauftes Bild markiert.
+
+included
+Bild ist im Paket enthalten und zählt gegen included_images.
+
+extra_pending
+Kunde möchte dieses Bild zusätzlich haben, aber Bezahlung/Buchung ist noch nicht abgeschlossen.
+(Vorbereitung für späteren Upsell / Checkout, aktuell nur Status.)
+
+extra_paid
+Bild ist zusätzlich kostenpflichtig gebucht/bezahlt.
+
+extra_free
+Bild ist zusätzlich, aber von mir kostenlos freigegeben (Kulanz).
+
+blocked
+Bild ist sichtbar, kann aber nicht heruntergeladen werden (z. B. nur Preview).
+
+3. Verhalten in der Kundengalerie (Frontend)
+3.1 Grundverhalten
+
+Der Kunde sieht alle Bilder mit is_candidate = true.
+
+Oben auf der Seite muss klar angezeigt werden:
+
+Paketgröße: included_images
+
+Aktuell ausgewählte Paketbilder: Anzahl selection_state = 'included'
+
+Eventuelle Extras: Anzahl extra_free + extra_paid + extra_pending
+
+Beispiele für Anzeige:
+
+Normale Situation (ohne Extras):
+„Sie haben 20 Bilder in Ihrem Paket. Ausgewählt: 12/20.“
+
+Mit Extras (Konzept für späteres Upselling):
+„Paket: 20 Bilder inklusive. Ausgewählt: 28 (davon 8 zusätzliche Bilder).“
+
+3.2 Auswahlbegrenzung (Paketlogik)
+
+Standardverhalten (ohne all_images_included):
+
+Der Kunde kann Bilder als „paketrelevant“ markieren.
+
+selection_state wird entsprechend gesetzt.
+
+Wir brauchen zwei Modi:
+
+Modus A – Hartes Limit (kein Upsell):
+
+Kunde darf maximal max_selectable Bilder als included markieren.
+
+Wenn das Limit erreicht ist, darf er weitere Bilder entweder:
+
+nicht mehr auswählen (UI blockiert),
+
+oder es erscheint eine klare Meldung:
+„Sie haben die maximale Anzahl von X Bildern erreicht.“
+
+Modus B – Upsell-fähig (Vorbereitung):
+
+Kunde darf mehr als included_images auswählen.
+
+Alles oberhalb der Paketgrenze wird im Frontend deutlich als „zusätzliche Bilder“ markiert.
+
+Diese Zusätze werden intern z. B. als extra_pending gekennzeichnet (Konzept für späteren Kaufprozess).
+
+Wichtig: Für jetzt reicht, wenn wir extra_pending sauber führen und anzeigen. Die echte Zahlungslogik kann später ergänzt werden.
+
+3.3 Spezialfall: all_images_included = true
+
+Wenn all_images_included = true:
+
+Alle is_candidate = true Bilder gelten automatisch als freigegeben.
+
+selection_state kann intern als included oder Mischung aus included/extra_free gesetzt werden – wichtig ist:
+Kunde darf alle diese Bilder herunterladen.
+
+Paketbegrenzung wird in der UI optisch ausgeblendet oder mit Hinweis:
+„Für diesen Auftrag sind alle Bilder für Sie freigeschaltet.“
+
+4. Download-Logik (serverseitige Durchsetzung)
+
+Entscheidend: Der Download (ZIP oder Einzeldownloads) darf nur freigegebene Bilder liefern.
+Frontend darf das nicht umgehen können.
+
+4.1 ZIP-Download für einen Auftrag
+
+Wenn der Kunde einen „Alles herunterladen“ oder „ZIP-Download“-Button klickt:
+
+Der Server generiert ein ZIP nur mit Bildern, deren selection_state einer der folgenden ist:
+
+included
+
+extra_paid
+
+extra_free
+
+Bilder mit selection_state:
+
+none
+
+extra_pending
+
+blocked
+dürfen nicht im Download-ZIP landen.
+
+Ausnahme: Wenn all_images_included = true, dann sind alle is_candidate = true Bilder in diesem Auftrag automatisch download-berechtigt.
+
+4.2 Einzelbild-Download / signierte Links
+
+Wenn es pro Bild einen Direktdownload gibt (signierte URL):
+
+Vor dem Erzeugen der signierten URL prüft die API:
+
+Gehört dieses Bild zum Auftrag des eingeloggten Kunden?
+
+Ist selection_state ∈ {included, extra_paid, extra_free}
+oder all_images_included = true?
+
+Wenn nein → 403 oder saubere Fehlermeldung:
+„Dieses Bild ist in Ihrem Paket nicht freigeschaltet.“
+
+5. Admin-Funktionen (Kulanz & Freigabe)
+
+Im Admin-/Fotografen-Backend brauche ich einfache Möglichkeiten, Kulanz umzusetzen:
+
+5.1 Bildweise Kulanz
+
+Auf einem Bild kann ich den Status auf extra_free setzen, auch wenn der Kunde eigentlich sein Paket voll hat.
+
+Alternativ kann ich Bilder von none → included hochstufen, selbst wenn das included_images übersteigt.
+(Optional: System weist mich darauf hin, dass ich damit das Paket-Limit überschreite.)
+
+5.2 Auftragweite Kulanz
+
+Ich kann für einen Auftrag all_images_included = true setzen.
+Ergebnis:
+
+Alle is_candidate Bilder werden als download-berechtigt behandelt.
+
+Der Kunde kann die gesamte Serie runterladen, ohne Limit.
+
+5.3 Anpassung Paketgröße
+
+Ich kann included_images nachträglich erhöhen (z. B. von 20 auf 25).
+
+Die Anzeige in der Galerie passt sich dann an.
+
+Bereits als included markierte Bilder sollen möglichst nicht automatisch zurückgesetzt werden.
+
+6. Multi-Tenant und R2
+
+Wichtig: Die Logik muss für alle zukünftigen Fotografen/Mandanten funktionieren, nicht nur für mich:
+
+Die Paket-/Auswahl-Logik hängt an Job-/Auftragsebene, nicht an globalen Einstellungen.
+
+Die tatsächlichen Bilddateien bleiben wie bisher in R2.
+
+Die Download-API filtert nur anhand der oben beschriebenen Felder, bevor sie signierte URLs/ZIPs erzeugt.
+
+7. Übergangsphase
+
+Für den Anfang reicht:
+
+Paket-Felder im Jobmodell einbauen.
+
+selection_state per Bild verwalten.
+
+ZIP-Download so anpassen, dass nur freigegebene Bilder enthalten sind.
+
+all_images_included als harte Kulanzfunktion voll respektieren.
+
+Später können wir:
+
+Die extra_pending / extra_paid Logik mit Stripe/Checkout versehen,
+
+sowie bessere Admin-UI bauen, um Paketgrößen und Kulanz schnell anzupassen.
+
+Das ist der gewünschte Funktionsumfang. Wichtig ist, dass kein Kunde „aus Versehen“ mehr Bilder herunterladen kann, als durch Paket, Extras oder Kulanz freigegeben sind, und dass ich im Admin diese Grenzen bei Bedarf bewusst aufheben kann.
