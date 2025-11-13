@@ -31,6 +31,7 @@ import { registerEditorRoutes } from "./editor-routes";
 import { registerOrderFilesRoutes } from "./order-files-routes";
 import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
+import { assertJobAccessOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 
 // Middleware to validate request body with Zod
 export function validateBody(schema: z.ZodSchema) {
@@ -3197,15 +3198,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
-    // Log the full error internally
-    console.error('[ERROR]', {
-      requestId: (req as any).requestId,
-      error: err.message,
-      stack: err.stack,
-      path: req.path,
-      method: req.method,
-      ip: req.ip,
-    });
+    // Security: Log download authorization failures for audit trail
+    if (err.name === 'DownloadUnauthorizedError') {
+      console.warn('[SECURITY] Download denied', {
+        requestId: (req as any).requestId,
+        userId: req.user?.id,
+        userRole: req.user?.role,
+        reason: err.reason,
+        jobId: err.jobId,
+        fileId: err.fileId,
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+      });
+    } else {
+      // Log the full error internally for non-security errors
+      console.error('[ERROR]', {
+        requestId: (req as any).requestId,
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+        ip: req.ip,
+      });
+    }
     
     // Never send stack traces to client
     const statusCode = err.statusCode || err.status || 500;
