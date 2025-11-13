@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -630,6 +630,27 @@ export interface IStorage {
   getJobDownloadableFiles(jobId: string): Promise<any[]>; // Files that can be downloaded (included, extra_paid, extra_free, or allImagesIncluded)
   setFileKulanzFree(fileId: string): Promise<void>; // Set file to extra_free
   enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void>; // Toggle allImagesIncluded
+
+  // Upload Manifest Session operations (client-manifest-based upload tracking)
+  createManifestSession(data: {
+    userId: string;
+    jobId?: string;
+    clientType: 'pixcapture_ios' | 'pixcapture_android' | 'web_uploader';
+    expectedFiles: number;
+    totalBytesExpected: number;
+  }): Promise<import("@shared/schema").UploadManifestSession>;
+  createManifestItems(sessionId: string, items: Array<{
+    objectKey: string;
+    sizeBytes: number;
+    checksum?: string;
+  }>): Promise<import("@shared/schema").UploadManifestItem[]>;
+  getManifestSession(sessionId: string): Promise<import("@shared/schema").UploadManifestSession | undefined>;
+  getManifestItems(sessionId: string): Promise<import("@shared/schema").UploadManifestItem[]>;
+  updateManifestItemStatus(itemId: string, status: 'pending' | 'uploading' | 'uploaded' | 'verified' | 'failed', errorMessage?: string): Promise<void>;
+  updateManifestSessionState(sessionId: string, state: 'pending' | 'in_progress' | 'complete' | 'error' | 'stale'): Promise<void>;
+  incrementManifestSessionErrors(sessionId: string): Promise<void>;
+  completeManifestSession(sessionId: string): Promise<void>;
+  getManifestItemByObjectKey(objectKey: string): Promise<import("@shared/schema").UploadManifestItem | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3791,6 +3812,133 @@ export class DatabaseStorage implements IStorage {
       .update(jobs)
       .set({ allImagesIncluded: enabled })
       .where(eq(jobs.id, jobId));
+  }
+
+  // Upload Manifest Session operations
+  async createManifestSession(data: {
+    userId: string;
+    jobId?: string;
+    clientType: 'pixcapture_ios' | 'pixcapture_android' | 'web_uploader';
+    expectedFiles: number;
+    totalBytesExpected: number;
+  }): Promise<UploadManifestSession> {
+    const id = randomUUID();
+    const now = Date.now();
+    const [session] = await db
+      .insert(uploadManifestSessions)
+      .values({
+        id,
+        userId: data.userId,
+        jobId: data.jobId || null,
+        clientType: data.clientType,
+        expectedFiles: data.expectedFiles,
+        totalBytesExpected: data.totalBytesExpected,
+        state: 'pending',
+        errorCount: 0,
+        createdAt: now,
+        lastActivityAt: now,
+      })
+      .returning();
+    return session;
+  }
+
+  async createManifestItems(sessionId: string, items: Array<{
+    objectKey: string;
+    sizeBytes: number;
+    checksum?: string;
+  }>): Promise<UploadManifestItem[]> {
+    const now = Date.now();
+    const itemsToInsert = items.map(item => ({
+      id: randomUUID(),
+      sessionId,
+      objectKey: item.objectKey,
+      sizeBytes: item.sizeBytes,
+      checksum: item.checksum || null,
+      status: 'pending' as const,
+      retryCount: 0,
+      createdAt: now,
+    }));
+    
+    const result = await db
+      .insert(uploadManifestItems)
+      .values(itemsToInsert)
+      .returning();
+    
+    return result;
+  }
+
+  async getManifestSession(sessionId: string): Promise<UploadManifestSession | undefined> {
+    const [session] = await db
+      .select()
+      .from(uploadManifestSessions)
+      .where(eq(uploadManifestSessions.id, sessionId));
+    return session || undefined;
+  }
+
+  async getManifestItems(sessionId: string): Promise<UploadManifestItem[]> {
+    return await db
+      .select()
+      .from(uploadManifestItems)
+      .where(eq(uploadManifestItems.sessionId, sessionId))
+      .orderBy(uploadManifestItems.createdAt);
+  }
+
+  async updateManifestItemStatus(itemId: string, status: 'pending' | 'uploading' | 'uploaded' | 'verified' | 'failed', errorMessage?: string): Promise<void> {
+    const now = Date.now();
+    const updateData: any = { status };
+    
+    if (status === 'uploaded') {
+      updateData.uploadedAt = now;
+    } else if (status === 'verified') {
+      updateData.verifiedAt = now;
+    } else if (status === 'failed' && errorMessage) {
+      updateData.errorMessage = errorMessage;
+    }
+    
+    await db
+      .update(uploadManifestItems)
+      .set(updateData)
+      .where(eq(uploadManifestItems.id, itemId));
+  }
+
+  async updateManifestSessionState(sessionId: string, state: 'pending' | 'in_progress' | 'complete' | 'error' | 'stale'): Promise<void> {
+    await db
+      .update(uploadManifestSessions)
+      .set({ 
+        state, 
+        lastActivityAt: Date.now(),
+      })
+      .where(eq(uploadManifestSessions.id, sessionId));
+  }
+
+  async incrementManifestSessionErrors(sessionId: string): Promise<void> {
+    await db
+      .update(uploadManifestSessions)
+      .set({ 
+        errorCount: sql`${uploadManifestSessions.errorCount} + 1`,
+        lastActivityAt: Date.now(),
+      })
+      .where(eq(uploadManifestSessions.id, sessionId));
+  }
+
+  async completeManifestSession(sessionId: string): Promise<void> {
+    const now = Date.now();
+    await db
+      .update(uploadManifestSessions)
+      .set({ 
+        state: 'complete',
+        completedAt: now,
+        lastActivityAt: now,
+      })
+      .where(eq(uploadManifestSessions.id, sessionId));
+  }
+
+  async getManifestItemByObjectKey(objectKey: string): Promise<UploadManifestItem | undefined> {
+    const [item] = await db
+      .select()
+      .from(uploadManifestItems)
+      .where(eq(uploadManifestItems.objectKey, objectKey));
+    return item || undefined;
   }
 }
 
