@@ -1,0 +1,131 @@
+Bitte die folgenden drei Punkte als verbindliche Sicherheits-Erweiterungen umsetzen. Das sind Pflichtanforderungen vor Staging/Production, keine „nice to haves“.
+
+1) Serverseitige Download-Prüfung (Galerie / ZIP / Einzelbild)
+
+Ziel: Kein Kunde darf ein Bild herunterladen, das für ihn nicht freigegeben ist.
+
+Anforderungen:
+
+Jede Download-Variante (ZIP-Download, Einzelbild-Download, signierte URL) muss über eine zentrale Server-Logik laufen, die folgendes prüft:
+
+Job-Zugriff:
+
+Der aufrufende User muss berechtigt sein, diesen Job zu sehen.
+
+job_id muss zu seiner Kunden-ID gehören.
+
+Wenn nicht → HTTP 403 (kein Fallback, kein „Silent Fail“).
+
+Bildfreigabe:
+
+Ein Bild ist nur dann downloadbar, wenn:
+
+selection_state ∈ { 'included', 'extra_paid', 'extra_free' }
+
+oder der Job all_images_included = true hat.
+
+Bilder mit selection_state ∈ { 'none', 'blocked', 'extra_pending' } dürfen nicht ausgeliefert werden.
+
+ZIP-Download:
+
+Beim Erzeugen des ZIPs werden ausschließlich Bilder berücksichtigt, die oben die Freigabekriterien erfüllen.
+
+Es darf keinen ZIP-Modus geben, der „alle Dateien aus dem R2-Folder“ reinschmeißt, ohne diese Prüfung.
+
+Signierte URLs:
+
+Signierte URLs dürfen nur nach erfolgreicher Berechtigungsprüfung erzeugt werden.
+
+Ablaufzeit kurz halten (Minutenbereich, keine Dauertickets).
+
+2) Rate-Limiting & CORS-Härtung
+
+Ziel: Missbrauch, Brute-Force und zufällige Cross-Origin-Zugriffe verhindern.
+
+Rate-Limits:
+
+Für Login-/OTP-/Auth-Endpunkte:
+
+Konkrete Rate-Limits pro IP / pro User (z. B. X Versuche pro 10 Minuten).
+
+Bei Überschreitung → saubere Fehlermeldung und Logging.
+
+Für Upload-Endpunkte:
+
+Limitierung pro IP / pro Session, damit niemand den Upload-Endpoint als generisches File-Hosting missbrauchen kann.
+
+Fehlversuche (z. B. ständig falsche Checksummen, abgebrochene Uploads) sollen geloggt werden.
+
+CORS-Härtung:
+
+In Produktion kein Access-Control-Allow-Origin: *.
+
+Erlaubte Origins explizit einschränken auf:
+
+pix.immo (Prod + Staging),
+
+pixcapture.app (Prod + Staging),
+
+ggf. Bravo-/Preview-URLs, wenn unbedingt nötig.
+
+Preflight und Credentials so konfigurieren, dass nur diese Domains mit Cookies/Tokens arbeiten können.
+
+3) Audit-Log für Paket- und Kulanz-Änderungen
+
+Ziel: Nachvollziehbarkeit aller manuellen Eingriffe in Bildfreigaben und Paketlogik.
+
+Anforderungen:
+
+Für folgende kritische Admin-Aktionen soll ein Audit-Log-Eintrag erzeugt werden:
+
+Änderung von included_images (Paketgröße eines Jobs).
+
+Setzen/Zurücksetzen von all_images_included.
+
+Ändern von selection_state einzelner Bilder auf:
+
+extra_free
+
+oder andere manuelle Freigaben, die den effektiven Download-Umfang erhöhen.
+
+Audit-Eintrag soll enthalten:
+
+timestamp
+
+admin_user_id (wer hat es gemacht)
+
+job_id
+
+affected_image_id (falls bildbezogen)
+
+alte und neue Werte (z. B. included_images: 20 → 25, selection_state: none → extra_free)
+
+optional: kurzer reason-String, falls im UI vorgesehen
+
+Das Audit-Log muss nicht sofort ein High-End-UI haben, aber:
+
+Es muss abfragbar sein (z. B. per Admin-Endpoint oder einfache Admin-Ansicht),
+
+Damit im Zweifel nachvollziehbar ist, warum ein Kunde mehr oder weniger Bilder herunterladen konnte.
+
+Definition of Done für diese Runde:
+
+Downloads:
+
+ZIP und Einzelbild-Downloads liefern nur noch Bilder aus, die serverseitig geprüft und freigegeben sind (siehe Punkt 1).
+
+Versuche, fremde Jobs oder nicht freigegebene Bilder zu ziehen, enden zuverlässig in 403.
+
+Rate-Limits & CORS:
+
+Login/OTP/Upload-Endpunkte sind rate-limited.
+
+CORS in Staging/Prod erlaubt nur unsere definierten Domains (kein *).
+
+Audit-Log:
+
+Alle Änderungen an Paketgröße, all_images_included und extra_free werden mit den genannten Feldern protokolliert.
+
+Es gibt eine einfache Möglichkeit, diese Logs im Admin-Kontext einzusehen (UI oder API).
+
+Bitte diese drei Punkte geschlossen umsetzen, bevor wir den nächsten größeren Funktionsblock angehen.

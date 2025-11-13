@@ -1,0 +1,93 @@
+Ja, E2E-Tests sind gewünscht – aber bitte fokussiert und nicht „nice to have“.
+
+1. E2E-Testing (Playwright – bitte umsetzen)
+
+Bitte Playwright-Tests für den Selection Flow bauen, mindestens:
+
+Galerie lädt korrekt
+
+Öffnet Kunden-Galerie für einen Job.
+
+Erwartung: Liste der Bilder wird geladen, included_images und Zähler werden korrekt angezeigt.
+
+Paket-Limit wird durchgesetzt
+
+Job mit z. B. included_images = 20.
+
+Test: 20 Bilder als included markieren → OK.
+
+Versuch, Bild Nr. 21 als included zu setzen →
+
+Erwartung: entweder Block im UI oder klare Fehlermeldung vom Backend (kein stillschweigend falscher Zustand).
+
+Kulanz / Freischaltung durch Admin
+
+Admin setzt für einen Job:
+
+ein bestimmtes Bild auf extra_free oder
+
+all_images_included = true.
+
+Kunde lädt die Galerie neu.
+
+Erwartung:
+
+extra_free: dieses Bild erscheint als freigegeben und ist im Download enthalten.
+
+all_images_included: alle is_candidate-Bilder sind download-berechtigt.
+
+Download enthält nur freigegebene Bilder
+
+ZIP-Download anstoßen.
+
+Erwartung:
+
+Nur Bilder mit selection_state ∈ {included, extra_paid, extra_free} bzw. alle, wenn all_images_included = true.
+
+Bilder mit none, blocked, extra_pending sind nicht im ZIP.
+
+Negativfall
+
+Mindestens ein Test, der versucht, ein „nicht freigegebenes“ Bild direkt herunterzuladen.
+
+Erwartung: 403 oder definierter Fehler, kein heimlicher Direktzugriff.
+
+Diese E2E-Tests sind Teil der „Definition of Done“ für die neue Auswahl-Logik.
+
+2. Production Deployment
+
+Production-Deployment erst, wenn:
+
+Backend-APIs (Selection / Admin-Mutations) komplett sind,
+
+Frontend zu 100 % auf diese echten APIs läuft (keine Fake-States, keine Mock-Pfade mehr),
+
+Playwright-Tests grün sind.
+
+Ich möchte kein Prod-Deployment, solange Frontend und Backend noch unterschiedliche Realitäten haben.
+
+3. Additional Features – was als nächstes kommen soll
+
+Als Nächstes priorisiere ich Upload-Sicherung und saubere Fehler-Rückmeldung:
+
+Upload-Sicherungslogik mit Sessions
+
+UploadSession + UploadItem (Manifest-basiert),
+
+der Server entscheidet, ob ein Upload vollständig und verifiziert ist.
+
+Sofortige Fehler-Rückmeldung
+
+Datei-Upload muss bei Fehlern direkt HTTP-Fehler liefern,
+
+kein „wir merken das 30 Minuten später“, sondern: App sieht sofort, welche Datei fehlgeschlagen ist.
+
+Expliziter Abschluss-Call
+
+z. B. POST /api/upload/sessions/{id}/finalize,
+
+Server prüft synchron: „Alle Dateien verified?“
+
+Erst dann: Status „Upload vollständig und gesichert“ (für App und Kunde).
+
+Bitte erst die aktuelle Auswahl-/Paket-Logik stabil bekommen (inkl. E2E-Tests), dann mit der Upload-Sicherung weitermachen. Keine neuen Spielereien oder Seiten dazwischen.
