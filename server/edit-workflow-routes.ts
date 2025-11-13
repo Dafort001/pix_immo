@@ -81,7 +81,7 @@ export function registerEditWorkflowRoutes(app: Express): void {
       
       for (const fileId of fileIds) {
         // SECURITY: Validate file ownership & order association
-        const file = await storage.findFileById(fileId);
+        const file = await storage.getUploadedFile(fileId);
         
         if (!file) {
           console.error(`[SECURITY] User ${userId} attempted to submit non-existent file ${fileId}`);

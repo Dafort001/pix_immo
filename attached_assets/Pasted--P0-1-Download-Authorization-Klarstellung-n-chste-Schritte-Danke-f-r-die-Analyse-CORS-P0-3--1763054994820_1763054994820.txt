@@ -1,0 +1,105 @@
+# P0-1 Download-Authorization – Klarstellung & nächste Schritte
+
+Danke für die Analyse. CORS (P0-3) und Rate-Limiting (P0-2) sind erledigt – passt.
+
+Für P0-1 (Download-Authorization) bitte ich um folgende, eindeutige Umsetzung:
+
+---
+
+## 1. /api/jobs/:id/download-zip – VERVOLLSTÄNDIGEN
+
+Bitte den Endpoint `/api/jobs/:id/download-zip` vollständig fertigstellen:
+
+### a) Authorization (wie schon teilweise angedeutet)
+
+- Job-Zugriff prüfen:
+  - Nur Owner des Jobs oder `role = 'admin'` dürfen den Download anstoßen.
+  - Andernfalls: `403 Forbidden`.
+
+- Download-Berechtigung pro Datei:
+  - Wenn `job.allImagesIncluded = true` → alle `isCandidate = true` Dateien sind erlaubt.
+  - Wenn `job.allImagesIncluded = false` → nur Dateien mit  
+    `selectionState ∈ { 'included', 'extra_paid', 'extra_free' }` sind erlaubt.
+  - Dateien mit `selectionState ∈ { 'none', 'extra_pending', 'blocked' }` dürfen **nicht** im ZIP landen.
+
+### b) ZIP-Inhalt
+
+Der ZIP-Download darf **ausschließlich** folgende Dateien enthalten:
+
+- `uploadedFiles`-Einträge des Jobs/Orders,  
+- mit `isCandidate = true`,  
+- und durch obige Regeln als downloadbar markiert.
+
+Keine „alle Dateien des Jobs“-Logik mehr, kein Fallback auf `images`.
+
+---
+
+## 2. Single-File-Download – NEU DEFINIEREN
+
+Statt des nicht existierenden `/api/order-files/:id/download` bitte ich um einen klaren, neuen Endpoint:
+
+> `GET /api/uploaded-files/:id/download`
+
+### Verhalten:
+
+1. **File lookup**  
+   - `uploadedFiles.id = :id` auflösen.
+   - Zugehörigen Job/Order ermitteln.
+
+2. **Job-/Owner-Check**
+   - Wenn aktueller User weder Owner des zugehörigen Jobs/Orders ist, noch Admin:  
+     → `403 Forbidden`.
+
+3. **Download-Berechtigung**  
+   - Wenn `job.allImagesIncluded = true` → Datei ist downloadbar (wenn `isCandidate = true`).
+   - Sonst nur, wenn  
+     `selectionState ∈ { 'included', 'extra_paid', 'extra_free' }`.
+   - Bei `selectionState ∈ { 'none', 'extra_pending', 'blocked' }` → `403` oder definierter Fehler („File not approved for download“).
+
+4. **Technische Umsetzung**  
+   - Analog zu `/api/files/:id/preview`:
+     - `assertJobAccessOrThrow`
+     - `assertFileDownloadableOrThrow`
+     - `generatePresignedDownloadUrl` mit kurzer Ablaufzeit (z. B. 5 Minuten).
+
+Damit sind **Preview** und **Download** auf derselben Sicherheits-Logik.
+
+---
+
+## 3. /api/files/:id/preview – SO LASSEN, ABER DOKUMENTIEREN
+
+Wie ihr geschrieben habt:
+
+- `/api/files/:id/preview` nutzt bereits:
+  - `assertJobAccessOrThrow`
+  - `assertFileDownloadableOrThrow`
+  - `generatePresignedDownloadUrl (5min)`
+
+Das ist P0-konform. Bitte nur:
+
+- Kurz in `SECURITY_IMPLEMENTATION.md` dokumentieren, dass Preview bereits:
+  - Owner-/Admin-Check  
+  - selectionState-/allImagesIncluded-Check  
+  - Presigned URL mit Ablaufzeit  
+  implementiert.
+
+---
+
+## 4. Dokumentation
+
+Bitte den finalen Stand von P0-1 ergänzen in:
+
+- `SECURITY_IMPLEMENTATION.md` (oder vergleichbare Datei)
+  - Welche Endpoints sind jetzt durch `assertJobAccessOrThrow` + `assertFileDownloadableOrThrow` abgesichert?
+  - Welche selectionStates werden als downloadbar behandelt?
+
+---
+
+**Kein weiterer Endpoint ist aktuell nötig.**  
+Wichtig ist:
+
+- `/api/jobs/:id/download-zip` → ZIP nur mit freigegebenen Dateien  
+- `/api/uploaded-files/:id/download` → Single-Download nur, wenn freigegeben  
+- `/api/files/:id/preview` → gleiche Guard-Logik (bereits vorhanden)
+
+Bitte diese drei Punkte abschließen, dann ist P0-1 für mich erfüllt.
