@@ -1,0 +1,76 @@
+# P1 – Nächste Schritte nach erfolgreichem P0-Sicherheitsblock
+
+P0 (Download-Auth, Rate-Limits, CORS) ist laut SECURITY_IMPLEMENTATION.md abgeschlossen.  
+Nächster Fokus: P1 – Nachvollziehbarkeit, Konsistenz und Tests.
+
+Ich bitte euch, jetzt **diese drei Punkte** umzusetzen:
+
+---
+
+## 1) Audit-Log-Emission aktivieren
+
+Schema für `auditLogs` ist fertig. Bitte jetzt **konkret Logs schreiben**, wenn:
+
+- `jobs.includedImages` geändert wird
+- `jobs.allImagesIncluded` gesetzt/entfernt wird
+- `uploadedFiles.selectionState` auf `extra_free` gesetzt wird
+- andere manuelle Freigaben/Overrides stattfinden, die den effektiven Download-Umfang erhöhen
+
+Eintrag soll mindestens enthalten:
+
+- `timestamp`
+- `adminUserId`
+- `jobId`
+- `affectedUploadedFileId` (oder null)
+- `actionType`
+- `oldValue`
+- `newValue`
+
+Bitte kurz dokumentieren:
+- Welche Stellen im Code Logs schreiben
+- Beispiel-Logeintrag in der Doku
+
+---
+
+## 2) Gallery-Flow komplett auf `uploadedFiles` überprüfen
+
+Ziel: Der gesamte Selection-/Package-Flow basiert auf `uploadedFiles`, nicht mehr auf `images`.
+
+Bitte prüfen und ggf. anpassen:
+
+- Galerie-Laden
+- Selection-Stats (Zähler für included, extra_paid, extra_free, blocked, downloadable)
+- Paketlimit-Checks
+- ZIP-Filterung (jetzt schon P0-gesichert, aber bitte gegen Doku abgleichen)
+- alle Stellen, die `isCandidate` + `selectionState` verwenden
+
+Ich möchte danach eine kurze Zusammenfassung:
+- Welche Funktionen/Endpunkte jetzt 100% `uploadedFiles`-basiert sind
+- Ob es noch irgendwo alte `images`-Abhängigkeiten im Gallery/Selection-Kontext gibt
+
+---
+
+## 3) E2E-Tests Selection/Download zum Laufen bringen
+
+Ihr schreibt, dass E2E-Tests existieren, aber Auth-Endpoints im Test-Environment 404 liefern.
+
+Bitte:
+
+- Test-Environment so konfigurieren, dass:
+  - Login/Auth-Endpunkte im Test verfügbar sind
+  - ein Test-User + Test-Job + Test-Files automatisch angelegt werden
+- Folgende E2E-Szenarien funktionsfähig machen:
+
+  1. Owner kann approved Files herunterladen
+  2. Owner kann blocked / non-candidate Files nicht herunterladen
+  3. Fremder User kann weder Galerie noch Downloads eines anderen Jobs nutzen
+  4. Admin kann Downloads für fremde Jobs auslösen (nur approved/candidate Files)
+
+Bitte am Ende:
+
+- Kurz dokumentieren, welche E2E-Spec-Dateien diese Szenarien abdecken
+- Sicherstellen, dass diese Tests im CI laufen und grün sind
+
+---
+
+Wenn diese drei Punkte umgesetzt sind, ist P1 für Selection/Download aus meiner Sicht abgeschlossen.
