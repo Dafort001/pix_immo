@@ -1,7 +1,17 @@
 import { z } from "zod";
-import { pgTable, varchar, text, bigint, boolean, jsonb, unique, index } from "drizzle-orm/pg-core";
+import { pgTable, varchar, text, bigint, boolean, jsonb, unique, index, integer, pgEnum } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+
+// Enums
+export const selectionStateEnum = pgEnum("selection_state", [
+  "none",
+  "included",
+  "extra_pending",
+  "extra_paid",
+  "extra_free",
+  "blocked",
+]);
 
 // Drizzle Tables
 export const users = pgTable("users", {
@@ -78,6 +88,13 @@ export const jobs = pgTable("jobs", {
   selectedUserId: varchar("selected_user_id", { length: 50 }), // App-User UUID (localStorage, not DB foreign key)
   selectedUserInitials: varchar("selected_user_initials", { length: 10 }), // e.g. "DF"
   selectedUserCode: varchar("selected_user_code", { length: 20 }), // e.g. "K9M2P"
+  // Package & Selection Logic (Image Limits & Kulanz)
+  includedImages: integer("included_images").notNull().default(20), // Number of images included in package
+  maxSelectable: integer("max_selectable"), // Hard limit for selectable images (null = same as includedImages)
+  extraPricePerImage: integer("extra_price_per_image"), // Price per additional image in cents (e.g., 800 = €8.00)
+  allowFreeExtras: boolean("allow_free_extras").notNull().default(true), // Whether kulanz extras can be given
+  freeExtraQuota: integer("free_extra_quota"), // How many free extras can be granted (null = unlimited for admins)
+  allImagesIncluded: boolean("all_images_included").notNull().default(false), // Kulanz: all images are free (no package limit)
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
@@ -136,6 +153,9 @@ export const uploadedFiles = pgTable("uploaded_files", {
   approved: boolean("approved").notNull().default(false), // Client approved for final delivery
   approvedAt: bigint("approved_at", { mode: "number" }), // When client approved
   completedAt: bigint("completed_at", { mode: "number" }), // When file processing fully completed
+  // Gallery Selection & Package Logic
+  isCandidate: boolean("is_candidate").notNull().default(true), // Whether image appears in customer gallery selection pool
+  selectionState: selectionStateEnum("selection_state").notNull().default("none"), // Selection state for package logic
 }, (table) => ({
   // UNIQUE constraint: prevent duplicate file slots in same stack/version
   uniqueFilePosition: unique("unique_file_position").on(table.orderId, table.roomType, table.index, table.ver),
@@ -1318,7 +1338,7 @@ export const insertEditJobSchema = createInsertSchema(editJobs).omit({
   createdAt: true,
   startedAt: true,
   finishedAt: true,
-  failureReason: true,
+  error: true,
 });
 
 export type EditJob = typeof editJobs.$inferSelect;
