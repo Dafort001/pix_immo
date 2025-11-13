@@ -25,14 +25,12 @@ export async function createTestJob(
     allImagesIncluded?: boolean;
   }
 ): Promise<TestJob> {
-  // P1: Create job via API (requires auth)
-  const response = await page.request.post('/api/jobs', {
+  // P1: Create job via test helper endpoint (storage-backed)
+  const response = await page.request.post('/api/test/create-job', {
     data: {
       propertyName: data.propertyName,
-      propertyAddress: '123 Test St, Hamburg',
-      serviceType: 'photography',
-      includedImages: data.includedImages || 25,
-      allImagesIncluded: data.allImagesIncluded || false,
+      includedImages: data.includedImages,
+      allImagesIncluded: data.allImagesIncluded,
     },
   });
 
@@ -53,17 +51,13 @@ export async function createTestFile(
     isCandidate?: boolean;
   }
 ): Promise<TestFile> {
-  // P1: Create uploadedFile via API (simulate upload)
-  // This would normally be done via upload endpoint, but for testing we use a helper endpoint
+  // P1: Create uploadedFile via test helper endpoint (storage-backed)
   const response = await page.request.post('/api/test/create-file', {
     data: {
       orderId: data.orderId,
       originalFilename: data.originalFilename,
-      selectionState: data.selectionState || 'none',
-      isCandidate: data.isCandidate !== false,
-      mimeType: 'image/jpeg',
-      sizeBytes: 1024 * 100, // 100 KB
-      objectKey: `test/${Date.now()}_${data.originalFilename}`,
+      selectionState: data.selectionState,
+      isCandidate: data.isCandidate,
     },
   });
 

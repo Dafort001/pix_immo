@@ -665,6 +665,20 @@ export interface IStorage {
     reason?: string;
     reasonCode?: string;
   }): Promise<AuditLog>;
+
+  // Test Helper operations (NODE_ENV === 'test' only)
+  createJobForTests(userId: string, data: {
+    propertyName: string;
+    includedImages?: number;
+    allImagesIncluded?: boolean;
+  }): Promise<Job>;
+  createUploadedFileForTests(data: {
+    userId: string;
+    orderId: string;
+    originalFilename: string;
+    selectionState?: 'none' | 'included' | 'extra_free' | 'blocked';
+    isCandidate?: boolean;
+  }): Promise<import("@shared/schema").UploadedFile>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -4118,6 +4132,101 @@ export class DatabaseStorage implements IStorage {
       .from(uploadManifestItems)
       .where(eq(uploadManifestItems.objectKey, objectKey));
     return item || undefined;
+  }
+
+  // Test Helper operations (NODE_ENV === 'test' only)
+  async createJobForTests(userId: string, data: {
+    propertyName: string;
+    includedImages?: number;
+    allImagesIncluded?: boolean;
+  }): Promise<Job> {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('createJobForTests() can only be called in test environment');
+    }
+
+    // Use existing createJob() with sensible test defaults
+    const job = await this.createJob(userId, {
+      customerName: 'Test Customer',
+      propertyName: data.propertyName,
+      propertyAddress: '123 Test St, 20095 Hamburg',
+      deadlineAt: Date.now() + 86400000, // Tomorrow
+      deliverGallery: true,
+      deliverAlttext: false,
+      deliverExpose: false,
+    });
+
+    // Update package settings if provided (test scenarios need custom limits)
+    if (data.includedImages !== undefined || data.allImagesIncluded !== undefined) {
+      const updateData: Record<string, unknown> = {};
+      if (data.includedImages !== undefined) {
+        updateData.includedImages = data.includedImages;
+      }
+      if (data.allImagesIncluded !== undefined) {
+        updateData.allImagesIncluded = data.allImagesIncluded;
+      }
+
+      await db
+        .update(jobs)
+        .set(updateData)
+        .where(eq(jobs.id, job.id));
+
+      // Fetch updated job
+      const [updatedJob] = await db
+        .select()
+        .from(jobs)
+        .where(eq(jobs.id, job.id));
+
+      return updatedJob;
+    }
+
+    return job;
+  }
+
+  async createUploadedFileForTests(data: {
+    userId: string;
+    orderId: string;
+    originalFilename: string;
+    selectionState?: 'none' | 'included' | 'extra_free' | 'blocked';
+    isCandidate?: boolean;
+  }): Promise<import("@shared/schema").UploadedFile> {
+    if (process.env.NODE_ENV !== 'test') {
+      throw new Error('createUploadedFileForTests() can only be called in test environment');
+    }
+
+    // Import ulid for unique ID generation
+    const { ulid } = await import('ulid');
+
+    // Use existing createUploadedFile() with test defaults
+    const file = await this.createUploadedFile({
+      userId: data.userId,
+      objectKey: `test/${ulid()}.jpg`,
+      originalFilename: data.originalFilename,
+      mimeType: 'image/jpeg',
+      fileSize: 1024,
+      orderId: data.orderId,
+    });
+
+    // Update selectionState if provided (uses existing method)
+    // IMPORTANT: Always update if selectionState is provided, even if it's 'none'
+    if (data.selectionState !== undefined) {
+      await this.updateFileSelectionState(file.id, data.selectionState);
+    }
+
+    // Update isCandidate if explicitly set to false
+    if (data.isCandidate === false) {
+      await db
+        .update(uploadedFiles)
+        .set({ isCandidate: false, updatedAt: Date.now() })
+        .where(eq(uploadedFiles.id, file.id));
+    }
+
+    // Fetch updated file
+    const [updatedFile] = await db
+      .select()
+      .from(uploadedFiles)
+      .where(eq(uploadedFiles.id, file.id));
+
+    return updatedFile;
   }
 }
 

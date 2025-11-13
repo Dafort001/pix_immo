@@ -1088,12 +1088,90 @@ function registerServiceRoutes(app: Express) {
   });
 }
 
-// P1: Test Helper Routes - COMMENTED OUT (require storage-backed methods)
-// See docs/P1_IMPLEMENTATION_STATUS.md for implementation plan
-// function registerTestHelperRoutes(app: Express) {
-//   console.log('[TEST] Registering test helper endpoints');
-//   // Implementation blocked - requires storage.createJobForTests() and storage.createUploadedFileForTests()
-// }
+// P1: Test Helper Routes (NODE_ENV === 'test' only)
+function registerTestHelperRoutes(app: Express) {
+  console.log('[TEST] Registering test helper endpoints');
+  
+  // POST /api/test/create-job - Create job with test defaults
+  app.post("/api/test/create-job", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { propertyName, includedImages, allImagesIncluded } = req.body;
+
+      if (!propertyName) {
+        return res.status(400).json({ error: "propertyName required" });
+      }
+
+      const job = await storage.createJobForTests(req.user.id, {
+        propertyName,
+        includedImages,
+        allImagesIncluded,
+      });
+
+      res.json(job);
+    } catch (error) {
+      console.error("Error creating test job:", error);
+      res.status(500).json({ error: "Failed to create test job" });
+    }
+  });
+
+  // POST /api/test/create-file - Create uploadedFile with test defaults
+  app.post("/api/test/create-file", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) {
+        return res.status(401).json({ error: "Unauthorized" });
+      }
+
+      const { orderId, originalFilename, selectionState, isCandidate } = req.body;
+
+      if (!orderId || !originalFilename) {
+        return res.status(400).json({ error: "orderId and originalFilename required" });
+      }
+
+      const file = await storage.createUploadedFileForTests({
+        userId: req.user.id,
+        orderId,
+        originalFilename,
+        selectionState,
+        isCandidate,
+      });
+
+      res.json(file);
+    } catch (error) {
+      console.error("Error creating test file:", error);
+      res.status(500).json({ error: "Failed to create test file" });
+    }
+  });
+
+  // POST /api/test/promote-admin - Promote user to admin role
+  app.post("/api/test/promote-admin", async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({ error: "email required" });
+      }
+
+      // Find user by email
+      const user = await storage.getUserByEmail(email);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      // Use storage method to update role
+      await storage.updateUserRole(user.id, 'admin');
+
+      res.json({ success: true, userId: user.id, role: 'admin' });
+    } catch (error) {
+      console.error("Error promoting admin:", error);
+      res.status(500).json({ error: "Failed to promote admin" });
+    }
+  });
+}
 
 // Gallery Package & Selection Routes
 function registerGalleryPackageRoutes(app: Express) {
@@ -3287,11 +3365,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Register Edit Workflow routes (Phase 2 - Stubs)
   registerEditWorkflowRoutes(app);
 
-  // P1: Test Helper routes commented out - require storage-backed methods
-  // See docs/P1_IMPLEMENTATION_STATUS.md for implementation plan
-  // if (process.env.NODE_ENV === 'test') {
-  //   registerTestHelperRoutes(app);
-  // }
+  // P1: Test Helper routes (NODE_ENV === 'test' only)
+  if (process.env.NODE_ENV === 'test') {
+    registerTestHelperRoutes(app);
+  }
 
   // Global error handler - Response Sanitization (must be last!)
   app.use((err: any, req: Request, res: Response, next: any) => {
