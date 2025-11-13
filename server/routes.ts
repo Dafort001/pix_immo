@@ -1307,6 +1307,175 @@ function registerGalleryPackageRoutes(app: Express) {
   });
 }
 
+// Upload Manifest Routes (Client-manifest-based upload tracking)
+function registerUploadManifestRoutes(app: Express) {
+  // POST /api/upload/sessions - Create manifest upload session
+  app.post("/api/upload/sessions", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { jobId, clientType, files } = req.body;
+      
+      if (!clientType || !files || !Array.isArray(files) || files.length === 0) {
+        return res.status(400).json({ error: "clientType and files array required" });
+      }
+      
+      // Validate clientType
+      if (!['pixcapture_ios', 'pixcapture_android', 'web_uploader'].includes(clientType)) {
+        return res.status(400).json({ error: "Invalid clientType" });
+      }
+      
+      // Calculate totals
+      const expectedFiles = files.length;
+      const totalBytesExpected = files.reduce((sum, f) => sum + (f.sizeBytes || 0), 0);
+      
+      // Create session
+      const session = await storage.createManifestSession({
+        userId: req.user.id,
+        jobId,
+        clientType,
+        expectedFiles,
+        totalBytesExpected,
+      });
+      
+      // Create items
+      const items = await storage.createManifestItems(session.id, files);
+      
+      res.status(201).json({
+        session,
+        items,
+      });
+    } catch (error) {
+      console.error("Error creating manifest session:", error);
+      res.status(500).json({ error: "Failed to create manifest session" });
+    }
+  });
+  
+  // POST /api/upload/sessions/:id/files/:itemId - Mark file upload status
+  app.post("/api/upload/sessions/:sessionId/files/:itemId", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { sessionId, itemId } = req.params;
+      const { status, errorMessage } = req.body;
+      
+      if (!status) {
+        return res.status(400).json({ error: "status required" });
+      }
+      
+      // Validate status
+      if (!['pending', 'uploading', 'uploaded', 'verified', 'failed'].includes(status)) {
+        return res.status(400).json({ error: "Invalid status" });
+      }
+      
+      // SECURITY: Verify session belongs to user
+      const session = await storage.getManifestSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      if (session.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // Update item status
+      await storage.updateManifestItemStatus(itemId, status, errorMessage);
+      
+      // If failed, increment session error count
+      if (status === 'failed') {
+        await storage.incrementManifestSessionErrors(sessionId);
+      }
+      
+      // Update session state to in_progress
+      if (session.state === 'pending') {
+        await storage.updateManifestSessionState(sessionId, 'in_progress');
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error updating file status:", error);
+      res.status(500).json({ error: "Failed to update file status" });
+    }
+  });
+  
+  // POST /api/upload/sessions/:id/complete - Complete session
+  app.post("/api/upload/sessions/:sessionId/complete", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { sessionId } = req.params;
+      
+      // SECURITY: Verify session belongs to user
+      const session = await storage.getManifestSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      if (session.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // Check if all items are uploaded/verified
+      const items = await storage.getManifestItems(sessionId);
+      const pendingItems = items.filter(item => 
+        item.status === 'pending' || item.status === 'uploading'
+      );
+      
+      if (pendingItems.length > 0) {
+        return res.status(400).json({ 
+          error: "Cannot complete session with pending uploads",
+          pendingCount: pendingItems.length,
+        });
+      }
+      
+      // Complete session
+      await storage.completeManifestSession(sessionId);
+      
+      const updatedSession = await storage.getManifestSession(sessionId);
+      res.json({ success: true, session: updatedSession });
+    } catch (error) {
+      console.error("Error completing session:", error);
+      res.status(500).json({ error: "Failed to complete session" });
+    }
+  });
+  
+  // GET /api/upload/sessions/:id - Get session status
+  app.get("/api/upload/sessions/:sessionId", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { sessionId } = req.params;
+      
+      const session = await storage.getManifestSession(sessionId);
+      if (!session) {
+        return res.status(404).json({ error: "Session not found" });
+      }
+      
+      if (session.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      const items = await storage.getManifestItems(sessionId);
+      
+      res.json({
+        session,
+        items,
+        stats: {
+          total: items.length,
+          pending: items.filter(i => i.status === 'pending').length,
+          uploading: items.filter(i => i.status === 'uploading').length,
+          uploaded: items.filter(i => i.status === 'uploaded').length,
+          verified: items.filter(i => i.status === 'verified').length,
+          failed: items.filter(i => i.status === 'failed').length,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting session:", error);
+      res.status(500).json({ error: "Failed to get session" });
+    }
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable trust proxy for correct IP detection with Replit's reverse proxy
   // Set to 1 to trust only the first proxy (Replit's reverse proxy)
@@ -3014,6 +3183,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Register Gallery Package & Selection routes
   registerGalleryPackageRoutes(app);
+  registerUploadManifestRoutes(app);
 
   // Register Order Files Management routes (PixCapture)
   registerOrderFilesRoutes(app);
