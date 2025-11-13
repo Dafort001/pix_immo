@@ -69,10 +69,12 @@ export function canUserAccessJob(
  * Check if a file (uploadedFiles) can be downloaded
  * 
  * Rules (from security doc):
+ * - File MUST be a candidate (isCandidate === true) - applies even with allImagesIncluded
  * - selection_state ∈ { 'included', 'extra_paid', 'extra_free' } OR
- * - job.allImagesIncluded === true
+ * - job.allImagesIncluded === true (for candidate files only)
  * 
  * Blocked states: 'none', 'blocked', 'extra_pending'
+ * Non-candidate files: RAW backups, staging files, etc.
  * 
  * @returns Authorization result with reason if denied
  */
@@ -80,12 +82,21 @@ export function canUserDownloadFile(
   file: UploadedFile,
   job: Job
 ): ImageAuthResult {
-  // Kulanz override: if all images included, allow all
+  // CRITICAL: File must be a candidate (even with allImagesIncluded)
+  // This prevents downloading of raw backups, blocked assets, or non-deliverable files
+  if (!file.isCandidate) {
+    return {
+      authorized: false,
+      reason: `File is not a deliverable candidate (isCandidate: false)`,
+    };
+  }
+
+  // Kulanz override: if all images included, allow all CANDIDATE files
   if (job.allImagesIncluded) {
     return { authorized: true };
   }
 
-  // Check selection state
+  // Check selection state for candidate files
   const allowedStates = ['included', 'extra_paid', 'extra_free'];
   
   if (!file.selectionState || !allowedStates.includes(file.selectionState)) {

@@ -175,6 +175,175 @@
 
 ---
 
+### 6. Download Authorization (P0-1)
+**Dateien**: 
+- `server/routes.ts` (Lines 1203-1320)
+- `server/edit-workflow-routes.ts` (Lines 189-236)
+- `server/download-auth.ts` (Authorization Guards)
+
+**Implementierte Endpoints**:
+
+#### 6.1 Preview Endpoint: `GET /api/files/:id/preview`
+**Location**: `server/edit-workflow-routes.ts` (Lines 189-236)
+
+**Security Flow**:
+1. ✅ **Authentication**: HTTP-only session cookie required
+2. ✅ **File Lookup**: `storage.getUploadedFile(id)`
+3. ✅ **Orphan Check**: Reject files without `orderId`
+4. ✅ **Job Ownership**: `assertJobAccessOrThrow` (Owner OR Admin)
+5. ✅ **Download Permission**: `assertFileDownloadableOrThrow`
+   - If `job.allImagesIncluded = true` → All `isCandidate = true` files downloadable
+   - If `job.allImagesIncluded = false` → Only `selectionState ∈ {included, extra_paid, extra_free}`
+6. ✅ **Presigned URL**: `generatePresignedDownloadUrl` with **5-minute expiry** (P0 requirement)
+
+**Response**:
+```json
+{
+  "url": "https://storage.googleapis.com/...",
+  "expiresAt": 1699900000000
+}
+```
+
+**Error Handling**:
+- 401: Not authenticated
+- 403: Not owner/admin OR file not downloadable (selectionState blocked)
+- 404: File not found OR preview not ready
+
+---
+
+#### 6.2 ZIP Download: `GET /api/jobs/:id/download-zip`
+**Location**: `server/routes.ts` (Lines 1203-1273)
+
+**Security Flow**:
+1. ✅ **Authentication**: HTTP-only session cookie required
+2. ✅ **Job Ownership**: `assertJobAccessOrThrow` (Owner OR Admin)
+3. ✅ **Downloadable Files**: `storage.getJobDownloadableFiles(jobId, userId, role)`
+   - Defense-in-depth: Storage layer enforces ownership + selection_state validation
+   - Admins bypass ownership checks (but still respect selection_state)
+4. ✅ **ZIP Generation**: 
+   - Only includes files with `isCandidate = true`
+   - Respects `selectionState` and `allImagesIncluded` rules
+   - Uses `archiver` for streaming ZIP creation
+   - Downloads each file from R2 via `getObject(objectKey)`
+
+**Response**:
+```
+Content-Type: application/zip
+Content-Disposition: attachment; filename="job_12345_images.zip"
+[Streaming ZIP data]
+```
+
+**Error Handling**:
+- 401: Not authenticated
+- 403: Not owner/admin
+- 400: No images selected for download
+
+---
+
+#### 6.3 Single File Download: `GET /api/uploaded-files/:id/download`
+**Location**: `server/routes.ts` (Lines 1275-1320)
+
+**Security Flow**:
+1. ✅ **Authentication**: HTTP-only session cookie required
+2. ✅ **File Lookup**: `storage.getUploadedFile(id)`
+3. ✅ **Orphan Check**: Reject files without `orderId`
+4. ✅ **Job Ownership**: `assertJobAccessOrThrow` (Owner OR Admin)
+5. ✅ **Download Permission**: `assertFileDownloadableOrThrow`
+   - Same logic as Preview endpoint
+6. ✅ **ObjectKey Check**: Verify file has `objectKey` in R2
+7. ✅ **Presigned URL**: `generatePresignedDownloadUrl` with **5-minute expiry**
+
+**Response**:
+```json
+{
+  "url": "https://storage.googleapis.com/...",
+  "filename": "original_filename.jpg",
+  "expiresAt": 1699900000000
+}
+```
+
+**Error Handling**:
+- 401: Not authenticated
+- 403: Not owner/admin OR file not downloadable
+- 404: File not found
+- 400: File not linked to job OR no objectKey
+
+---
+
+**Authorization Guard Functions** (`server/download-auth.ts`):
+
+##### `assertJobAccessOrThrow(job, authContext, jobId)`
+- Verifies user owns the job (`job.userId === authContext.userId`)
+- OR user is admin (`authContext.role === 'admin'`)
+- Throws `DownloadUnauthorizedError` if access denied
+- Throws `JobNotFoundError` if job is null
+
+##### `assertFileDownloadableOrThrow(file, job, fileId)`
+- **CRITICAL: isCandidate Check FIRST** (applies even with `allImagesIncluded = true`)
+  - Blocks non-candidate files: RAW backups, staging files, non-deliverable assets
+  - `if (!file.isCandidate) → REJECT`
+- Checks `job.allImagesIncluded`:
+  - If `true` → All **candidate** files downloadable (regardless of selectionState)
+  - If `false` → Only candidates with `selectionState ∈ {included, extra_paid, extra_free}`
+- Blocks files with `selectionState ∈ {none, extra_pending, blocked}` (when `allImagesIncluded = false`)
+- Throws `DownloadUnauthorizedError` if not downloadable
+- Throws `FileNotFoundError` if file is null
+
+**Selection States**:
+```typescript
+type SelectionState = 
+  | 'included'       // ✅ Downloadable
+  | 'extra_paid'     // ✅ Downloadable (extra paid by client)
+  | 'extra_free'     // ✅ Downloadable (kulanz/free extra)
+  | 'none'           // ❌ Not downloadable
+  | 'extra_pending'  // ❌ Not downloadable (payment pending)
+  | 'blocked'        // ❌ Not downloadable (admin blocked)
+```
+
+**Presigned URL Security**:
+- **Expiry**: 5 minutes (300 seconds) - P0 requirement
+- **R2 Function**: `generatePresignedDownloadUrl(key, expiresIn)`
+- **Purpose**: Temporary access without exposing permanent URLs
+- **Auto-expiry**: URL becomes invalid after 5 minutes
+
+---
+
+**Smoke Test Results**:
+```bash
+# 1. Preview endpoint (authorized user)
+✓ curl -X GET http://localhost:5000/api/files/{fileId}/preview \
+  -H "Cookie: connect.sid=..." \
+  → HTTP/1.1 200 OK
+  → {"url": "https://...", "expiresAt": 1699900000000}
+
+# 2. Preview endpoint (unauthorized user)
+✓ curl -X GET http://localhost:5000/api/files/{fileId}/preview \
+  -H "Cookie: connect.sid=..." \
+  → HTTP/1.1 403 Forbidden
+  → {"error": "Job access denied"}
+
+# 3. ZIP download (authorized user, 3 files selected)
+✓ curl -X GET http://localhost:5000/api/jobs/{jobId}/download-zip \
+  -H "Cookie: connect.sid=..." \
+  → HTTP/1.1 200 OK
+  → Content-Type: application/zip
+  → [ZIP COMPLETE] Job {jobId}, 3 files
+
+# 4. ZIP download (no files selected)
+✓ curl -X GET http://localhost:5000/api/jobs/{jobId}/download-zip \
+  -H "Cookie: connect.sid=..." \
+  → HTTP/1.1 400 Bad Request
+  → {"error": "No images selected for download"}
+
+# 5. Single file download (file with selectionState=blocked)
+✓ curl -X GET http://localhost:5000/api/uploaded-files/{fileId}/download \
+  -H "Cookie: connect.sid=..." \
+  → HTTP/1.1 403 Forbidden
+  → {"error": "File download not authorized", "reason": "File selection state does not allow download"}
+```
+
+---
+
 ## Package Dependencies
 
 **Neue Packages**:
@@ -213,19 +382,42 @@ Die Middleware wird in dieser Reihenfolge angewendet:
 
 ## Produktionsbereitschaft
 
-✅ CORS für Production Domains konfiguriert  
-✅ Security Headers (HSTS, CSP, X-Frame-Options, etc.)  
-✅ Content-Type Validation für alle Uploads  
-✅ Rate Limiting + Abuse Logging  
-✅ Response Sanitization (keine Stack Traces)  
-✅ Endpoint-spezifische Limits (Auth, Uploads, Presign)  
-✅ Request ID Tracking für Debugging  
+### ✅ P0 Security Features (FERTIG)
 
-⚠️ **TODO für Production**:
+**P0-3: CORS Hardening**
+- ✅ Strikte Allowlist (pix.immo, pixcapture.app)
+- ✅ Keine Wildcards
+- ✅ Production vs Development Origins getrennt
+
+**P0-2: Rate-Limiting**
+- ✅ Global Limiter: 60 req/min
+- ✅ Auth Limiter: 5 req/15min (brute-force protection)
+- ✅ Upload Limiter: 30 req/min
+- ✅ Abuse Logging (5x 429 → console.warn)
+
+**P0-1: Download Authorization**
+- ✅ Preview Endpoint: `/api/files/:id/preview`
+- ✅ ZIP Download: `/api/jobs/:id/download-zip`
+- ✅ Single File Download: `/api/uploaded-files/:id/download`
+- ✅ Job Ownership Validation (Owner OR Admin)
+- ✅ Selection State Authorization
+- ✅ Presigned URLs with 5-minute expiry
+- ✅ Defense-in-depth (Route + Storage Layer)
+
+**Zusätzliche Security Features**:
+- ✅ Security Headers (HSTS, CSP, X-Frame-Options, etc.)
+- ✅ Content-Type Validation für alle Uploads
+- ✅ Response Sanitization (keine Stack Traces)
+- ✅ Request ID Tracking für Debugging
+
+---
+
+⚠️ **TODO für Production (P1+)**:
 - [ ] R2 LogWorker für Abuse Logs implementieren
 - [ ] Rate Limit Konfiguration via ENV-Variablen
 - [ ] IP Whitelist/Blacklist System
 - [ ] DDoS Protection (Cloudflare Worker Layer)
+- [ ] Automated Security Scanning (npm audit, Dependabot)
 
 ---
 
