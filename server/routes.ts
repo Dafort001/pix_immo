@@ -1086,6 +1086,227 @@ function registerServiceRoutes(app: Express) {
   });
 }
 
+// Gallery Package & Selection Routes
+function registerGalleryPackageRoutes(app: Express) {
+  // GET /api/jobs/:id/gallery - Get job gallery with package info
+  app.get("/api/jobs/:id/gallery", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { id } = req.params;
+      const job = await storage.getJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // Check ownership
+      if (job.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // Get candidate files and selection stats
+      const files = await storage.getJobCandidateFiles(id);
+      const stats = await storage.getJobSelectionStats(id);
+      
+      res.json({
+        job: {
+          id: job.id,
+          jobNumber: job.jobNumber,
+          propertyName: job.propertyName,
+          includedImages: job.includedImages,
+          maxSelectable: job.maxSelectable,
+          extraPricePerImage: job.extraPricePerImage,
+          allImagesIncluded: job.allImagesIncluded,
+        },
+        files,
+        stats,
+      });
+    } catch (error) {
+      console.error("Error fetching job gallery:", error);
+      res.status(500).json({ error: "Failed to fetch job gallery" });
+    }
+  });
+  
+  // POST /api/jobs/:id/select-image - Toggle image selection
+  app.post("/api/jobs/:id/select-image", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { id } = req.params;
+      const { fileId, action } = req.body; // action: 'select' | 'deselect'
+      
+      if (!fileId || !action) {
+        return res.status(400).json({ error: "fileId and action required" });
+      }
+      
+      const job = await storage.getJob(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      if (job.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // SECURITY: Verify file belongs to this job and is a candidate
+      const file = await storage.getUploadedFile(fileId);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      if (file.orderId !== id) {
+        return res.status(403).json({ error: "File does not belong to this job" });
+      }
+      
+      if (!file.isCandidate) {
+        return res.status(400).json({ error: "File is not a selectable candidate" });
+      }
+      
+      // Get current stats
+      const stats = await storage.getJobSelectionStats(id);
+      
+      // Check package limit (unless allImagesIncluded)
+      if (!job.allImagesIncluded && action === 'select') {
+        const limit = job.maxSelectable || job.includedImages;
+        if (stats.includedCount >= limit) {
+          return res.status(400).json({ 
+            error: "Package limit reached",
+            limit,
+            current: stats.includedCount,
+          });
+        }
+      }
+      
+      // Update selection state
+      const newState = action === 'select' ? 'included' : 'none';
+      await storage.updateFileSelectionState(fileId, newState);
+      
+      // Return updated stats
+      const updatedStats = await storage.getJobSelectionStats(id);
+      res.json({ success: true, stats: updatedStats });
+    } catch (error) {
+      console.error("Error selecting image:", error);
+      res.status(500).json({ error: "Failed to select image" });
+    }
+  });
+  
+  // GET /api/jobs/:id/download-zip - Download only selected images as ZIP
+  app.get("/api/jobs/:id/download-zip", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { id } = req.params;
+      const job = await storage.getJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      if (job.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // Get ONLY downloadable files (respects package limits + kulanz)
+      const downloadableFiles = await storage.getJobDownloadableFiles(id);
+      
+      if (downloadableFiles.length === 0) {
+        return res.status(400).json({ error: "No images selected for download" });
+      }
+      
+      // TODO: Generate ZIP with downloadableFiles
+      // For now, return file list
+      res.json({
+        message: "ZIP generation not yet implemented",
+        files: downloadableFiles.map(f => ({
+          id: f.id,
+          objectKey: f.objectKey,
+          selectionState: f.selectionState,
+        })),
+      });
+    } catch (error) {
+      console.error("Error generating download ZIP:", error);
+      res.status(500).json({ error: "Failed to generate download ZIP" });
+    }
+  });
+  
+  // ADMIN: PATCH /api/admin/jobs/:id/package - Update package settings
+  app.patch("/api/admin/jobs/:id/package", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      const settings = req.body;
+      
+      await storage.updateJobPackageSettings(id, settings);
+      
+      const job = await storage.getJob(id);
+      res.json({ success: true, job });
+    } catch (error) {
+      console.error("Error updating package settings:", error);
+      res.status(500).json({ error: "Failed to update package settings" });
+    }
+  });
+  
+  // ADMIN: PATCH /api/admin/files/:id/kulanz - Set file as kulanz free
+  app.patch("/api/admin/files/:id/kulanz", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      
+      // SECURITY: Verify file exists and is a candidate
+      const file = await storage.getUploadedFile(id);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      if (!file.isCandidate) {
+        return res.status(400).json({ error: "File is not a candidate" });
+      }
+      
+      await storage.setFileKulanzFree(id);
+      
+      const updatedFile = await storage.getUploadedFile(id);
+      res.json({ success: true, file: updatedFile });
+    } catch (error) {
+      console.error("Error setting kulanz:", error);
+      res.status(500).json({ error: "Failed to set kulanz" });
+    }
+  });
+  
+  // ADMIN: PATCH /api/admin/jobs/:id/kulanz-all - Enable/disable all images kulanz
+  app.patch("/api/admin/jobs/:id/kulanz-all", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      const { enabled } = req.body;
+      
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ error: "enabled must be boolean" });
+      }
+      
+      // SECURITY: Verify job exists
+      const job = await storage.getJob(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      await storage.enableAllImagesKulanz(id, enabled);
+      
+      const updatedJob = await storage.getJob(id);
+      res.json({ success: true, job: updatedJob });
+    } catch (error) {
+      console.error("Error setting all-images kulanz:", error);
+      res.status(500).json({ error: "Failed to set all-images kulanz" });
+    }
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable trust proxy for correct IP detection with Replit's reverse proxy
   // Set to 1 to trust only the first proxy (Replit's reverse proxy)
@@ -2790,6 +3011,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Booking routes
   registerBookingRoutes(app);
+  
+  // Register Gallery Package & Selection routes
+  registerGalleryPackageRoutes(app);
 
   // Register Order Files Management routes (PixCapture)
   registerOrderFilesRoutes(app);

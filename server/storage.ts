@@ -606,6 +606,30 @@ export interface IStorage {
   getFilesByStatus(status: string): Promise<any[]>;
   updateFileStatus(fileId: string, status: string): Promise<void>;
   getUploadedFile(fileId: string): Promise<any | undefined>; // Get single uploaded file
+  
+  // Package & Selection Logic operations
+  updateJobPackageSettings(jobId: string, settings: {
+    includedImages?: number;
+    maxSelectable?: number;
+    extraPricePerImage?: number;
+    allowFreeExtras?: boolean;
+    freeExtraQuota?: number;
+    allImagesIncluded?: boolean;
+  }): Promise<void>;
+  getJobSelectionStats(jobId: string): Promise<{
+    totalCandidates: number;
+    includedCount: number;
+    extraPendingCount: number;
+    extraPaidCount: number;
+    extraFreeCount: number;
+    blockedCount: number;
+    downloadableCount: number;
+  }>;
+  updateFileSelectionState(fileId: string, state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'): Promise<void>;
+  getJobCandidateFiles(jobId: string): Promise<any[]>; // Files with isCandidate=true
+  getJobDownloadableFiles(jobId: string): Promise<any[]>; // Files that can be downloaded (included, extra_paid, extra_free, or allImagesIncluded)
+  setFileKulanzFree(fileId: string): Promise<void>; // Set file to extra_free
+  enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void>; // Toggle allImagesIncluded
 }
 
 export class DatabaseStorage implements IStorage {
@@ -3634,13 +3658,139 @@ export class DatabaseStorage implements IStorage {
       .where(eq(uploadedFiles.id, fileId));
   }
   
-  async getUploadedFile(fileId: string): Promise<any | undefined> {
-    const [file] = await db
+  // ===================================================================
+  // Package & Selection Logic operations
+  // ===================================================================
+  
+  async updateJobPackageSettings(jobId: string, settings: {
+    includedImages?: number;
+    maxSelectable?: number;
+    extraPricePerImage?: number;
+    allowFreeExtras?: boolean;
+    freeExtraQuota?: number;
+    allImagesIncluded?: boolean;
+  }): Promise<void> {
+    const updateData: any = {};
+    if (settings.includedImages !== undefined) updateData.includedImages = settings.includedImages;
+    if (settings.maxSelectable !== undefined) updateData.maxSelectable = settings.maxSelectable;
+    if (settings.extraPricePerImage !== undefined) updateData.extraPricePerImage = settings.extraPricePerImage;
+    if (settings.allowFreeExtras !== undefined) updateData.allowFreeExtras = settings.allowFreeExtras;
+    if (settings.freeExtraQuota !== undefined) updateData.freeExtraQuota = settings.freeExtraQuota;
+    if (settings.allImagesIncluded !== undefined) updateData.allImagesIncluded = settings.allImagesIncluded;
+    
+    await db
+      .update(jobs)
+      .set(updateData)
+      .where(eq(jobs.id, jobId));
+  }
+  
+  async getJobSelectionStats(jobId: string): Promise<{
+    totalCandidates: number;
+    includedCount: number;
+    extraPendingCount: number;
+    extraPaidCount: number;
+    extraFreeCount: number;
+    blockedCount: number;
+    downloadableCount: number;
+  }> {
+    const files = await db
       .select()
       .from(uploadedFiles)
-      .where(eq(uploadedFiles.id, fileId))
+      .where(and(
+        eq(uploadedFiles.orderId, jobId),
+        eq(uploadedFiles.isCandidate, true)
+      ));
+    
+    const stats = {
+      totalCandidates: files.length,
+      includedCount: files.filter(f => f.selectionState === 'included').length,
+      extraPendingCount: files.filter(f => f.selectionState === 'extra_pending').length,
+      extraPaidCount: files.filter(f => f.selectionState === 'extra_paid').length,
+      extraFreeCount: files.filter(f => f.selectionState === 'extra_free').length,
+      blockedCount: files.filter(f => f.selectionState === 'blocked').length,
+      downloadableCount: 0,
+    };
+    
+    // Calculate downloadable count: included + extra_paid + extra_free
+    stats.downloadableCount = stats.includedCount + stats.extraPaidCount + stats.extraFreeCount;
+    
+    return stats;
+  }
+  
+  async updateFileSelectionState(fileId: string, state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ selectionState: state, updatedAt: Date.now() })
+      .where(eq(uploadedFiles.id, fileId));
+  }
+  
+  async getJobCandidateFiles(jobId: string): Promise<any[]> {
+    const files = await db
+      .select()
+      .from(uploadedFiles)
+      .where(and(
+        eq(uploadedFiles.orderId, jobId),
+        eq(uploadedFiles.isCandidate, true)
+      ))
+      .orderBy(desc(uploadedFiles.createdAt));
+    
+    return files;
+  }
+  
+  async getJobDownloadableFiles(jobId: string): Promise<any[]> {
+    // First check if job has allImagesIncluded
+    const [job] = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, jobId))
       .limit(1);
-    return file;
+    
+    if (!job) {
+      return [];
+    }
+    
+    // If allImagesIncluded, return all candidate files
+    if (job.allImagesIncluded) {
+      return await db
+        .select()
+        .from(uploadedFiles)
+        .where(and(
+          eq(uploadedFiles.orderId, jobId),
+          eq(uploadedFiles.isCandidate, true)
+        ))
+        .orderBy(desc(uploadedFiles.createdAt));
+    }
+    
+    // Otherwise, only files with downloadable states
+    const files = await db
+      .select()
+      .from(uploadedFiles)
+      .where(and(
+        eq(uploadedFiles.orderId, jobId),
+        eq(uploadedFiles.isCandidate, true),
+        or(
+          eq(uploadedFiles.selectionState, 'included'),
+          eq(uploadedFiles.selectionState, 'extra_paid'),
+          eq(uploadedFiles.selectionState, 'extra_free')
+        )
+      ))
+      .orderBy(desc(uploadedFiles.createdAt));
+    
+    return files;
+  }
+  
+  async setFileKulanzFree(fileId: string): Promise<void> {
+    await db
+      .update(uploadedFiles)
+      .set({ selectionState: 'extra_free', updatedAt: Date.now() })
+      .where(eq(uploadedFiles.id, fileId));
+  }
+  
+  async enableAllImagesKulanz(jobId: string, enabled: boolean): Promise<void> {
+    await db
+      .update(jobs)
+      .set({ allImagesIncluded: enabled })
+      .where(eq(jobs.id, jobId));
   }
 }
 
