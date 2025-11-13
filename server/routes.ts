@@ -1089,7 +1089,8 @@ function registerServiceRoutes(app: Express) {
 // Gallery Package & Selection Routes
 function registerGalleryPackageRoutes(app: Express) {
   // GET /api/jobs/:id/gallery - Get job gallery with package info
-  app.get("/api/jobs/:id/gallery", validateUuidParam("id"), async (req: Request, res: Response) => {
+  // Alias: GET /api/jobs/:id/images (for backward compatibility)
+  const galleryHandler = async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       
@@ -1126,7 +1127,10 @@ function registerGalleryPackageRoutes(app: Express) {
       console.error("Error fetching job gallery:", error);
       res.status(500).json({ error: "Failed to fetch job gallery" });
     }
-  });
+  };
+  
+  app.get("/api/jobs/:id/gallery", validateUuidParam("id"), galleryHandler);
+  app.get("/api/jobs/:id/images", validateUuidParam("id"), galleryHandler);
   
   // POST /api/jobs/:id/select-image - Toggle image selection
   app.post("/api/jobs/:id/select-image", validateUuidParam("id"), async (req: Request, res: Response) => {

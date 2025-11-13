@@ -31,8 +31,6 @@ export default function CustomerUploadGallery() {
   const [detailFile, setDetailFile] = useState<GalleryFile | null>(null);
   const [maskEditorFile, setMaskEditorFile] = useState<GalleryFile | null>(null);
 
-  if (authLoading) return null;
-
   // Get galleryId from URL parameters, or auto-create a new gallery
   const urlParams = new URLSearchParams(window.location.search);
   const galleryIdParam = urlParams.get("galleryId");

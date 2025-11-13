@@ -133,6 +133,7 @@ function Router() {
       <Route path="/app/settings" component={AppSettings} />
       <Route path="/portal/uploads" component={UploadsOverview} />
       <Route path="/portal/job/:jobId" component={GallerySelection} />
+      <Route path="/portal/galerie-auswahl" component={GallerySelection} />
       <Route path="/portal/payment/:jobId" component={Payment} />
       <Route path="/portal/status/:jobId" component={StatusTimeline} />
       <Route path="/portal/delivery/:jobId" component={Delivery} />

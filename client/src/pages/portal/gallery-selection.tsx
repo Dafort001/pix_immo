@@ -49,11 +49,13 @@ type GalleryResponse = {
 
 export default function GallerySelection() {
   const { isLoading: authLoading } = useAuthGuard();
-  const { jobId } = useParams<{ jobId: string }>();
+  const { jobId: paramJobId } = useParams<{ jobId?: string }>();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-
-  if (authLoading) return null;
+  
+  const urlParams = new URLSearchParams(window.location.search);
+  const queryJobId = urlParams.get("jobId");
+  const jobId = paramJobId || queryJobId;
 
   const { data: galleryData, isLoading, isError, refetch } = useQuery<GalleryResponse>({
     queryKey: ["/api/jobs", jobId, "gallery"],
@@ -99,6 +101,8 @@ export default function GallerySelection() {
       });
     },
   });
+
+  if (authLoading) return null;
 
   const handleSelectAsIncluded = (fileId: string) => {
     selectMutation.mutate(fileId);

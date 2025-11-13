@@ -3746,14 +3746,24 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getJobCandidateFiles(jobId: string): Promise<any[]> {
+    // Get all shoots for this job
+    const jobShoots = await db
+      .select({ shootId: shoots.id })
+      .from(shoots)
+      .where(eq(shoots.jobId, jobId));
+    
+    if (jobShoots.length === 0) {
+      return [];
+    }
+    
+    const shootIds = jobShoots.map(s => s.shootId);
+    
+    // Get all images from shoots for this job (no isCandidate field in images table)
     const files = await db
       .select()
-      .from(uploadedFiles)
-      .where(and(
-        eq(uploadedFiles.orderId, jobId),
-        eq(uploadedFiles.isCandidate, true)
-      ))
-      .orderBy(desc(uploadedFiles.createdAt));
+      .from(images)
+      .where(inArray(images.shootId, shootIds))
+      .orderBy(desc(images.createdAt));
     
     return files;
   }
