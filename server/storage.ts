@@ -626,7 +626,7 @@ export interface IStorage {
     downloadableCount: number;
   }>;
   updateFileSelectionState(fileId: string, state: 'none' | 'included' | 'extra_pending' | 'extra_paid' | 'extra_free' | 'blocked'): Promise<void>;
-  getJobCandidateFiles(jobId: string): Promise<any[]>; // Files with isCandidate=true
+  getJobCandidateFiles(jobId: string, userId: string, role?: string): Promise<any[]>; // P1: Fixed - now queries uploadedFiles + enforces ownership (was incorrectly querying images table)
   getJobDownloadableFiles(jobId: string, userId: string, role?: string): Promise<any[]>; // Files that can be downloaded (P0: ownership + selection_state validated, admins bypass)
   setFileKulanzFree(fileId: string, adminUserId: string, reason?: string, reasonCode?: string): Promise<void>; // Set file to extra_free (P1: audit log)
   enableAllImagesKulanz(jobId: string, enabled: boolean, adminUserId: string, reason?: string, reasonCode?: string): Promise<void>; // Toggle allImagesIncluded (P1: audit log)
@@ -3813,25 +3813,32 @@ export class DatabaseStorage implements IStorage {
       .where(eq(uploadedFiles.id, fileId));
   }
   
-  async getJobCandidateFiles(jobId: string): Promise<any[]> {
-    // Get all shoots for this job
-    const jobShoots = await db
-      .select({ shootId: shoots.id })
-      .from(shoots)
-      .where(eq(shoots.jobId, jobId));
+  // P1: Fixed - pix.immo Orders use uploadedFiles table (was incorrectly querying images table)
+  async getJobCandidateFiles(jobId: string, userId: string, role?: string): Promise<any[]> {
+    // P1 SECURITY: Verify job ownership BEFORE returning files (prevents cross-tenant access)
+    const [job] = await db
+      .select()
+      .from(jobs)
+      .where(eq(jobs.id, jobId))
+      .limit(1);
     
-    if (jobShoots.length === 0) {
-      return [];
+    if (!job) {
+      return []; // Job not found → no files
     }
     
-    const shootIds = jobShoots.map(s => s.shootId);
+    // P1 SECURITY: Reject if user doesn't own this job (admins bypass)
+    if (job.userId !== userId && role !== 'admin') {
+      return []; // Unauthorized → no files
+    }
     
-    // Get all images from shoots for this job (no isCandidate field in images table)
     const files = await db
       .select()
-      .from(images)
-      .where(inArray(images.shootId, shootIds))
-      .orderBy(desc(images.createdAt));
+      .from(uploadedFiles)
+      .where(and(
+        eq(uploadedFiles.orderId, jobId), // jobId is actually orderId for pix.immo Orders
+        eq(uploadedFiles.isCandidate, true)
+      ))
+      .orderBy(desc(uploadedFiles.createdAt));
     
     return files;
   }

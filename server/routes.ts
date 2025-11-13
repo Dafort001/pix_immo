@@ -1107,8 +1107,8 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(403).json({ error: "Forbidden" });
       }
       
-      // Get candidate files and selection stats
-      const files = await storage.getJobCandidateFiles(id);
+      // P1: Security - getJobCandidateFiles now enforces ownership + queries uploadedFiles table
+      const files = await storage.getJobCandidateFiles(id, req.user.id, req.user.role);
       const stats = await storage.getJobSelectionStats(id);
       
       res.json({
