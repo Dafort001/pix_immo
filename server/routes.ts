@@ -9,12 +9,13 @@ import { logger, generateRequestId, type LogContext } from "./logger";
 import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, insertBookingSchema, uploadIntentSchema, uploadFinalizeSchema, type InitUploadResponse, type PresignedUrlResponse, type UploadIntentResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
-import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl } from "./r2-client";
+import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl, getObject, generatePresignedDownloadUrl } from "./r2-client";
 import { runAITool, getToolById, getAllTools } from "./replicate-adapter";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { upload, processUploadedFiles } from "./uploadHandler";
 import { generateHandoffPackage, generateHandoffToken } from "./handoffPackage";
+import archiver from "archiver";
 import Stripe from "stripe";
 
 // Initialize Stripe from Replit's Stripe integration
@@ -31,7 +32,7 @@ import { registerEditorRoutes } from "./editor-routes";
 import { registerOrderFilesRoutes } from "./order-files-routes";
 import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
-import { assertJobAccessOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
+import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 
 // Middleware to validate request body with Zod
 export function validateBody(schema: z.ZodSchema) {
@@ -1215,15 +1216,99 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(400).json({ error: "No images selected for download" });
       }
       
-      // TODO: Generate ZIP with downloadableFiles
-      // For now, return file list
+      // Generate ZIP with downloadableFiles
+      const archive = archiver("zip", {
+        zlib: { level: 6 }, // Moderate compression
+      });
+      
+      // Set response headers for ZIP download
+      const jobNumber = job!.jobNumber || job!.id.substring(0, 8);
+      const filename = `job_${jobNumber}_images.zip`;
+      res.setHeader("Content-Type", "application/zip");
+      res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+      
+      // Pipe archive to response
+      archive.pipe(res);
+      
+      // Handle archiver errors
+      archive.on("error", (err) => {
+        console.error("[ZIP ERROR]", err);
+        if (!res.headersSent) {
+          res.status(500).json({ error: "Failed to generate ZIP" });
+        }
+      });
+      
+      // Add each downloadable file to ZIP
+      for (const file of downloadableFiles) {
+        try {
+          if (!file.objectKey) {
+            console.warn(`[ZIP SKIP] File ${file.id} has no objectKey`);
+            continue;
+          }
+          
+          // Download file from R2
+          const buffer = await getObject(file.objectKey);
+          
+          // Add to ZIP with original filename
+          const zipFilename = file.originalFilename || `file_${file.id}.jpg`;
+          archive.append(buffer, { name: zipFilename });
+          
+          console.log(`[ZIP ADD] ${zipFilename} (${buffer.length} bytes)`);
+        } catch (error) {
+          console.error(`[ZIP SKIP] Failed to download file ${file.id}:`, error);
+          // Continue with other files
+        }
+      }
+      
+      // Finalize ZIP (triggers streaming to client)
+      await archive.finalize();
+      console.log(`[ZIP COMPLETE] Job ${id}, ${downloadableFiles.length} files`);
+    } catch (error) {
+      // Let error middleware handle DownloadUnauthorizedError
+      next(error);
+    }
+  });
+  
+  // GET /api/uploaded-files/:id/download - Download single file with presigned URL (P0 Security)
+  app.get("/api/uploaded-files/:id/download", validateUuidParam("id"), async (req: Request, res: Response, next: any) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { id } = req.params;
+      
+      // P0 Security Step 1: Get uploadedFile to check ownership + selection_state
+      const file = await storage.getUploadedFile(id);
+      if (!file) {
+        return res.status(404).json({ error: "File not found" });
+      }
+      
+      // P0 Security Step 2: Validate file has orderId (orphaned files cannot be accessed)
+      if (!file.orderId) {
+        return res.status(400).json({ error: "File is not linked to a job" });
+      }
+      
+      // P0 Security Step 3: Get job for ownership check
+      const job = await storage.getJob(file.orderId);
+      
+      // P0 Security Step 4: Assert job access (throws DownloadUnauthorizedError)
+      assertJobAccessOrThrow(job || null, { userId: req.user.id, role: req.user.role }, file.orderId);
+      
+      // P0 Security Step 5: Assert file downloadable (checks selection_state or allImagesIncluded)
+      assertFileDownloadableOrThrow(file, job!, id);
+      
+      // P0 Security Step 6: Verify file has objectKey
+      if (!file.objectKey) {
+        return res.status(400).json({ error: "File has no download URL" });
+      }
+      
+      // AUTHORIZATION PASSED - generate presigned download URL
+      // P0 Security: 5-minute expiry for temporary access
+      const signedUrl = await generatePresignedDownloadUrl(file.objectKey, 300);
+      
       res.json({
-        message: "ZIP generation not yet implemented",
-        files: downloadableFiles.map(f => ({
-          id: f.id,
-          objectKey: f.objectKey,
-          selectionState: f.selectionState,
-        })),
+        url: signedUrl,
+        filename: file.originalFilename || `file_${file.id}.jpg`,
+        expiresAt: Date.now() + 300000, // 5 minutes (P0 requirement)
       });
     } catch (error) {
       // Let error middleware handle DownloadUnauthorizedError
