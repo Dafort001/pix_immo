@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { pgTable, varchar, text, bigint, boolean, jsonb, unique, index, integer, pgEnum } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 
@@ -27,6 +28,25 @@ export const uploadItemStatusEnum = pgEnum("upload_item_status", [
   "uploaded",
   "verified",
   "failed",
+]);
+
+export const auditActionTypeEnum = pgEnum("audit_action_type", [
+  // Mandated kulanz/package events
+  "update_included_images",
+  "set_all_images_included",
+  "change_selection_state_extra_free",
+  // Future capacity
+  "update_max_selectable",
+  "update_extra_price_per_image",
+  "update_free_extra_quota",
+  "bulk_selection_change",
+  "update_allow_free_extras",
+]);
+
+export const auditEntityScopeEnum = pgEnum("audit_entity_scope", [
+  "job",
+  "uploaded_file",
+  "legacy_image",
 ]);
 
 // Drizzle Tables
@@ -275,6 +295,39 @@ export const notifications = pgTable("notifications", {
   userIdCreatedIdx: index("notifications_user_id_created_idx").on(table.userId, table.createdAt),
   // Index for unread notifications
   userIdReadIdx: index("notifications_user_id_read_idx").on(table.userId, table.read),
+}));
+
+// Audit Logs for Package & Kulanz Changes (Security Requirement)
+// Compliance-critical append-only log for all admin actions affecting package limits, kulanz, and selection state
+export const auditLogs = pgTable("audit_logs", {
+  id: varchar("id").primaryKey(),
+  timestamp: bigint("timestamp", { mode: "number" }).notNull(),
+  // Who performed the action (admin only)
+  adminUserId: varchar("admin_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Affected entities (job is always set, files are optional)
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  affectedUploadedFileId: varchar("affected_uploaded_file_id").references(() => uploadedFiles.id, { onDelete: "set null" }), // Null if job-level change
+  affectedLegacyImageId: varchar("affected_legacy_image_id").references(() => images.id, { onDelete: "set null" }), // Null if job-level change or Orders system
+  // Action classification
+  entityScope: auditEntityScopeEnum("entity_scope").notNull(), // 'job', 'uploaded_file', 'legacy_image'
+  actionType: auditActionTypeEnum("action_type").notNull(),
+  // Change tracking (JSON for structured diffing)
+  oldValue: jsonb("old_value").$type<Record<string, any>>(), // Before state
+  newValue: jsonb("new_value").$type<Record<string, any>>(), // After state
+  // Admin notes
+  reason: text("reason"), // Optional explanation for kulanz decisions
+  reasonCode: varchar("reason_code", { length: 50 }), // Optional category (e.g., 'customer_complaint', 'technical_issue')
+  // Soft-delete for retention policy (24 months online)
+  deletedAt: bigint("deleted_at", { mode: "number" }),
+}, (table) => ({
+  // Clustered index for job-scoped queries
+  jobIdTimestampIdx: index("audit_logs_job_id_timestamp_idx").on(table.jobId, table.timestamp),
+  // Admin activity tracking
+  adminUserIdTimestampIdx: index("audit_logs_admin_user_id_timestamp_idx").on(table.adminUserId, table.timestamp),
+  // File-level drill-down (uploaded_files system)
+  entityScopeFileIdIdx: index("audit_logs_entity_scope_file_id_idx").on(table.entityScope, table.affectedUploadedFileId),
+  // Abuse investigation (kulanz extras)
+  kulanzActionIdx: index("audit_logs_kulanz_action_idx").on(table.actionType).where(sql`action_type = 'change_selection_state_extra_free'`),
 }));
 
 export const images = pgTable("images", {
@@ -1415,6 +1468,16 @@ export const insertNotificationSchema = createInsertSchema(notifications).omit({
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+// Audit Log Schemas
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({
+  id: true,
+  timestamp: true,
+  deletedAt: true,
+});
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = z.infer<typeof insertAuditLogSchema>;
 
 // PixCapture Upload API Schemas
 export const uploadIntentSchema = z.object({
