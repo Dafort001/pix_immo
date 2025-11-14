@@ -121,14 +121,19 @@ All test infrastructure is production-ready with storage-backed test helpers:
 **Local Execution** (requires browser deps):
 ```bash
 # Install Playwright browsers (local machine only)
-npx playwright install
+npx playwright install chromium
 
 # Run E2E tests
-NODE_ENV=test npx playwright test
+NODE_ENV=test npx playwright test e2e/download-auth.spec.ts
 
-# Run with UI mode
-NODE_ENV=test npx playwright test --ui
+# Run with UI mode (interactive debugging)
+NODE_ENV=test npx playwright test e2e/download-auth.spec.ts --ui
+
+# Run specific scenario
+NODE_ENV=test npx playwright test -g "Scenario 1"
 ```
+
+**Ausführungsanleitung**: Siehe `RUN_E2E_TESTS.md` für detaillierte Schritt-für-Schritt-Anleitung.
 
 **Replit Limitation**: Cannot install browser dependencies (`libglib2.0`, `libnss3`, etc.) without sudo access. Tests validated via infrastructure review instead.
 
@@ -275,7 +280,9 @@ NODE_ENV=test npx playwright test
 - `e2e/helpers/fixtures.ts` - Test fixtures (storage-backed) ✅
 - `e2e/download-auth.spec.ts` - 5 test scenarios ✅
 - `server/routes.ts` - Test helper routes (Lines 1094-1177) ✅ (storage-backed)
-- `server/storage.ts` - Test helper methods (Lines 4140-4206) ✅ (NODE_ENV guards)
+- `server/storage.ts` - Test helper methods (Lines 4140-4233) ✅ (NODE_ENV guards)
+- `e2e/README.md` - Comprehensive E2E test documentation ✅
+- `RUN_E2E_TESTS.md` - Step-by-step execution guide ✅
 
 ---
 
