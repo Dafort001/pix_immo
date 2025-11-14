@@ -1,0 +1,291 @@
+Bitte bei der weiteren Arbeit an pix.immo / PixCapture die folgenden Punkte architektonisch mit einplanen.
+Es geht um Struktur, ENV-Variablen und Service-Hooks – nicht darum, heute alles zu implementieren.
+
+1. R2-Struktur und Bildversionen
+Bitte folgende Prefixes als fixe Struktur anlegen / voraussetzen:
+
+
+raw/{shoot_id}/... – Upload-Brackets/RAW
+
+
+archive/{shoot_id}/... – Highres-JPEGs vom Editing-Team (final entwickelt)
+
+
+master/{shoot_id}/... – 3000px-Master-Version (Basis für KI + Galerie)
+
+
+analysis/{shoot_id}/... – KI-Ergebnisse:
+
+
+{image_id}.vision.json
+
+
+{image_id}.mask_*.png
+
+
+{image_id}.gpt.json
+
+
+später: summary.json pro Shoot
+
+
+
+
+edits/{shoot_id}/{image_id}/... – Self-Edit-Versionen:
+
+
+base.jpg (Kopie von master, erste Bearbeitung)
+
+
+clean_v1.jpg, clean_v2.jpg, …
+
+
+
+
+Diese Struktur bitte jetzt verankern, auch wenn noch nicht alle Ordner verwendet werden.
+
+2. DB-Felder (Status & Versionen)
+In der images-Tabelle bitte folgende Felder vorsehen:
+
+
+ready_for_vision (bool)
+
+
+vision_done (bool)
+
+
+gpt_done (bool)
+
+
+has_edits (bool)
+
+
+best_version (string / enum, z. B. "master", "clean_v1", …)
+
+
+Optional, aber sinnvoll (für spätere Multi-Tenant-/Avatar-Themen):
+
+
+shoot_code
+
+
+room_type
+
+
+customer_id
+
+
+photographer_id
+
+
+
+3. Editor-Return als offizieller KI-Einstiegspunkt
+Der bestehende/kommende „Editor-Return“-Flow soll zukünftig der Einstieg in die KI-Pipeline sein:
+
+
+Highres-JPEG vom Editing-Team annehmen.
+
+
+Speichern:
+
+
+archive/{shoot_id}/{image_id}_hr.jpg
+
+
+3000px-Version erzeugen → master/{shoot_id}/{image_id}_3000.jpg
+
+
+
+
+DB-Flags setzen:
+
+
+ready_for_vision = true
+
+
+vision_done = false
+
+
+gpt_done = false
+
+
+
+
+Die KI-Orchestrierung (Vision/GPT) kommt später, aber dieser Einstiegspunkt muss jetzt eindeutig definiert sein.
+
+4. Service-Hooks / Orchestratoren
+Bitte im Backend nur die Schichten/Hooks vorbereiten (Ordner/Struktur), ohne jetzt die Logik zu schreiben:
+
+
+services/vision-orchestrator
+
+
+später: ruft fal.ai (Florence-2/SAM) mit 3000px-Bild auf
+
+
+schreibt vision.json + Masken nach analysis/...
+
+
+
+
+services/gpt-orchestrator
+
+
+später: ruft OpenAI GPT-Vision auf
+
+
+liest master/... + vision.json
+
+
+schreibt gpt.json nach analysis/...
+
+
+
+
+services/avatar-orchestrator (Platzhalter)
+
+
+später: erzeugt Avatar-/Video-Content aus summary.json
+
+
+
+
+services/video-orchestrator (Platzhalter)
+
+
+später: Anbindung Sora/Veo/fal-Video
+
+
+
+
+services/gallery-export-orchestrator (ArtSpace-Hook)
+
+
+später: Exporte nach ArtSpace / 3D-Galerie
+
+
+
+
+services/sceneplates-export-orchestrator (ScenePlates-Hook)
+
+
+später: Automotive/Backplate-Exporte
+
+
+
+
+services/pano-export-orchestrator (360°-Hook)
+
+
+später: 360°/Pano2VR/Gaussian-Splatting-Exports
+
+
+
+
+services/external-sync-orchestrator (generische Reserve-Schnittstelle)
+
+
+Diese Services müssen aktuell nur als leere/angedeutete Layer existieren, damit die Architektur klar ist und wir später andocken können.
+
+5. ENV-Variablen für fal.ai & GPT
+Bitte ENV-Keys vorsehen (noch nicht zwingend nutzen):
+# Vision Provider (fal.ai)
+VISION_PROVIDER=fal
+VISION_API_BASE_URL=<fal-api-url>
+VISION_API_KEY=<secret>
+
+VISION_OBJECT_DETECTION_MODEL=fal-ai/florence-2-large/object-detection
+VISION_CAPTION_MODEL=fal-ai/florence-2-large/caption
+VISION_REGIONAL_CAPTION_MODEL=fal-ai/florence-2-large/regional-caption
+VISION_SEGMENTATION_MODEL=fal-ai/sam2
+VISION_OBJECT_REMOVAL_MODEL=fal-ai/object-removal
+
+VISION_MAX_CONCURRENT_JOBS=5
+VISION_REQUEST_TIMEOUT_MS=30000
+VISION_JOB_RETRY_COUNT=3
+
+# GPT (OpenAI Vision)
+OPENAI_API_KEY=<secret>
+GPT_VISION_MODEL=<z.B. gpt-4.5-vision>
+GPT_LOCALE_DEFAULT=de
+
+# Avatar / Video (nur Platzhalter)
+AVATAR_PROVIDER=<später>
+AVATAR_API_KEY=<secret>
+AVATAR_MODEL=<später>
+
+VIDEO_GEN_PROVIDER=fal
+VIDEO_GEN_MODEL=<später>
+VIDEO_MOTION_FILL_MODEL=<später>
+VISION_OUTPAINT_MODEL=<später>
+
+Die Orchestratoren sollen später nur über diese ENV-Werte konfigurierbar sein.
+
+6. Self-Edit / PixCapture: API-Hook für Objektentfernung
+Bitte eine künftige API-Richtung für Self-Edit einplanen (noch nicht implementieren):
+
+
+Route (Backend): POST /api/remove-object
+
+
+Input:
+
+
+shoot_id, image_id
+
+
+version (z. B. "master" oder "clean_v1")
+
+
+Maske (vom Client gezeichnet, PNG oder Pixelmap)
+
+
+
+
+Ablauf:
+
+
+Bild aus master/ oder edits/ laden
+
+
+mit Maske an VISION_OBJECT_REMOVAL_MODEL (fal.ai) schicken
+
+
+Ergebnis nach edits/{shoot_id}/{image_id}/clean_vX.jpg speichern
+
+
+has_edits = true, best_version = "clean_vX" setzen
+
+
+
+
+
+
+Die PixCapture-App kann sich später genau an diese Route hängen.
+
+7. Summary pro Shoot (Avatar-/Video-Hook)
+Bitte im analysis/{shoot_id}/ eine geplante Datei summary.json vorsehen:
+
+
+Backend soll später aus allen *.gpt.json und Metadaten pro Shoot eine konsolidierte Zusammenfassung erzeugen (Raumliste, Texte, Highlights, QC).
+
+
+Diese summary.json ist der spätere Input für:
+
+
+avatar-orchestrator
+
+
+video-orchestrator
+
+
+externe Exporte (ArtSpace, ScenePlates etc.)
+
+
+
+
+Aktuell reicht, wenn der Pfad und das Konzept in der Doku/Struktur auftauchen.
+
+Wichtig:
+Keines dieser Features muss heute fertig sein.
+Die Bitte ist nur, diese R2-Pfade, DB-Felder, ENV-Namen und Service-Hooks jetzt mit einzuplanen, damit wir später nicht die Architektur umbauen müssen, wenn KI, Self-Editing, Avatar, ArtSpace oder ScenePlates aktiviert werden.
