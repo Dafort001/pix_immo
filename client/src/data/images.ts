@@ -15,6 +15,7 @@ export interface ImageAsset {
   alt: string;
   page: string;
   description?: string;
+  aspectRatio?: "3:2" | "16:9" | "9:16" | "4:3"; // Aspect Ratio für Film-Strip
 }
 
 // ========================================
@@ -27,6 +28,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Modern House Exterior",
     page: "home",
     description: "Modernes Einfamilienhaus Außenansicht",
+    aspectRatio: "3:2",
   },
   {
     id: "home-002",
@@ -34,6 +36,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Luxury Apartment Interior",
     page: "home",
     description: "Luxuriöses Apartment Innenansicht",
+    aspectRatio: "16:9",
   },
   {
     id: "home-003",
@@ -41,6 +44,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Real Estate Kitchen",
     page: "home",
     description: "Moderne Küche für Immobilienexposé",
+    aspectRatio: "3:2",
   },
   {
     id: "home-004",
@@ -48,6 +52,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Modern Living Room",
     page: "home",
     description: "Modernes Wohnzimmer",
+    aspectRatio: "3:2",
   },
   {
     id: "home-005",
@@ -55,6 +60,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Apartment Balcony View",
     page: "home",
     description: "Balkon mit Ausblick",
+    aspectRatio: "9:16",
   },
   {
     id: "home-006",
@@ -62,6 +68,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Modern Bathroom",
     page: "home",
     description: "Modernes Badezimmer",
+    aspectRatio: "3:2",
   },
   {
     id: "home-007",
@@ -69,6 +76,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "House Facade Architecture",
     page: "home",
     description: "Hausfassade Architektur",
+    aspectRatio: "3:2",
   },
   {
     id: "home-008",
@@ -76,6 +84,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Luxury Bedroom Interior",
     page: "home",
     description: "Luxuriöses Schlafzimmer",
+    aspectRatio: "3:2",
   },
   {
     id: "home-009",
@@ -83,6 +92,7 @@ export const homePageImages: ImageAsset[] = [
     alt: "Modern Office Space",
     page: "home",
     description: "Moderner Büroraum",
+    aspectRatio: "3:2",
   },
 ];
 
@@ -190,5 +200,6 @@ export function formatForScrollingStrip(images: ImageAsset[]) {
     id: img.id,
     url: img.url,
     alt: img.alt,
+    aspectRatio: img.aspectRatio || "3:2", // Standard: 3:2
   }));
 }
