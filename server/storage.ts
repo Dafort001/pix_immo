@@ -70,6 +70,7 @@ export interface IStorage {
     // Appointment Details
     appointmentDate?: number;
     appointmentTime?: string;
+    calendarEventId?: string;
     // Service & Add-ons
     serviceId?: string;
     droneIncluded?: boolean;
@@ -913,6 +914,7 @@ export class DatabaseStorage implements IStorage {
     // Appointment Details
     appointmentDate?: number;
     appointmentTime?: string;
+    calendarEventId?: string;
     // Service & Add-ons
     serviceId?: string;
     droneIncluded?: boolean;
@@ -955,6 +957,7 @@ export class DatabaseStorage implements IStorage {
         // Appointment Details
         appointmentDate: data.appointmentDate || null,
         appointmentTime: data.appointmentTime || null,
+        calendarEventId: data.calendarEventId || null,
         // Service & Add-ons
         serviceId: data.serviceId || null,
         droneIncluded: data.droneIncluded || false,

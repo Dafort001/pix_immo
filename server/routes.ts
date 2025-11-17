@@ -33,6 +33,7 @@ import { registerOrderFilesRoutes } from "./order-files-routes";
 import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
+import { GoogleCalendarService } from "./google-calendar";
 
 // Middleware to validate request body with Zod
 export function validateBody(schema: z.ZodSchema) {
@@ -2461,6 +2462,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Google Calendar Integration Routes
+  
+  // GET /api/calendar/available-slots - Get available time slots for a specific date
+  app.get("/api/calendar/available-slots", async (req: Request, res: Response) => {
+    try {
+      const { date, duration } = req.query;
+      
+      if (!date || typeof date !== 'string') {
+        return res.status(400).json({ error: "Date parameter is required" });
+      }
+      
+      const slots = await GoogleCalendarService.getAvailableSlots({
+        date: date as string,
+        duration: duration ? parseInt(duration as string) : undefined,
+      });
+      
+      res.json({ slots });
+    } catch (error) {
+      console.error("Error fetching available slots:", error);
+      res.status(500).json({ error: "Failed to fetch available slots" });
+    }
+  });
+  
   // pix.immo Professional Jobs Routes (source: 'piximmo')
   
   // POST /api/pix-jobs - Create a new pix.immo professional job (ADMIN ONLY)
@@ -2496,6 +2520,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
+      // Create Google Calendar event if appointment details are provided
+      let calendarEventId: string | undefined;
+      if (appointmentDate && appointmentTime && propertyAddress) {
+        try {
+          const appointmentStart = new Date(appointmentDate);
+          const [hours, minutes] = appointmentTime.split(':');
+          appointmentStart.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          
+          const appointmentEnd = new Date(appointmentStart);
+          appointmentEnd.setHours(appointmentStart.getHours() + 2); // Default 2-hour appointment
+          
+          const contactPerson = brokerPresent ? brokerName : contactPersonName;
+          const contactPhone = brokerPresent ? brokerPhone : contactPersonPhone;
+          
+          calendarEventId = await GoogleCalendarService.createEvent({
+            summary: `Fotoshooting: ${propertyName}`,
+            description: `Kunde: ${customerName || 'N/A'}\nImmobilie: ${propertyName}\nAnsprechpartner: ${contactPerson}\nTelefon: ${contactPhone}\n\nProperty Type: ${propertyType || 'N/A'}\nFläche: ${propertyArea ? propertyArea + ' m²' : 'N/A'}`,
+            location: addressFormatted || propertyAddress,
+            start: appointmentStart.toISOString(),
+            end: appointmentEnd.toISOString(),
+            attendees: [brokerPhone && brokerPresent ? brokerPhone : ''].filter(Boolean),
+          });
+        } catch (calendarError) {
+          console.error("Error creating calendar event:", calendarError);
+          // Continue with job creation even if calendar event fails
+        }
+      }
+      
       // Create pix.immo job with source: 'piximmo'
       const job = await storage.createJob(demoUser.id, {
         source: 'piximmo', // Professional jobs from pix.immo
@@ -2511,6 +2563,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         propertyArea,
         appointmentDate,
         appointmentTime,
+        calendarEventId,
         serviceId,
         droneIncluded,
         brokerName,
