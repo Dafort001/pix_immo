@@ -15,6 +15,7 @@ export interface ImageAsset {
   alt: string;
   page: string;
   description?: string;
+  aspectRatio?: "3:2" | "16:9" | "9:16" | "4:3";
 }
 
 // ========================================
@@ -96,6 +97,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "iPhone Camera Photography",
     page: "pixcapture",
     description: "Mit dem iPhone fotografieren",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-002",
@@ -103,6 +105,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Person Taking Real Estate Photo",
     page: "pixcapture",
     description: "Self-Service Immobilienfotografie",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-003",
@@ -110,6 +113,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Smartphone Apartment Photo",
     page: "pixcapture",
     description: "Wohnung mit Smartphone fotografieren",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-004",
@@ -117,6 +121,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Mobile Photography House",
     page: "pixcapture",
     description: "Mobile Fotografie für Immobilien",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-005",
@@ -124,6 +129,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "iPhone Real Estate Interior",
     page: "pixcapture",
     description: "Innenräume mit iPhone",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-006",
@@ -131,6 +137,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Self-Service Photography",
     page: "pixcapture",
     description: "Selbst fotografieren und hochladen",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-007",
@@ -138,6 +145,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Modern Living Room",
     page: "pixcapture",
     description: "Wohnzimmer fotografieren",
+    aspectRatio: "3:2",
   },
   {
     id: "pixcap-008",
@@ -145,6 +153,7 @@ export const pixCaptureImages: ImageAsset[] = [
     alt: "Real Estate Kitchen",
     page: "pixcapture",
     description: "Küche fotografieren",
+    aspectRatio: "3:2",
   },
 ];
 
