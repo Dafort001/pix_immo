@@ -82,5 +82,7 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
 
 ## Recent Updates (November 2025)
 - **Google Calendar Integration**: Complete booking flow with timezone fixes (CET: 09:00-18:00), automated event creation
-- **PixCapture.app Layout**: Unified design with pix.immo - identical ScrollingImageStrip component, 3:2 aspect ratio images (540×360px), matching typography and spacing
+- **PixCapture.app Layout**: Unified design with pix.immo - identical ScrollingImageStrip component (ref-based hover pause, dynamic aspect ratio width calculation), uniform 3:2 images (540×360px), matching typography and spacing
+- **pix.immo Layout**: Mixed aspect ratios (3:2, 16:9, 9:16) for visual variety, identical ScrollingImageStrip implementation
 - **User Management**: Single admin account (admin@piximmo.de) for both pix.immo and pixcapture.app
+- **Twilio SMS Integration**: Ready for setup - requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
