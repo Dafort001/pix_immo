@@ -107,6 +107,7 @@ export const jobs = pgTable("jobs", {
   localId: varchar("local_id", { length: 50 }).unique(), // Client-generated ULID for offline deduplication
   jobNumber: varchar("job_number", { length: 50 }).notNull().unique(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  source: varchar("source", { length: 20 }).notNull().default("pixcapture"), // 'piximmo' | 'pixcapture' - Automatically set based on entry point
   customerName: varchar("customer_name", { length: 255 }), // Name of the ordering customer/agency
   propertyName: varchar("property_name", { length: 255 }).notNull(), // Property/listing name
   propertyAddress: text("property_address"), // Property address
