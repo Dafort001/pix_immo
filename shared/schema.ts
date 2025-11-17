@@ -127,6 +127,7 @@ export const jobs = pgTable("jobs", {
   // Appointment Details
   appointmentDate: bigint("appointment_date", { mode: "number" }), // Unix timestamp for appointment date
   appointmentTime: varchar("appointment_time", { length: 10 }), // Time in HH:MM format (e.g., "14:30")
+  calendarEventId: varchar("calendar_event_id", { length: 255 }), // Google Calendar event ID
   // Service & Add-ons
   serviceId: varchar("service_id").references(() => services.id, { onDelete: "set null" }), // Selected service/package
   droneIncluded: boolean("drone_included").default(false), // Whether drone shots are included
