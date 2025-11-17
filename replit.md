@@ -52,6 +52,23 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 ### System Design Choices
 The architecture prioritizes Cloudflare Workers compatibility using Hono, maintaining separate development (Express+Vite) and production (Hono) environments. Security features include Scrypt hashing, HTTP-only cookies, and secure environment variable management. SEO is managed via a `SEOHead` component, Schema.org templates, sitemap, and robots.txt. Frontend patterns strictly enforce React's Rules of Hooks, requiring all hooks to be called before any conditional early returns.
 
+## Admin & Media Library Setup
+
+### Admin Setup
+- **Admin Seed Script**: `tsx server/seed-admin.ts` - ENV-based admin account creation
+- **ENV Variables**: ADMIN_EMAIL, ADMIN_PASSWORD (defaults: admin@piximmo.de / Admin123!)
+- **Features**: Idempotent, auto-promotes existing users, password sync
+
+### Media Library Setup
+- **Media Library Seed Script**: `./seed-media.sh` or `tsx server/seed-media-library.ts`
+- **Purpose**: Imports homepage, PixCapture, and portfolio images into database for visibility in Admin Media Library
+- **Images Imported** (62 total):
+  - **9 Homepage images** (home-001 to home-009) - Hero images for pix.immo
+  - **8 PixCapture images** (pixcap-001 to pixcap-008) - Mobile photography examples
+  - **45 Gallery images** (gallery-001 to gallery-045) - Complete portfolio from /gallery page
+- **Features**: Idempotent, tracks image location by page, enables SEO optimization and alt-text editing
+- **Access**: Visit `/admin/media-library` to view and manage all images
+
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
 - **Email Service**: Resend
