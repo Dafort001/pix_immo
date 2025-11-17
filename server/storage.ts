@@ -76,6 +76,7 @@ export interface IStorage {
   getUserJobs(userId: string): Promise<Job[]>;
   getAllJobs(): Promise<Job[]>;
   updateJobStatus(id: string, status: string): Promise<void>;
+  deleteJob(id: string): Promise<void>;
   
   // Workflow operations - Shoots
   createShoot(jobId: string): Promise<Shoot>;
@@ -951,6 +952,12 @@ export class DatabaseStorage implements IStorage {
 
   async updateJobStatus(id: string, status: string): Promise<void> {
     await db.update(jobs).set({ status }).where(eq(jobs.id, id));
+  }
+
+  async deleteJob(id: string): Promise<void> {
+    await db.delete(jobs).where(eq(jobs.id, id));
+    // CASCADE delete automatically handles: shoots, images, stacks, exposes, uploadManifestSessions
+    // galleries.jobId is SET NULL (not deleted)
   }
 
   // Shoot operations
