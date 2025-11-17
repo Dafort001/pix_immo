@@ -1,14 +1,16 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 
 interface ScrollingImageStripProps {
   images: Array<{
     url: string;
     alt: string;
     id: string;
+    aspectRatio?: "3:2" | "16:9" | "9:16" | "4:3";
   }>;
-  duration?: number; // Duration in seconds for one complete loop
+  duration?: number;
   onImageClick?: (id: string, url: string) => void;
   clickable?: boolean;
+  height?: number;
 }
 
 export function ScrollingImageStrip({
@@ -16,12 +18,26 @@ export function ScrollingImageStrip({
   duration = 120,
   onImageClick,
   clickable = false,
+  height = 360,
 }: ScrollingImageStripProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Duplicate images for seamless loop
+  const getWidth = (aspectRatio: string = "3:2"): number => {
+    const ratios: Record<string, number> = {
+      "3:2": 1.5,
+      "16:9": 1.778,
+      "9:16": 0.5625,
+      "4:3": 1.333,
+    };
+    return Math.round(height * ratios[aspectRatio]);
+  };
+
   const duplicatedImages = [...images, ...images];
+  
+  const gapPx = 8;
+  const totalWidth = images.reduce((sum, img) => {
+    return sum + getWidth(img.aspectRatio) + gapPx;
+  }, 0);
 
   const handleImageClick = (id: string, url: string) => {
     if (clickable && onImageClick) {
@@ -29,53 +45,52 @@ export function ScrollingImageStrip({
     }
   };
 
-  const handleMouseEnter = () => {
-    if (clickable && containerRef.current) {
-      containerRef.current.style.animationPlayState = 'paused';
-    }
-  };
-
-  const handleMouseLeave = () => {
-    if (clickable && containerRef.current) {
-      containerRef.current.style.animationPlayState = 'running';
-    }
-  };
-
-  // Dynamic values as CSS custom properties (best practice for runtime-calculated values)
-  const scrollStyles = {
-    '--scroll-width': `${duplicatedImages.length * 242}px`,
-    '--scroll-duration': `${duration}s`,
-  } as React.CSSProperties;
-
   return (
-    <div className="relative w-full overflow-hidden bg-white">
+    <div className="relative w-full overflow-hidden bg-white" style={{ height: `${height}px` }}>
       <div
-        ref={containerRef}
-        className="flex gap-2 animate-scroll-left"
-        style={scrollStyles}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
+        className="flex gap-2"
+        style={{
+          animation: `scroll-left ${duration}s linear infinite`,
+        }}
+        onMouseEnter={() => {
+          if (clickable) {
+            const element = document.querySelector('.scrolling-strip') as HTMLElement;
+            if (element) element.style.animationPlayState = 'paused';
+          }
+        }}
+        onMouseLeave={() => {
+          if (clickable) {
+            const element = document.querySelector('.scrolling-strip') as HTMLElement;
+            if (element) element.style.animationPlayState = 'running';
+          }
+        }}
       >
-        {duplicatedImages.map((image, index) => (
-          <div
-            key={`${image.id}-${index}`}
-            className={`flex-shrink-0 w-[240px] h-[180px] relative overflow-hidden ${
-              clickable ? 'cursor-pointer' : ''
-            }`}
-            onClick={() => handleImageClick(image.id, image.url)}
-            onMouseEnter={() => setHoveredId(`${image.id}-${index}`)}
-            onMouseLeave={() => setHoveredId(null)}
-            data-testid={`image-strip-${index}`}
-          >
-            <img
-              src={image.url}
-              alt={image.alt}
-              className={`w-full h-full object-cover transition-transform duration-500 ${
-                hoveredId === `${image.id}-${index}` && clickable
-                  ? 'scale-110'
-                  : 'scale-100'
+        {duplicatedImages.map((image, index) => {
+          const imageWidth = getWidth(image.aspectRatio);
+          return (
+            <div
+              key={`${image.id}-${index}`}
+              className={`flex-shrink-0 relative overflow-hidden scrolling-strip ${
+                clickable ? 'cursor-pointer' : ''
               }`}
-            />
+              style={{
+                width: `${imageWidth}px`,
+                height: `${height}px`,
+              }}
+              onClick={() => handleImageClick(image.id, image.url)}
+              onMouseEnter={() => setHoveredId(`${image.id}-${index}`)}
+              onMouseLeave={() => setHoveredId(null)}
+              data-testid={`image-strip-${index}`}
+            >
+              <img
+                src={image.url}
+                alt={image.alt}
+                className={`w-full h-full object-cover transition-transform duration-500 ${
+                  hoveredId === `${image.id}-${index}` && clickable
+                    ? 'scale-110'
+                    : 'scale-100'
+                }`}
+              />
             {clickable && hoveredId === `${image.id}-${index}` && (
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
                 <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center">
@@ -96,9 +111,21 @@ export function ScrollingImageStrip({
                 </div>
               </div>
             )}
-          </div>
-        ))}
+            </div>
+          );
+        })}
       </div>
+
+      <style>{`
+        @keyframes scroll-left {
+          0% {
+            transform: translateX(0);
+          }
+          100% {
+            transform: translateX(-${totalWidth}px);
+          }
+        }
+      `}</style>
     </div>
   );
 }

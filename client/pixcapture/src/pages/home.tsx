@@ -25,7 +25,7 @@ export default function PixCaptureHome() {
         {/* Logo als Home-Button */}
         <Link href="/pixcapture">
           <h1 
-            className="text-2xl font-medium tracking-tight cursor-pointer text-black leading-none hover:text-gray-600 transition-colors"
+            className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-black leading-none hover:text-gray-600 transition-colors"
             data-testid="brand-logo"
           >
             pixcapture.app
@@ -45,11 +45,11 @@ export default function PixCaptureHome() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="fixed top-20 right-8 z-50 bg-white border border-gray-200 shadow-lg rounded-md">
+        <div className="fixed top-20 right-8 z-50 bg-white shadow-lg rounded-md">
           <nav className="flex flex-col px-8 py-6 gap-6">
             <Link href="/pixcapture/about">
               <span
-                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
+                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
                 data-testid="menu-link-about"
               >
@@ -58,7 +58,7 @@ export default function PixCaptureHome() {
             </Link>
             <Link href="/pixcapture/blog">
               <span
-                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
+                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
                 data-testid="menu-link-blog"
               >
@@ -67,7 +67,7 @@ export default function PixCaptureHome() {
             </Link>
             <Link href="/pixcapture/login">
               <span
-                className="text-base text-black cursor-pointer tracking-tight hover:text-gray-600 transition-colors"
+                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
                 onClick={() => setMenuOpen(false)}
                 data-testid="menu-link-login"
               >
@@ -77,7 +77,7 @@ export default function PixCaptureHome() {
             <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
               <Link href="/pixcapture/impressum">
                 <span
-                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
                   onClick={() => setMenuOpen(false)}
                   data-testid="menu-link-impressum"
                 >
@@ -86,7 +86,7 @@ export default function PixCaptureHome() {
               </Link>
               <Link href="/pixcapture/datenschutz">
                 <span
-                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
                   onClick={() => setMenuOpen(false)}
                   data-testid="menu-link-datenschutz"
                 >
@@ -95,7 +95,7 @@ export default function PixCaptureHome() {
               </Link>
               <Link href="/pixcapture/agb">
                 <span
-                  className="text-sm text-gray-600 cursor-pointer hover:text-black transition-colors"
+                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
                   onClick={() => setMenuOpen(false)}
                   data-testid="menu-link-agb"
                 >
