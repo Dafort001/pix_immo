@@ -8,6 +8,16 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { 
+  AlertDialog, 
+  AlertDialogAction, 
+  AlertDialogCancel, 
+  AlertDialogContent, 
+  AlertDialogDescription, 
+  AlertDialogFooter, 
+  AlertDialogHeader, 
+  AlertDialogTitle 
+} from '@/components/ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -34,7 +44,9 @@ export default function AdminBlog() {
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<'all' | 'draft' | 'published'>('all');
   const [showDialog, setShowDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [postToDelete, setPostToDelete] = useState<BlogPost | null>(null);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -297,8 +309,15 @@ export default function AdminBlog() {
   };
 
   const handleDelete = (post: BlogPost) => {
-    if (confirm(`Möchten Sie den Beitrag "${post.title}" wirklich löschen?`)) {
-      deleteMutation.mutate(post.id);
+    setPostToDelete(post);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (postToDelete) {
+      deleteMutation.mutate(postToDelete.id);
+      setShowDeleteDialog(false);
+      setPostToDelete(null);
     }
   };
 
@@ -620,6 +639,23 @@ export default function AdminBlog() {
           </DialogContent>
         </Dialog>
       )}
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Beitrag löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Möchten Sie den Beitrag "{postToDelete?.title}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} data-testid="button-confirm-delete">
+              Löschen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
