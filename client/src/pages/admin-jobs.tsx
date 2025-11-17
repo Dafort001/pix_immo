@@ -24,7 +24,7 @@ type User = {
 };
 
 type Job = {
-  id: number;
+  id: string;
   displayId: string;
   userId: string;
   status: string;
@@ -62,12 +62,12 @@ type GalleryResponse = {
 export default function AdminJobs() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
-  const [selectedJobId, setSelectedJobId] = useState<number | null>(null);
+  const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [showPackageDialog, setShowPackageDialog] = useState(false);
   const [showKulanzDialog, setShowKulanzDialog] = useState(false);
   const [showFilesDialog, setShowFilesDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [selectedFileId, setSelectedFileId] = useState<number | null>(null);
+  const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   
   // Package settings form
   const [packageForm, setPackageForm] = useState({
@@ -82,7 +82,7 @@ export default function AdminJobs() {
   });
 
   const { data: jobs = [], isLoading: jobsLoading } = useQuery<Job[]>({
-    queryKey: ['/api/jobs/all'],
+    queryKey: ['/api/jobs'],
   });
 
   const { data: galleryData, refetch: refetchGallery } = useQuery<GalleryResponse>({
@@ -91,11 +91,11 @@ export default function AdminJobs() {
   });
 
   const updatePackageMutation = useMutation({
-    mutationFn: async (data: { jobId: number; settings: typeof packageForm }) => {
+    mutationFn: async (data: { jobId: string; settings: typeof packageForm }) => {
       return await apiRequest('PATCH', `/api/admin/jobs/${data.jobId}/package`, data.settings);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/jobs/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       setShowPackageDialog(false);
       toast({ title: "Paketeinstellungen aktualisiert" });
     },
@@ -109,11 +109,11 @@ export default function AdminJobs() {
   });
 
   const enableAllKulanzMutation = useMutation({
-    mutationFn: async (jobId: number) => {
+    mutationFn: async (jobId: string) => {
       return await apiRequest('PATCH', `/api/admin/jobs/${jobId}/kulanz-all`, { enabled: true });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/jobs/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       setShowKulanzDialog(false);
       toast({ title: "Kulanz aktiviert - Alle Bilder inkludiert" });
     },
@@ -144,11 +144,11 @@ export default function AdminJobs() {
   });
 
   const deleteJobMutation = useMutation({
-    mutationFn: async (jobId: number) => {
+    mutationFn: async (jobId: string) => {
       return await apiRequest('DELETE', `/api/admin/jobs/${jobId}`, {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/jobs/all'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs'] });
       setShowDeleteDialog(false);
       toast({ 
         title: "Job gelöscht",
