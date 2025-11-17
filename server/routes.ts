@@ -2153,7 +2153,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       // TODO: Get userId and role from session/auth middleware when auth is implemented
       // For now, show all jobs (demo user is admin)
-      const jobs = await storage.getAllJobs();
+      
+      // Filter by source: only show pixcapture jobs (customer DIY jobs)
+      // pix.immo jobs (professional jobs) are shown in a separate dashboard
+      const jobs = await storage.getJobsBySource('pixcapture');
       
       res.json(jobs);
     } catch (error) {

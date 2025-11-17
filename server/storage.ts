@@ -75,6 +75,7 @@ export interface IStorage {
   getJobByNumber(jobNumber: string): Promise<Job | undefined>;
   getUserJobs(userId: string): Promise<Job[]>;
   getAllJobs(): Promise<Job[]>;
+  getJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]>;
   updateJobStatus(id: string, status: string): Promise<void>;
   deleteJob(id: string): Promise<void>;
   
@@ -905,6 +906,7 @@ export class DatabaseStorage implements IStorage {
         id,
         jobNumber,
         userId,
+        source: 'pixcapture', // Automatically set based on entry point (pixcapture.app)
         localId: data.localId || null, // Store client-provided localId for deduplication
         customerName: data.customerName,
         propertyName: data.propertyName,
@@ -949,6 +951,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAllJobs(): Promise<Job[]> {
     return await db.select().from(jobs).orderBy(desc(jobs.createdAt));
+  }
+
+  async getJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]> {
+    return await db.select().from(jobs).where(eq(jobs.source, source)).orderBy(desc(jobs.createdAt));
   }
 
   async updateJobStatus(id: string, status: string): Promise<void> {
