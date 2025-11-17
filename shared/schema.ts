@@ -429,6 +429,7 @@ export const publicImages = pgTable("public_images", {
   page: varchar("page", { length: 50 }).notNull(), // 'home', 'pixcapture', 'gallery', 'blog'
   imageKey: varchar("image_key", { length: 100 }).notNull(), // 'home-001', 'pixcap-001', etc.
   url: text("url").notNull(), // Image URL (Unsplash or R2 storage)
+  objectPath: text("object_path"), // Object Storage path (e.g., "media-library/home/xyz.jpg"), null for external URLs (Unsplash)
   alt: text("alt").notNull(), // Alt text for accessibility
   description: text("description"), // Optional SEO description
   displayOrder: bigint("display_order", { mode: "number" }).notNull().default(0), // Sort order on page

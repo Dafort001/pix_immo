@@ -339,9 +339,94 @@ function registerMediaLibraryRoutes(app: Express) {
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
 
       const { id } = req.params;
-      await storage.deletePublicImage(id);
       
-      res.json({ success: true });
+      // Get image before deleting
+      const existingImage = await storage.getPublicImage(id);
+      if (!existingImage) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+
+      // Delete from database first
+      const deleted = await storage.deletePublicImage(id);
+      
+      if (!deleted) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+
+      // Delete from Object Storage (best effort - don't fail if deletion fails)
+      // DUAL-READ Pattern: Prefer objectPath (robust), fallback to URL parsing (legacy)
+      try {
+        const { deleteFile } = await import("./objectStorage");
+        let objectPathToDelete: string | null = null;
+        
+        // PREFERRED: Use stored objectPath if available (robust, works for all URLs)
+        if (existingImage.objectPath) {
+          objectPathToDelete = existingImage.objectPath;
+          console.log(`[STORAGE CLEANUP] Using stored objectPath: ${objectPathToDelete}`);
+        } 
+        // FALLBACK: Parse URL (fragile, but handles legacy data)
+        else {
+          const imageUrl = new URL(existingImage.url);
+          const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+          
+          // Only try to parse if the URL is from our Object Storage (not Unsplash or external)
+          if (imageUrl.hostname.includes('storage.googleapis.com') && imageUrl.pathname.includes(bucketId)) {
+            // Extract object path from URL
+            let extractedPath = imageUrl.pathname.startsWith('/') ? imageUrl.pathname.slice(1) : imageUrl.pathname;
+            
+            // Remove bucket prefix if present
+            if (extractedPath.startsWith(bucketId + '/')) {
+              extractedPath = extractedPath.slice(bucketId.length + 1);
+            }
+            
+            // Verify it's a valid storage path
+            if (extractedPath.startsWith('media-library/') || extractedPath.startsWith('public/')) {
+              objectPathToDelete = extractedPath;
+              console.warn(`[STORAGE CLEANUP] Falling back to URL parsing (objectPath not stored): ${objectPathToDelete}`, {
+                imageId: id,
+                imageKey: existingImage.imageKey,
+              });
+            }
+          }
+        }
+        
+        // Delete the file if we have a valid path
+        if (objectPathToDelete) {
+          const deleteResult = await deleteFile(objectPathToDelete);
+          if (!deleteResult.ok) {
+            console.error(`[STORAGE CLEANUP] Failed to delete file: ${objectPathToDelete}`, {
+              error: deleteResult.error,
+              imageId: id,
+              imageKey: existingImage.imageKey,
+              url: existingImage.url,
+              usedStoredPath: !!existingImage.objectPath,
+            });
+          } else {
+            console.log(`[STORAGE CLEANUP] Successfully deleted file: ${objectPathToDelete}`, {
+              imageId: id,
+              imageKey: existingImage.imageKey,
+              usedStoredPath: !!existingImage.objectPath,
+            });
+          }
+        } else {
+          console.warn(`[STORAGE CLEANUP] Skipped deletion - could not determine object path`, {
+            imageId: id,
+            imageKey: existingImage.imageKey,
+            url: existingImage.url,
+            hasStoredPath: !!existingImage.objectPath,
+          });
+        }
+      } catch (storageError) {
+        console.error(`[STORAGE CLEANUP] Error deleting file:`, {
+          error: storageError,
+          imageId: id,
+          imageKey: existingImage.imageKey,
+          url: existingImage.url,
+        });
+        // Continue anyway - database deletion was successful
+      }
+      
+      res.json({ success: true, message: "Image deleted successfully" });
     } catch (error) {
       console.error("Error deleting public image:", error);
       res.status(500).json({ error: "Failed to delete public image" });
@@ -395,14 +480,16 @@ function registerMediaLibraryRoutes(app: Express) {
         const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
         const publicUrl = `https://storage.googleapis.com/${bucketId}/${objectPath}`;
 
-        // Create database entry with default alt text
+        // Create database entry with default alt text and objectPath
         const newImage = await storage.createPublicImage({
           page,
+          imageKey: `${page}-${timestamp}`,
           url: publicUrl,
+          objectPath: objectPath,
           alt: file.originalname.replace(/\.[^/.]+$/, ''), // filename without extension
           description: null,
           updatedBy: req.user.id,
-        } as any);
+        });
 
         createdImages.push(newImage);
       }
@@ -450,8 +537,8 @@ function registerMediaLibraryRoutes(app: Express) {
         return res.status(404).json({ error: "Image not found" });
       }
 
-      // Import uploadFile from objectStorage
-      const { uploadFile } = await import("./objectStorage");
+      // Import uploadFile and deleteFile from objectStorage
+      const { uploadFile, deleteFile } = await import("./objectStorage");
 
       // Generate new filename (keep same imageKey, update timestamp)
       const timestamp = Date.now();
@@ -460,7 +547,7 @@ function registerMediaLibraryRoutes(app: Express) {
       const filename = `${existingImage.page}_${timestamp}_${randomStr}.${ext}`;
       const objectPath = `media-library/${existingImage.page}/${filename}`;
 
-      // Upload to Object Storage
+      // Upload new image to Object Storage
       const uploadResult = await uploadFile(objectPath, file.buffer, file.mimetype);
 
       if (!uploadResult.ok) {
@@ -471,14 +558,87 @@ function registerMediaLibraryRoutes(app: Express) {
       const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
       const publicUrl = `https://storage.googleapis.com/${bucketId}/${objectPath}`;
 
-      // Update database with new URL
+      // Update database with new URL and objectPath
       const updatedImage = await storage.updatePublicImage(id, {
         url: publicUrl,
+        objectPath: objectPath,
         updatedBy: req.user.id,
       });
 
       if (!updatedImage) {
         return res.status(500).json({ error: "Failed to update image record" });
+      }
+
+      // Delete old image from Object Storage (best effort - don't fail if deletion fails)
+      // DUAL-READ Pattern: Prefer objectPath (robust), fallback to URL parsing (legacy)
+      try {
+        let oldObjectPath: string | null = null;
+        
+        // PREFERRED: Use stored objectPath if available (robust, works for all URLs)
+        if (existingImage.objectPath) {
+          oldObjectPath = existingImage.objectPath;
+          console.log(`[STORAGE CLEANUP] Using stored objectPath: ${oldObjectPath}`);
+        } 
+        // FALLBACK: Parse URL (fragile, but handles legacy data)
+        else {
+          const oldUrl = new URL(existingImage.url);
+          const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+          
+          // Only try to parse if the URL is from our Object Storage (not Unsplash or external)
+          if (oldUrl.hostname.includes('storage.googleapis.com') && oldUrl.pathname.includes(bucketId)) {
+            // Extract object path from URL
+            let extractedPath = oldUrl.pathname.startsWith('/') ? oldUrl.pathname.slice(1) : oldUrl.pathname;
+            
+            // Remove bucket prefix if present
+            if (extractedPath.startsWith(bucketId + '/')) {
+              extractedPath = extractedPath.slice(bucketId.length + 1);
+            }
+            
+            // Verify it's a valid storage path
+            if (extractedPath.startsWith('media-library/') || extractedPath.startsWith('public/')) {
+              oldObjectPath = extractedPath;
+              console.warn(`[STORAGE CLEANUP] Falling back to URL parsing (objectPath not stored): ${oldObjectPath}`, {
+                imageId: id,
+                imageKey: existingImage.imageKey,
+              });
+            }
+          }
+        }
+        
+        // Delete the old file if we have a valid path
+        if (oldObjectPath) {
+          const deleteResult = await deleteFile(oldObjectPath);
+          if (!deleteResult.ok) {
+            console.error(`[STORAGE CLEANUP] Failed to delete old image: ${oldObjectPath}`, {
+              error: deleteResult.error,
+              imageId: id,
+              imageKey: existingImage.imageKey,
+              oldUrl: existingImage.url,
+              usedStoredPath: !!existingImage.objectPath,
+            });
+          } else {
+            console.log(`[STORAGE CLEANUP] Successfully deleted old image: ${oldObjectPath}`, {
+              imageId: id,
+              imageKey: existingImage.imageKey,
+              usedStoredPath: !!existingImage.objectPath,
+            });
+          }
+        } else {
+          console.warn(`[STORAGE CLEANUP] Skipped deletion - could not determine object path`, {
+            imageId: id,
+            imageKey: existingImage.imageKey,
+            oldUrl: existingImage.url,
+            hasStoredPath: !!existingImage.objectPath,
+          });
+        }
+      } catch (deleteError) {
+        console.error(`[STORAGE CLEANUP] Error deleting old image file:`, {
+          error: deleteError,
+          imageId: id,
+          imageKey: existingImage.imageKey,
+          url: existingImage.url,
+        });
+        // Continue anyway - the new upload was successful
       }
 
       res.json(updatedImage);

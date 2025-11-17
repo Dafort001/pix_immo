@@ -506,7 +506,7 @@ export interface IStorage {
     isActive?: string;
     updatedBy?: string;
   }): Promise<import("@shared/schema").PublicImage | undefined>;
-  deletePublicImage(id: string): Promise<void>;
+  deletePublicImage(id: string): Promise<boolean>;
 
   // Invoice Operations
   createInvoice(data: {
@@ -2722,6 +2722,7 @@ export class DatabaseStorage implements IStorage {
     page: string;
     imageKey: string;
     url: string;
+    objectPath?: string | null;
     alt: string;
     description?: string;
     displayOrder?: number;
@@ -2733,8 +2734,14 @@ export class DatabaseStorage implements IStorage {
       .insert(publicImages)
       .values({
         id,
-        ...data,
+        page: data.page,
+        imageKey: data.imageKey,
+        url: data.url,
+        objectPath: data.objectPath ?? null,
+        alt: data.alt,
+        description: data.description ?? null,
         displayOrder: data.displayOrder ?? 0,
+        updatedBy: data.updatedBy ?? null,
         createdAt: now,
         updatedAt: now,
       })
@@ -2767,25 +2774,35 @@ export class DatabaseStorage implements IStorage {
 
   async updatePublicImage(id: string, data: {
     url?: string;
+    objectPath?: string | null;
     alt?: string;
     description?: string;
     displayOrder?: number;
     isActive?: string;
     updatedBy?: string;
   }): Promise<PublicImage | undefined> {
+    const updateData: any = {
+      updatedAt: Date.now(),
+    };
+    if (data.url !== undefined) updateData.url = data.url;
+    if (data.objectPath !== undefined) updateData.objectPath = data.objectPath;
+    if (data.alt !== undefined) updateData.alt = data.alt;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.displayOrder !== undefined) updateData.displayOrder = data.displayOrder;
+    if (data.isActive !== undefined) updateData.isActive = data.isActive;
+    if (data.updatedBy !== undefined) updateData.updatedBy = data.updatedBy;
+    
     const [publicImage] = await db
       .update(publicImages)
-      .set({
-        ...data,
-        updatedAt: Date.now(),
-      })
+      .set(updateData)
       .where(eq(publicImages.id, id))
       .returning();
     return publicImage || undefined;
   }
 
-  async deletePublicImage(id: string): Promise<void> {
-    await db.delete(publicImages).where(eq(publicImages.id, id));
+  async deletePublicImage(id: string): Promise<boolean> {
+    const result = await db.delete(publicImages).where(eq(publicImages.id, id)).returning();
+    return result.length > 0;
   }
 
   // ==================== Invoice Operations ====================
