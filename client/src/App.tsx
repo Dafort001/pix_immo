@@ -74,6 +74,7 @@ import AdminBlog from "@/pages/admin-blog";
 import AdminServices from "@/pages/admin-services";
 import AdminBookings from "@/pages/admin-bookings";
 import AdminJobs from "@/pages/admin-jobs";
+import AdminPixJobs from "@/pages/admin-pix-jobs";
 import QAPage from "@/routes/qa";
 
 function Router() {
@@ -92,6 +93,7 @@ function Router() {
       <Route path="/admin/services" component={AdminServices} />
       <Route path="/admin/bookings" component={AdminBookings} />
       <Route path="/admin/jobs" component={AdminJobs} />
+      <Route path="/admin/pix-jobs" component={AdminPixJobs} />
       <Route path="/qc-quality-check" component={QCQualityCheck} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />

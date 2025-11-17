@@ -85,6 +85,20 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
       testId: "nav-jobs",
     },
     {
+      title: "pixcapture Jobs",
+      url: "/admin/jobs",
+      icon: Camera,
+      testId: "nav-pixcapture-jobs",
+      adminOnly: true,
+    },
+    {
+      title: "pix.immo Aufträge",
+      url: "/admin/pix-jobs",
+      icon: Briefcase,
+      testId: "nav-pix-jobs",
+      adminOnly: true,
+    },
+    {
       title: "Buchungen",
       url: "/admin/bookings",
       icon: CalendarCheck,

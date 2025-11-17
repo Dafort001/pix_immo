@@ -1231,6 +1231,11 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(404).json({ error: "Job not found" });
       }
       
+      // DATA SEPARATION: Only allow pixcapture jobs from this route
+      if (job.source !== 'pixcapture') {
+        return res.status(403).json({ error: "Cannot view pix.immo jobs from pixcapture dashboard" });
+      }
+      
       // Check ownership
       if (job.userId !== req.user.id && req.user.role !== "admin") {
         return res.status(403).json({ error: "Forbidden" });
@@ -1516,7 +1521,7 @@ function registerGalleryPackageRoutes(app: Express) {
     }
   });
   
-  // ADMIN: DELETE /api/admin/jobs/:id - Delete job with CASCADE (shoots, images, stacks, exposes)
+  // ADMIN: DELETE /api/admin/jobs/:id - Delete pixcapture job with CASCADE (shoots, images, stacks, exposes)
   app.delete("/api/admin/jobs/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
@@ -1530,6 +1535,11 @@ function registerGalleryPackageRoutes(app: Express) {
         return res.status(404).json({ error: "Job not found" });
       }
       
+      // DATA SEPARATION: Only allow deletion of pixcapture jobs from this route
+      if (job.source !== 'pixcapture') {
+        return res.status(403).json({ error: "Cannot delete pix.immo jobs from pixcapture dashboard" });
+      }
+      
       // Delete job (CASCADE handles related data)
       await storage.deleteJob(id);
       
@@ -1537,6 +1547,35 @@ function registerGalleryPackageRoutes(app: Express) {
     } catch (error) {
       console.error("Error deleting job:", error);
       res.status(500).json({ error: "Failed to delete job" });
+    }
+  });
+  
+  // ADMIN: DELETE /api/admin/pix-jobs/:id - Delete pix.immo job with CASCADE
+  app.delete("/api/admin/pix-jobs/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      
+      // SECURITY: Verify job exists before deletion
+      const job = await storage.getJob(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // DATA SEPARATION: Only allow deletion of pix.immo jobs from this route
+      if (job.source !== 'piximmo') {
+        return res.status(403).json({ error: "Cannot delete pixcapture jobs from pix.immo dashboard" });
+      }
+      
+      // Delete job (CASCADE handles related data)
+      await storage.deleteJob(id);
+      
+      res.json({ success: true, message: "Job deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting pix.immo job:", error);
+      res.status(500).json({ error: "Failed to delete pix.immo job" });
     }
   });
 }
@@ -2197,6 +2236,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating job status:", error);
       res.status(500).json({ error: "Failed to update job status" });
+    }
+  });
+
+  // pix.immo Professional Jobs Routes (source: 'piximmo')
+  
+  // POST /api/pix-jobs - Create a new pix.immo professional job (ADMIN ONLY)
+  app.post("/api/pix-jobs", validateBody(createJobSchema), async (req: Request, res: Response) => {
+    try {
+      // Auth Guard: Admin only
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const demoUser = req.user; // Use authenticated admin user
+      
+      const { localId, customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose, selectedUserId, selectedUserInitials, selectedUserCode } = req.body;
+      
+      // Deduplication: Check if job with this localId already exists
+      if (localId) {
+        const existingJob = await storage.findJobByLocalId(localId);
+        if (existingJob) {
+          // Job already exists - return 409 Conflict with existing job data
+          return res.status(409).json({ 
+            message: "Job with this localId already exists",
+            job: existingJob 
+          });
+        }
+      }
+      
+      // Create pix.immo job with source: 'piximmo'
+      const job = await storage.createJob(demoUser.id, {
+        source: 'piximmo', // Professional jobs from pix.immo
+        localId,
+        customerName,
+        propertyName,
+        propertyAddress,
+        deadlineAt,
+        deliverGallery,
+        deliverAlttext,
+        deliverExpose,
+        selectedUserId,
+        selectedUserInitials,
+        selectedUserCode,
+      });
+      
+      res.status(201).json(job);
+    } catch (error) {
+      console.error("Error creating pix.immo job:", error);
+      res.status(500).json({ error: "Failed to create pix.immo job" });
+    }
+  });
+  
+  // GET /api/pix-jobs - Get all pix.immo professional jobs (ADMIN ONLY)
+  app.get("/api/pix-jobs", async (req: Request, res: Response) => {
+    try {
+      // Auth Guard: Admin only
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      // Filter by source: only show piximmo jobs (professional jobs)
+      const jobs = await storage.getJobsBySource('piximmo');
+      
+      res.json(jobs);
+    } catch (error) {
+      console.error("Error getting pix.immo jobs:", error);
+      res.status(500).json({ error: "Failed to get pix.immo jobs" });
+    }
+  });
+
+  // GET /api/pix-jobs/:id/shoots-gallery - Get pix.immo job shoots gallery (ADMIN ONLY)
+  app.get("/api/pix-jobs/:id/shoots-gallery", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      // Auth Guard: Admin only
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      const job = await storage.getJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // DATA SEPARATION: Only allow pix.immo jobs from this route
+      if (job.source !== 'piximmo') {
+        return res.status(403).json({ error: "Cannot view pixcapture jobs from pix.immo dashboard" });
+      }
+      
+      // Get shoots with images
+      const shoots = await storage.getJobShootsGallery(id);
+      
+      res.json({
+        job: {
+          id: job.id,
+          jobNumber: job.jobNumber,
+          propertyName: job.propertyName,
+          customerName: job.customerName,
+        },
+        shoots,
+      });
+    } catch (error) {
+      console.error("Error fetching pix.immo job shoots gallery:", error);
+      res.status(500).json({ error: "Failed to fetch pix.immo shoots gallery" });
     }
   });
 

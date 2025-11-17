@@ -54,6 +54,7 @@ export interface IStorage {
   
   // Workflow operations - Jobs
   createJob(userId: string, data: {
+    source?: 'piximmo' | 'pixcapture'; // Platform source (default: pixcapture)
     customerName?: string;
     propertyName: string;
     propertyAddress?: string;
@@ -880,6 +881,7 @@ export class DatabaseStorage implements IStorage {
 
   // Job operations
   async createJob(userId: string, data: {
+    source?: 'piximmo' | 'pixcapture'; // Platform source (default: pixcapture)
     localId?: string; // Client-generated ULID for offline deduplication
     customerName?: string;
     propertyName: string;
@@ -906,7 +908,7 @@ export class DatabaseStorage implements IStorage {
         id,
         jobNumber,
         userId,
-        source: 'pixcapture', // Automatically set based on entry point (pixcapture.app)
+        source: data.source || 'pixcapture', // Use provided source or default to pixcapture
         localId: data.localId || null, // Store client-provided localId for deduplication
         customerName: data.customerName,
         propertyName: data.propertyName,
