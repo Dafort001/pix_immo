@@ -83,6 +83,7 @@ export interface IStorage {
   getShoot(id: string): Promise<Shoot | undefined>;
   getShootByCode(shootCode: string): Promise<Shoot | undefined>;
   getJobShoots(jobId: string): Promise<Shoot[]>;
+  getJobShootsGallery(jobId: string): Promise<Array<Shoot & { images: Image[] }>>;
   getActiveShootForJob(jobId: string): Promise<Shoot | undefined>;
   updateShootStatus(id: string, status: string, timestampField?: string): Promise<void>;
   
@@ -988,6 +989,17 @@ export class DatabaseStorage implements IStorage {
 
   async getJobShoots(jobId: string): Promise<Shoot[]> {
     return await db.select().from(shoots).where(eq(shoots.jobId, jobId)).orderBy(desc(shoots.createdAt));
+  }
+
+  async getJobShootsGallery(jobId: string): Promise<Array<Shoot & { images: Image[] }>> {
+    const jobShoots = await this.getJobShoots(jobId);
+    const shootsWithImages = await Promise.all(
+      jobShoots.map(async (shoot) => {
+        const shootImages = await this.getShootImages(shoot.id);
+        return { ...shoot, images: shootImages };
+      })
+    );
+    return shootsWithImages;
   }
 
   async getActiveShootForJob(jobId: string): Promise<Shoot | undefined> {
