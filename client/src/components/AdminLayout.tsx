@@ -105,6 +105,13 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
       testId: "nav-bookings",
       adminOnly: true,
     },
+    {
+      title: "Interne Buchung",
+      url: "/admin/internal-booking",
+      icon: ListOrdered,
+      testId: "nav-internal-booking",
+      adminOnly: true,
+    },
   ];
 
   // Content management

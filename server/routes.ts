@@ -1080,14 +1080,14 @@ function registerBookingRoutes(app: Express) {
       });
 
       // Send booking confirmation SMS if phone number is provided
-      if (bookingData.brokerPhone) {
+      if (bookingData.contactMobile) {
         try {
           const { notifyBookingConfirmation } = await import('./notifications');
           await notifyBookingConfirmation({
-            phone: bookingData.brokerPhone,
-            customerName: bookingData.customerName || 'Kunde',
-            appointmentDate: bookingData.appointmentDate,
-            appointmentTime: bookingData.appointmentTime,
+            phone: bookingData.contactMobile,
+            customerName: bookingData.contactName || 'Kunde',
+            appointmentDate: bookingData.preferredDate,
+            appointmentTime: bookingData.preferredTime,
             propertyAddress: bookingData.propertyAddress || 'Objektadresse',
           });
         } catch (smsError) {
