@@ -118,6 +118,17 @@ export default function AdminPage() {
 - [ ] Admin pages reuse `AdminLayout` wrapper pattern (consistent sidebar + header)
 - [ ] No conditional Hook calls (e.g., Hooks inside `if` statements)
 
+## Admin Setup
+- **Admin Seed Script**: `tsx server/seed-admin.ts` - ENV-based admin account creation
+- **ENV Variables**:
+  - `ADMIN_EMAIL` - Admin email address (default: `admin@piximmo.de`)
+  - `ADMIN_PASSWORD` - Admin password (default: `Admin123!`)
+- **Features**: Idempotent (can run multiple times), auto-promotes existing users, synchronizes passwords
+- **Documentation**: See `ADMIN_SETUP.md` for detailed setup instructions
+- **Alternative Scripts**: 
+  - `tsx server/create-admin.ts` - Hardcoded `admin@pix.immo` / `Admin2025!`
+  - `tsx server/create-test-admin.ts` - Test admin `admin@example.com` / `admin123`
+
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
 - **Email Service**: Resend (API key stored in RESEND_API_KEY environment variable)
