@@ -43,7 +43,7 @@ export function ScrollingImageStrip({
 
   // Dynamic values as CSS custom properties (best practice for runtime-calculated values)
   const scrollStyles = {
-    '--scroll-width': `${duplicatedImages.length * 482}px`,
+    '--scroll-width': `${duplicatedImages.length * 242}px`,
     '--scroll-duration': `${duration}s`,
   } as React.CSSProperties;
 
@@ -59,7 +59,7 @@ export function ScrollingImageStrip({
         {duplicatedImages.map((image, index) => (
           <div
             key={`${image.id}-${index}`}
-            className={`flex-shrink-0 w-[480px] h-[360px] relative overflow-hidden ${
+            className={`flex-shrink-0 w-[240px] h-[180px] relative overflow-hidden ${
               clickable ? 'cursor-pointer' : ''
             }`}
             onClick={() => handleImageClick(image.id, image.url)}
