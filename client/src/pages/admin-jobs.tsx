@@ -66,6 +66,7 @@ export default function AdminJobs() {
   const [showPackageDialog, setShowPackageDialog] = useState(false);
   const [showKulanzDialog, setShowKulanzDialog] = useState(false);
   const [showFilesDialog, setShowFilesDialog] = useState(false);
+  const [showShootsDialog, setShowShootsDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<string | null>(null);
   
@@ -88,6 +89,14 @@ export default function AdminJobs() {
   const { data: galleryData, refetch: refetchGallery } = useQuery<GalleryResponse>({
     queryKey: ['/api/jobs', selectedJobId, 'gallery'],
     enabled: !!selectedJobId && showFilesDialog,
+  });
+
+  const { data: shootsData } = useQuery<{
+    job: { id: string; jobNumber: string; propertyName: string; customerName: string | null };
+    shoots: Array<{ id: string; shootCode: string; status: string; createdAt: number; images: any[] }>;
+  }>({
+    queryKey: ['/api/jobs', selectedJobId, 'shoots-gallery'],
+    enabled: !!selectedJobId && showShootsDialog,
   });
 
   const updatePackageMutation = useMutation({
@@ -182,6 +191,11 @@ export default function AdminJobs() {
   const handleOpenFilesDialog = (job: Job) => {
     setSelectedJobId(job.id);
     setShowFilesDialog(true);
+  };
+
+  const handleOpenShootsDialog = (job: Job) => {
+    setSelectedJobId(job.id);
+    setShowShootsDialog(true);
   };
 
   const handleOpenDeleteDialog = (job: Job) => {
@@ -304,8 +318,9 @@ export default function AdminJobs() {
                               <Button
                                 size="sm"
                                 variant="outline"
-                                onClick={() => handleOpenFilesDialog(job)}
-                                data-testid={`button-files-${job.id}`}
+                                onClick={() => handleOpenShootsDialog(job)}
+                                data-testid={`button-shoots-${job.id}`}
+                                title="Shoots anzeigen"
                               >
                                 <Eye className="w-4 h-4" />
                               </Button>
@@ -490,6 +505,67 @@ export default function AdminJobs() {
                 ))}
               </TableBody>
             </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Shoots Gallery Dialog (for pixcapture.app jobs) */}
+      <Dialog open={showShootsDialog} onOpenChange={setShowShootsDialog}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Shoots & Bilder</DialogTitle>
+            <DialogDescription>
+              Job {shootsData?.job.jobNumber} - {shootsData?.job.propertyName} - {shootsData?.shoots.length || 0} Shoots
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-6">
+            {shootsData?.shoots.map((shoot) => (
+              <Card key={shoot.id}>
+                <CardContent className="pt-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold">Shoot {shoot.shootCode}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Status: <Badge variant="outline">{shoot.status}</Badge>
+                      </p>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {shoot.images.length} Bilder
+                    </p>
+                  </div>
+                  {shoot.images.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Dateiname</TableHead>
+                          <TableHead>Room Type</TableHead>
+                          <TableHead>Stack</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {shoot.images.slice(0, 10).map((image: any) => (
+                          <TableRow key={image.id}>
+                            <TableCell className="font-mono text-sm">{image.originalFilename}</TableCell>
+                            <TableCell><Badge variant="secondary">{image.roomType || 'unbekannt'}</Badge></TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{image.stackId ? '✓' : '−'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-sm text-muted-foreground text-center py-4">Keine Bilder vorhanden</p>
+                  )}
+                  {shoot.images.length > 10 && (
+                    <p className="text-sm text-muted-foreground text-center mt-2">
+                      ... und {shoot.images.length - 10} weitere Bilder
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+            {(!shootsData?.shoots || shootsData.shoots.length === 0) && (
+              <p className="text-sm text-muted-foreground text-center py-8">Keine Shoots vorhanden</p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -1243,7 +1243,6 @@ function registerGalleryPackageRoutes(app: Express) {
         job: {
           id: job.id,
           jobNumber: job.jobNumber,
-          displayId: job.displayId,
           propertyName: job.propertyName,
           customerName: job.customerName,
         },
