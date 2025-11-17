@@ -121,6 +121,21 @@ export const jobs = pgTable("jobs", {
   deliverGallery: varchar("deliver_gallery", { length: 10 }).notNull().default("true"),
   deliverAlttext: varchar("deliver_alttext", { length: 10 }).notNull().default("true"),
   deliverExpose: varchar("deliver_expose", { length: 10 }).notNull().default("false"),
+  // Property Details (pix.immo)
+  propertyType: varchar("property_type", { length: 50 }), // 'apartment', 'house', 'office', 'commercial', 'land'
+  propertyArea: integer("property_area"), // Property area in m²
+  // Appointment Details
+  appointmentDate: bigint("appointment_date", { mode: "number" }), // Unix timestamp for appointment date
+  appointmentTime: varchar("appointment_time", { length: 10 }), // Time in HH:MM format (e.g., "14:30")
+  // Service & Add-ons
+  serviceId: varchar("service_id").references(() => services.id, { onDelete: "set null" }), // Selected service/package
+  droneIncluded: boolean("drone_included").default(false), // Whether drone shots are included
+  // Broker & Contact Information (pix.immo)
+  brokerName: varchar("broker_name", { length: 255 }), // Real estate agent name
+  brokerPhone: varchar("broker_phone", { length: 50 }), // Real estate agent phone
+  brokerPresent: boolean("broker_present"), // Whether broker will be present at appointment
+  contactPersonName: varchar("contact_person_name", { length: 255 }), // On-site contact if broker not present
+  contactPersonPhone: varchar("contact_person_phone", { length: 50 }), // On-site contact phone
   // Local App User (Photographer) Assignment
   selectedUserId: varchar("selected_user_id", { length: 50 }), // App-User UUID (localStorage, not DB foreign key)
   selectedUserInitials: varchar("selected_user_initials", { length: 10 }), // e.g. "DF"
@@ -1003,10 +1018,30 @@ export const createJobSchema = z.object({
   customerName: z.string().optional(),
   propertyName: z.string().min(1, "Property name is required"),
   propertyAddress: z.string().optional(),
+  // Google Maps verified address data
+  addressLat: z.string().optional(),
+  addressLng: z.string().optional(),
+  addressPlaceId: z.string().optional(),
+  addressFormatted: z.string().optional(),
   deadlineAt: z.number().optional(), // Unix timestamp
   deliverGallery: z.boolean().optional().default(true),
   deliverAlttext: z.boolean().optional().default(true),
   deliverExpose: z.boolean().optional().default(false),
+  // Property Details (pix.immo)
+  propertyType: z.enum(['apartment', 'house', 'office', 'commercial', 'land']).optional(),
+  propertyArea: z.number().positive().optional(),
+  // Appointment Details
+  appointmentDate: z.number().optional(), // Unix timestamp
+  appointmentTime: z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/).optional(), // HH:MM format
+  // Service & Add-ons
+  serviceId: z.string().optional(),
+  droneIncluded: z.boolean().optional().default(false),
+  // Broker & Contact Information
+  brokerName: z.string().optional(),
+  brokerPhone: z.string().optional(),
+  brokerPresent: z.boolean().optional(),
+  contactPersonName: z.string().optional(),
+  contactPersonPhone: z.string().optional(),
   // Local App User Assignment
   selectedUserId: z.string().optional(),
   selectedUserInitials: z.string().optional(),
