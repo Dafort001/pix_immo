@@ -54,8 +54,8 @@ export default function EditingGallery() {
   const createGalleryMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/gallery", {
-        type: "final_edited",
-        name: `Final Editing ${new Date().toLocaleDateString()}`,
+        galleryType: "editing",
+        title: `Final Editing ${new Date().toLocaleDateString()}`,
         description: "Final edited images for client review",
       });
     },

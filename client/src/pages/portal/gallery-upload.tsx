@@ -45,8 +45,8 @@ export default function CustomerUploadGallery() {
   const createGalleryMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/gallery", {
-        type: "customer_upload",
-        name: `Customer Upload ${new Date().toLocaleDateString()}`,
+        galleryType: "customer_upload",
+        title: `Customer Upload ${new Date().toLocaleDateString()}`,
         description: "Customer reference images",
       });
     },

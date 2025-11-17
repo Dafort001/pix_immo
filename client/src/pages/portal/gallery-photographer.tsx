@@ -45,8 +45,8 @@ export default function PhotographerUploadGallery() {
   const createGalleryMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest("POST", "/api/gallery", {
-        type: "photographer_raw",
-        name: `Photographer RAW ${new Date().toLocaleDateString()}`,
+        galleryType: "photographer_upload",
+        title: `Photographer RAW ${new Date().toLocaleDateString()}`,
         description: "RAW files from photographer",
       });
     },
