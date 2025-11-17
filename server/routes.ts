@@ -1480,6 +1480,30 @@ function registerGalleryPackageRoutes(app: Express) {
       res.status(500).json({ error: "Failed to set all-images kulanz" });
     }
   });
+  
+  // ADMIN: DELETE /api/admin/jobs/:id - Delete job with CASCADE (shoots, images, stacks, exposes)
+  app.delete("/api/admin/jobs/:id", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+      
+      const { id } = req.params;
+      
+      // SECURITY: Verify job exists before deletion
+      const job = await storage.getJob(id);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // Delete job (CASCADE handles related data)
+      await storage.deleteJob(id);
+      
+      res.json({ success: true, message: "Job deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting job:", error);
+      res.status(500).json({ error: "Failed to delete job" });
+    }
+  });
 }
 
 // Upload Manifest Routes (Client-manifest-based upload tracking)
