@@ -51,6 +51,7 @@ export interface TimeSlot {
   start: string;
   end: string;
   available: boolean;
+  formatted?: string; // Human-readable time in Europe/Berlin timezone (e.g., "09:00")
 }
 
 export interface AvailableSlotsParams {
@@ -80,12 +81,17 @@ export class GoogleCalendarService {
     const calendarId = params.calendarId || this.DEFAULT_CALENDAR_ID;
     const duration = params.duration || this.SLOT_DURATION_MINUTES;
 
-    const requestedDate = new Date(params.date);
-    const timeMin = new Date(requestedDate);
-    timeMin.setHours(this.BUSINESS_HOURS_START, 0, 0, 0);
+    // Parse date and create business hours in Europe/Berlin timezone
+    // We need to manually handle timezone offset to ensure 09:00 Europe/Berlin
+    const [year, month, day] = params.date.split('-').map(Number);
     
-    const timeMax = new Date(requestedDate);
-    timeMax.setHours(this.BUSINESS_HOURS_END, 0, 0, 0);
+    // Create dates representing business hours in Europe/Berlin
+    // Date constructor uses local system time, so we need to adjust for Europe/Berlin
+    const berlinOffset = 1; // CET is UTC+1 (adjust to +2 for CEST in summer if needed)
+    
+    // Create UTC dates that represent the correct Berlin local time
+    const timeMin = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_START - berlinOffset, 0, 0, 0));
+    const timeMax = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_END - berlinOffset, 0, 0, 0));
 
     const freeBusyResponse = await calendar.freebusy.query({
       requestBody: {
@@ -115,10 +121,19 @@ export class GoogleCalendarService {
         );
       });
 
+      // Format time in Berlin timezone for display
+      // currentTime is already in UTC, so we just need to format it in Berlin timezone
+      const formatted = currentTime.toLocaleTimeString('de-DE', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        timeZone: 'Europe/Berlin'
+      });
+
       slots.push({
         start: currentTime.toISOString(),
         end: slotEnd.toISOString(),
         available: !isBusy,
+        formatted,
       });
 
       currentTime = new Date(currentTime.getTime() + duration * 60000);

@@ -15,11 +15,11 @@ import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { createJobSchema, type CreateJobInput, type Service } from '@shared/schema';
-import { Calendar, Sun, Package, Users, Building2, Home, Briefcase, MapPin, Warehouse, TreePine } from 'lucide-react';
+import { Calendar, Sun, Package, Users, Building2, Home, Briefcase, MapPin, Warehouse, TreePine, Clock } from 'lucide-react';
 import { z } from 'zod';
 import { GoogleMapsAddressInput } from './GoogleMapsAddressInput';
 import { calculateSunPosition, formatSunPosition } from '@/lib/sun-position';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type CreatePixJobDialogProps = {
   open: boolean;
@@ -56,6 +56,12 @@ const pixJobFormSchema = createJobSchema.extend({
 
 type PixJobFormData = z.infer<typeof pixJobFormSchema>;
 
+type CalendarSlot = {
+  start: string;
+  end: string;
+  formatted: string;
+};
+
 export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogProps) {
   const { toast } = useToast();
   const [addressData, setAddressData] = useState<{
@@ -64,6 +70,9 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
     formatted: string;
   } | null>(null);
   const [sunInfo, setSunInfo] = useState<string | null>(null);
+  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [availableSlots, setAvailableSlots] = useState<CalendarSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
 
   const { data: services = [], isLoading: servicesLoading } = useQuery<Service[]>({
     queryKey: ['/api/services'],
@@ -102,6 +111,33 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
   const brokerPresent = form.watch('brokerPresent');
   const appointmentDate = form.watch('appointmentDate');
   const appointmentTime = form.watch('appointmentTime');
+
+  // Fetch available slots when date is selected
+  useEffect(() => {
+    if (!selectedDate) {
+      setAvailableSlots([]);
+      return;
+    }
+
+    setLoadingSlots(true);
+    fetch(`/api/calendar/available-slots?date=${selectedDate}`)
+      .then(res => res.json())
+      .then(data => {
+        setAvailableSlots(data.slots || []);
+      })
+      .catch(error => {
+        console.error('Error fetching slots:', error);
+        toast({
+          title: 'Fehler',
+          description: 'Verfügbare Zeitslots konnten nicht geladen werden',
+          variant: 'destructive',
+        });
+        setAvailableSlots([]);
+      })
+      .finally(() => {
+        setLoadingSlots(false);
+      });
+  }, [selectedDate, toast]);
 
   const handleAddressSelect = (address: any) => {
     form.setValue('addressLat', address.lat.toString());
@@ -307,24 +343,89 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
                   Terminvereinbarung *
                 </Label>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Step 1: Date Selection */}
+                <div className="space-y-4">
+                  <div>
+                    <FormLabel>1. Datum wählen *</FormLabel>
+                    <Input
+                      type="date"
+                      min={new Date().toISOString().split('T')[0]}
+                      value={selectedDate}
+                      onChange={(e) => {
+                        setSelectedDate(e.target.value);
+                        // Clear appointment fields when date changes
+                        form.setValue('appointmentDate', '');
+                        form.setValue('appointmentTime', '');
+                        setSunInfo(null);
+                      }}
+                      data-testid="input-appointment-date"
+                      className="w-full"
+                    />
+                  </div>
+
+                  {/* Step 2: Slot Selection */}
+                  {selectedDate && (
+                    <div data-testid="slot-selection-container">
+                      <FormLabel className="flex items-center gap-2 mb-2">
+                        <Clock className="h-4 w-4" />
+                        2. Verfügbaren Zeitslot wählen *
+                      </FormLabel>
+                      
+                      {loadingSlots ? (
+                        <div className="text-sm text-muted-foreground py-4" data-testid="text-loading-slots">
+                          Lade verfügbare Zeitslots...
+                        </div>
+                      ) : availableSlots.length === 0 ? (
+                        <div className="text-sm text-muted-foreground py-4" data-testid="text-no-slots">
+                          Keine verfügbaren Zeitslots für dieses Datum.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2" data-testid="grid-slots">
+                          {availableSlots.map((slot, index) => {
+                            // Use formatted time directly from API (e.g., "09:00")
+                            const formattedTime = slot.formatted || new Date(slot.start).toLocaleTimeString('de-DE', { 
+                              hour: '2-digit', 
+                              minute: '2-digit',
+                              timeZone: 'Europe/Berlin'
+                            });
+                            
+                            // Extract HH:MM for comparison and form value
+                            const slotTime = formattedTime.length === 5 ? formattedTime : formattedTime.split(':').slice(0, 2).join(':');
+                            
+                            const isSelected = 
+                              appointmentDate === selectedDate && 
+                              appointmentTime === slotTime;
+                            
+                            return (
+                              <Button
+                                key={index}
+                                type="button"
+                                variant={isSelected ? "default" : "outline"}
+                                className="justify-center"
+                                onClick={() => {
+                                  form.setValue('appointmentDate', selectedDate);
+                                  form.setValue('appointmentTime', slotTime);
+                                  updateSunPosition(undefined, undefined, selectedDate, slotTime);
+                                }}
+                                data-testid={`button-slot-${index}`}
+                              >
+                                {formattedTime}
+                              </Button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Hidden form fields */}
                   <FormField
                     control={form.control}
                     name="appointmentDate"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Datum *</FormLabel>
+                      <FormItem className="hidden">
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="date"
-                            min={new Date().toISOString().split('T')[0]}
-                            onChange={(e) => {
-                              field.onChange(e);
-                              updateSunPosition(undefined, undefined, e.target.value, undefined);
-                            }}
-                            data-testid="input-appointment-date"
-                          />
+                          <Input {...field} type="hidden" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -335,18 +436,9 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
                     control={form.control}
                     name="appointmentTime"
                     render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Uhrzeit *</FormLabel>
+                      <FormItem className="hidden">
                         <FormControl>
-                          <Input
-                            {...field}
-                            type="time"
-                            onChange={(e) => {
-                              field.onChange(e);
-                              updateSunPosition(undefined, undefined, undefined, e.target.value);
-                            }}
-                            data-testid="input-appointment-time"
-                          />
+                          <Input {...field} type="hidden" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
