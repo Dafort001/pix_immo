@@ -55,6 +55,7 @@ export interface IStorage {
   // Workflow operations - Jobs
   createJob(userId: string, data: {
     source?: 'piximmo' | 'pixcapture'; // Platform source (default: pixcapture)
+    localId?: string;
     customerName?: string;
     propertyName: string;
     propertyAddress?: string;
@@ -63,6 +64,21 @@ export interface IStorage {
     addressLng?: string;
     addressPlaceId?: string;
     addressFormatted?: string;
+    // Property Details (pix.immo)
+    propertyType?: 'apartment' | 'house' | 'office' | 'commercial' | 'land';
+    propertyArea?: number;
+    // Appointment Details
+    appointmentDate?: number;
+    appointmentTime?: string;
+    // Service & Add-ons
+    serviceId?: string;
+    droneIncluded?: boolean;
+    // Broker & Contact Information
+    brokerName?: string;
+    brokerPhone?: string;
+    brokerPresent?: boolean;
+    contactPersonName?: string;
+    contactPersonPhone?: string;
     deadlineAt?: number;
     deliverGallery?: boolean;
     deliverAlttext?: boolean;
@@ -891,6 +907,21 @@ export class DatabaseStorage implements IStorage {
     addressLng?: string;
     addressPlaceId?: string;
     addressFormatted?: string;
+    // Property Details (pix.immo)
+    propertyType?: 'apartment' | 'house' | 'office' | 'commercial' | 'land';
+    propertyArea?: number;
+    // Appointment Details
+    appointmentDate?: number;
+    appointmentTime?: string;
+    // Service & Add-ons
+    serviceId?: string;
+    droneIncluded?: boolean;
+    // Broker & Contact Information
+    brokerName?: string;
+    brokerPhone?: string;
+    brokerPresent?: boolean;
+    contactPersonName?: string;
+    contactPersonPhone?: string;
     deadlineAt?: number;
     deliverGallery?: boolean;
     deliverAlttext?: boolean;
@@ -918,6 +949,21 @@ export class DatabaseStorage implements IStorage {
         addressLng: data.addressLng || null,
         addressPlaceId: data.addressPlaceId || null,
         addressFormatted: data.addressFormatted || null,
+        // Property Details (pix.immo)
+        propertyType: data.propertyType || null,
+        propertyArea: data.propertyArea || null,
+        // Appointment Details
+        appointmentDate: data.appointmentDate || null,
+        appointmentTime: data.appointmentTime || null,
+        // Service & Add-ons
+        serviceId: data.serviceId || null,
+        droneIncluded: data.droneIncluded || false,
+        // Broker & Contact Information
+        brokerName: data.brokerName || null,
+        brokerPhone: data.brokerPhone || null,
+        brokerPresent: data.brokerPresent !== undefined ? data.brokerPresent : null,
+        contactPersonName: data.contactPersonName || null,
+        contactPersonPhone: data.contactPersonPhone || null,
         deadlineAt: data.deadlineAt,
         deliverGallery: data.deliverGallery !== undefined ? (data.deliverGallery ? "true" : "false") : "true",
         deliverAlttext: data.deliverAlttext !== undefined ? (data.deliverAlttext ? "true" : "false") : "true",
