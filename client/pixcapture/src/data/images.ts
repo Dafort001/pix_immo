@@ -199,5 +199,6 @@ export function formatForScrollingStrip(images: ImageAsset[]) {
     id: img.id,
     url: img.url,
     alt: img.alt,
+    aspectRatio: img.aspectRatio,
   }));
 }

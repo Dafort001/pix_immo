@@ -26,6 +26,8 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 - **Order Management**: API for managing property photography orders with role-based authorization.
 - **Service Catalog & Booking**: Comprehensive catalog and multi-step booking wizard.
 - **Google Maps Integration**: For address verification and thumbnail previews.
+- **Google Calendar Integration**: Automated appointment scheduling with CET timezone support (09:00-18:00), time slot query API, and automatic event creation with stored event IDs.
+- **SMS Notifications (Twilio)**: Pending user setup - will provide booking confirmations, appointment reminders, and cancellation notifications once Twilio credentials are configured.
 - **Photo Workflow System**: Manages jobs, shoots, image stacks, RAW file handling, editor tokens, and ZIP handoff packages.
 - **Client Gallery**: Features image viewer, favorites, comments, and download functionality.
 - **QA-Autofix System**: Plugin-based framework for validating various aspects of the platform.
@@ -72,6 +74,13 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
 ## External Dependencies
 - **Database**: PostgreSQL (Neon)
 - **Email Service**: Resend
+- **Google Calendar API**: Appointment scheduling and time slot management
+- **SMS Service**: Twilio (requires TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER - pending user setup)
 - **AI Services**:
   - **Image Processing**: Replicate or Clipdrop
   - **Text & Captions**: OpenAI ChatGPT (GPT-4 Vision)
+
+## Recent Updates (November 2025)
+- **Google Calendar Integration**: Complete booking flow with timezone fixes (CET: 09:00-18:00), automated event creation
+- **PixCapture.app Layout**: Unified design with pix.immo - identical ScrollingImageStrip component, 3:2 aspect ratio images (540×360px), matching typography and spacing
+- **User Management**: Single admin account (admin@piximmo.de) for both pix.immo and pixcapture.app

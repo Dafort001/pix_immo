@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface ScrollingImageStripProps {
   images: Array<{
@@ -21,6 +21,7 @@ export function ScrollingImageStrip({
   height = 360,
 }: ScrollingImageStripProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const getWidth = (aspectRatio: string = "3:2"): number => {
     const ratios: Record<string, number> = {
@@ -45,25 +46,28 @@ export function ScrollingImageStrip({
     }
   };
 
+  const handleMouseEnter = () => {
+    if (clickable && containerRef.current) {
+      containerRef.current.style.animationPlayState = 'paused';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (clickable && containerRef.current) {
+      containerRef.current.style.animationPlayState = 'running';
+    }
+  };
+
   return (
     <div className="relative w-full overflow-hidden bg-white" style={{ height: `${height}px` }}>
       <div
+        ref={containerRef}
         className="flex gap-2"
         style={{
           animation: `scroll-left ${duration}s linear infinite`,
         }}
-        onMouseEnter={() => {
-          if (clickable) {
-            const element = document.querySelector('.scrolling-strip') as HTMLElement;
-            if (element) element.style.animationPlayState = 'paused';
-          }
-        }}
-        onMouseLeave={() => {
-          if (clickable) {
-            const element = document.querySelector('.scrolling-strip') as HTMLElement;
-            if (element) element.style.animationPlayState = 'running';
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         {duplicatedImages.map((image, index) => {
           const imageWidth = getWidth(image.aspectRatio);
