@@ -172,12 +172,10 @@ export default function AdminInternalBooking() {
 
   const bookingMutation = useMutation({
     mutationFn: async (data: BookingFormData & { serviceSelections: Record<string, number>; totalNetPrice: number; vatAmount: number; grossAmount: number }) => {
-      const payload = {
+      return await apiRequest('POST', '/api/bookings', {
         ...data,
         agbAccepted: true, // Admin bookings automatically accept AGB
-      };
-      console.log('[DEBUG] Booking payload:', JSON.stringify(payload, null, 2));
-      return await apiRequest('POST', '/api/bookings', payload);
+      });
     },
     onSuccess: () => {
       toast({
