@@ -1079,6 +1079,23 @@ function registerBookingRoutes(app: Express) {
         serviceSelections,
       });
 
+      // Send booking confirmation SMS if phone number is provided
+      if (bookingData.brokerPhone) {
+        try {
+          const { notifyBookingConfirmation } = await import('./notifications');
+          await notifyBookingConfirmation({
+            phone: bookingData.brokerPhone,
+            customerName: bookingData.customerName || 'Kunde',
+            appointmentDate: bookingData.appointmentDate,
+            appointmentTime: bookingData.appointmentTime,
+            propertyAddress: bookingData.propertyAddress || 'Objektadresse',
+          });
+        } catch (smsError) {
+          // Log SMS error but don't fail the booking
+          console.error("Failed to send booking confirmation SMS:", smsError);
+        }
+      }
+
       res.status(201).json(result);
     } catch (error: any) {
       console.error("Error creating booking:", error);
@@ -1155,8 +1172,28 @@ function registerBookingRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid status" });
       }
 
+      // Get booking details before update for SMS notification
+      const bookingBefore = await storage.getBooking(id);
+      
       await storage.updateBookingStatus(id, status);
       const updatedBooking = await storage.getBooking(id);
+      
+      // Send cancellation SMS if status changed to cancelled and phone is available
+      if (status === 'cancelled' && bookingBefore && bookingBefore.brokerPhone) {
+        try {
+          const { notifyAppointmentCancellation } = await import('./notifications');
+          await notifyAppointmentCancellation({
+            phone: bookingBefore.brokerPhone,
+            customerName: bookingBefore.customerName || 'Kunde',
+            appointmentDate: bookingBefore.appointmentDate,
+            appointmentTime: bookingBefore.appointmentTime,
+            reason: req.body.reason || undefined,
+          });
+        } catch (smsError) {
+          // Log SMS error but don't fail the status update
+          console.error("Failed to send cancellation SMS:", smsError);
+        }
+      }
       
       res.json(updatedBooking);
     } catch (error) {

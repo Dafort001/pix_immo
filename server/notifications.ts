@@ -62,7 +62,7 @@ export async function sendEmail(params: {
 
 /**
  * Send SMS notification to producer
- * In production, this would use Twilio or similar SMS service
+ * Production implementation using Twilio
  */
 export async function sendSMS(params: {
   to: string;
@@ -75,24 +75,44 @@ export async function sendSMS(params: {
     type: 'sms',
     recipient: params.to,
     message: params.message,
-    status: 'sent', // Stub: mark as sent immediately
-    sentAt: Date.now(),
+    status: 'pending',
   };
   
   notifications.set(notificationId, notification);
   
-  console.log(`📱 SMS notification sent to ${params.to}: ${params.message}`);
-  
-  // TODO: In production, use actual SMS service
-  // Example:
-  // const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
-  // await client.messages.create({
-  //   from: process.env.TWILIO_PHONE_NUMBER,
-  //   to: params.to,
-  //   body: params.message,
-  // });
-  
-  return { ok: true, id: notificationId };
+  try {
+    // Check if Twilio credentials are configured
+    if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_PHONE_NUMBER) {
+      console.log(`📱 [DEV] SMS notification to ${params.to}: ${params.message}`);
+      notification.status = 'sent';
+      notification.sentAt = Date.now();
+      return { ok: true, id: notificationId };
+    }
+
+    // Use Twilio to send actual SMS (ESM-compatible dynamic import)
+    const { default: twilio } = await import('twilio');
+    const client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    
+    await client.messages.create({
+      from: process.env.TWILIO_PHONE_NUMBER,
+      to: params.to,
+      body: params.message,
+    });
+    
+    notification.status = 'sent';
+    notification.sentAt = Date.now();
+    
+    console.log(`📱 SMS sent via Twilio to ${params.to}`);
+    
+    return { ok: true, id: notificationId };
+  } catch (error) {
+    notification.status = 'failed';
+    notification.error = error instanceof Error ? error.message : 'Unknown error';
+    
+    console.error(`❌ Failed to send SMS to ${params.to}:`, error);
+    
+    return { ok: false, error: notification.error };
+  }
 }
 
 /**
@@ -179,4 +199,73 @@ export function getNotification(id: string): Notification | undefined {
  */
 export function getAllNotifications(): Notification[] {
   return Array.from(notifications.values());
+}
+
+/**
+ * Send booking confirmation SMS
+ */
+export async function notifyBookingConfirmation(params: {
+  phone: string;
+  customerName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  propertyAddress: string;
+}): Promise<void> {
+  const formattedDate = new Date(params.appointmentDate).toLocaleDateString('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  await sendSMS({
+    to: params.phone,
+    message: `PIX.IMMO: Buchung bestätigt! ${formattedDate} um ${params.appointmentTime} Uhr - ${params.propertyAddress}. Wir freuen uns auf Sie!`,
+  });
+}
+
+/**
+ * Send appointment reminder SMS (24h before)
+ */
+export async function notifyAppointmentReminder(params: {
+  phone: string;
+  customerName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  propertyAddress: string;
+}): Promise<void> {
+  const formattedDate = new Date(params.appointmentDate).toLocaleDateString('de-DE', {
+    weekday: 'long',
+    day: '2-digit',
+    month: '2-digit',
+  });
+
+  await sendSMS({
+    to: params.phone,
+    message: `PIX.IMMO Erinnerung: Morgen ${formattedDate} um ${params.appointmentTime} Uhr - ${params.propertyAddress}. Bei Fragen: info@pix.immo`,
+  });
+}
+
+/**
+ * Send appointment cancellation SMS
+ */
+export async function notifyAppointmentCancellation(params: {
+  phone: string;
+  customerName: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  reason?: string;
+}): Promise<void> {
+  const formattedDate = new Date(params.appointmentDate).toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const reasonText = params.reason ? ` Grund: ${params.reason}` : '';
+
+  await sendSMS({
+    to: params.phone,
+    message: `PIX.IMMO: Termin am ${formattedDate} um ${params.appointmentTime} Uhr wurde storniert.${reasonText} Bei Fragen: info@pix.immo`,
+  });
 }
