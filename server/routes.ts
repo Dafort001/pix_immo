@@ -1070,6 +1070,8 @@ function registerBookingRoutes(app: Express) {
     try {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
 
+      console.log('[DEBUG] Booking request body:', JSON.stringify(req.body, null, 2));
+
       const userId = req.user.id;
       const { serviceSelections, agbAccepted, ...bookingData } = req.body;
 
