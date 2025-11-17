@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { Settings, Gift, GiftIcon, Eye } from 'lucide-react';
+import { Settings, Gift, GiftIcon, Eye, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,6 +66,7 @@ export default function AdminJobs() {
   const [showPackageDialog, setShowPackageDialog] = useState(false);
   const [showKulanzDialog, setShowKulanzDialog] = useState(false);
   const [showFilesDialog, setShowFilesDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedFileId, setSelectedFileId] = useState<number | null>(null);
   
   // Package settings form
@@ -141,6 +143,27 @@ export default function AdminJobs() {
     },
   });
 
+  const deleteJobMutation = useMutation({
+    mutationFn: async (jobId: number) => {
+      return await apiRequest('DELETE', `/api/admin/jobs/${jobId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/jobs/all'] });
+      setShowDeleteDialog(false);
+      toast({ 
+        title: "Job gelöscht",
+        description: "Job und alle zugehörigen Daten wurden entfernt"
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Fehler",
+        description: error.message || "Job konnte nicht gelöscht werden",
+        variant: "destructive"
+      });
+    },
+  });
+
   const handleOpenPackageDialog = (job: Job) => {
     setSelectedJobId(job.id);
     setPackageForm({
@@ -159,6 +182,16 @@ export default function AdminJobs() {
   const handleOpenFilesDialog = (job: Job) => {
     setSelectedJobId(job.id);
     setShowFilesDialog(true);
+  };
+
+  const handleOpenDeleteDialog = (job: Job) => {
+    setSelectedJobId(job.id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!selectedJobId) return;
+    deleteJobMutation.mutate(selectedJobId);
   };
 
   const handleSavePackage = () => {
@@ -275,6 +308,14 @@ export default function AdminJobs() {
                                 data-testid={`button-files-${job.id}`}
                               >
                                 <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleOpenDeleteDialog(job)}
+                                data-testid={`button-delete-${job.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
                               </Button>
                             </div>
                           </TableCell>
@@ -452,6 +493,37 @@ export default function AdminJobs() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Job wirklich löschen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Diese Aktion kann nicht rückgängig gemacht werden. Der Job{" "}
+              <span className="font-semibold">{jobs.find(j => j.id === selectedJobId)?.displayId}</span>
+              {" "}und alle zugehörigen Daten werden permanent gelöscht:
+              <ul className="list-disc list-inside mt-2 space-y-1">
+                <li>Alle Shoots (Fotosessions)</li>
+                <li>Alle hochgeladenen Bilder und Stacks</li>
+                <li>Exposé-Texte</li>
+                <li>Upload-Sitzungen</li>
+              </ul>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Abbrechen</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete}
+              disabled={deleteJobMutation.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {deleteJobMutation.isPending ? "Löschen..." : "Job löschen"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AdminLayout>
   );
 }
