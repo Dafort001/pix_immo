@@ -127,14 +127,26 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
 
     if (currentLat && currentLng && currentDate && currentTime) {
       const dateTime = new Date(`${currentDate}T${currentTime}`);
+      
+      if (isNaN(dateTime.getTime())) {
+        setSunInfo(null);
+        return;
+      }
+      
       const position = calculateSunPosition(currentLat, currentLng, dateTime);
       setSunInfo(formatSunPosition(position));
+    } else {
+      setSunInfo(null);
     }
   };
 
   const createJobMutation = useMutation({
     mutationFn: async (data: PixJobFormData) => {
       const appointmentTimestamp = new Date(`${data.appointmentDate}T${data.appointmentTime}`).getTime();
+      
+      if (isNaN(appointmentTimestamp)) {
+        throw new Error('Ungültiges Datum oder Uhrzeit für Termin');
+      }
       
       const payload: CreateJobInput = {
         customerName: data.customerName,
