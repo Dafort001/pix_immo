@@ -425,6 +425,68 @@ function registerMediaLibraryRoutes(app: Express) {
       res.status(500).json({ error: "Failed to upload images" });
     }
   });
+
+  // POST /api/media-library/:id/upload - Replace existing image (admin auth required)
+  app.post("/api/media-library/:id/upload", uploadLimiter, validateUuidParam("id"), upload.single("file"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const { id } = req.params;
+      const file = req.file as Express.Multer.File | undefined;
+
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Validate file type (images only)
+      if (!file.mimetype.startsWith('image/')) {
+        return res.status(400).json({ error: "Only image files are allowed" });
+      }
+
+      // Get existing image
+      const existingImage = await storage.getPublicImage(id);
+      if (!existingImage) {
+        return res.status(404).json({ error: "Image not found" });
+      }
+
+      // Import uploadFile from objectStorage
+      const { uploadFile } = await import("./objectStorage");
+
+      // Generate new filename (keep same imageKey, update timestamp)
+      const timestamp = Date.now();
+      const randomStr = randomBytes(8).toString('hex');
+      const ext = file.originalname.split('.').pop() || 'jpg';
+      const filename = `${existingImage.page}_${timestamp}_${randomStr}.${ext}`;
+      const objectPath = `media-library/${existingImage.page}/${filename}`;
+
+      // Upload to Object Storage
+      const uploadResult = await uploadFile(objectPath, file.buffer, file.mimetype);
+
+      if (!uploadResult.ok) {
+        return res.status(500).json({ error: "Failed to upload image to storage" });
+      }
+
+      // Generate public URL
+      const bucketId = process.env.DEFAULT_OBJECT_STORAGE_BUCKET_ID || '';
+      const publicUrl = `https://storage.googleapis.com/${bucketId}/${objectPath}`;
+
+      // Update database with new URL
+      const updatedImage = await storage.updatePublicImage(id, {
+        url: publicUrl,
+        updatedBy: req.user.id,
+      });
+
+      if (!updatedImage) {
+        return res.status(500).json({ error: "Failed to update image record" });
+      }
+
+      res.json(updatedImage);
+    } catch (error) {
+      console.error("Error replacing image:", error);
+      res.status(500).json({ error: "Failed to replace image" });
+    }
+  });
 }
 
 // Register Invoice Routes

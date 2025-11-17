@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { Plus, Edit2, Eye, Image as ImageIcon } from 'lucide-react';
+import { Plus, Edit2, Eye, Image as ImageIcon, Trash2, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -102,6 +102,53 @@ export default function AdminMediaLibrary() {
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest('DELETE', `/api/media-library/${id}`, null);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/media-library'] });
+      toast({ title: "Bild erfolgreich gelöscht" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Fehler beim Löschen", 
+        description: error.message || "Bild konnte nicht gelöscht werden",
+        variant: "destructive"
+      });
+    },
+  });
+
+  const replaceMutation = useMutation({
+    mutationFn: async ({ id, file }: { id: string; file: File }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch(`/api/media-library/${id}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Upload fehlgeschlagen');
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/media-library'] });
+      toast({ title: "Bild erfolgreich ersetzt" });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Fehler beim Ersetzen", 
+        description: error.message || "Bild konnte nicht ersetzt werden",
+        variant: "destructive"
+      });
+    },
+  });
+
   if (authLoading) return null;
 
   const handleEditImage = (image: PublicImage) => {
@@ -134,6 +181,25 @@ export default function AdminMediaLibrary() {
       return;
     }
     uploadMutation.mutate(uploadFiles);
+  };
+
+  const handleDeleteImage = (image: PublicImage) => {
+    if (confirm(`Möchtest du das Bild "${image.alt}" wirklich löschen?`)) {
+      deleteMutation.mutate(image.id);
+    }
+  };
+
+  const handleReplaceImage = (image: PublicImage) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        replaceMutation.mutate({ id: image.id, file });
+      }
+    };
+    input.click();
   };
 
   const getPageBadge = (page: string) => {
@@ -226,6 +292,7 @@ export default function AdminMediaLibrary() {
                           className="bg-white/90 hover:bg-white"
                           onClick={() => handleEditImage(image)}
                           data-testid={`button-edit-${image.id}`}
+                          title="Metadaten bearbeiten"
                         >
                           <Edit2 className="h-4 w-4" />
                         </Button>
@@ -233,9 +300,21 @@ export default function AdminMediaLibrary() {
                           size="icon"
                           variant="secondary"
                           className="bg-white/90 hover:bg-white"
-                          data-testid={`button-view-${image.id}`}
+                          onClick={() => handleReplaceImage(image)}
+                          data-testid={`button-replace-${image.id}`}
+                          title="Bild ersetzen"
                         >
-                          <Eye className="h-4 w-4" />
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="bg-red-500/90 hover:bg-red-600"
+                          onClick={() => handleDeleteImage(image)}
+                          data-testid={`button-delete-${image.id}`}
+                          title="Bild löschen"
+                        >
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
 
