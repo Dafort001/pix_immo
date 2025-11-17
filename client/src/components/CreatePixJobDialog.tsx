@@ -70,7 +70,7 @@ export function CreatePixJobDialog({ open, onOpenChange }: CreatePixJobDialogPro
     enabled: open,
   });
 
-  const photographyServices = services.filter(s => s.category === 'photography' && s.isActive === 'true');
+  const photographyServices = services.filter(s => s.category === 'photography' && s.isActive === true);
   
   const form = useForm<PixJobFormData>({
     resolver: zodResolver(pixJobFormSchema),
