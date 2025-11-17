@@ -2472,7 +2472,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const demoUser = req.user; // Use authenticated admin user
       
-      const { localId, customerName, propertyName, propertyAddress, deadlineAt, deliverGallery, deliverAlttext, deliverExpose, selectedUserId, selectedUserInitials, selectedUserCode } = req.body;
+      const { 
+        localId, customerName, propertyName, propertyAddress, 
+        addressLat, addressLng, addressPlaceId, addressFormatted,
+        propertyType, propertyArea,
+        appointmentDate, appointmentTime,
+        serviceId, droneIncluded,
+        brokerName, brokerPhone, brokerPresent,
+        contactPersonName, contactPersonPhone,
+        deadlineAt, deliverGallery, deliverAlttext, deliverExpose, 
+        selectedUserId, selectedUserInitials, selectedUserCode 
+      } = req.body;
       
       // Deduplication: Check if job with this localId already exists
       if (localId) {
@@ -2493,6 +2503,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerName,
         propertyName,
         propertyAddress,
+        addressLat,
+        addressLng,
+        addressPlaceId,
+        addressFormatted,
+        propertyType,
+        propertyArea,
+        appointmentDate,
+        appointmentTime,
+        serviceId,
+        droneIncluded,
+        brokerName,
+        brokerPhone,
+        brokerPresent,
+        contactPersonName,
+        contactPersonPhone,
         deadlineAt,
         deliverGallery,
         deliverAlttext,
