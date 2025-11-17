@@ -220,7 +220,7 @@ export async function notifyBookingConfirmation(params: {
 
   await sendSMS({
     to: params.phone,
-    message: `PIX.IMMO: Buchung bestätigt! ${formattedDate} um ${params.appointmentTime} Uhr - ${params.propertyAddress}. Wir freuen uns auf Sie!`,
+    message: `PIX.IMMO: Buchung bestätigt! ${formattedDate} um ${params.appointmentTime} Uhr - ${params.propertyAddress}. Ich freue mich Sie dort zu treffen`,
   });
 }
 
