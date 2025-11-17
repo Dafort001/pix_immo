@@ -1,6 +1,7 @@
 import { db } from "./db";
 import { services } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { eq } from "drizzle-orm";
 
 const serviceData = [
   // Photography
@@ -38,31 +39,68 @@ const serviceData = [
   
   // Travel
   { serviceCode: "AH", category: "travel", name: "Hamburg", description: "bis 30 km inklusive", netPrice: 0, notes: "Grundpreis enthalten" },
+  { serviceCode: "AB", category: "travel", name: "Berlin", description: "innerhalb Berliner S-Bahn-Rings inklusive", netPrice: 0, notes: "Grundpreis enthalten" },
   { serviceCode: "AEX", category: "travel", name: "Erweiterte Anfahrt", description: "> 30 km", netPrice: null, priceNote: "€0.80/km", notes: "Hin- und Rückweg" },
   { serviceCode: "ARE", category: "travel", name: "Reise/Übernachtung", description: "nach Absprache", netPrice: null, priceNote: "auf Anfrage", notes: "individuell vereinbar" },
 ];
 
 async function seedServices() {
-  console.log("🌱 Seeding services...");
+  console.log("🌱 Seeding services from internal price list...");
   
   const timestamp = Date.now();
+  let inserted = 0;
+  let updated = 0;
   
   for (const service of serviceData) {
-    await db.insert(services).values({
-      id: randomUUID(),
-      serviceCode: service.serviceCode,
-      category: service.category,
-      name: service.name,
-      description: service.description || null,
-      netPrice: service.netPrice || null,
-      priceNote: service.priceNote || null,
-      notes: service.notes || null,
-      isActive: "true",
-      createdAt: timestamp,
-    });
+    // Check if service already exists
+    const existing = await db
+      .select()
+      .from(services)
+      .where(eq(services.serviceCode, service.serviceCode))
+      .limit(1);
+
+    if (existing.length > 0) {
+      // Update existing service
+      await db
+        .update(services)
+        .set({
+          category: service.category,
+          name: service.name,
+          description: service.description || null,
+          netPrice: service.netPrice || null,
+          priceNote: service.priceNote || null,
+          notes: service.notes || null,
+          isActive: "true",
+        })
+        .where(eq(services.serviceCode, service.serviceCode));
+      
+      updated++;
+      console.log(`✏️  Updated: ${service.serviceCode} - ${service.name}`);
+    } else {
+      // Insert new service
+      await db.insert(services).values({
+        id: randomUUID(),
+        serviceCode: service.serviceCode,
+        category: service.category,
+        name: service.name,
+        description: service.description || null,
+        netPrice: service.netPrice || null,
+        priceNote: service.priceNote || null,
+        notes: service.notes || null,
+        isActive: "true",
+        createdAt: timestamp,
+      });
+      
+      inserted++;
+      console.log(`✅ Inserted: ${service.serviceCode} - ${service.name}`);
+    }
   }
   
-  console.log(`✅ Seeded ${serviceData.length} services`);
+  console.log("\n📊 Import Summary:");
+  console.log(`   ✅ Inserted: ${inserted}`);
+  console.log(`   ✏️  Updated: ${updated}`);
+  console.log(`   📦 Total: ${serviceData.length}`);
+  console.log("\n🎉 Services import complete!");
   process.exit(0);
 }
 
