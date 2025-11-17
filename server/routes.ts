@@ -1219,6 +1219,42 @@ function registerGalleryPackageRoutes(app: Express) {
   app.get("/api/jobs/:id/gallery", validateUuidParam("id"), galleryHandler);
   app.get("/api/jobs/:id/images", validateUuidParam("id"), galleryHandler);
   
+  // GET /api/jobs/:id/shoots-gallery - Get job shoots gallery (for pixcapture.app jobs)
+  app.get("/api/jobs/:id/shoots-gallery", validateUuidParam("id"), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      
+      const { id } = req.params;
+      const job = await storage.getJob(id);
+      
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+      
+      // Check ownership
+      if (job.userId !== req.user.id && req.user.role !== "admin") {
+        return res.status(403).json({ error: "Forbidden" });
+      }
+      
+      // Get shoots with images
+      const shoots = await storage.getJobShootsGallery(id);
+      
+      res.json({
+        job: {
+          id: job.id,
+          jobNumber: job.jobNumber,
+          displayId: job.displayId,
+          propertyName: job.propertyName,
+          customerName: job.customerName,
+        },
+        shoots,
+      });
+    } catch (error) {
+      console.error("Error fetching job shoots gallery:", error);
+      res.status(500).json({ error: "Failed to fetch shoots gallery" });
+    }
+  });
+  
   // POST /api/jobs/:id/select-image - Toggle image selection
   app.post("/api/jobs/:id/select-image", validateUuidParam("id"), async (req: Request, res: Response) => {
     try {
