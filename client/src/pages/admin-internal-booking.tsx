@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
@@ -20,7 +21,6 @@ import { AdminLayout } from '@/components/AdminLayout';
 import { AdminPageHeader } from '@/components/AdminPageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient, getQueryFn } from '@/lib/queryClient';
-import { GoogleMapsAddressInput } from '@/components/GoogleMapsAddressInput';
 import type { Service } from '@shared/schema';
 
 type User = {
@@ -387,18 +387,11 @@ export default function AdminInternalBooking() {
                         <FormItem>
                           <FormLabel>Objektadresse</FormLabel>
                           <FormControl>
-                            <GoogleMapsAddressInput
-                              value={field.value}
-                              onChange={(value, details) => {
-                                field.onChange(value);
-                                if (details) {
-                                  form.setValue('addressLat', details.lat);
-                                  form.setValue('addressLng', details.lng);
-                                  form.setValue('addressPlaceId', details.placeId);
-                                  form.setValue('addressFormatted', details.formatted);
-                                }
-                              }}
-                              placeholder="Adresse eingeben..."
+                            <Textarea 
+                              {...field} 
+                              placeholder="Straße und Hausnummer, PLZ Ort&#10;z.B. Große Elbstraße 133, 22767 Hamburg"
+                              rows={2}
+                              data-testid="input-property-address"
                             />
                           </FormControl>
                           <FormMessage />
