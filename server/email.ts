@@ -1,6 +1,23 @@
 import { Resend } from "resend";
 import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
+/**
+ * Mask sensitive token in URL for logging (security)
+ * Example: https://example.com/reset?token=abc123 -> https://example.com/reset?token=***MASKED***
+ */
+function maskTokenInUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.searchParams.has('token')) {
+      urlObj.searchParams.set('token', '***MASKED***');
+    }
+    return urlObj.toString();
+  } catch {
+    // If URL parsing fails, return masked placeholder
+    return '[URL with sensitive token - masked for security]';
+  }
+}
+
 // Initialize Resend client for invoices
 const resend = process.env.RESEND_API_KEY 
   ? new Resend(process.env.RESEND_API_KEY)
@@ -373,7 +390,7 @@ export async function sendVerificationEmail(to: string, verificationLink: string
   const body = generateVerificationEmailBody(verificationLink);
 
   if (!isSesConfigured || !sesClient) {
-    // DRY-RUN mode: Log to console
+    // DRY-RUN mode: Log to console (with masked token for security)
     console.log("\n" + "=".repeat(60));
     console.log("[EMAIL DRY-RUN] SES not configured - Verification email not sent");
     console.log("=".repeat(60));
@@ -381,7 +398,7 @@ export async function sendVerificationEmail(to: string, verificationLink: string
     console.log(`From: ${AWS_SES_FROM_ADDRESS}`);
     console.log(`Subject: ${subject}`);
     console.log("-".repeat(60));
-    console.log(body);
+    console.log(`Verification Link: ${maskTokenInUrl(verificationLink)}`);
     console.log("=".repeat(60) + "\n");
     return;
   }
@@ -444,7 +461,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
   const body = generatePasswordResetEmailBody(resetLink);
 
   if (!isSesConfigured || !sesClient) {
-    // DRY-RUN mode: Log to console
+    // DRY-RUN mode: Log to console (with masked token for security)
     console.log("\n" + "=".repeat(60));
     console.log("[EMAIL DRY-RUN] SES not configured - Password reset email not sent");
     console.log("=".repeat(60));
@@ -452,7 +469,7 @@ export async function sendPasswordResetEmail(to: string, resetLink: string): Pro
     console.log(`From: ${AWS_SES_FROM_ADDRESS}`);
     console.log(`Subject: ${subject}`);
     console.log("-".repeat(60));
-    console.log(body);
+    console.log(`Reset Link: ${maskTokenInUrl(resetLink)}`);
     console.log("=".repeat(60) + "\n");
     return;
   }

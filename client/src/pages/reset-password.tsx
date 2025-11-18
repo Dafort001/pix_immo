@@ -22,17 +22,32 @@ const resetPasswordSchema = z.object({
 
 type ResetPasswordData = z.infer<typeof resetPasswordSchema>;
 
+// UUID v4 validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+function isValidToken(token: string | null): boolean {
+  return token !== null && UUID_REGEX.test(token);
+}
+
 export default function ResetPassword() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const [token, setToken] = useState<string | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  // Extract token from URL on mount
+  // Extract and validate token from URL on mount
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const tokenParam = params.get("token");
-    setToken(tokenParam);
+    
+    if (!tokenParam) {
+      setTokenError("missing");
+    } else if (!isValidToken(tokenParam)) {
+      setTokenError("invalid");
+    } else {
+      setToken(tokenParam);
+    }
   }, []);
 
   const form = useForm<ResetPasswordData>({
@@ -85,8 +100,23 @@ export default function ResetPassword() {
     }
   }, [resetSuccess, setLocation]);
 
-  // No token state
-  if (!token) {
+  // Token error states (missing or invalid format)
+  if (tokenError) {
+    const errorMessages = {
+      missing: {
+        title: "Ungültiger Link",
+        description: "Kein Reset-Token gefunden",
+        message: "Bitte verwende den vollständigen Link aus deiner E-Mail.",
+      },
+      invalid: {
+        title: "Ungültiger Token",
+        description: "Der Reset-Token hat ein ungültiges Format",
+        message: "Bitte fordere einen neuen Reset-Link an.",
+      },
+    };
+
+    const error = errorMessages[tokenError as keyof typeof errorMessages] || errorMessages.invalid;
+
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-primary/5 via-background to-accent/5 px-4">
         <div className="w-full max-w-md">
@@ -100,15 +130,15 @@ export default function ResetPassword() {
 
           <Card>
             <CardHeader className="text-center">
-              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-muted">
-                <XCircle className="h-8 w-8 text-muted-foreground" />
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
+                <XCircle className="h-8 w-8 text-destructive" />
               </div>
-              <CardTitle>Ungültiger Link</CardTitle>
-              <CardDescription>Kein Reset-Token gefunden</CardDescription>
+              <CardTitle>{error.title}</CardTitle>
+              <CardDescription>{error.description}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm text-muted-foreground text-center">
-                Bitte verwende den vollständigen Link aus deiner E-Mail.
+                {error.message}
               </p>
               <Link href="/request-password-reset">
                 <Button className="w-full" data-testid="button-request-reset">

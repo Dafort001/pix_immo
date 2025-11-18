@@ -63,6 +63,8 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   emailVerifiedAt: bigint("email_verified_at", { mode: "number" }), // NULL = not verified, timestamp = verified
   requiresPasswordMigration: boolean("requires_password_migration").notNull().default(false), // Legacy OTP-only users
+  isSuspended: boolean("is_suspended").notNull().default(false), // Account suspended by admin
+  isDeleted: boolean("is_deleted").notNull().default(false), // Soft delete flag
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 

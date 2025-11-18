@@ -9,6 +9,7 @@ export interface IStorage {
   
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(data: {
     email: string;
@@ -21,12 +22,14 @@ export interface IStorage {
     emailVerifiedAt?: number | null;
     requiresPasswordMigration?: boolean;
   }): Promise<User>;
+  updateUser(userId: string, data: Partial<User>): Promise<void>;
   
   // Session operations
   getSession(id: string): Promise<Session | undefined>;
   createSession(userId: string, expiresAt: number): Promise<Session>;
   deleteSession(id: string): Promise<void>;
   deleteUserSessions(userId: string): Promise<void>;
+  invalidateAllUserSessions(userId: string): Promise<void>;
   
   // Refresh token operations
   getRefreshToken(token: string): Promise<RefreshToken | undefined>;
@@ -775,6 +778,15 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async updateUser(userId: string, data: Partial<User>): Promise<void> {
+    await db.update(users).set(data).where(eq(users.id, userId));
+  }
+
   async getSession(id: string): Promise<Session | undefined> {
     const [session] = await db.select().from(sessions).where(eq(sessions.id, id));
     
@@ -805,6 +817,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteUserSessions(userId: string): Promise<void> {
+    await db.delete(sessions).where(eq(sessions.userId, userId));
+  }
+
+  async invalidateAllUserSessions(userId: string): Promise<void> {
     await db.delete(sessions).where(eq(sessions.userId, userId));
   }
 

@@ -12,7 +12,12 @@ import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFro
 import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl, getObject, generatePresignedDownloadUrl } from "./r2-client";
 import { runAITool, getToolById, getAllTools } from "./replicate-adapter";
 import { z } from "zod";
-import { randomBytes, randomUUID } from "crypto";
+import { randomBytes, randomUUID, createHash } from "crypto";
+
+// Utility: Hash token with SHA-256 for secure storage
+function hashToken(token: string): string {
+  return createHash("sha256").update(token).digest("hex");
+}
 import { upload, processUploadedFiles } from "./uploadHandler";
 import { generateHandoffPackage, generateHandoffToken } from "./handoffPackage";
 import archiver from "archiver";
@@ -138,6 +143,22 @@ const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.NODE_ENV === "production" ? 5 : 100, // 5 in prod, 100 in dev for testing
   message: { error: "Too many login attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetRequestLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === "production" ? 3 : 100, // 3 requests per 15min in prod
+  message: { error: "Zu viele Passwort-Reset-Anfragen. Bitte versuche es später erneut." },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === "production" ? 5 : 100, // 5 attempts per 15min in prod
+  message: { error: "Zu viele Versuche. Bitte fordere einen neuen Reset-Link an." },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -2511,6 +2532,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
+      // Check if account is suspended
+      if (user.isSuspended) {
+        return res.status(403).json({ 
+          error: "Dein Account wurde gesperrt. Bitte kontaktiere den Support.",
+        });
+      }
+      
+      // Check if account is deleted
+      if (user.isDeleted) {
+        return res.status(403).json({ 
+          error: "Dieser Account wurde gelöscht.",
+        });
+      }
+      
       // Verify password
       const isPasswordValid = await verifyPassword(password, user.hashedPassword);
       
@@ -2549,7 +2584,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
   });
 
-  app.post("/api/auth/request-password-reset", authLimiter, validateBody(requestPasswordResetSchema), async (req: Request, res: Response) => {
+  app.post("/api/auth/request-password-reset", passwordResetRequestLimiter, validateBody(requestPasswordResetSchema), async (req: Request, res: Response) => {
     try {
       const { email } = req.body;
       
@@ -2567,17 +2602,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Generate reset token (1 hour expiry)
-      const resetToken = randomUUID();
+      const resetToken = randomUUID(); // Plaintext token for email
+      const hashedResetToken = hashToken(resetToken); // Hashed for storage
       const expiresAt = Date.now() + (1000 * 60 * 60); // 1 hour
       
       await storage.createPasswordResetToken(
         randomUUID(),
         user.id,
-        resetToken,
+        hashedResetToken, // Store hashed token
         expiresAt
       );
       
-      // Send reset email
+      // Send reset email with plaintext token
       const baseUrl = process.env.FRONTEND_URL || "http://localhost:5000";
       const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
       
@@ -2600,12 +2636,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     newPassword: z.string().min(8, "Das Passwort muss mindestens 8 Zeichen lang sein"),
   });
 
-  app.post("/api/auth/reset-password", authLimiter, validateBody(resetPasswordSchema), async (req: Request, res: Response) => {
+  app.post("/api/auth/reset-password", passwordResetLimiter, validateBody(resetPasswordSchema), async (req: Request, res: Response) => {
     try {
       const { token, newPassword } = req.body;
       
-      // Find reset token
-      const resetToken = await storage.getPasswordResetToken(token);
+      // Hash the incoming token to compare with stored hash
+      const hashedToken = hashToken(token);
+      
+      // Find reset token by hashed value
+      const resetToken = await storage.getPasswordResetToken(hashedToken);
       
       if (!resetToken) {
         return res.status(400).json({ error: "Ungültiger oder abgelaufener Reset-Link" });
@@ -2614,7 +2653,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Check if token is expired
       if (resetToken.expiresAt < Date.now()) {
         // Delete expired token
-        await storage.deletePasswordResetToken(token);
+        await storage.deletePasswordResetToken(hashedToken);
         return res.status(400).json({ error: "Dieser Reset-Link ist abgelaufen. Bitte fordere einen neuen an." });
       }
       
@@ -2633,8 +2672,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         hashedPassword,
       });
       
-      // Delete used token
-      await storage.deletePasswordResetToken(token);
+      // Invalidate all existing sessions (one-time use + security)
+      await storage.invalidateAllUserSessions(user.id);
+      
+      // Delete used token (one-time use)
+      await storage.deletePasswordResetToken(hashedToken);
       
       console.log(`[PASSWORD RESET] Password reset successful for ${user.email}`);
       
