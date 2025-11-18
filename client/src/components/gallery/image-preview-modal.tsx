@@ -1,4 +1,4 @@
-import { X, Download, ChevronLeft, ChevronRight, Check, Info, Image as ImageIcon, ZoomIn, ZoomOut, Maximize, Minimize, StickyNote, Play, Pause, Volume2, VolumeX } from 'lucide-react';
+import { Download, ChevronLeft, ChevronRight, Check, Info, Image as ImageIcon, ZoomIn, ZoomOut, Maximize, Minimize, StickyNote, Play, Pause, Volume2, VolumeX } from 'lucide-react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -306,13 +306,6 @@ export function ImagePreviewModal({
                   <Info className="w-4 h-4" />
                 </button>
               )}
-              
-              <button 
-                onClick={onClose}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
             </div>
           </div>
           
