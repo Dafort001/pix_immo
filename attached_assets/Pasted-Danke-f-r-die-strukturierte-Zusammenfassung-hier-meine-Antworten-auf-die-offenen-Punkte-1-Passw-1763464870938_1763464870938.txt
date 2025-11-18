@@ -1,0 +1,88 @@
+Danke für die strukturierte Zusammenfassung, hier meine Antworten auf die offenen Punkte:
+
+1️⃣ Passwort-Reset-Flow
+
+Ja, der vorgeschlagene Flow ist korrekt:
+
+User klickt „Passwort vergessen“
+
+gibt seine E-Mail ein
+
+bekommt ein OTP per E-Mail
+
+gibt OTP + neues Passwort ein
+
+System setzt das Passwort zurück und loggt ihn ein
+
+Wichtig: Passwort-Reset nur für existierende Accounts mit dieser E-Mail.
+Wenn es keinen Account gibt → generische „Wenn ein Konto existiert, haben wir Ihnen eine E-Mail geschickt“-Meldung.
+
+2️⃣ E-Mail-Verifizierung
+
+Bitte Option A: Verifizierungs-Link.
+
+In der Mail ist ein eindeutiger Link
+
+Klick auf den Link setzt email_verified = true und loggt den User (optional) ein
+
+Kein extra OTP-Eingabefeld nötig.
+Wenn ihr den Code zusätzlich in die Mail packen wollt, okay – aber für V1 reicht der Link völlig.
+
+3️⃣ Wegwerf-/Relay-Domains
+
+Bitte:
+
+Eine Standardliste anlegen (z. B. Firefox Relay, Apple Hide My Email, 10minutemail & Co.)
+
+Diese Liste so implementieren, dass sie konfigurierbar/erweiterbar ist (z. B. in einer Konstanten oder Config, nicht hart im Code verstreut).
+
+Wichtig ist mir ausdrücklich, dass u. a. geblockt werden:
+
+Firefox Relay / Mozilla Relay
+
+Apple „Hide My Email“
+
+typische Wegwerf-Mailer
+
+Wenn ihr einen ersten Vorschlag für die Liste habt, könnt ihr ihn gerne kurz mitschicken, dann passe ich sie bei Bedarf später an.
+
+4️⃣ Bestehende User (OTP-Only)
+
+Bitte Option A:
+
+Beim nächsten Login müssen diese User ein Passwort setzen (One-Time-Migration).
+
+Ablauf z. B.:
+
+User gibt E-Mail ein
+
+erhält einmalig OTP
+
+nach gültigem OTP muss er ein Passwort setzen
+
+danach gilt nur noch Login mit E-Mail + Passwort
+
+Kein dauerhafter Legacy-OTP-Only-Mode. Ziel ist ein einheitliches System.
+
+5️⃣ Admin-Account (z. B. janjira@pix.immo
+)
+
+Der Admin-Account kann als trusted gelten.
+
+Ihr könnt email_verified = true direkt setzen oder ihn von der Verifizierungspflicht ausnehmen.
+
+Wichtig ist nur: Admin muss zuverlässig ins Admin-Dashboard kommen und darf nicht im Kunden-Dashboard landen.
+
+Zusammenfassung:
+
+Login-Modell wie von euch beschrieben ist freigegeben.
+
+Verifizierung per Link (kein extra OTP-Eingabeschritt nötig).
+
+Wegwerf-/Relay-Domains werden geblockt, Liste von euch initial, später erweiterbar.
+
+Bestehende OTP-User: einmalige Migration → Passwort setzen.
+
+Admin-Account gilt als verifiziert/trusted.
+
+Wenn bei der Umsetzung oder bei Edge-Cases etwas unklar ist, bitte vorher nachfragen, nicht improvisieren.
