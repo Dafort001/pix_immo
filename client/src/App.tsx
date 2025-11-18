@@ -18,7 +18,6 @@ import Dashboard from "@/pages/dashboard";
 import Gallery from "@/pages/gallery";
 import Blog from "@/pages/blog";
 import BlogPost from "@/pages/blog-post";
-import OrderForm from "@/pages/order-form";
 import Imprint from "@/pages/imprint";
 import AGB from "@/pages/agb";
 import Contact from "@/pages/contact";
@@ -108,7 +107,6 @@ function Router() {
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
-      <Route path="/order" component={OrderForm} />
       <Route path="/impressum" component={Imprint} />
       <Route path="/agb" component={AGB} />
       <Route path="/kontakt" component={Contact} />
