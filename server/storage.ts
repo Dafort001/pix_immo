@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, otpCodes, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -30,6 +30,15 @@ export interface IStorage {
   deletePasswordResetToken(token: string): Promise<void>;
   deleteUserPasswordResetTokens(userId: string): Promise<void>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
+  
+  // OTP operations
+  createOtpCode(id: string, email: string, codeHash: string, expiresAt: number): Promise<OtpCode>;
+  getValidOtpCode(email: string, codeHash: string): Promise<OtpCode | undefined>;
+  incrementOtpAttempts(id: string): Promise<void>;
+  markOtpAsUsed(id: string): Promise<void>;
+  getRecentOtpForEmail(email: string, sinceTimestamp: number): Promise<OtpCode | undefined>;
+  deleteExpiredOtpCodes(): Promise<void>;
+  setEmailVerified(userId: string): Promise<void>;
   
   // Order operations
   createOrder(userId: string, orderData: {
@@ -837,6 +846,79 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
     await db.update(users).set({ hashedPassword }).where(eq(users.id, userId));
+  }
+
+  // OTP operations
+  async createOtpCode(id: string, email: string, codeHash: string, expiresAt: number): Promise<OtpCode> {
+    const now = Date.now();
+    const [otpCode] = await db.insert(otpCodes).values({
+      id,
+      email: email.toLowerCase().trim(),
+      codeHash,
+      expiresAt,
+      createdAt: now,
+    }).returning();
+    return otpCode;
+  }
+
+  async getValidOtpCode(email: string, codeHash: string): Promise<OtpCode | undefined> {
+    const now = Date.now();
+    const [otpCode] = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.email, email.toLowerCase().trim()),
+          eq(otpCodes.codeHash, codeHash),
+          sql`${otpCodes.expiresAt} > ${now}`,
+          sql`${otpCodes.usedAt} IS NULL`
+        )
+      )
+      .limit(1);
+    return otpCode;
+  }
+
+  async incrementOtpAttempts(id: string): Promise<void> {
+    await db
+      .update(otpCodes)
+      .set({ attempts: sql`${otpCodes.attempts} + 1` })
+      .where(eq(otpCodes.id, id));
+  }
+
+  async markOtpAsUsed(id: string): Promise<void> {
+    const now = Date.now();
+    await db
+      .update(otpCodes)
+      .set({ usedAt: now })
+      .where(eq(otpCodes.id, id));
+  }
+
+  async getRecentOtpForEmail(email: string, sinceTimestamp: number): Promise<OtpCode | undefined> {
+    const [otpCode] = await db
+      .select()
+      .from(otpCodes)
+      .where(
+        and(
+          eq(otpCodes.email, email.toLowerCase().trim()),
+          sql`${otpCodes.createdAt} >= ${sinceTimestamp}`
+        )
+      )
+      .orderBy(desc(otpCodes.createdAt))
+      .limit(1);
+    return otpCode;
+  }
+
+  async deleteExpiredOtpCodes(): Promise<void> {
+    const now = Date.now();
+    await db.delete(otpCodes).where(sql`${otpCodes.expiresAt} < ${now}`);
+  }
+
+  async setEmailVerified(userId: string): Promise<void> {
+    const now = Date.now();
+    await db
+      .update(users)
+      .set({ emailVerifiedAt: now })
+      .where(eq(users.id, userId));
   }
 
   async createOrder(userId: string, orderData: {
