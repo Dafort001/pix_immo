@@ -396,8 +396,9 @@ export function ImagePreviewModal({
             )}
 
             {/* Bild oder Video - VOLLSTÄNDIG SICHTBAR - VOLLE GRÖSSE */}
-            <div className="flex-1 flex items-center justify-center min-h-0 overflow-auto">
-              {mediaType === 'image' ? (
+            {mediaType === 'image' ? (
+              /* Bild mit Zoom */
+              <div className="flex-1 flex items-center justify-center min-h-0 overflow-auto">
                 <div 
                   className="transition-transform duration-200"
                   style={{
@@ -408,33 +409,32 @@ export function ImagePreviewModal({
                   <img 
                     src={image} 
                     alt={alt || filename}
-                    className="object-contain rounded shadow-lg"
+                    className="rounded shadow-lg"
                     style={{
-                      maxWidth: '90vw',
-                      maxHeight: '80vh',
-                      width: 'auto',
-                      height: 'auto'
+                      display: 'block',
+                      objectFit: 'contain'
                     }}
                   />
                 </div>
-              ) : (
+              </div>
+            ) : (
+              /* Video ohne Zoom - volle Größe */
+              <div className="flex-1 flex items-center justify-center min-h-0 w-full">
                 <video
                   ref={videoRef}
                   src={image}
                   className="rounded shadow-lg"
                   controls
                   style={{
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'contain'
                   }}
                   onTimeUpdate={handleVideoTimeUpdate}
                   onLoadedMetadata={handleVideoLoadedMetadata}
                 />
-              )}
-            </div>
+              </div>
+            )}
 
             {/* Mobile Zoom Controls - nur für Bilder */}
               {mediaType === 'image' && (
