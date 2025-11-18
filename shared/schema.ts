@@ -582,8 +582,8 @@ export const services = pgTable("services", {
 export const bookings = pgTable("bookings", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  region: varchar("region", { length: 3 }).notNull(), // 'HH', 'B', 'EXT'
-  kilometers: bigint("kilometers", { mode: "number" }), // Only for region='EXT'
+  region: varchar("region", { length: 3 }), // DEPRECATED: No longer used (travel up to 40km included)
+  kilometers: bigint("kilometers", { mode: "number" }), // DEPRECATED: No longer used
   contactName: varchar("contact_name", { length: 255 }), // Optional
   contactEmail: varchar("contact_email", { length: 255 }), // Optional
   contactMobile: varchar("contact_mobile", { length: 50 }).notNull(), // Required

@@ -220,7 +220,7 @@ export async function notifyBookingConfirmation(params: {
 
   await sendSMS({
     to: params.phone,
-    message: `PIX.IMMO: Buchung bestätigt! ${formattedDate} um ${params.appointmentTime} Uhr - ${params.propertyAddress}. Ich freue mich Sie dort zu treffen`,
+    message: `Hallo ${params.customerName}, Ihre Buchung ist bei uns eingegangen. Gewünschter Termin: ${formattedDate} um ${params.appointmentTime} Uhr. Wir melden uns, falls es Rückfragen oder Terminänderungen gibt. Viele Grüße, Ihr pix.immo Team`,
   });
 }
 

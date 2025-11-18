@@ -42,8 +42,6 @@ const bookingSchema = z.object({
   propertyType: z.string().optional(),
   preferredDate: z.string().min(1, "Termin erforderlich"),
   preferredTime: z.string().min(1, "Uhrzeit erforderlich"),
-  region: z.enum(["HH", "EXT"]),
-  kilometers: z.number().int().min(0).optional(),
   specialRequirements: z.string().optional(),
 });
 
@@ -96,8 +94,6 @@ export default function AdminInternalBooking() {
       propertyType: '',
       preferredDate: '',
       preferredTime: '',
-      region: 'HH',
-      kilometers: 0,
       specialRequirements: '',
     },
   });
@@ -148,14 +144,6 @@ export default function AdminInternalBooking() {
           netTotal += service.netPrice * quantity;
         }
       }
-    }
-
-    // Add travel costs if region is EXT
-    const region = form.watch('region');
-    const kilometers = form.watch('kilometers') || 0;
-    if (region === 'EXT' && kilometers > 0) {
-      // AEX: €0.80/km (in cents: 80)
-      netTotal += kilometers * 80;
     }
 
     const vatAmount = Math.round(netTotal * 0.19);
@@ -463,49 +451,13 @@ export default function AdminInternalBooking() {
                       />
                     </div>
 
-                    <FormField
-                      control={form.control}
-                      name="region"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Region</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger data-testid="select-region">
-                                <SelectValue />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="HH">Hamburg (bis 30 km)</SelectItem>
-                              <SelectItem value="EXT">Erweiterte Anfahrt (&gt; 30 km)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {form.watch('region') === 'EXT' && (
-                      <FormField
-                        control={form.control}
-                        name="kilometers"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Entfernung (km)</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                type="number"
-                                min="0"
-                                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                                data-testid="input-kilometers"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
+                    <div className="rounded-lg bg-muted p-4 text-sm">
+                      <p className="font-semibold mb-1">ℹ️ Anfahrt</p>
+                      <p className="text-muted-foreground">
+                        Bis 40 km Umkreis um Hamburg sind die Anfahrtskosten im Paketpreis enthalten. 
+                        Bei größeren Entfernungen werden zusätzliche Fahrtkosten individuell abgesprochen.
+                      </p>
+                    </div>
 
                     <FormField
                       control={form.control}
@@ -561,18 +513,6 @@ export default function AdminInternalBooking() {
                         </div>
                       )}
                     </div>
-
-                    {form.watch('region') === 'EXT' && form.watch('kilometers') > 0 && (
-                      <div className="space-y-2">
-                        <Separator />
-                        <div className="flex justify-between text-sm">
-                          <span>Anfahrt ({form.watch('kilometers')} km × €0.80)</span>
-                          <span className="font-medium">
-                            €{((form.watch('kilometers') || 0) * 0.80).toFixed(2)}
-                          </span>
-                        </div>
-                      </div>
-                    )}
 
                     <Separator />
 
