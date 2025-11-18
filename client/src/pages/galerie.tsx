@@ -50,7 +50,23 @@ import {
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
 import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
 
-// Einheitliches Grid-Layout - keine Masonry
+// Helper function for aspect ratio classes (Masonry Layout)
+function getAspectRatioClass(aspectRatio?: string) {
+  switch (aspectRatio) {
+    case '2:3':
+      return 'aspect-[2/3]';
+    case '16:9':
+      return 'aspect-[16/9]';
+    case '9:16':
+      return 'aspect-[9/16]';
+    case '1:1':
+      return 'aspect-square';
+    case '3:2':
+      return 'aspect-[3/2]';
+    default:
+      return 'aspect-[4/3]'; // Default für Landscape
+  }
+}
 
 export default function Galerie() {
   const [, setLocation] = useLocation();
@@ -582,27 +598,28 @@ export default function Galerie() {
               <p className="text-muted-foreground">Keine Bilder gefunden</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div className="columns-1 md:columns-2 lg:columns-3 gap-2 space-y-2">
               {filteredImages.map((image, index) => (
-                <GalleryImageCard
-                  key={image.id}
-                  image={image}
-                  imageIndex={index}
-                  packageLimit={packageLimit}
-                  selected={selectedImages.has(image.id)}
-                  onToggleSelect={() => toggleSelection(image.id)}
-                  onApprove={() => handleApprove([image.id])}
-                  onRequestChange={() => handleRequestChange(image)}
-                  onDownload={() => handleDownload([image.id])}
-                  onKiEdit={() => handleKiEdit(image)}
-                  onVersionCompare={() => {
-                    setCurrentCompareImage(image);
-                    setVersionCompareOpen(true);
-                  }}
-                  onImageClick={() => openLightbox(image)}
-                  isPaidUser={isPaidUser}
-                  onCopyAltText={(text) => copyToClipboard(text)}
-                />
+                <div key={image.id} className="break-inside-avoid mb-2">
+                  <GalleryImageCard
+                    image={image}
+                    imageIndex={index}
+                    packageLimit={packageLimit}
+                    selected={selectedImages.has(image.id)}
+                    onToggleSelect={() => toggleSelection(image.id)}
+                    onApprove={() => handleApprove([image.id])}
+                    onRequestChange={() => handleRequestChange(image)}
+                    onDownload={() => handleDownload([image.id])}
+                    onKiEdit={() => handleKiEdit(image)}
+                    onVersionCompare={() => {
+                      setCurrentCompareImage(image);
+                      setVersionCompareOpen(true);
+                    }}
+                    onImageClick={() => openLightbox(image)}
+                    isPaidUser={isPaidUser}
+                    onCopyAltText={(text) => copyToClipboard(text)}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -1376,8 +1393,8 @@ function GalleryImageCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image/Video Container - Einheitliche Höhe */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer group" onClick={onImageClick}>
+      {/* Image/Video Container - Native Aspekt-Verhältnisse für Masonry */}
+      <div className={`relative ${getAspectRatioClass(image.aspectRatio)} overflow-hidden bg-muted cursor-pointer group`} onClick={onImageClick}>
         {image.mediaType === 'video' ? (
           <>
             <img
