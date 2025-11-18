@@ -319,7 +319,7 @@ export function ImagePreviewModal({
           {/* Bild Container mit Navigation */}
           <div 
             ref={imageContainerRef}
-            className={`flex-1 flex items-center justify-center p-4 sm:p-8 bg-gray-50 overflow-auto relative ${
+            className={`flex-1 flex flex-col p-4 sm:p-8 bg-gray-50 relative min-h-0 ${
               isFullscreen ? 'bg-black' : ''
             }`}
           >
@@ -334,146 +334,103 @@ export function ImagePreviewModal({
               </button>
             )}
 
-            <div className="flex flex-col items-center gap-4 max-w-full">
-              {/* Media Info Card (wenn aktiviert) */}
-              {showImageInfo && alt && !isFullscreen && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4 w-full max-w-2xl">
-                  <div className="flex items-start gap-2">
-                    {mediaType === 'video' ? (
-                      <Play className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    ) : (
-                      <ImageIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                    )}
-                    <div>
-                      <h4 className="text-sm text-blue-900 mb-1">
-                        {mediaType === 'video' ? 'Videobeschreibung' : 'Bildbeschreibung'}
-                      </h4>
-                      <p className="text-sm text-blue-700">{alt}</p>
-                      {mediaType === 'video' && (
-                        <p className="text-xs text-blue-600 mt-2">
-                          💡 Tipp: Klicken Sie auf das Video zum Abspielen/Pausieren
-                        </p>
+            {/* Info/Notes Cards oben */}
+            {(showImageInfo || showNotes) && !isFullscreen && (
+              <div className="flex flex-col gap-3 mb-4 max-w-2xl mx-auto w-full">
+                {/* Media Info Card */}
+                {showImageInfo && alt && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 sm:p-4">
+                    <div className="flex items-start gap-2">
+                      {mediaType === 'video' ? (
+                        <Play className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      ) : (
+                        <ImageIcon className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
                       )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Notes Card (wenn aktiviert) */}
-              {showNotes && !isFullscreen && (
-                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4 w-full max-w-2xl">
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm text-amber-900 flex items-center gap-2">
-                        <StickyNote className="w-4 h-4" />
-                        Notizen zu diesem Bild
-                      </h4>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveNote}
-                        className="bg-amber-600 hover:bg-amber-700 text-white"
-                      >
-                        Speichern
-                      </Button>
-                    </div>
-                    <Textarea
-                      value={localNote}
-                      onChange={(e) => setLocalNote(e.target.value)}
-                      placeholder="Notizen hier eingeben... (z.B. 'Zu dunkel', 'Perfekt für Exposé', 'Möbel retuschieren')"
-                      className="min-h-[100px] border-amber-300 focus:border-amber-500 focus:ring-amber-500"
-                    />
-                    {localNote && (
-                      <p className="text-xs text-amber-600">
-                        ✓ Notiz wird automatisch gespeichert
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Bild oder Video - VOLLSTÄNDIG SICHTBAR */}
-              <div className="relative flex items-center justify-center w-full h-full">
-                {mediaType === 'image' ? (
-                  <img 
-                    src={image} 
-                    alt={alt || filename}
-                    className="object-contain rounded shadow-lg transition-transform duration-200 max-w-full max-h-full"
-                    style={{
-                      transform: `scale(${zoomLevel / 100})`,
-                      transformOrigin: 'center center',
-                      width: isFullscreen ? 'auto' : 'auto',
-                      height: isFullscreen ? '100vh' : 'auto',
-                      maxWidth: '100%',
-                      maxHeight: isFullscreen ? '100vh' : '70vh'
-                    }}
-                  />
-                ) : (
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <video
-                      ref={videoRef}
-                      src={image}
-                      className="object-contain rounded shadow-lg max-w-full max-h-full"
-                      style={{
-                        maxWidth: '100%',
-                        maxHeight: isFullscreen ? '100vh' : '70vh'
-                      }}
-                      onTimeUpdate={handleVideoTimeUpdate}
-                      onLoadedMetadata={handleVideoLoadedMetadata}
-                      onClick={togglePlayPause}
-                    />
-                    
-                    {/* Video Controls Overlay */}
-                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b">
-                      <div className="space-y-2">
-                        {/* Progress Bar */}
-                        <input
-                          type="range"
-                          min="0"
-                          max="100"
-                          value={videoProgress}
-                          onChange={handleVideoSeek}
-                          className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
-                          style={{
-                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${videoProgress}%, rgba(255,255,255,0.3) ${videoProgress}%, rgba(255,255,255,0.3) 100%)`
-                          }}
-                        />
-                        
-                        {/* Controls */}
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <button
-                              onClick={togglePlayPause}
-                              className="text-white hover:text-blue-400 transition-colors"
-                            >
-                              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
-                            </button>
-                            
-                            <button
-                              onClick={toggleMute}
-                              className="text-white hover:text-blue-400 transition-colors"
-                            >
-                              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
-                            </button>
-                            
-                            <span className="text-white text-sm">
-                              {formatVideoTime((videoProgress / 100) * videoDuration)} / {formatVideoTime(videoDuration)}
-                            </span>
-                          </div>
-                          
-                          <button
-                            onClick={toggleFullscreen}
-                            className="text-white hover:text-blue-400 transition-colors"
-                          >
-                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-                          </button>
-                        </div>
+                      <div>
+                        <h4 className="text-sm text-blue-900 mb-1">
+                          {mediaType === 'video' ? 'Videobeschreibung' : 'Bildbeschreibung'}
+                        </h4>
+                        <p className="text-sm text-blue-700">{alt}</p>
+                        {mediaType === 'video' && (
+                          <p className="text-xs text-blue-600 mt-2">
+                            💡 Tipp: Klicken Sie auf das Video zum Abspielen/Pausieren
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
-              </div>
 
-              {/* Mobile Zoom Controls - nur für Bilder */}
+                {/* Notes Card */}
+                {showNotes && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 sm:p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm text-amber-900 flex items-center gap-2">
+                          <StickyNote className="w-4 h-4" />
+                          Notizen zu diesem Bild
+                        </h4>
+                        <Button
+                          size="sm"
+                          onClick={handleSaveNote}
+                          className="bg-amber-600 hover:bg-amber-700 text-white"
+                        >
+                          Speichern
+                        </Button>
+                      </div>
+                      <Textarea
+                        value={localNote}
+                        onChange={(e) => setLocalNote(e.target.value)}
+                        placeholder="Notizen hier eingeben... (z.B. 'Zu dunkel', 'Perfekt für Exposé', 'Möbel retuschieren')"
+                        className="min-h-[100px] border-amber-300 focus:border-amber-500 focus:ring-amber-500"
+                      />
+                      {localNote && (
+                        <p className="text-xs text-amber-600">
+                          ✓ Notiz wird automatisch gespeichert
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Bild oder Video - VOLLSTÄNDIG SICHTBAR - VOLLE GRÖSSE */}
+            <div className="flex-1 flex items-center justify-center min-h-0">
+              {mediaType === 'image' ? (
+                <img 
+                  src={image} 
+                  alt={alt || filename}
+                  className="object-contain rounded shadow-lg transition-transform duration-200"
+                  style={{
+                    transform: `scale(${zoomLevel / 100})`,
+                    transformOrigin: 'center center',
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto'
+                  }}
+                />
+              ) : (
+                <video
+                  ref={videoRef}
+                  src={image}
+                  className="rounded shadow-lg"
+                  controls
+                  style={{
+                    maxWidth: '100%',
+                    maxHeight: '100%',
+                    width: 'auto',
+                    height: 'auto',
+                    objectFit: 'contain'
+                  }}
+                  onTimeUpdate={handleVideoTimeUpdate}
+                  onLoadedMetadata={handleVideoLoadedMetadata}
+                />
+              )}
+            </div>
+
+            {/* Mobile Zoom Controls - nur für Bilder */}
               {mediaType === 'image' && (
                 <div className="sm:hidden flex items-center gap-2 bg-white/90 rounded-full px-3 py-2 shadow-lg">
                   <button
@@ -518,7 +475,6 @@ export function ImagePreviewModal({
                   )}
                 </div>
               )}
-            </div>
 
             {/* Next Button */}
             {hasNext && onNext && (
