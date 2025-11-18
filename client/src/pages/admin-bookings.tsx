@@ -48,7 +48,6 @@ export default function AdminBookings() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [regionFilter, setRegionFilter] = useState<string>('all');
   const [selectedBooking, setSelectedBooking] = useState<{ booking: Booking; items: BookingItem[] } | null>(null);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
 
@@ -104,8 +103,7 @@ export default function AdminBookings() {
 
   const filteredBookings = bookings.filter(booking => {
     const statusMatch = statusFilter === 'all' || booking.status === statusFilter;
-    const regionMatch = regionFilter === 'all' || booking.region === regionFilter;
-    return statusMatch && regionMatch;
+    return statusMatch;
   });
 
   if (authLoading || userLoading) return null;
@@ -149,8 +147,8 @@ export default function AdminBookings() {
                 Filter
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex gap-4">
-              <div className="flex-1">
+            <CardContent>
+              <div className="max-w-xs">
                 <label className="text-sm font-medium mb-2 block">Status</label>
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger data-testid="select-status-filter">
@@ -163,19 +161,6 @@ export default function AdminBookings() {
                     <SelectItem value="inProgress">In Bearbeitung</SelectItem>
                     <SelectItem value="completed">Abgeschlossen</SelectItem>
                     <SelectItem value="cancelled">Storniert</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex-1">
-                <label className="text-sm font-medium mb-2 block">Region</label>
-                <Select value={regionFilter} onValueChange={setRegionFilter}>
-                  <SelectTrigger data-testid="select-region-filter">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Alle Regionen</SelectItem>
-                    <SelectItem value="HH">Hamburg</SelectItem>
-                    <SelectItem value="EXT">Extended</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
