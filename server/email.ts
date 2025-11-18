@@ -1,9 +1,35 @@
 import { Resend } from "resend";
+import { SESClient, SendEmailCommand } from "@aws-sdk/client-ses";
 
-// Initialize Resend client
+// Initialize Resend client for invoices
 const resend = process.env.RESEND_API_KEY 
   ? new Resend(process.env.RESEND_API_KEY)
   : null;
+
+// AWS SES Configuration for OTP emails
+const AWS_SES_ACCESS_KEY_ID = process.env.AWS_SES_ACCESS_KEY_ID;
+const AWS_SES_SECRET_ACCESS_KEY = process.env.AWS_SES_SECRET_ACCESS_KEY;
+const AWS_SES_REGION = process.env.AWS_SES_REGION || "eu-central-1";
+const AWS_SES_FROM_ADDRESS = process.env.AWS_SES_FROM_ADDRESS || "no-reply@pix.immo";
+
+// Check if SES is configured
+const isSesConfigured = !!(AWS_SES_ACCESS_KEY_ID && AWS_SES_SECRET_ACCESS_KEY);
+
+// Initialize SES client if configured
+let sesClient: SESClient | null = null;
+if (isSesConfigured) {
+  sesClient = new SESClient({
+    region: AWS_SES_REGION,
+    credentials: {
+      accessKeyId: AWS_SES_ACCESS_KEY_ID!,
+      secretAccessKey: AWS_SES_SECRET_ACCESS_KEY!,
+    },
+  });
+  console.log(`[EMAIL] AWS SES configured for region: ${AWS_SES_REGION}`);
+} else {
+  console.log("[EMAIL] AWS SES not configured - OTP emails will run in DRY-RUN mode");
+  console.log("[EMAIL] Set AWS_SES_ACCESS_KEY_ID and AWS_SES_SECRET_ACCESS_KEY to enable OTP email sending");
+}
 
 export interface SendInvoiceEmailParams {
   to: string;
@@ -258,4 +284,83 @@ export async function sendTestEmail(to: string): Promise<EmailResponse> {
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }
+}
+
+/**
+ * Send OTP code via email using AWS SES
+ * 
+ * @param to - Recipient email address
+ * @param code - 6-digit OTP code
+ * @returns Promise<void>
+ * 
+ * Behavior:
+ * - If SES is configured: Sends real email via AWS SES (eu-central-1)
+ * - If SES is not configured: Logs to console (Dry-Run mode)
+ */
+export async function sendOtpEmail(to: string, code: string): Promise<void> {
+  const subject = "Dein pix.immo Login-Code";
+  const body = generateOtpEmailBody(code);
+
+  if (!isSesConfigured || !sesClient) {
+    // DRY-RUN mode: Log to console
+    console.log("\n" + "=".repeat(60));
+    console.log("[EMAIL DRY-RUN] SES not configured - Email not sent");
+    console.log("=".repeat(60));
+    console.log(`To: ${to}`);
+    console.log(`From: ${AWS_SES_FROM_ADDRESS}`);
+    console.log(`Subject: ${subject}`);
+    console.log("-".repeat(60));
+    console.log(body);
+    console.log("=".repeat(60) + "\n");
+    return;
+  }
+
+  // PRODUCTION mode: Send via SES
+  try {
+    const command = new SendEmailCommand({
+      Source: AWS_SES_FROM_ADDRESS,
+      Destination: {
+        ToAddresses: [to],
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: "UTF-8",
+        },
+        Body: {
+          Text: {
+            Data: body,
+            Charset: "UTF-8",
+          },
+        },
+      },
+    });
+
+    await sesClient.send(command);
+    console.log(`[EMAIL] OTP sent successfully to ${to} via AWS SES`);
+  } catch (error) {
+    console.error("[EMAIL] Failed to send OTP via SES:", error);
+    throw new Error("Failed to send OTP email");
+  }
+}
+
+/**
+ * Generate OTP email body (plaintext only, no links)
+ */
+function generateOtpEmailBody(code: string): string {
+  return `Hallo,
+
+hier ist dein Login-Code für pix.immo:
+
+    ${code}
+
+Dieser Code ist 10 Minuten lang gültig.
+
+Falls du diese E-Mail nicht angefordert hast, kannst du sie einfach ignorieren.
+
+Viele Grüße,
+dein pix.immo Team
+
+---
+Diese E-Mail wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.`;
 }
