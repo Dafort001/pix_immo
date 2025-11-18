@@ -9,7 +9,6 @@ const serviceData = [
   { serviceCode: "F15", category: "photography", name: "Fotopaket 15 Bilder", description: "erweiterter Umfang, Innen + Außen", netPrice: 21000, notes: "Ideal für mittlere Wohnungen" },
   { serviceCode: "F20", category: "photography", name: "Fotopaket 20 Bilder", description: "umfangreiches Shooting, inkl. Detailaufnahmen", netPrice: 24000, notes: "Standardpaket für Exposés" },
   { serviceCode: "F40", category: "photography", name: "Fotopaket 40 Bilder", description: "große Objekte oder Mehrfamilienhäuser", netPrice: 32000, notes: "auf Anfrage anpassbar" },
-  { serviceCode: "FEX", category: "photography", name: "Zusatzfoto (einzeln)", description: "je weiteres Bild außerhalb des Pakets", netPrice: 900, notes: "falls Nachbestellung erfolgt" },
   
   // Drone
   { serviceCode: "D04", category: "drone", name: "4 Drohnenfotos", description: "Lage- und Umfelddarstellung", netPrice: 15000, notes: "Einzelauftrag" },
