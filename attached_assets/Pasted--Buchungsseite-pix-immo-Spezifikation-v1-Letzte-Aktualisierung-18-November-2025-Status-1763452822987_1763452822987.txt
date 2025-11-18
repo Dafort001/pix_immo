@@ -34,7 +34,7 @@ Die Seite ermöglicht die Buchung von:
 ### 2.1 Admin-Interne Buchung
 
 - **Route:** `/admin/internal-booking`
-- **Navigation:** Admin-Sidebar → Services → „Buchen"
+- **Navigation:** Admin-Sidebar → Services → „Buchen“
 - **Berechtigung:** Nur für eingeloggte Admin-Benutzer (Role: `admin`)
 
 ### 2.2 Kundenseite (später)
@@ -63,7 +63,7 @@ Die Buchungsseite zeigt eine Liste aller buchbaren Services aus dem Preiskatalog
 - Anfahrt: integriert in die Grundlogik, keine separate Service-Position
 
 **Wichtig:**  
-Regionen-Auswahl (HH/EXT/Berlin) entfällt vollständig. Es gibt **keine „Region"-Felder** mehr in der UI und keine Berlin-spezifischen Services. Anfahrt wird pauschal geregelt (siehe Abschnitt 10).
+Regionen-Auswahl (HH/EXT/Berlin) entfällt vollständig. Es gibt **keine „Region“-Felder** mehr in der UI und keine Berlin-spezifischen Services. Anfahrt wird pauschal geregelt (siehe Abschnitt 7).
 
 ---
 
@@ -175,7 +175,7 @@ Es existieren Video-Services (z. B. Kurz, Mittel, Lang, Premium o. Ä.).
 - Video-Services können gebucht werden
 - Es gibt **keine Zusatzbuchung einzelner Clips**  
 - Keine Verbindung zu FEX oder Bildauswahl-Logik
-- Interne Notiz in der Doku: *„Video-Logik in v2 überarbeiten"*
+- Interne Notiz in der Doku: *„Video-Logik in v2 überarbeiten“*
 
 ---
 
@@ -185,7 +185,7 @@ Es existieren Video-Services (z. B. Kurz, Mittel, Lang, Premium o. Ä.).
 
 - **TML** ist die einzige aktive Position für virtuelle Rundgänge.
 - Preis und Leistungsumfang werden im Preiskatalog definiert.
-- TML steht für einen „normalen" virtuellen Rundgang (Standardauflösung, Standard-Umfang).
+- TML steht für einen „normalen“ virtuellen Rundgang (Standardauflösung, Standard-Umfang).
 
 ### 8.2 Entfernte Tourtypen
 
@@ -206,7 +206,7 @@ Diese Positionen:
 
 Hierunter fallen alle Leistungen, die **über das Standard-Editing** hinausgehen, z. B.:
 
-- „Kosusche" / intensive Bildoptimierung
+- „Kosusche“ / intensive Bildoptimierung
 - Entfernen von Möbeln / Objekten
 - Teil-Räumung oder Voll-Räumung eines Raumes (virtuell)
 - Virtuelles Staging
@@ -225,7 +225,7 @@ Hierunter fallen alle Leistungen, die **über das Standard-Editing** hinausgehen
    - Dort kann er pro Bild auswählen, ob zusätzliche Bearbeitung gewünscht ist.
    - Die entsprechende Position wird dann mit in die Abrechnung aufgenommen.
 
-Für die Buchungsseite reicht ein Hinweis auf „zusätzliche Bearbeitungsoptionen in der Galerie".  
+Für die Buchungsseite reicht ein Hinweis auf „zusätzliche Bearbeitungsoptionen in der Galerie“.  
 Die eigentliche Auswahl passiert **nicht** bei der Buchung.
 
 ---
@@ -245,7 +245,7 @@ Die eigentliche Auswahl passiert **nicht** bei der Buchung.
   - Diese werden **immer vorab individuell abgesprochen** (telefonisch oder per E-Mail).
   - Es gibt **keine fixe, im System hinterlegte Pauschale**.
 - Reise- und Übernachtungspauschalen entfallen aus der Spezifikation:
-  - „Reise" und „Übernachtung" als eigene Positionen werden gestrichen.
+  - „Reise“ und „Übernachtung“ als eigene Positionen werden gestrichen.
 
 Im UI wird das als Hinweistext kommuniziert, nicht als eigenes Formularfeld.
 
@@ -264,7 +264,7 @@ Im UI wird das als Hinweistext kommuniziert, nicht als eigenes Formularfeld.
 **Objektdaten:**
 
 - `propertyName` – Interne Objektbezeichnung (Pflichtfeld)
-  - z. B. „Helle 3-Zimmer-Wohnung Eimsbüttel", „Objekt 4711 – Mühlenkamp"
+  - z. B. „Helle 3-Zimmer-Wohnung Eimsbüttel“, „Objekt 4711 – Mühlenkamp“
 - `propertyAddress` – Adresse der Immobilie (Pflichtfeld)
 
 ### 11.2 Terminauswahl
@@ -282,35 +282,26 @@ Im UI wird das als Hinweistext kommuniziert, nicht als eigenes Formularfeld.
 Netto-Summe = Σ (Service-Preis × Quantity)
 MwSt (19 %) = Netto-Summe × 0.19
 Brutto-Summe = Netto-Summe + MwSt
-```
 
-### 12.2 Checkout-Summary
+12.2 Checkout-Summary
 
 Die Zusammenfassung zeigt:
 
-- Netto-Gesamtbetrag
-- MwSt-Betrag (19 %)
-- **Brutto-Gesamtbetrag** (fett hervorgehoben)
+Netto-Gesamtbetrag
+
+MwSt-Betrag (19 %)
+
+Brutto-Gesamtbetrag (fett hervorgehoben)
 
 Alle Preise werden im Backend als Cent gespeichert, z. B.:
 
-```
 57900 = 579,00 €
-```
 
----
-
-## 13. Backend-Integration
-
-### 13.1 API Endpoint
-
-```
+13. Backend-Integration
+13.1 API Endpoint
 POST /api/bookings
-```
 
-### 13.2 Beispiel-Payload
-
-```json
+13.2 Beispiel-Payload
 {
   "contactName": "Test Makler GmbH",
   "contactEmail": "makler@example.com",
@@ -328,53 +319,60 @@ POST /api/bookings
   "grossAmount": 68901,
   "agbAccepted": true
 }
-```
 
-**Hinweise:**
 
-- `serviceSelections`:
-  - Key = Service-ID (z. B. F10, F15, F40, TML, VIDEO_SHORT, DRONE_BASIC etc.)
-  - Value = Quantity (meist 0 oder 1, theoretisch >1 möglich)
-  - FEX (Zusatzfoto) taucht in diesem Payload nur auf, wenn im weiteren Verlauf (Galerie) Zusatzbilder gekauft werden.
+Hinweise:
 
-- `agbAccepted`:
-  - Admin-seitig: darf nur true gesetzt werden, wenn eine Einwilligung bereits vorliegt (Rahmenvertrag, frühere Zustimmung).
-  - Kundenseitig: auf der öffentlichen Buchungsseite muss eine AGB-Checkbox implementiert sein.
+serviceSelections:
 
-### 13.3 Datenbankoperationen
+Key = Service-ID (z. B. F10, F15, F40, TML, VIDEO_SHORT, DRONE_BASIC etc.)
 
-**1. Booking erstellen** (`bookings` Tabelle)
+Value = Quantity (meist 0 oder 1, theoretisch >1 möglich)
+
+FEX (Zusatzfoto) taucht in diesem Payload nur auf, wenn im weiteren Verlauf (Galerie) Zusatzbilder gekauft werden.
+
+agbAccepted:
+
+Admin-seitig: darf nur true gesetzt werden, wenn eine Einwilligung bereits vorliegt (Rahmenvertrag, frühere Zustimmung).
+
+Kundenseitig: auf der öffentlichen Buchungsseite muss eine AGB-Checkbox implementiert sein.
+
+13.3 Datenbankoperationen
+
+Booking erstellen (bookings Tabelle)
 
 Speichert:
-- Kundendaten
-- Objektdaten
-- Wunschtermin
-- Netto-, MwSt- und Bruttobeträge
-- Initialer Status: "pending"
 
-**2. BookingItems erstellen** (`bookingItems` Tabelle)
+Kundendaten
 
-- Für jeden Service mit Quantity > 0
-- Referenz auf Service-ID und Booking-ID
+Objektdaten
 
-**Spätere Ergänzung (Galerie):**
+Wunschtermin
+
+Netto-, MwSt- und Bruttobeträge
+
+Initialer Status: "pending"
+
+BookingItems erstellen (bookingItems Tabelle)
+
+Für jeden Service mit Quantity > 0
+
+Referenz auf Service-ID und Booking-ID
+
+Spätere Ergänzung (Galerie):
 
 Zusatzbilder (FEX) und Bildbearbeitungsoptionen werden als weitere BookingItems oder OrderItems ergänzt, sobald der Kunde in der Galerie entsprechende Optionen auswählt.
 
----
-
-## 14. SMS-Benachrichtigung
-
-### 14.1 Twilio-Integration
+14. SMS-Benachrichtigung
+14.1 Twilio-Integration
 
 Nach erfolgreichem Speichern der Buchung:
 
-- Es wird eine SMS an `contactMobile` gesendet.
-- Inhaltlich: Eingangsbestätigung, keine endgültige Terminbestätigung, da Status "pending" ist.
+Es wird eine SMS an contactMobile gesendet.
 
-### 14.2 Beispiel-Text (neutral, nicht „bestätigt")
+Inhaltlich: Eingangsbestätigung, keine endgültige Terminbestätigung, da Status "pending" ist.
 
-```
+14.2 Beispiel-Text (neutral, nicht „bestätigt“)
 Hallo [contactName],
 
 Ihre Buchung ist bei uns eingegangen.
@@ -384,65 +382,86 @@ Wir melden uns, falls es Rückfragen oder Terminänderungen gibt.
 
 Viele Grüße
 Ihr pix.immo Team
-```
+
 
 Später kann bei tatsächlicher Bestätigung ein weiterer Kommunikationskanal (E-Mail/SMS) verwendet werden, falls nötig.
 
----
+15. Validierung
 
-## 15. Validierung
+Zod-Schema (insertBookingSchema):
 
-**Zod-Schema (`insertBookingSchema`):**
+Pflichtfelder:
 
-**Pflichtfelder:**
-- `contactName`, `contactEmail`, `contactMobile`
-- `propertyName`, `propertyAddress`
-- `preferredDate`, `preferredTime`
+contactName, contactEmail, contactMobile
 
-**E-Mail:** valides Format
+propertyName, propertyAddress
 
-**Telefonnummer:** muss angegeben sein, Formatprüfung (mindestens + + Landesvorwahl + Nummer)
+preferredDate, preferredTime
 
-**serviceSelections:**
-- Darf nicht leer sein
-- Mindestens ein Service mit Quantity > 0
+E-Mail: valides Format
 
-**Preisfelder:**
-- `totalNetPrice` > 0
-- `vatAmount` >= 0
-- `grossAmount` > 0
+Telefonnummer: muss angegeben sein, Formatprüfung (mindestens + + Landesvorwahl + Nummer)
 
----
+serviceSelections:
 
-## 16. Technische Struktur
+Darf nicht leer sein
 
-- **Frontend**: `client/src/pages/admin-internal-booking.tsx`
-- **Backend-Routen**: `server/routes.ts` (POST /api/bookings)
-- **Schema**: `shared/schema.ts` (bookings, bookingItems)
-- **Storage**: `server/storage.ts` (createBooking)
-- **Notifications**: `server/notifications.ts` (sendBookingConfirmationSMS)
-- **Services / Preisliste**: `server/seed-services.ts`
+Mindestens ein Service mit Quantity > 0
 
----
+Preisfelder:
 
-## 17. Testing (E2E)
+totalNetPrice > 0
+
+vatAmount >= 0
+
+grossAmount > 0
+
+16. Technische Struktur
+
+Frontend: client/src/pages/admin-internal-booking.tsx
+
+Backend-Routen: server/routes.ts (POST /api/bookings)
+
+Schema: shared/schema.ts (bookings, bookingItems)
+
+Storage: server/storage.ts (createBooking)
+
+Notifications: server/notifications.ts (sendBookingConfirmationSMS)
+
+Services / Preisliste: server/seed-services.ts
+
+17. Testing (E2E)
 
 E2E-Tests sollen erst angepasst/neu geschrieben werden, wenn die Buchungslogik vollständig steht.
 
-**Ziel-E2E-Szenario (wenn alles fertig):**
+Ziel-E2E-Szenario (wenn alles fertig):
 
-1. Login als Admin
-2. Navigation zu `/admin/internal-booking`
-3. Auswahl von:
-   - Mindestens einem Fotopaket (z. B. F15)
-   - Optional TML und/oder Drohnenpaket
-4. Ausfüllen aller Pflichtfelder (Kundendaten, Objektdaten, Termin)
-5. Formular absenden
-6. Prüfen:
-   - Erfolgsmeldung im UI (Toast)
-   - Eintrag in `bookings` und `bookingItems`
-   - SMS an `contactMobile` mit neutraler Bestätigung
-7. Sicherstellen, dass:
-   - Keine Regionslogik mehr existiert
-   - TFX/THD nicht angezeigt werden
-   - FEX auf der Buchungsseite nicht aktiv auswählbar ist
+Login als Admin
+
+Navigation zu /admin/internal-booking
+
+Auswahl von:
+
+Mindestens einem Fotopaket (z. B. F15)
+
+Optional TML und/oder Drohnenpaket
+
+Ausfüllen aller Pflichtfelder (Kundendaten, Objektdaten, Termin)
+
+Formular absenden
+
+Prüfen:
+
+Erfolgsmeldung im UI (Toast)
+
+Eintrag in bookings und bookingItems
+
+SMS an contactMobile mit neutraler Bestätigung
+
+Sicherstellen, dass:
+
+Keine Regionslogik mehr existiert
+
+TFX/THD nicht angezeigt werden
+
+FEX auf der Buchungsseite nicht aktiv auswählbar ist
