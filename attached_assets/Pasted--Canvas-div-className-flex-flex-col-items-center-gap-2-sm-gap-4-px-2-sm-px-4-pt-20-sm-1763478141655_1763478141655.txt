@@ -1,0 +1,48 @@
+{/* Canvas */}
+      <div className="flex flex-col items-center gap-2 sm:gap-4 px-2 sm:px-4 pt-20 sm:pt-4 pb-4">
+        <div className="text-white text-center">
+          <h2 className="text-base sm:text-xl">{filename}</h2>
+          <p className="text-xs sm:text-sm text-gray-400 mt-1">
+            {currentTool === 'arrow' && !arrowStart && 'Klicken Sie für den Startpunkt des Pfeils'}
+            {currentTool === 'arrow' && arrowStart && 'Klicken Sie für den Endpunkt des Pfeils'}
+            {currentTool !== 'arrow' && 'Markieren Sie die Bereiche, die bearbeitet werden sollen'}
+          </p>
+        </div>
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousedown', {
+              clientX: touch.clientX,
+              clientY: touch.clientY
+            });
+            canvasRef.current?.dispatchEvent(mouseEvent);
+            e.preventDefault();
+          }}
+          onTouchMove={(e) => {
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent('mousemove', {
+              clientX: touch.clientX,
+              clientY: touch.clientY
+            });
+            canvasRef.current?.dispatchEvent(mouseEvent);
+            e.preventDefault();
+          }}
+          onTouchEnd={(e) => {
+            const mouseEvent = new MouseEvent('mouseup');
+            canvasRef.current?.dispatchEvent(mouseEvent);
+            e.preventDefault();
+          }}
+          className={`max-w-[95vw] sm:max-w-[80vw] lg:max-w-[70vw] max-h-[60vh] sm:max-h-[70vh] bg-white rounded shadow-2xl touch-none ${
+            currentTool === 'arrow' ? 'cursor-crosshair' : 'cursor-crosshair'
+          }`}
+          style={{ width: 'auto', height: 'auto', maxWidth: '95vw', maxHeight: '60vh' }}
+        />
+      </div>
+    </div>
+  );
+}
