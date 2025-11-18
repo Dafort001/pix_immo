@@ -186,7 +186,7 @@ export default function Booking() {
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      region: undefined,
+      region: "HH", // Hamburg als Standard-Region (30 km Radius inkl.)
       kilometers: undefined,
       contactName: "",
       contactEmail: "",
@@ -379,7 +379,7 @@ export default function Booking() {
               className={step !== 2 ? "cursor-pointer hover-elevate" : ""}
               onClick={() => {
                 // Can only go to step 2 if step 1 is valid
-                if (step === 1 && selectedCount > 0 && watchRegion) {
+                if (step === 1 && selectedCount > 0) {
                   setStep(2);
                 } else if (step > 2) {
                   setStep(2);
@@ -406,7 +406,7 @@ export default function Booking() {
               <div>
                 <h2 className="text-lg font-semibold mb-2">Leistungen auswählen</h2>
                 <p className="text-muted-foreground">
-                  Wählen Sie zunächst Ihre Region, dann die gewünschten Leistungen
+                  Wählen Sie die gewünschten Leistungen für Ihr Objekt (Region: Hamburg bis 30 km inkl.)
                 </p>
               </div>
               {selectedCount > 0 && (
@@ -416,81 +416,7 @@ export default function Booking() {
               )}
             </div>
 
-            {/* Region Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Region auswählen *</CardTitle>
-                <CardDescription>
-                  Die Region bestimmt die Anfahrtskosten
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {(["HH", "B", "EXT"] as const).map((region) => (
-                    <Card
-                      key={region}
-                      className={`cursor-pointer hover-elevate active-elevate-2 ${
-                        watchRegion === region ? "border-primary" : ""
-                      }`}
-                      onClick={() => {
-                        form.setValue("region", region);
-                        // Clear AEX selection if switching away from EXT
-                        if (region !== "EXT" && selectedServices["AEX"]) {
-                          const newSelections = { ...selectedServices };
-                          delete newSelections["AEX"];
-                          setSelectedServices(newSelections);
-                          form.setValue("kilometers", undefined);
-                        }
-                      }}
-                      data-testid={`card-region-${region}`}
-                    >
-                      <CardContent className="pt-6">
-                        <div className="flex items-start gap-3">
-                          <div className={`mt-1 h-4 w-4 rounded-full border-2 ${
-                            watchRegion === region 
-                              ? "border-primary bg-primary" 
-                              : "border-muted-foreground"
-                          }`} />
-                          <div className="flex-1">
-                            <p className="font-medium">{regionLabels[region]}</p>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {region === "HH" && "Anfahrt inkl. bis 30 km"}
-                              {region === "B" && "Anfahrt inkl. innerhalb S-Bahn-Ring"}
-                              {region === "EXT" && "€0.80/km (Hin- und Rückweg)"}
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-
-                {/* Kilometer input for EXT region */}
-                {watchRegion === "EXT" && (
-                  <div className="mt-4">
-                    <Label htmlFor="kilometers">Kilometer (einfache Strecke) *</Label>
-                    <Input
-                      id="kilometers"
-                      type="number"
-                      min="0"
-                      placeholder="z.B. 42"
-                      value={watchKilometers || ""}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value) || 0;
-                        form.setValue("kilometers", val);
-                      }}
-                      className="mt-2"
-                      data-testid="input-kilometers"
-                    />
-                    <p className="text-sm text-muted-foreground mt-2">
-                      Hin- und Rückweg werden automatisch berechnet (× 2)
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Service Selection */}
+            {/* Service Selection - Region ist auf HH voreingestellt */}
             {watchRegion && categoryOrder.map((categoryKey) => {
               const categoryServices = servicesByCategory[categoryKey];
               if (!categoryServices || categoryServices.length === 0) return null;
@@ -595,25 +521,9 @@ export default function Booking() {
               <Button
                 size="lg"
                 onClick={() => {
-                  if (!watchRegion) {
-                    toast({
-                      variant: "destructive",
-                      title: "Region erforderlich",
-                      description: "Bitte wählen Sie zunächst eine Region aus",
-                    });
-                    return;
-                  }
-                  if (watchRegion === "EXT" && !watchKilometers) {
-                    toast({
-                      variant: "destructive",
-                      title: "Kilometer erforderlich",
-                      description: "Bitte geben Sie die Kilometer ein",
-                    });
-                    return;
-                  }
                   setStep(2);
                 }}
-                disabled={selectedCount === 0 || !watchRegion}
+                disabled={selectedCount === 0}
                 data-testid="button-continue-step1"
               >
                 Weiter
