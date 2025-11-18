@@ -1,0 +1,237 @@
+                    
+                    {/* Video Controls Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 rounded-b">
+                      <div className="space-y-2">
+                        {/* Progress Bar */}
+                        <input
+                          type="range"
+                          min="0"
+                          max="100"
+                          value={videoProgress}
+                          onChange={handleVideoSeek}
+                          className="w-full h-1 bg-white/30 rounded-lg appearance-none cursor-pointer"
+                          style={{
+                            background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${videoProgress}%, rgba(255,255,255,0.3) ${videoProgress}%, rgba(255,255,255,0.3) 100%)`
+                          }}
+                        />
+                        
+                        {/* Controls */}
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex items-center gap-3">
+                            <button
+                              onClick={togglePlayPause}
+                              className="text-white hover:text-blue-400 transition-colors"
+                            >
+                              {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
+                            </button>
+                            
+                            <button
+                              onClick={toggleMute}
+                              className="text-white hover:text-blue-400 transition-colors"
+                            >
+                              {isMuted ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                            </button>
+                            
+                            <span className="text-white text-sm">
+                              {formatVideoTime((videoProgress / 100) * videoDuration)} / {formatVideoTime(videoDuration)}
+                            </span>
+                          </div>
+                          
+                          <button
+                            onClick={toggleFullscreen}
+                            className="text-white hover:text-blue-400 transition-colors"
+                          >
+                            {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Zoom Controls - nur für Bilder */}
+              {mediaType === 'image' && (
+                <div className="sm:hidden flex items-center gap-2 bg-white/90 rounded-full px-3 py-2 shadow-lg">
+                  <button
+                    onClick={handleZoomOut}
+                    disabled={zoomLevel <= 50}
+                    className="p-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Herauszoomen"
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </button>
+                  <span className="text-xs text-gray-600 min-w-[3rem] text-center">
+                    {zoomLevel}%
+                  </span>
+                  <button
+                    onClick={handleZoomIn}
+                    disabled={zoomLevel >= 300}
+                    className="p-1 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Hineinzoomen"
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+
+              {/* Selection Status Badge */}
+              {isSelected && !isFullscreen && (
+                <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${
+                  isPackageImage 
+                    ? 'bg-green-100 text-green-800 border border-green-300' 
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}>
+                  {isPackageImage ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>Im Paket enthalten</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xs">€</span>
+                      <span>Zusatzbild (+ € 6,00)</span>
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Next Button */}
+            {hasNext && onNext && (
+              <button
+                onClick={onNext}
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white shadow-lg rounded-full p-2 sm:p-3 transition-all hover:scale-110"
+                title="Nächstes Bild (→)"
+              >
+                <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-gray-700" />
+              </button>
+            )}
+
+            {/* Fullscreen overlay controls - nur für Bilder */}
+            {isFullscreen && mediaType === 'image' && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 bg-black/80 backdrop-blur-sm rounded-full px-6 py-3 flex items-center gap-4">
+                <button
+                  onClick={handleZoomOut}
+                  disabled={zoomLevel <= 50}
+                  className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30"
+                >
+                  <ZoomOut className="w-5 h-5" />
+                </button>
+                <span className="text-white text-sm min-w-[3.5rem] text-center">
+                  {zoomLevel}%
+                </span>
+                <button
+                  onClick={handleZoomIn}
+                  disabled={zoomLevel >= 300}
+                  className="p-2 rounded-full text-white hover:bg-white/20 disabled:opacity-30"
+                >
+                  <ZoomIn className="w-5 h-5" />
+                </button>
+                <div className="w-px h-6 bg-white/30"></div>
+                <button
+                  onClick={exitFullscreen}
+                  className="p-2 rounded-full text-white hover:bg-white/20"
+                >
+                  <Minimize className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {/* Footer mit Buttons */}
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-t border-gray-200 space-y-3">
+            {/* Selection Toggle */}
+            {onToggleSelection && (
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                    isSelected 
+                      ? isPackageImage 
+                        ? 'bg-green-500 text-white' 
+                        : 'bg-amber-500 text-white'
+                      : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    <Check className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-900">
+                      {isSelected ? 'Ausgewählt' : 'Nicht ausgewählt'}
+                    </div>
+                    {isSelected && !isPackageImage && (
+                      <div className="text-xs text-amber-600">+ € 6,00 Zusatzkosten</div>
+                    )}
+                    {isSelected && isPackageImage && (
+                      <div className="text-xs text-green-600">Im Paket enthalten</div>
+                    )}
+                    {!isSelected && (
+                      <div className="text-xs text-gray-500">Zum Warenkorb hinzufügen</div>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  onClick={onToggleSelection}
+                  className={`${
+                    isSelected
+                      ? 'bg-red-500 hover:bg-red-600 text-white'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {isSelected ? 'Abwählen' : 'Auswählen'}
+                </Button>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button 
+                  variant="outline"
+                  className="border-gray-300 text-xs sm:text-sm"
+                >
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Standard (3000 px)</span>
+                  <span className="sm:hidden">Standard</span>
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-gray-300 text-xs sm:text-sm"
+                >
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  Full-Res
+                </Button>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <Button 
+                  variant="outline"
+                  onClick={onRequestEdit}
+                  className="border-gray-300 text-xs sm:text-sm"
+                >
+                  <span className="hidden sm:inline">Bearbeitung anfordern</span>
+                  <span className="sm:hidden">Bearbeiten</span>
+                </Button>
+                <Button 
+                  onClick={onClose}
+                  className="bg-[#2d2d2d] hover:bg-[#1a1a1a] text-white text-xs sm:text-sm"
+                >
+                  Schließen
+                </Button>
+              </div>
+            </div>
+
+            {/* Keyboard Shortcuts Hint */}
+            <div className="text-xs text-gray-500 text-center pt-2 border-t border-gray-100">
+              <span className="hidden sm:inline">
+                Tastatur: ← Zurück | → Weiter | + Zoom In | - Zoom Out | ESC Schließen
+              </span>
+              <span className="sm:hidden">
+                ← → | + - Zoom | ESC
+              </span>
+            </div>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
