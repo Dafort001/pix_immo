@@ -47,7 +47,7 @@ export default function Login() {
       
       // Role-based redirect
       if (response.user?.role === "admin") {
-        setLocation("/admin/dashboard");
+        setLocation("/admin/jobs");
       } else {
         setLocation("/dashboard");
       }

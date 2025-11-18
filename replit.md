@@ -3,6 +3,8 @@
 ## Overview
 pix.immo is a professional real estate media platform built with Node.js 22, TypeScript, and React. Its primary purpose is to connect real estate professionals with photography services, streamlining the ordering and management of property photography. The platform operates with a **Multi-SPA Architecture**, featuring two independent web applications (pix.immo for professional services and pixcapture.app for DIY smartphone photography) sharing a single backend. Key capabilities include a **complete booking system**, robust session-based authentication with role-based access, and designed for future AI integration for image analysis. The platform currently serves the Hamburg area (30 km radius) and aims to enhance property listings with high-quality, AI-analyzed media.
 
+**Login Redirects:** Admin users → `/admin/jobs` | Client users → `/dashboard`
+
 ## User Preferences
 - Hono for Cloudflare Workers compatibility
 - React SPA with Wouter routing
