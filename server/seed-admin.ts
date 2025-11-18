@@ -55,12 +55,14 @@ async function seedAdmin() {
     console.log(`🆕 Erstelle neuen Admin-Account: ${email}\n`);
 
     const hashedPassword = await hashPassword(password);
-    const user = await storage.createUser(email, hashedPassword);
-
-    // Update role to admin (createUser creates "client" by default)
-    await db.update(users)
-      .set({ role: "admin" })
-      .where(eq(users.id, user.id));
+    const user = await storage.createUser({
+      email,
+      hashedPassword,
+      firstName: "Admin",
+      lastName: "User",
+      role: "admin",
+      emailVerifiedAt: Date.now(), // Auto-verify admin account
+    });
 
     console.log(`✅ Admin-Account erfolgreich erstellt!`);
     console.log(`   Email:   ${email}`);
