@@ -1,0 +1,133 @@
+Task: Verifizierte E-Mail + OTP-Login für Buchung & Login (Amazon SES, Region eu-central-1)
+
+Ziel
+Alle sensiblen Bereiche der pix.immo-Webseite (Buchung, Kundenlogin, Galeriezugang etc.) dürfen nur über verifizierte E-Mail-Adressen zugänglich sein. Browser-Autofill (Fake-/Alias-Adressen) soll technisch egal sein – ohne Zugriff auf das reale Postfach kein Zugang.
+
+1. E-Mail als harte Identität
+
+E-Mail ist die einzige Identität für Kunden (kein Passwort, keine Social Logins).
+
+Kein Account, keine Buchung, kein Zugriff auf Buchungs-/Galeriedaten ohne verifizierte E-Mail.
+
+„Verifiziert“ heißt:
+
+Es wurde ein OTP-Code an diese Adresse geschickt.
+
+Der Nutzer hat diesen Code im Frontend korrekt eingegeben.
+
+Erst danach wird die E-Mail als „bestätigt“ markiert (oder in einer entsprechenden Tabelle/Spalte gespeichert).
+
+2. OTP-Login-Flow (Magic Code, kein Link)
+
+Login/Buchung läuft grundsätzlich so:
+
+Nutzer gibt seine E-Mail ein.
+
+Backend generiert einen kurzlebigen OTP-Code (z. B. 6-stellig).
+
+Code wird über Amazon SES (Region: eu-central-1 / Frankfurt) als Plaintext-Mail verschickt (kein Login-Link, nur Text + Code).
+
+Nutzer gibt den Code im Frontend ein.
+
+Bei erfolgreicher Validierung:
+
+Session wird erstellt.
+
+E-Mail gilt als verifiziert.
+
+Wichtig:
+
+OTP hat kurze Gültigkeit (z. B. 10–15 Minuten).
+
+Nach X Fehlversuchen ist der Code ungültig.
+
+3. Integration Amazon SES (Frankfurt)
+
+SES verwenden in der Region eu-central-1 (Frankfurt).
+
+Absenderadresse und Domain so konfigurieren, dass:
+
+Mails nicht im Spam landen (SPF/DKIM/DMARC werden separat in Cloudflare/DNS gepflegt).
+
+Absendername und Betreff klar sind, z. B.:
+
+From: pix.immo <no-reply@pix.immo>
+
+Betreff: Dein pix.immo Login-Code
+
+Inhalt der E-Mail nur im Klartext, keine Links:
+
+Kurze Erklärung, wofür der Code ist.
+
+Klarer Hinweis auf Gültigkeitsdauer.
+
+Der eigentliche Code gut sichtbar.
+
+4. Security & Rate-Limits
+
+Rate-Limits pro E-Mail + IP:
+
+Max. 1 neuer OTP-Code pro Minute und E-Mail-Adresse.
+
+Zusätzlich ein sinnvolles Limit pro IP (z. B. X Codes pro Stunde), um Bots zu bremsen.
+
+OTP-Codes:
+
+Werden sicher gespeichert (kein Klartext, idealerweise gehasht oder stark limitiert zugreifbar).
+
+Verfallen automatisch nach Ablauf der Zeit.
+
+Nach erfolgreicher Nutzung werden sie invalidiert.
+
+Logging:
+
+Fehlgeschlagene Versuche pro E-Mail und IP zählen, um Missbrauch zu erkennen.
+
+5. Session-Scoping / Zugriff auf Daten
+
+Nach erfolgreichem OTP-Login:
+
+Session enthält mindestens:
+
+user_id oder customer_id
+
+verifizierte email
+
+ggf. tenant_id, falls Mandantenfähigkeit schon angelegt ist.
+
+Frontend-/Backend-Zugriffe auf Buchungen und Galerien:
+
+Jede API, die Buchungs- oder Galeriedaten liefert, muss über Session geprüft werden.
+
+Ein Nutzer sieht nur seine eigenen Buchungen/Jobs/Galerien, nie fremde.
+
+Ziel:
+Selbst wenn jemand eine Fake-Mail einträgt oder im Browser eine Alias-Adresse auswählt, kommt er ohne Zugriff auf das Postfach nicht an Daten heran.
+
+6. Anbindung an Buchungs-Flow
+
+Buchungsprozess:
+
+Wenn Nutzer noch nicht eingeloggt ist:
+
+E-Mail-Eingabe → OTP-Flow wie oben beschrieben.
+
+Danach erst Fortsetzung des Buchungsformulars.
+
+Wenn Nutzer bereits eingeloggt:
+
+E-Mail-Feld ist entweder vorausgefüllt und gesperrt oder wird sauber aus der Session genommen.
+
+Wichtig:
+Keine Buchung speichern, die nicht einer verifizierten E-Mail zugeordnet ist.
+
+7. Akzeptanzkriterien
+
+Ich kann mit einer nicht existierenden E-Mail-Adresse keinen Zugang zu Buchungen/Galerien erhalten, da ich den OTP-Code nicht empfangen kann.
+
+Ich kann ohne OTP-Validierung keinen Account/finalen Buchungsdatensatz erzeugen.
+
+Browser-Autofill/Fake-Adressen sind egal:
+Ohne Zugriff auf das Postfach kein Login und keine Datenanzeige.
+
+Alle OTP-Mails werden zuverlässig über SES (Frankfurt) versendet, kommen im normalen Posteingang an und enthalten nur Text + Code, keine Links.
