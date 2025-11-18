@@ -15,7 +15,14 @@ export async function seedDemoJobs(storage: IStorage) {
     let demoUser = await storage.getUserByEmail(demoEmail);
     
     if (!demoUser) {
-      demoUser = await storage.createUser(demoEmail, "demo-password-hash", "admin");
+      demoUser = await storage.createUser({
+        email: demoEmail,
+        hashedPassword: "demo-password-hash",
+        firstName: "Demo",
+        lastName: "User",
+        role: "admin",
+        emailVerifiedAt: Date.now(),
+      });
       console.log("[Seed] Created demo user:", demoEmail);
     }
     
