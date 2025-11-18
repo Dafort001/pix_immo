@@ -699,6 +699,8 @@ export default function Galerie() {
                     onImageClick={() => openLightbox(image)}
                     isPaidUser={isPaidUser}
                     onCopyAltText={(text) => copyToClipboard(text)}
+                    isFavorite={favorites.includes(image.id)}
+                    onToggleFavorite={() => handleToggleFavorite(image.id)}
                   />
                 </div>
               ))}
@@ -1448,6 +1450,8 @@ function GalleryImageCard({
   onImageClick,
   isPaidUser,
   onCopyAltText,
+  isFavorite,
+  onToggleFavorite,
 }: {
   image: GalleryImage;
   imageIndex: number;
@@ -1462,6 +1466,8 @@ function GalleryImageCard({
   onImageClick: () => void;
   isPaidUser: boolean;
   onCopyAltText: (text: string) => void;
+  isFavorite: boolean;
+  onToggleFavorite: () => void;
 }) {
   const [isHovered, setIsHovered] = useState(false);
   const [altTextExpanded, setAltTextExpanded] = useState(false);
@@ -1511,13 +1517,27 @@ function GalleryImageCard({
           )}
         </div>
         
-        {/* Checkbox */}
-        <div className="absolute top-2 left-2 z-10" onClick={(e) => e.stopPropagation()}>
+        {/* Checkbox & Favorite Heart */}
+        <div className="absolute top-2 left-2 z-10 flex gap-2" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={selected}
             onCheckedChange={onToggleSelect}
             className="bg-white border-2"
           />
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-5 w-5 bg-white/90 backdrop-blur-sm hover:bg-white"
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavorite();
+            }}
+            data-testid={`button-favorite-${image.id}`}
+          >
+            <Heart
+              className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+            />
+          </Button>
         </div>
         
         {/* Status Badge & Extra Image Badge */}
