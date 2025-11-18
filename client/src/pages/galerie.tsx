@@ -138,6 +138,8 @@ export default function CustomerGallery() {
         jobTitle="Mustermann Immobilie - Einfamilienhaus Hamburg"
         packageSize={`${selectedPackage.name}-Paket (${selectedPackage.imageCount} Bilder)`}
         onDownloadZip={handleDownloadZip}
+        selectedCount={selectedImages.size}
+        allowedCount={selectedPackage.imageCount}
       />
 
       {/* Main Content */}
@@ -145,12 +147,6 @@ export default function CustomerGallery() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            <PackageSelector
-              packages={packages}
-              selectedPackage={selectedPackage}
-              onPackageChange={setSelectedPackage}
-              additionalImagesCount={additionalImageCount}
-            />
             <GalleryStats
               total={stats.total}
               selected={stats.selected}

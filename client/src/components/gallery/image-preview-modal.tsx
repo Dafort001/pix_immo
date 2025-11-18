@@ -167,14 +167,20 @@ export function ImagePreviewModal({
   }, [image, mediaType]);
 
   // Video control functions
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
+      try {
+        if (isPlaying) {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        } else {
+          await videoRef.current.play();
+          setIsPlaying(true);
+        }
+      } catch (error) {
+        console.error('Video play error:', error);
+        // Silently fail for mock/invalid video URLs
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -385,29 +391,31 @@ export function ImagePreviewModal({
                 </div>
               )}
 
-              {/* Bild oder Video */}
-              <div className="relative overflow-auto max-w-full max-h-[50vh] sm:max-h-[60vh]">
+              {/* Bild oder Video - VOLLSTÄNDIG SICHTBAR */}
+              <div className="relative flex items-center justify-center w-full h-full">
                 {mediaType === 'image' ? (
                   <img 
                     src={image} 
                     alt={alt || filename}
-                    className="object-contain rounded shadow-lg transition-transform duration-200"
+                    className="object-contain rounded shadow-lg transition-transform duration-200 max-w-full max-h-full"
                     style={{
                       transform: `scale(${zoomLevel / 100})`,
                       transformOrigin: 'center center',
-                      maxWidth: isFullscreen ? '100vw' : 'none',
-                      maxHeight: isFullscreen ? '100vh' : 'none'
+                      width: isFullscreen ? 'auto' : 'auto',
+                      height: isFullscreen ? '100vh' : 'auto',
+                      maxWidth: '100%',
+                      maxHeight: isFullscreen ? '100vh' : '70vh'
                     }}
                   />
                 ) : (
-                  <div className="relative">
+                  <div className="relative w-full h-full flex items-center justify-center">
                     <video
                       ref={videoRef}
                       src={image}
-                      className="object-contain rounded shadow-lg max-w-full max-h-[50vh] sm:max-h-[60vh]"
+                      className="object-contain rounded shadow-lg max-w-full max-h-full"
                       style={{
-                        maxWidth: isFullscreen ? '100vw' : '100%',
-                        maxHeight: isFullscreen ? '100vh' : '60vh'
+                        maxWidth: '100%',
+                        maxHeight: isFullscreen ? '100vh' : '70vh'
                       }}
                       onTimeUpdate={handleVideoTimeUpdate}
                       onLoadedMetadata={handleVideoLoadedMetadata}
