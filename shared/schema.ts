@@ -57,6 +57,7 @@ export const users = pgTable("users", {
   role: varchar("role", { length: 20 }).notNull().default("client"), // 'client' or 'admin'
   credits: bigint("credits", { mode: "number" }).notNull().default(0), // AI processing credits
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  emailVerifiedAt: bigint("email_verified_at", { mode: "number" }), // NULL = not verified, timestamp = verified
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
@@ -81,6 +82,19 @@ export const passwordResetTokens = pgTable("password_reset_tokens", {
   expiresAt: bigint("expires_at", { mode: "number" }).notNull(),
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
+
+export const otpCodes = pgTable("otp_codes", {
+  id: varchar("id").primaryKey(),
+  email: varchar("email", { length: 255 }).notNull(), // Not a FK - can be used before user exists
+  codeHash: text("code_hash").notNull(), // Hashed OTP code
+  expiresAt: bigint("expires_at", { mode: "number" }).notNull(),
+  usedAt: bigint("used_at", { mode: "number" }), // NULL = not used yet
+  attempts: integer("attempts").notNull().default(0), // Failed validation attempts
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+}, (table) => ({
+  emailIdx: index("otp_codes_email_idx").on(table.email),
+  expiresAtIdx: index("otp_codes_expires_at_idx").on(table.expiresAt),
+}));
 
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey(),
@@ -907,6 +921,8 @@ export type RefreshToken = typeof refreshTokens.$inferSelect;
 export type InsertRefreshToken = typeof refreshTokens.$inferInsert;
 export type PasswordResetToken = typeof passwordResetTokens.$inferSelect;
 export type InsertPasswordResetToken = typeof passwordResetTokens.$inferInsert;
+export type OtpCode = typeof otpCodes.$inferSelect;
+export type InsertOtpCode = typeof otpCodes.$inferInsert;
 export type Order = typeof orders.$inferSelect;
 export type InsertOrder = typeof orders.$inferInsert;
 export type Job = typeof jobs.$inferSelect;
