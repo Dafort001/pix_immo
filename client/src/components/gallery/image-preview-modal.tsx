@@ -396,21 +396,27 @@ export function ImagePreviewModal({
             )}
 
             {/* Bild oder Video - VOLLSTÄNDIG SICHTBAR - VOLLE GRÖSSE */}
-            <div className="flex-1 flex items-center justify-center min-h-0">
+            <div className="flex-1 flex items-center justify-center min-h-0 overflow-auto">
               {mediaType === 'image' ? (
-                <img 
-                  src={image} 
-                  alt={alt || filename}
-                  className="object-contain rounded shadow-lg transition-transform duration-200"
+                <div 
+                  className="transition-transform duration-200"
                   style={{
                     transform: `scale(${zoomLevel / 100})`,
-                    transformOrigin: 'center center',
-                    maxWidth: '100%',
-                    maxHeight: '100%',
-                    width: 'auto',
-                    height: 'auto'
+                    transformOrigin: 'center center'
                   }}
-                />
+                >
+                  <img 
+                    src={image} 
+                    alt={alt || filename}
+                    className="object-contain rounded shadow-lg"
+                    style={{
+                      maxWidth: '90vw',
+                      maxHeight: '80vh',
+                      width: 'auto',
+                      height: 'auto'
+                    }}
+                  />
+                </div>
               ) : (
                 <video
                   ref={videoRef}
