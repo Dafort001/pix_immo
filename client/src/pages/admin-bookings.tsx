@@ -41,7 +41,6 @@ const STATUS_VARIANTS: Record<BookingStatus, 'secondary' | 'destructive' | 'outl
 
 const REGION_LABELS: Record<string, string> = {
   HH: 'Hamburg',
-  B: 'Berlin',
   EXT: 'Extended',
 };
 
@@ -176,7 +175,6 @@ export default function AdminBookings() {
                   <SelectContent>
                     <SelectItem value="all">Alle Regionen</SelectItem>
                     <SelectItem value="HH">Hamburg</SelectItem>
-                    <SelectItem value="B">Berlin</SelectItem>
                     <SelectItem value="EXT">Extended</SelectItem>
                   </SelectContent>
                 </Select>
