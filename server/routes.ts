@@ -12,7 +12,7 @@ import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFro
 import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl, getObject, generatePresignedDownloadUrl } from "./r2-client";
 import { runAITool, getToolById, getAllTools } from "./replicate-adapter";
 import { z } from "zod";
-import { randomBytes } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { upload, processUploadedFiles } from "./uploadHandler";
 import { generateHandoffPackage, generateHandoffToken } from "./handoffPackage";
 import archiver from "archiver";
@@ -2297,6 +2297,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Registration error:", error);
       res.status(500).json({ error: "Registrierung fehlgeschlagen" });
+    }
+  });
+
+  // GET /api/auth/verify-email?token=... - Verify email address
+  app.get("/api/auth/verify-email", async (req: Request, res: Response) => {
+    try {
+      const { token } = req.query;
+      
+      if (!token || typeof token !== "string") {
+        return res.status(400).json({ error: "Ungültiger Verifizierungs-Token" });
+      }
+      
+      // Find verification token
+      const verificationToken = await storage.getEmailVerificationToken(token);
+      
+      if (!verificationToken) {
+        return res.status(400).json({ error: "Ungültiger oder abgelaufener Verifizierungs-Link" });
+      }
+      
+      // Check if token is expired
+      if (verificationToken.expiresAt < Date.now()) {
+        // Delete expired token
+        await storage.deleteEmailVerificationToken(verificationToken.id);
+        return res.status(400).json({ error: "Dieser Verifizierungs-Link ist abgelaufen. Bitte fordere einen neuen an." });
+      }
+      
+      // Get user
+      const user = await storage.getUserById(verificationToken.userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "Benutzer nicht gefunden" });
+      }
+      
+      // Check if already verified
+      if (user.emailVerifiedAt) {
+        // Delete used token
+        await storage.deleteEmailVerificationToken(verificationToken.id);
+        return res.status(200).json({
+          message: "E-Mail-Adresse bereits verifiziert",
+          alreadyVerified: true,
+        });
+      }
+      
+      // Mark email as verified
+      await storage.updateUser(user.id, {
+        emailVerifiedAt: Date.now(),
+      });
+      
+      // Delete used token
+      await storage.deleteEmailVerificationToken(verificationToken.id);
+      
+      // Auto-login: Create session (30 days expiry)
+      const expiresAt = Date.now() + (1000 * 60 * 60 * 24 * 30); // 30 days
+      const session = await storage.createSession(user.id, expiresAt);
+      
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        ...SESSION_CONFIG.cookieOptions,
+        maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days in milliseconds
+      });
+      
+      res.status(200).json({
+        message: "E-Mail-Adresse erfolgreich verifiziert! Du bist jetzt angemeldet.",
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Email verification error:", error);
+      res.status(500).json({ error: "E-Mail-Verifizierung fehlgeschlagen" });
     }
   });
 

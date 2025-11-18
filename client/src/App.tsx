@@ -11,6 +11,7 @@ import Home from "@/pages/home";
 import Login from "@/pages/login";
 import LoginOtp from "@/pages/login-otp";
 import Register from "@/pages/register";
+import VerifyEmail from "@/pages/verify-email";
 import Dashboard from "@/pages/dashboard";
 import Gallery from "@/pages/gallery";
 import Blog from "@/pages/blog";
@@ -87,6 +88,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/login-otp" component={LoginOtp} />
       <Route path="/register" component={Register} />
+      <Route path="/verify-email" component={VerifyEmail} />
       <Route path="/dashboard" component={Dashboard} />
       <Route path="/admin/password" component={AdminPassword} />
       <Route path="/admin/editor-management" component={AdminEditorManagement} />
