@@ -121,7 +121,7 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               </div>
-              <Link href="/order">
+              <Link href="/buchen">
                 <Button size="lg" data-testid="button-new-order">
                   <Plus className="mr-2 h-5 w-5" />
                   Neuer Auftrag
@@ -151,7 +151,7 @@ export default function Dashboard() {
                     <p className="mb-6 text-center text-muted-foreground">
                       Erstellen Sie Ihren ersten Auftrag für Immobilienfotografie
                     </p>
-                    <Link href="/order">
+                    <Link href="/buchen">
                       <Button data-testid="button-create-first-order">
                         <Plus className="mr-2 h-4 w-4" />
                         Ersten Auftrag erstellen
