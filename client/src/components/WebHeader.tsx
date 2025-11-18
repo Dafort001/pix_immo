@@ -99,17 +99,6 @@ export function WebHeader() {
                 </Link>
               </li>
               <li>
-                <Link href="/gallery">
-                  <span
-                    className="block text-lg font-medium hover:underline cursor-pointer"
-                    onClick={() => setIsMenuOpen(false)}
-                    data-testid="menu-link-portfolio"
-                  >
-                    Portfolio
-                  </span>
-                </Link>
-              </li>
-              <li>
                 <Link href="/preise">
                   <span
                     className="block text-lg font-medium hover:underline cursor-pointer"

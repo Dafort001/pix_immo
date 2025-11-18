@@ -204,12 +204,6 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
       icon: ImageIcon,
       testId: "nav-galerie",
     },
-    {
-      title: "Portfolio",
-      url: "/gallery",
-      icon: ImageIcon,
-      testId: "nav-portfolio",
-    },
   ];
 
   // Admin tools

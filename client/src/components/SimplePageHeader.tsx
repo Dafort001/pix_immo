@@ -53,15 +53,6 @@ export function SimplePageHeader() {
       {isMenuOpen && (
         <div ref={menuRef} className="fixed top-[72px] right-8 z-50 bg-white shadow-lg rounded-md" data-testid="menu-drawer">
           <nav className="flex flex-col px-8 py-6 gap-6">
-            <Link href="/gallery">
-              <span
-                className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
-                onClick={() => setIsMenuOpen(false)}
-                data-testid="menu-link-portfolio"
-              >
-                Portfolio
-              </span>
-            </Link>
             <Link href="/preise">
               <span
                 className="text-base text-black cursor-pointer hover:text-gray-600 transition-colors"
