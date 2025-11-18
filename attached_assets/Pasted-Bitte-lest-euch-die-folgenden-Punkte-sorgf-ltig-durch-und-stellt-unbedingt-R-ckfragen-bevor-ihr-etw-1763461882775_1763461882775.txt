@@ -1,0 +1,138 @@
+Bitte lest euch die folgenden Punkte sorgfältig durch und stellt unbedingt Rückfragen, bevor ihr etwas umsetzt, wenn irgendetwas unklar ist. Ich möchte vermeiden, dass erneut Funktionen eingebaut oder gelöscht werden, die so nie besprochen waren.
+Zentrales Ziel:
+Das Kunden-Login und das Admin-Dashboard müssen endlich sauber getrennt funktionieren – mit klarer Rollenlogik, getrennten Views und korrektem Routing nach dem Login.
+
+1. Kundenbereich (pix.immo Web, NICHT PixCapture App)
+
+
+Kein Upload im Kunden-Dashboard
+
+
+Bei pix.immo kann der Kunde im Web keine Bilder hochladen.
+
+
+Alle Upload-Funktionen im Kunden-Dashboard gehören entfernt.
+
+
+Upload gibt es ausschließlich in der PixCapture App, nicht im Web-Kundenbereich von pix.immo.
+
+
+
+
+Download nur über Kunden-Galerie
+
+
+Der Download-Button im Kundenbereich darf nur über die Kundengalerie funktionieren.
+
+
+Lösungsidee: Im Kunden-Dashboard gibt es einen klaren Link/Button „Zur Galerie“, und dort befinden sich die Download-Optionen (nicht irgendwo separat).
+
+
+
+
+Portfolio-Button im Kundenbereich entfernen
+
+
+Ein „Portfolio“-Button im Kundenbereich ist überflüssig und verwirrend.
+
+
+Stattdessen soll die Galerie-Seite für den Kunden eine Übersicht aller vorhandenen Aufträge anzeigen und von dort auf den jeweils aktuellen Auftrag / die jeweilige Galerie führen.
+
+
+Bitte den Portfolio-Button im Kunden-Dashboard entfernen.
+
+
+
+
+„Region auswählen“ auf der Seite „Neue Bestellung“ entfernen
+
+
+Auf der Seite „Neue Bestellung“ ist immer noch das Feld/Element „Region auswählen“ vorhanden.
+
+
+Dieses Feld gehört dort nicht hin und hätte bereits entfernt sein müssen.
+
+
+Bitte komplett entfernen, inklusive aller dahinterliegenden Logik, falls vorhanden.
+
+
+
+
+Fotopakete auf „Neue Bestellung“-Seite
+
+
+Aktuell tauchen dort „verschiedenste Fotopakete“ zur Auswahl auf.
+
+
+Das war so nicht besprochen.
+
+
+Bitte fragen, wie die Paketlogik aussehen soll, bevor ihr hier irgendetwas finalisiert.
+
+
+Wichtig: Keine neuen Paket- oder Preislogiken eigenständig erfinden. Wenn etwas unklar ist, bitte nachfragen.
+
+
+
+
+
+2. Admin-Login vs. Kunden-Login (Routing / Sessions)
+Aktueller Fehler:
+
+
+Wenn ich mich als Benutzer (Kunde) anmelde, dann zurück zum Login gehe und mich danach als Administrator anmelde, lande ich trotzdem wieder auf der Benutzerseite und nicht im Admin-Dashboard.
+
+
+Erwartetes Verhalten:
+
+
+Kunden-Login → immer ins Kunden-Dashboard (mit Kundensicht, ohne Admin-Funktionen).
+
+
+Admin-Login → immer ins Admin-Dashboard (Admin-Sicht, alle Admin-Funktionen).
+
+
+Rollen, Sessions und Routing müssen eindeutig getrennt sein.
+
+
+Bitte:
+
+
+Prüft die aktuelle Auth-/Routing-Logik.
+
+
+Stellt sicher, dass ein Admin-Login nie im Kunden-Dashboard landet.
+
+
+Wenn unklar ist, wie die Rollenstruktur gedacht ist, bitte direkt nachfragen, bevor ihr Workarounds baut.
+
+
+
+3. Preislisten und vorherige Arbeiten
+
+
+Alle vorher bearbeiteten Preisinformationen und Listen sind aktuell verschwunden.
+
+
+Bitte prüfen, ob durch eure letzten Änderungen bestehende Inhalte überschrieben oder entfernt wurden.
+
+
+Ziel: Die bereits abgestimmten Preislisten und Strukturen müssen wiederhergestellt werden oder zumindest klar dokumentiert sein, was entfernt/überschrieben wurde.
+
+
+
+4. Allgemeine Bitte an euch
+Bevor ihr neue Elemente einbaut (z. B. neue Pakete, zusätzliche Felder, Buttons, etc.), die nicht ausdrücklich beschrieben wurden:
+
+
+Fragt lieber einmal mehr nach,
+
+
+Schickt bei Bedarf einen kurzen Vorschlag (z. B. Screenshot, kurze Beschreibung),
+
+
+Und wartet auf Freigabe, bevor ihr produktiv daran weiterarbeitet.
+
+
+Mir ist wichtig, dass wir jetzt zuerst die saubere Trennung von Kunden-Login/Kunden-Dashboard und Admin-Dashboard stabil hinbekommen, bevor zusätzliche Features oder Logiken dazukommen.
+Vielen Dank – bitte meldet euch mit Rückfragen zu jedem Punkt, der euch nicht zu 100 % klar ist.
