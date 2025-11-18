@@ -1348,6 +1348,64 @@ export default function Galerie() {
                   </p>
                 </div>
               )}
+
+              {/* Comments Section */}
+              <div className="px-6 py-4 border-t border-border bg-background shrink-0 max-h-64 overflow-y-auto">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                    <h3 className="text-sm font-medium">Kommentare ({comments.length})</h3>
+                  </div>
+
+                  {/* Existing Comments */}
+                  {comments.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {comments.map((comment) => (
+                        <div key={comment.id} className="border-l-2 border-border pl-3 py-1">
+                          <p className="text-sm">{comment.comment}</p>
+                          {comment.altText && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Alt-Text: {comment.altText}
+                            </p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(comment.createdAt).toLocaleString('de-DE')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Comment Form */}
+                  <div className="space-y-2">
+                    <Textarea
+                      placeholder="Kommentar hinzufügen..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      className="resize-none text-sm"
+                      rows={2}
+                      data-testid="input-comment"
+                    />
+                    <Input
+                      placeholder="Alt-Text (optional)"
+                      value={newAltText}
+                      onChange={(e) => setNewAltText(e.target.value)}
+                      className="text-sm"
+                      data-testid="input-alttext"
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleAddComment}
+                      disabled={addCommentMutation.isPending || !newComment.trim()}
+                      className="w-full"
+                      data-testid="button-add-comment"
+                    >
+                      <Send className="w-4 h-4 mr-2" />
+                      {addCommentMutation.isPending ? 'Wird gesendet...' : 'Kommentar hinzufügen'}
+                    </Button>
+                  </div>
+                </div>
+              </div>
               
               {/* Footer */}
               <div className="px-6 py-4 border-t border-border bg-background shrink-0 flex justify-between gap-2">
