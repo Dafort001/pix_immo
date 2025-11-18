@@ -6,8 +6,8 @@ import { eq } from "drizzle-orm";
 const serviceData = [
   // Photography
   { serviceCode: "F10", category: "photography", name: "Fotopaket 10 Bilder", description: "Innen- und Außenaufnahmen, Auswahl + Bearbeitung (max. 60 m² Wohnfläche)", netPrice: 18000, notes: "Standardpaket für kleinere Objekte bis 60 m²" },
-  { serviceCode: "F15", category: "photography", name: "Fotopaket 15 Bilder", description: "erweiterter Umfang, Innen + Außen", netPrice: 21000, notes: "Ideal für mittlere Wohnungen" },
-  { serviceCode: "F20", category: "photography", name: "Fotopaket 20 Bilder", description: "umfangreiches Shooting, inkl. Detailaufnahmen", netPrice: 24000, notes: "Standardpaket für Exposés" },
+  { serviceCode: "F15", category: "photography", name: "Fotopaket 15 Bilder", description: "erweiterter Umfang, Innen + Außen (max. 200 m² Wohnfläche)", netPrice: 21000, notes: "Ideal für mittlere Wohnungen bis 200 m²" },
+  { serviceCode: "F20", category: "photography", name: "Fotopaket 20 Bilder", description: "umfangreiches Shooting, inkl. Detailaufnahmen (max. 200 m² Wohnfläche)", netPrice: 24000, notes: "Standardpaket für Exposés bis 200 m²" },
   { serviceCode: "F40", category: "photography", name: "Fotopaket 40 Bilder", description: "große Objekte oder Mehrfamilienhäuser", netPrice: 32000, notes: "auf Anfrage anpassbar" },
   
   // Drone
