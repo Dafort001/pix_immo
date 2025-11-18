@@ -46,6 +46,7 @@ import {
   Pencil,
 } from 'lucide-react';
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
+import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
 
 export default function Galerie() {
   const [, setLocation] = useLocation();
@@ -72,8 +73,8 @@ export default function Galerie() {
   const [costOverviewOpen, setCostOverviewOpen] = useState(false);
   
   // Drawers & Dialogs
-  const [markupDrawerOpen, setMarkupDrawerOpen] = useState(false);
-  const [currentMarkupImage, setCurrentMarkupImage] = useState<GalleryImage | null>(null);
+  const [annotationOpen, setAnnotationOpen] = useState(false);
+  const [currentAnnotationImage, setCurrentAnnotationImage] = useState<GalleryImage | null>(null);
   const [approvalDialogOpen, setApprovalDialogOpen] = useState(false);
   const [shareLinkDialogOpen, setShareLinkDialogOpen] = useState(false);
   const [kiEditorOpen, setKiEditorOpen] = useState(false);
@@ -96,16 +97,6 @@ export default function Galerie() {
   const [lightboxImage, setLightboxImage] = useState<GalleryImage | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   
-  // Markup State
-  const [markers, setMarkers] = useState<Array<{ id: string; x: number; y: number; color: 'red' | 'yellow' | 'green'; note?: string }>>([]);
-  const [selectedColor, setSelectedColor] = useState<'red' | 'yellow' | 'green'>('red');
-  const [markupHistory, setMarkupHistory] = useState<any[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  
-  // Comments
-  const [comments, setComments] = useState<Array<{ id: string; author: string; role: 'kunde' | 'bearbeiter' | 'admin'; text: string; date: string; status: 'offen' | 'in-arbeit' | 'geloest' }>>([]);
-  const [newComment, setNewComment] = useState('');
   
   // Share Link
   const [shareLinkType, setShareLinkType] = useState<'view' | 'view-download' | 'view-select'>('view');
@@ -191,26 +182,23 @@ export default function Galerie() {
   };
 
   const handleRequestChange = (image: GalleryImage) => {
-    setCurrentMarkupImage(image);
-    setMarkers(image.markers || []);
-    setComments(image.comments || []);
-    setMarkupDrawerOpen(true);
+    setCurrentAnnotationImage(image);
+    setAnnotationOpen(true);
   };
 
-  const handleSubmitChange = () => {
-    if (!currentMarkupImage) return;
+  const handleAnnotationSave = (annotationData: string) => {
+    if (!currentAnnotationImage) return;
     
     const ticketId = `TICKET-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
     setImages(prev => prev.map(img => 
-      img.id === currentMarkupImage.id 
-        ? { ...img, status: 'korrektur' as GalleryImageStatus, markers, comments }
+      img.id === currentAnnotationImage.id 
+        ? { ...img, status: 'korrektur' as GalleryImageStatus, annotationData }
         : img
     ));
     
     toast.success(`Änderungsauftrag ${ticketId} erstellt`);
-    setMarkupDrawerOpen(false);
-    setMarkers([]);
-    setComments([]);
+    setAnnotationOpen(false);
+    setCurrentAnnotationImage(null);
   };
 
   const handleDownload = (imageIds: string[]) => {
@@ -331,62 +319,6 @@ export default function Galerie() {
     toast.success('CRM-Export erstellt – ZIP bereit');
   };
 
-  // Canvas Drawing
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    
-    const newMarker = {
-      id: `marker-${Date.now()}`,
-      x: Math.round(x),
-      y: Math.round(y),
-      color: selectedColor,
-    };
-    
-    setMarkers(prev => [...prev, newMarker]);
-    saveToHistory([...markers, newMarker]);
-  };
-
-  const saveToHistory = (state: any) => {
-    const newHistory = markupHistory.slice(0, historyIndex + 1);
-    newHistory.push(state);
-    setMarkupHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const undo = () => {
-    if (historyIndex > 0) {
-      setHistoryIndex(historyIndex - 1);
-      setMarkers(markupHistory[historyIndex - 1]);
-    }
-  };
-
-  const redo = () => {
-    if (historyIndex < markupHistory.length - 1) {
-      setHistoryIndex(historyIndex + 1);
-      setMarkers(markupHistory[historyIndex + 1]);
-    }
-  };
-
-  const addComment = () => {
-    if (!newComment.trim()) return;
-    
-    const comment = {
-      id: `comment-${Date.now()}`,
-      author: 'Max Müller',
-      role: 'kunde' as const,
-      text: newComment,
-      date: new Date().toISOString().split('T')[0],
-      status: 'offen' as const,
-    };
-    
-    setComments(prev => [...prev, comment]);
-    setNewComment('');
-  };
 
   const getStatusBadge = (status: GalleryImageStatus) => {
     const variants: Record<GalleryImageStatus, { variant: any; label: string; icon: any }> = {
@@ -674,159 +606,14 @@ export default function Galerie() {
         </div>
       </main>
 
-      {/* Markup Drawer */}
-      <Sheet open={markupDrawerOpen} onOpenChange={setMarkupDrawerOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-2xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-2xl">Änderung beauftragen</SheetTitle>
-          </SheetHeader>
-          
-          {currentMarkupImage && (
-            <Tabs defaultValue="markup" className="mt-6">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="markup">Markieren</TabsTrigger>
-                <TabsTrigger value="comments">Kommentare ({comments.length})</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="markup" className="space-y-4">
-                {/* Color Selector */}
-                <div className="flex items-center gap-3">
-                  <span className="text-sm">Farbe:</span>
-                  <div className="flex gap-2">
-                    {(['red', 'yellow', 'green'] as const).map((color) => (
-                      <button
-                        key={color}
-                        onClick={() => setSelectedColor(color)}
-                        className={`w-8 h-8 rounded-full border-2 ${
-                          selectedColor === color ? 'border-foreground' : 'border-transparent'
-                        }`}
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                  <div className="flex-1" />
-                  <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex <= 0}>
-                    <Undo2 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= markupHistory.length - 1}>
-                    <Redo2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                
-                {/* Canvas */}
-                <div className="relative border border-border" style={{ borderRadius: '0px' }}>
-                  <img
-                    src={currentMarkupImage.url}
-                    alt={currentMarkupImage.filename}
-                    className="w-full h-auto"
-                  />
-                  <canvas
-                    ref={canvasRef}
-                    onClick={handleCanvasClick}
-                    className="absolute inset-0 w-full h-full cursor-crosshair"
-                    width={800}
-                    height={600}
-                  />
-                  {/* Markers */}
-                  {markers.map((marker) => (
-                    <div
-                      key={marker.id}
-                      className="absolute w-6 h-6 rounded-full border-2 border-white shadow-lg cursor-pointer"
-                      style={{
-                        backgroundColor: marker.color,
-                        left: `${(marker.x / 800) * 100}%`,
-                        top: `${(marker.y / 600) * 100}%`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                      onClick={() => setMarkers(markers.filter(m => m.id !== marker.id))}
-                    />
-                  ))}
-                </div>
-                
-                <p className="text-xs text-muted-foreground">
-                  Klicken Sie auf das Bild, um Markierungen zu setzen. Klicken Sie auf eine Markierung, um sie zu entfernen.
-                </p>
-              </TabsContent>
-              
-              <TabsContent value="comments" className="space-y-4">
-                {/* Comment List */}
-                <div className="space-y-3">
-                  {comments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-8">
-                      Noch keine Kommentare vorhanden
-                    </p>
-                  ) : (
-                    comments.map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="p-3 border border-border bg-muted/30"
-                        style={{ borderRadius: '0px' }}
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{comment.author}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {comment.role}
-                            </Badge>
-                          </div>
-                          <Badge
-                            variant={
-                              comment.status === 'geloest' ? 'default' :
-                              comment.status === 'in-arbeit' ? 'secondary' : 'outline'
-                            }
-                            className="text-xs"
-                          >
-                            {comment.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm">{comment.text}</p>
-                        <p className="text-xs text-muted-foreground mt-2">{comment.date}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-                
-                {/* Add Comment */}
-                <div className="space-y-2">
-                  <Textarea
-                    placeholder="Neuer Kommentar..."
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    rows={3}
-                    style={{ borderRadius: '0px' }}
-                  />
-                  <Button
-                    onClick={addComment}
-                    className="w-full"
-                    style={{ borderRadius: '0px', height: '32px' }}
-                  >
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Kommentar hinzufügen
-                  </Button>
-                </div>
-              </TabsContent>
-            </Tabs>
-          )}
-          
-          <div className="mt-6 flex gap-2">
-            <Button
-              onClick={handleSubmitChange}
-              className="flex-1 bg-[#2E2E2E] text-white hover:opacity-90"
-              style={{ borderRadius: '0px', height: '40px' }}
-              disabled={markers.length === 0 && comments.length === 0}
-            >
-              Änderung senden
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setMarkupDrawerOpen(false)}
-              style={{ borderRadius: '0px', height: '40px' }}
-            >
-              Abbrechen
-            </Button>
-          </div>
-        </SheetContent>
-      </Sheet>
+      {/* Annotation Overlay */}
+      <AnnotationOverlay
+        isOpen={annotationOpen}
+        onClose={() => setAnnotationOpen(false)}
+        onSave={handleAnnotationSave}
+        image={currentAnnotationImage?.url || ''}
+        filename={currentAnnotationImage?.filename || ''}
+      />
 
       {/* Approval Dialog */}
       <Dialog open={approvalDialogOpen} onOpenChange={setApprovalDialogOpen}>
