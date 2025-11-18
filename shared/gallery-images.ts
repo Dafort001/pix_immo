@@ -12,6 +12,8 @@ export type GalleryImage = {
   roomType?: string;
   version: number;
   tags?: string[];
+  mediaType?: 'image' | 'video';
+  aspectRatio?: '3:2' | '2:3' | '16:9' | '9:16' | '1:1';
   versions?: Array<{
     version: number;
     url: string;
@@ -211,5 +213,61 @@ export const mockGalleryImages: GalleryImage[] = [
         status: 'geloest',
       },
     ],
+  },
+  {
+    id: 'img-013',
+    filename: 'fassade-portrait-01.jpg',
+    url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=1200',
+    thumbnail: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=600',
+    resolution: '4000 × 6000',
+    uploadDate: '2025-11-03',
+    status: 'neu',
+    altText: 'Moderne Hausfassade im Hochformat mit großen Fensterfronten und Balkon',
+    roomType: 'Außenansicht',
+    version: 1,
+    mediaType: 'image',
+    aspectRatio: '2:3',
+  },
+  {
+    id: 'img-014',
+    filename: 'treppe-portrait-01.jpg',
+    url: 'https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=800&h=1200',
+    thumbnail: 'https://images.unsplash.com/photo-1600607687644-c7171b42498b?w=400&h=600',
+    resolution: '4000 × 6000',
+    uploadDate: '2025-11-03',
+    status: 'freigegeben',
+    altText: 'Elegante Treppe im Hochformat mit Holzstufen und Glasgeländer',
+    roomType: 'Treppenhaus',
+    version: 1,
+    mediaType: 'image',
+    aspectRatio: '2:3',
+  },
+  {
+    id: 'vid-001',
+    filename: 'rundgang-wohnung-16-9.mp4',
+    url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf',
+    thumbnail: 'https://images.unsplash.com/photo-1600210492493-0946911123ea?w=800&h=450',
+    resolution: '1920 × 1080',
+    uploadDate: '2025-11-03',
+    status: 'zur-pruefung',
+    altText: 'Video-Rundgang durch die Wohnung im Landscape-Format',
+    roomType: 'Rundgang',
+    version: 1,
+    mediaType: 'video',
+    aspectRatio: '16:9',
+  },
+  {
+    id: 'vid-002',
+    filename: 'immobilien-reels-9-16.mp4',
+    url: 'https://player.vimeo.com/external/371433846.sd.mp4?s=236da2f3c0fd273d2c6d9a064f3ae35579b2bbdf',
+    thumbnail: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=450&h=800',
+    resolution: '1080 × 1920',
+    uploadDate: '2025-11-03',
+    status: 'neu',
+    altText: 'Vertikales Immobilien-Video für Social Media (Instagram Reels, TikTok)',
+    roomType: 'Social Media',
+    version: 1,
+    mediaType: 'video',
+    aspectRatio: '9:16',
   },
 ];

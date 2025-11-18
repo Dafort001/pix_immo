@@ -44,6 +44,8 @@ import {
   AlertCircle,
   Clock,
   Pencil,
+  Play,
+  Film,
 } from 'lucide-react';
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
 import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
@@ -319,6 +321,22 @@ export default function Galerie() {
     toast.success('CRM-Export erstellt – ZIP bereit');
   };
 
+
+  const getAspectRatioClass = (aspectRatio?: string) => {
+    switch (aspectRatio) {
+      case '2:3':
+        return 'aspect-[2/3]';
+      case '16:9':
+        return 'aspect-[16/9]';
+      case '9:16':
+        return 'aspect-[9/16]';
+      case '1:1':
+        return 'aspect-square';
+      case '3:2':
+      default:
+        return 'aspect-[4/3]'; // Default für Landscape
+    }
+  };
 
   const getStatusBadge = (status: GalleryImageStatus) => {
     const variants: Record<GalleryImageStatus, { variant: any; label: string; icon: any }> = {
@@ -1170,9 +1188,15 @@ export default function Galerie() {
           {/* Header */}
           <div className="px-6 py-4 border-b border-border bg-background shrink-0 flex items-start justify-between">
             <div>
-              <h2 className="text-2xl">{lightboxImage?.filename}</h2>
+              <div className="flex items-center gap-2">
+                {lightboxImage?.mediaType === 'video' && (
+                  <Film className="w-5 h-5 text-muted-foreground" />
+                )}
+                <h2 className="text-2xl">{lightboxImage?.filename}</h2>
+              </div>
               <p className="text-sm text-muted-foreground">
-                {lightboxImage?.resolution} • {lightboxImage?.uploadDate} • Bild {lightboxIndex + 1} von {filteredImages.length}
+                {lightboxImage?.resolution} • {lightboxImage?.uploadDate} • {lightboxImage?.mediaType === 'video' ? 'Video' : 'Bild'} {lightboxIndex + 1} von {filteredImages.length}
+                {lightboxImage?.aspectRatio && ` • ${lightboxImage.aspectRatio}`}
               </p>
             </div>
             <Button
@@ -1187,14 +1211,27 @@ export default function Galerie() {
           
           {lightboxImage && (
             <>
-              {/* Image Viewport */}
+              {/* Image/Video Viewport */}
               <div className="flex-1 overflow-auto bg-black flex items-center justify-center p-4 min-h-0 relative">
-                <img
-                  src={lightboxImage.url}
-                  alt={lightboxImage.filename}
-                  className="max-w-full max-h-full object-contain"
-                  style={{ width: 'auto', height: 'auto' }}
-                />
+                {lightboxImage.mediaType === 'video' ? (
+                  <video
+                    src={lightboxImage.url}
+                    controls
+                    autoPlay
+                    loop
+                    className="max-w-full max-h-full"
+                    style={{ width: 'auto', height: 'auto' }}
+                  >
+                    Ihr Browser unterstützt keine Videos.
+                  </video>
+                ) : (
+                  <img
+                    src={lightboxImage.url}
+                    alt={lightboxImage.filename}
+                    className="max-w-full max-h-full object-contain"
+                    style={{ width: 'auto', height: 'auto' }}
+                  />
+                )}
                 
                 {/* Navigation Arrows */}
                 {lightboxIndex > 0 && (
@@ -1355,19 +1392,41 @@ function GalleryImageCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image Container */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer group" onClick={onImageClick}>
-        <img
-          src={image.thumbnail}
-          alt={image.filename}
-          className={`w-full h-full object-cover transition-transform duration-300 ${
-            isHovered ? 'scale-110' : 'scale-100'
-          }`}
-        />
+      {/* Image/Video Container */}
+      <div className={`relative ${getAspectRatioClass(image.aspectRatio)} overflow-hidden bg-muted cursor-pointer group`} onClick={onImageClick}>
+        {image.mediaType === 'video' ? (
+          <>
+            <img
+              src={image.thumbnail}
+              alt={image.filename}
+              className={`w-full h-full object-cover transition-transform duration-300 ${
+                isHovered ? 'scale-110' : 'scale-100'
+              }`}
+            />
+            {/* Play Icon Overlay for Videos */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="bg-black/60 rounded-full p-4">
+                <Play className="w-10 h-10 text-white fill-white" />
+              </div>
+            </div>
+          </>
+        ) : (
+          <img
+            src={image.thumbnail}
+            alt={image.filename}
+            className={`w-full h-full object-cover transition-transform duration-300 ${
+              isHovered ? 'scale-110' : 'scale-100'
+            }`}
+          />
+        )}
         
-        {/* Zoom Overlay */}
+        {/* Zoom/Play Overlay on Hover */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center pointer-events-none">
-          <ZoomIn className="w-12 h-12 text-white" />
+          {image.mediaType === 'video' ? (
+            <Film className="w-12 h-12 text-white" />
+          ) : (
+            <ZoomIn className="w-12 h-12 text-white" />
+          )}
         </div>
         
         {/* Checkbox */}
@@ -1420,9 +1479,15 @@ function GalleryImageCard({
       <div className="p-3 space-y-2">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <p className="text-sm truncate">{image.filename}</p>
+            <div className="flex items-center gap-1">
+              {image.mediaType === 'video' && (
+                <Film className="w-3 h-3 text-muted-foreground" />
+              )}
+              <p className="text-sm truncate">{image.filename}</p>
+            </div>
             <p className="text-xs text-muted-foreground">
               {image.resolution} • {image.uploadDate}
+              {image.aspectRatio && ` • ${image.aspectRatio}`}
             </p>
             {image.roomType && (
               <p className="text-xs text-muted-foreground">{image.roomType}</p>
