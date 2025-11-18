@@ -4,10 +4,11 @@ import { useAuthGuard } from '@/hooks/use-auth-guard';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Plus, Minus, ShoppingCart, Calendar, MapPin } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Calendar, MapPin, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
@@ -216,6 +217,13 @@ export default function AdminInternalBooking() {
       />
 
       <div className="container max-w-7xl mx-auto p-6 space-y-6">
+        {/* Travel Policy Info */}
+        <Alert className="bg-primary/5 border-primary/20" data-testid="alert-travel-policy">
+          <Info className="h-4 w-4 text-primary" />
+          <AlertDescription className="text-sm">
+            <strong>Anfahrt:</strong> Anfahrt bis 40 km inklusive, darüber hinaus individuelle Absprache.
+          </AlertDescription>
+        </Alert>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -322,7 +330,7 @@ export default function AdminInternalBooking() {
                         <FormItem>
                           <FormLabel>Kundenname / Makler</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Max Mustermann / Makler GmbH" data-testid="input-contactName" />
+                            <Input {...field} placeholder="Max Mustermann / Makler GmbH" data-testid="input-contact-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -337,7 +345,7 @@ export default function AdminInternalBooking() {
                           <FormItem>
                             <FormLabel>E-Mail</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" placeholder="makler@example.com" data-testid="input-contactEmail" />
+                              <Input {...field} type="email" placeholder="makler@example.com" data-testid="input-contact-email" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -350,7 +358,7 @@ export default function AdminInternalBooking() {
                           <FormItem>
                             <FormLabel>Telefonnummer (für SMS)</FormLabel>
                             <FormControl>
-                              <Input {...field} placeholder="+49 170 1234567" data-testid="input-contactMobile" />
+                              <Input {...field} placeholder="+49 170 1234567" data-testid="input-contact-mobile" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -365,7 +373,7 @@ export default function AdminInternalBooking() {
                         <FormItem>
                           <FormLabel>Objektbezeichnung</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Moderne 3-Zimmer-Wohnung" data-testid="input-propertyName" />
+                            <Input {...field} placeholder="Moderne 3-Zimmer-Wohnung" data-testid="input-property-name" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -406,7 +414,7 @@ export default function AdminInternalBooking() {
                           <FormLabel>Objekttyp</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <SelectTrigger data-testid="select-propertyType">
+                              <SelectTrigger data-testid="select-property-type">
                                 <SelectValue placeholder="Objekttyp wählen" />
                               </SelectTrigger>
                             </FormControl>
@@ -430,7 +438,7 @@ export default function AdminInternalBooking() {
                           <FormItem>
                             <FormLabel>Terminwunsch (Datum)</FormLabel>
                             <FormControl>
-                              <Input {...field} type="date" data-testid="input-preferredDate" />
+                              <Input {...field} type="date" data-testid="input-preferred-date" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -443,7 +451,7 @@ export default function AdminInternalBooking() {
                           <FormItem>
                             <FormLabel>Uhrzeit</FormLabel>
                             <FormControl>
-                              <Input {...field} type="time" data-testid="input-preferredTime" />
+                              <Input {...field} type="time" data-testid="input-preferred-time" />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -466,7 +474,7 @@ export default function AdminInternalBooking() {
                         <FormItem>
                           <FormLabel>Besondere Anforderungen</FormLabel>
                           <FormControl>
-                            <Input {...field} placeholder="Optional..." data-testid="input-specialRequirements" />
+                            <Input {...field} placeholder="Optional..." data-testid="input-special-requirements" />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
