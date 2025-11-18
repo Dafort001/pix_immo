@@ -583,24 +583,15 @@ export function ImagePreviewModal({
                 </Button>
               </div>
               
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <Button 
-                  variant="outline"
-                  onClick={onRequestEdit}
-                  className="border-gray-300 text-xs sm:text-sm"
-                  data-testid="button-request-edit"
-                >
-                  <span className="hidden sm:inline">Bearbeitung anfordern</span>
-                  <span className="sm:hidden">Bearbeiten</span>
-                </Button>
-                <Button 
-                  onClick={onClose}
-                  className="bg-[#2d2d2d] text-white text-xs sm:text-sm"
-                  data-testid="button-close-preview"
-                >
-                  Schließen
-                </Button>
-              </div>
+              <Button 
+                variant="outline"
+                onClick={onRequestEdit}
+                className="border-gray-300 text-xs sm:text-sm"
+                data-testid="button-request-edit"
+              >
+                <span className="hidden sm:inline">Bearbeitung anfordern</span>
+                <span className="sm:hidden">Bearbeiten</span>
+              </Button>
             </div>
 
             {/* Keyboard Shortcuts Hint */}
