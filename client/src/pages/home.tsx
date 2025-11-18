@@ -123,25 +123,25 @@ export default function Home() {
         {/* Spacer to push buttons and strip to bottom */}
         <div className="flex-1"></div>
 
-        {/* Navigation Buttons - Above Strip (Desktop only) */}
-        <nav className="hidden lg:flex items-center justify-start gap-6 pb-6 pl-8 bg-white h-[40px]">
+        {/* Navigation Buttons - Above Strip (Tablet & Desktop) */}
+        <nav className="hidden md:flex items-center justify-start gap-4 md:gap-6 pb-6 pl-8 bg-white h-[40px]">
           <Link href="/gallery">
-            <span className="text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.12em]" data-testid="link-portfolio">
+            <span className="text-[14px] md:text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.12em]" data-testid="link-portfolio">
               Portfolio
             </span>
           </Link>
           <Link href="/preise">
-            <span className="text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-preise">
+            <span className="text-[14px] md:text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-preise">
               Preise
             </span>
           </Link>
           <Link href="/blog">
-            <span className="text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-blog">
+            <span className="text-[14px] md:text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-blog">
               Blog
             </span>
           </Link>
           <Link href="/login">
-            <span className="text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-login">
+            <span className="text-[14px] md:text-[16px] text-black hover:text-gray-600 transition-colors cursor-pointer tracking-[0.05em]" data-testid="link-login">
               Login
             </span>
           </Link>
