@@ -54,10 +54,15 @@ export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   hashedPassword: text("hashed_password").notNull(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  company: varchar("company", { length: 255 }),
+  phone: varchar("phone", { length: 50 }),
   role: varchar("role", { length: 20 }).notNull().default("client"), // 'client' or 'admin'
   credits: bigint("credits", { mode: "number" }).notNull().default(0), // AI processing credits
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   emailVerifiedAt: bigint("email_verified_at", { mode: "number" }), // NULL = not verified, timestamp = verified
+  requiresPasswordMigration: boolean("requires_password_migration").notNull().default(false), // Legacy OTP-only users
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
@@ -76,6 +81,14 @@ export const refreshTokens = pgTable("refresh_tokens", {
 });
 
 export const passwordResetTokens = pgTable("password_reset_tokens", {
+  id: varchar("id").primaryKey(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: bigint("expires_at", { mode: "number" }).notNull(),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+});
+
+export const emailVerificationTokens = pgTable("email_verification_tokens", {
   id: varchar("id").primaryKey(),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: text("token").notNull().unique(),
