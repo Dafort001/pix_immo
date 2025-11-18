@@ -34,6 +34,9 @@ import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 import { GoogleCalendarService } from "./google-calendar";
+import { sendOtpEmail } from "./email";
+import { checkEmailRateLimit, checkIpRateLimit, getClientIp } from "./otp-rate-limit";
+import { generateOtpCode, hashOtpCode, verifyOtpCode, generateOtpExpiration, normalizeEmail, OTP_MAX_ATTEMPTS } from "./otp-helpers";
 
 // Middleware to validate request body with Zod
 export function validateBody(schema: z.ZodSchema) {
@@ -2311,6 +2314,152 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Logout error:", error);
       res.status(500).json({ error: "Logout failed" });
+    }
+  });
+
+  // POST /api/auth/request-otp - Request OTP code via email
+  app.post("/api/auth/request-otp", authLimiter, async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      if (!email || typeof email !== "string") {
+        return res.status(400).json({ error: "E-Mail-Adresse ist erforderlich" });
+      }
+      
+      const normalizedEmail = normalizeEmail(email);
+      const clientIp = getClientIp(req);
+      
+      // Check email rate limit (1 per minute per email)
+      const emailCheck = checkEmailRateLimit(normalizedEmail);
+      if (!emailCheck.allowed) {
+        return res.status(429).json({
+          error: emailCheck.message,
+          retryAfter: emailCheck.retryAfter,
+        });
+      }
+      
+      // Check IP rate limit (10 per hour per IP)
+      const ipCheck = checkIpRateLimit(clientIp);
+      if (!ipCheck.allowed) {
+        return res.status(429).json({
+          error: ipCheck.message,
+          retryAfter: ipCheck.retryAfter,
+        });
+      }
+      
+      // Find or create user
+      let user = await storage.getUserByEmail(normalizedEmail);
+      if (!user) {
+        // Create new user without password (OTP-only user)
+        const tempPassword = randomBytes(32).toString("hex"); // Random unusable password
+        const hashedPassword = await hashPassword(tempPassword);
+        user = await storage.createUser(normalizedEmail, hashedPassword, "client");
+        console.log(`[OTP] Created new OTP-only user: ${normalizedEmail}`);
+      }
+      
+      // Generate OTP code
+      const otpCode = generateOtpCode();
+      const codeHash = await hashOtpCode(otpCode);
+      const expiresAt = generateOtpExpiration();
+      
+      // Store OTP in database
+      const otpId = randomBytes(16).toString("hex");
+      await storage.createOtpCode(otpId, normalizedEmail, codeHash, expiresAt);
+      
+      // Send OTP email
+      await sendOtpEmail(normalizedEmail, otpCode);
+      
+      console.log(`[OTP] Code generated for ${normalizedEmail} (expires in 10 minutes)`);
+      
+      // Generic success response (don't reveal if user exists or not)
+      res.json({
+        success: true,
+        message: "Falls diese E-Mail-Adresse registriert ist, wurde ein Login-Code gesendet.",
+      });
+    } catch (error) {
+      console.error("Request OTP error:", error);
+      res.status(500).json({ error: "Fehler beim Senden des Codes" });
+    }
+  });
+
+  // POST /api/auth/verify-otp - Verify OTP code and create session
+  app.post("/api/auth/verify-otp", authLimiter, async (req: Request, res: Response) => {
+    try {
+      const { email, code } = req.body;
+      
+      if (!email || !code || typeof email !== "string" || typeof code !== "string") {
+        return res.status(400).json({ error: "E-Mail und Code sind erforderlich" });
+      }
+      
+      const normalizedEmail = normalizeEmail(email);
+      const codeHash = await hashOtpCode(code);
+      
+      // Find valid OTP code
+      const otpEntry = await storage.getValidOtpCode(normalizedEmail, codeHash);
+      
+      if (!otpEntry) {
+        // Increment attempts if we can find the code (even if expired/used)
+        console.log(`[OTP] Invalid or expired code attempt for ${normalizedEmail}`);
+        return res.status(400).json({ error: "Ungültiger oder abgelaufener Code" });
+      }
+      
+      // Check max attempts
+      if (otpEntry.attempts >= OTP_MAX_ATTEMPTS) {
+        console.log(`[OTP] Max attempts exceeded for ${normalizedEmail}`);
+        return res.status(400).json({ error: "Zu viele Fehlversuche. Bitte fordere einen neuen Code an." });
+      }
+      
+      // Verify the code
+      const isValid = await verifyOtpCode(code, otpEntry.codeHash);
+      
+      if (!isValid) {
+        // Increment failed attempts
+        await storage.incrementOtpAttempts(otpEntry.id);
+        console.log(`[OTP] Failed verification attempt for ${normalizedEmail} (attempt ${otpEntry.attempts + 1})`);
+        return res.status(400).json({ error: "Ungültiger Code" });
+      }
+      
+      // Mark OTP as used
+      await storage.markOtpAsUsed(otpEntry.id);
+      
+      // Get user
+      const user = await storage.getUserByEmail(normalizedEmail);
+      if (!user) {
+        console.error(`[OTP] User not found after successful OTP verification: ${normalizedEmail}`);
+        return res.status(500).json({ error: "Authentifizierungsfehler" });
+      }
+      
+      // Set email as verified
+      if (!user.emailVerifiedAt) {
+        await storage.setEmailVerified(user.id);
+        console.log(`[OTP] Email verified for user: ${normalizedEmail}`);
+      }
+      
+      // Create session
+      const sessionExpiry = Date.now() + SESSION_CONFIG.sessionDuration;
+      const session = await storage.createSession(user.id, sessionExpiry);
+      
+      // Set session cookie
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: SESSION_CONFIG.sessionDuration,
+      });
+      
+      console.log(`[OTP] Session created for ${normalizedEmail}`);
+      
+      res.json({
+        success: true,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Verify OTP error:", error);
+      res.status(500).json({ error: "Fehler bei der Verifizierung" });
     }
   });
 
