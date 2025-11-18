@@ -124,7 +124,7 @@ export default function LoginOtp() {
       });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       // Clear localStorage on successful login
       localStorage.removeItem("otp_email");
       localStorage.removeItem("otp_step");
@@ -133,8 +133,27 @@ export default function LoginOtp() {
         title: "Angemeldet",
         description: "Du wurdest erfolgreich angemeldet",
       });
-      // Redirect to home or booking page
-      navigate("/");
+      
+      // Fetch user info to determine routing
+      try {
+        const userRes = await fetch("/api/auth/me");
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          
+          // Role-based routing
+          if (userData.user.email === "janjira@pix.immo") {
+            navigate("/admin/dashboard");
+          } else {
+            navigate("/dashboard");
+          }
+        } else {
+          // Fallback if user info fetch fails
+          navigate("/dashboard");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user info:", error);
+        navigate("/dashboard");
+      }
     },
     onError: (error: any) => {
       const errorMessage = error.message || "Ungültiger Code";
