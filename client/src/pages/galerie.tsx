@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link, useLocation } from 'wouter';
 import { SEOHead } from '@shared/components';
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -49,6 +51,17 @@ import {
 } from 'lucide-react';
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
 import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
+import { Heart, Send } from 'lucide-react';
+
+// Types for API integration
+type Comment = {
+  id: string;
+  comment: string;
+  altText: string | null;
+  createdAt: number;
+  userId: string;
+  userEmail: string;
+};
 
 // Helper function for aspect ratio classes (Masonry Layout)
 function getAspectRatioClass(aspectRatio?: string) {
@@ -124,6 +137,74 @@ export default function Galerie() {
   const [shareLinkPin, setShareLinkPin] = useState('');
   const [shareLinkWatermark, setShareLinkWatermark] = useState(false);
   const [generatedShareLink, setGeneratedShareLink] = useState('');
+
+  // Comments State
+  const [newComment, setNewComment] = useState("");
+  const [newAltText, setNewAltText] = useState("");
+
+  // API Queries for Favorites and Comments
+  const { data: favoritesData } = useQuery<{ favorites: string[] }>({
+    queryKey: ["/api/favorites"],
+    queryFn: getQueryFn<{ favorites: string[] }>({ on401: "returnNull" }),
+  });
+
+  const { data: commentsData } = useQuery<{ comments: Comment[] }>({
+    queryKey: ["/api/image", lightboxImage?.id, "comments"],
+    queryFn: getQueryFn<{ comments: Comment[] }>({ on401: "returnNull" }),
+    enabled: !!lightboxImage,
+  });
+
+  const favorites = favoritesData?.favorites || [];
+  const comments = commentsData?.comments || [];
+
+  // Favoriten-Toggle Mutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: async (imageId: string) => {
+      return await apiRequest("POST", `/api/image/${imageId}/favorite`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/favorites"] });
+      toast.success("Favorit aktualisiert");
+    },
+    onError: () => {
+      toast.error("Favorit konnte nicht aktualisiert werden");
+    },
+  });
+
+  // Kommentar hinzufügen Mutation
+  const addCommentMutation = useMutation({
+    mutationFn: async ({ imageId, comment, altText }: { imageId: string; comment: string; altText?: string }) => {
+      return await apiRequest("POST", `/api/image/${imageId}/comment`, { comment, altText });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/image", variables.imageId, "comments"] });
+      setNewComment("");
+      setNewAltText("");
+      toast.success("Kommentar hinzugefügt");
+    },
+    onError: () => {
+      toast.error("Kommentar konnte nicht hinzugefügt werden");
+    },
+  });
+
+  // Toggle Favorit Handler
+  const handleToggleFavorite = (imageId: string) => {
+    toggleFavoriteMutation.mutate(imageId);
+  };
+
+  // Add Comment Handler
+  const handleAddComment = () => {
+    if (!lightboxImage) return;
+    if (!newComment.trim()) {
+      toast.error("Bitte geben Sie einen Kommentar ein");
+      return;
+    }
+    addCommentMutation.mutate({
+      imageId: lightboxImage.id,
+      comment: newComment,
+      altText: newAltText || undefined,
+    });
+  };
 
   // Filter & Sort
   const filteredImages = images
