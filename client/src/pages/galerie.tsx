@@ -50,6 +50,23 @@ import {
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
 import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
 
+// Helper function for aspect ratio classes
+function getAspectRatioClass(aspectRatio?: string) {
+  switch (aspectRatio) {
+    case '2:3':
+      return 'aspect-[2/3]';
+    case '16:9':
+      return 'aspect-[16/9]';
+    case '9:16':
+      return 'aspect-[9/16]';
+    case '1:1':
+      return 'aspect-square';
+    case '3:2':
+    default:
+      return 'aspect-[4/3]'; // Default für Landscape
+  }
+}
+
 export default function Galerie() {
   const [, setLocation] = useLocation();
   
@@ -319,23 +336,6 @@ export default function Galerie() {
     const mockZipLink = `https://pix.immo/exports/crm-export-${Date.now()}.zip`;
     setExportLink(mockZipLink);
     toast.success('CRM-Export erstellt – ZIP bereit');
-  };
-
-
-  const getAspectRatioClass = (aspectRatio?: string) => {
-    switch (aspectRatio) {
-      case '2:3':
-        return 'aspect-[2/3]';
-      case '16:9':
-        return 'aspect-[16/9]';
-      case '9:16':
-        return 'aspect-[9/16]';
-      case '1:1':
-        return 'aspect-square';
-      case '3:2':
-      default:
-        return 'aspect-[4/3]'; // Default für Landscape
-    }
   };
 
   const getStatusBadge = (status: GalleryImageStatus) => {
