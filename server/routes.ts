@@ -34,7 +34,8 @@ import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 import { GoogleCalendarService } from "./google-calendar";
-import { sendOtpEmail } from "./email";
+import { sendOtpEmail, sendVerificationEmail } from "./email";
+import { isDisposableEmail, getDisposableEmailErrorMessage } from "./blocked-domains";
 import { checkEmailRateLimit, checkIpRateLimit, getClientIp } from "./otp-rate-limit";
 import { generateOtpCode, hashOtpCode, verifyOtpCode, generateOtpExpiration, normalizeEmail, OTP_MAX_ATTEMPTS } from "./otp-helpers";
 
@@ -2230,46 +2231,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // POST /api/auth/signup - Create new user account
-  const signupSchema = z.object({
-    email: z.string().email("Invalid email format"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+  // POST /api/auth/register - Create new user account with email verification
+  const registerSchema = z.object({
+    email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
+    password: z.string().min(8, "Das Passwort muss mindestens 8 Zeichen lang sein"),
+    firstName: z.string().min(1, "Vorname ist erforderlich"),
+    lastName: z.string().min(1, "Nachname ist erforderlich"),
+    company: z.string().optional(),
+    phone: z.string().optional(),
+    acceptedTerms: z.boolean().refine(val => val === true, "Du musst die AGB akzeptieren"),
   });
 
-  app.post("/api/auth/signup", authLimiter, validateBody(signupSchema), async (req: Request, res: Response) => {
+  app.post("/api/auth/register", authLimiter, validateBody(registerSchema), async (req: Request, res: Response) => {
     try {
-      const { email, password } = req.body;
+      const { email, password, firstName, lastName, company, phone } = req.body;
+      
+      // Check for disposable email domains
+      if (isDisposableEmail(email)) {
+        return res.status(400).json({ error: getDisposableEmailErrorMessage() });
+      }
       
       // Check if user already exists
       const existingUser = await storage.getUserByEmail(email);
       if (existingUser) {
-        return res.status(409).json({ error: "Email already registered" });
+        return res.status(409).json({ error: "Diese E-Mail-Adresse ist bereits registriert" });
       }
       
-      // Hash password and create user
+      // Hash password
       const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser(email, hashedPassword, "client");
       
-      // Create session (default 24h for signup)
-      const expiresAt = Date.now() + (1000 * 60 * 60 * 24); // 24 hours
-      const session = await storage.createSession(user.id, expiresAt);
-      
-      // Set session cookie
-      res.cookie(SESSION_CONFIG.cookieName, session.id, {
-        ...SESSION_CONFIG.cookieOptions,
-        maxAge: 60 * 60 * 24 * 1000, // 24 hours in milliseconds
+      // Create user (not verified yet)
+      const user = await storage.createUser({
+        email,
+        hashedPassword,
+        firstName,
+        lastName,
+        company,
+        phone,
+        role: "client",
+        emailVerifiedAt: null, // Not verified yet
+        requiresPasswordMigration: false,
       });
+      
+      // Generate verification token (24h expiry)
+      const verificationToken = randomUUID();
+      const expiresAt = Date.now() + (1000 * 60 * 60 * 24); // 24 hours
+      
+      await storage.createEmailVerificationToken(
+        randomUUID(),
+        user.id,
+        verificationToken,
+        expiresAt
+      );
+      
+      // Send verification email
+      const baseUrl = process.env.FRONTEND_URL || "http://localhost:5000";
+      const verificationLink = `${baseUrl}/verify-email?token=${verificationToken}`;
+      
+      await sendVerificationEmail(email, verificationLink);
       
       res.status(201).json({
-        user: {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-        },
+        message: "Registrierung erfolgreich! Bitte prüfe deine E-Mails, um dein Konto zu aktivieren.",
+        email: user.email,
       });
     } catch (error) {
-      console.error("Signup error:", error);
-      res.status(500).json({ error: "Signup failed" });
+      console.error("Registration error:", error);
+      res.status(500).json({ error: "Registrierung fehlgeschlagen" });
     }
   });
 

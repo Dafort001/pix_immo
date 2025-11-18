@@ -364,3 +364,74 @@ dein pix.immo Team
 ---
 Diese E-Mail wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.`;
 }
+
+/**
+ * Send email verification email with link
+ */
+export async function sendVerificationEmail(to: string, verificationLink: string): Promise<void> {
+  const subject = "E-Mail-Adresse bestätigen – pix.immo";
+  const body = generateVerificationEmailBody(verificationLink);
+
+  if (!isSesConfigured || !sesClient) {
+    // DRY-RUN mode: Log to console
+    console.log("\n" + "=".repeat(60));
+    console.log("[EMAIL DRY-RUN] SES not configured - Verification email not sent");
+    console.log("=".repeat(60));
+    console.log(`To: ${to}`);
+    console.log(`From: ${AWS_SES_FROM_ADDRESS}`);
+    console.log(`Subject: ${subject}`);
+    console.log("-".repeat(60));
+    console.log(body);
+    console.log("=".repeat(60) + "\n");
+    return;
+  }
+
+  // PRODUCTION mode: Send via SES
+  try {
+    const command = new SendEmailCommand({
+      Source: AWS_SES_FROM_ADDRESS,
+      Destination: {
+        ToAddresses: [to],
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: "UTF-8",
+        },
+        Body: {
+          Text: {
+            Data: body,
+            Charset: "UTF-8",
+          },
+        },
+      },
+    });
+
+    await sesClient.send(command);
+    console.log(`[EMAIL] Verification email sent successfully to ${to} via AWS SES`);
+  } catch (error) {
+    console.error("[EMAIL] Failed to send verification email via SES:", error);
+    throw new Error("Failed to send verification email");
+  }
+}
+
+/**
+ * Generate email verification body (plaintext with link)
+ */
+function generateVerificationEmailBody(verificationLink: string): string {
+  return `Willkommen bei pix.immo!
+
+Bitte bestätige deine E-Mail-Adresse, um dein Konto zu aktivieren:
+
+${verificationLink}
+
+Dieser Link ist 24 Stunden lang gültig.
+
+Falls du kein Konto bei pix.immo erstellt hast, kannst du diese E-Mail ignorieren.
+
+Viele Grüße,
+dein pix.immo Team
+
+---
+Diese E-Mail wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.`;
+}

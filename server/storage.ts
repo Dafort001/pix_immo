@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, otpCodes, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, emailVerificationTokens, otpCodes, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -10,7 +10,17 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
-  createUser(email: string, hashedPassword: string, role?: string): Promise<User>;
+  createUser(data: {
+    email: string;
+    hashedPassword: string;
+    firstName: string;
+    lastName: string;
+    company?: string;
+    phone?: string;
+    role?: string;
+    emailVerifiedAt?: number | null;
+    requiresPasswordMigration?: boolean;
+  }): Promise<User>;
   
   // Session operations
   getSession(id: string): Promise<Session | undefined>;
@@ -30,6 +40,12 @@ export interface IStorage {
   deletePasswordResetToken(token: string): Promise<void>;
   deleteUserPasswordResetTokens(userId: string): Promise<void>;
   updateUserPassword(userId: string, hashedPassword: string): Promise<void>;
+  
+  // Email verification token operations
+  createEmailVerificationToken(id: string, userId: string, token: string, expiresAt: number): Promise<any>;
+  getEmailVerificationToken(token: string): Promise<any>;
+  deleteEmailVerificationToken(token: string): Promise<void>;
+  verifyUserEmail(userId: string): Promise<void>;
   
   // OTP operations
   createOtpCode(id: string, email: string, codeHash: string, expiresAt: number): Promise<OtpCode>;
@@ -728,15 +744,31 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async createUser(email: string, hashedPassword: string, role: string = "client"): Promise<User> {
+  async createUser(data: {
+    email: string;
+    hashedPassword: string;
+    firstName: string;
+    lastName: string;
+    company?: string;
+    phone?: string;
+    role?: string;
+    emailVerifiedAt?: number | null;
+    requiresPasswordMigration?: boolean;
+  }): Promise<User> {
     const id = randomUUID();
     const [user] = await db
       .insert(users)
       .values({
         id,
-        email: email.toLowerCase(), // Store email in lowercase
-        hashedPassword,
-        role,
+        email: data.email.toLowerCase(), // Store email in lowercase
+        hashedPassword: data.hashedPassword,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        company: data.company || null,
+        phone: data.phone || null,
+        role: data.role || "client",
+        emailVerifiedAt: data.emailVerifiedAt !== undefined ? data.emailVerifiedAt : null,
+        requiresPasswordMigration: data.requiresPasswordMigration || false,
         createdAt: Date.now(),
       })
       .returning();
@@ -846,6 +878,38 @@ export class DatabaseStorage implements IStorage {
 
   async updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
     await db.update(users).set({ hashedPassword }).where(eq(users.id, userId));
+  }
+
+  // Email verification token operations
+  async createEmailVerificationToken(id: string, userId: string, token: string, expiresAt: number): Promise<any> {
+    const [verificationToken] = await db.insert(emailVerificationTokens).values({
+      id,
+      userId,
+      token,
+      expiresAt,
+      createdAt: Date.now(),
+    }).returning();
+    return verificationToken;
+  }
+
+  async getEmailVerificationToken(token: string): Promise<any> {
+    const [verificationToken] = await db.select().from(emailVerificationTokens).where(eq(emailVerificationTokens.token, token));
+    
+    // Check if token is expired
+    if (verificationToken && verificationToken.expiresAt < Date.now()) {
+      await this.deleteEmailVerificationToken(token);
+      return undefined;
+    }
+    
+    return verificationToken || undefined;
+  }
+
+  async deleteEmailVerificationToken(token: string): Promise<void> {
+    await db.delete(emailVerificationTokens).where(eq(emailVerificationTokens.token, token));
+  }
+
+  async verifyUserEmail(userId: string): Promise<void> {
+    await db.update(users).set({ emailVerifiedAt: Date.now() }).where(eq(users.id, userId));
   }
 
   // OTP operations
