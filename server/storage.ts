@@ -33,7 +33,7 @@ export interface IStorage {
   
   // OTP operations
   createOtpCode(id: string, email: string, codeHash: string, expiresAt: number): Promise<OtpCode>;
-  getValidOtpCode(email: string, codeHash: string): Promise<OtpCode | undefined>;
+  getValidOtpCodesForEmail(email: string): Promise<OtpCode[]>;
   incrementOtpAttempts(id: string): Promise<void>;
   markOtpAsUsed(id: string): Promise<void>;
   getRecentOtpForEmail(email: string, sinceTimestamp: number): Promise<OtpCode | undefined>;
@@ -861,21 +861,20 @@ export class DatabaseStorage implements IStorage {
     return otpCode;
   }
 
-  async getValidOtpCode(email: string, codeHash: string): Promise<OtpCode | undefined> {
+  async getValidOtpCodesForEmail(email: string): Promise<OtpCode[]> {
     const now = Date.now();
-    const [otpCode] = await db
+    const codes = await db
       .select()
       .from(otpCodes)
       .where(
         and(
           eq(otpCodes.email, email.toLowerCase().trim()),
-          eq(otpCodes.codeHash, codeHash),
           sql`${otpCodes.expiresAt} > ${now}`,
           sql`${otpCodes.usedAt} IS NULL`
         )
       )
-      .limit(1);
-    return otpCode;
+      .orderBy(sql`${otpCodes.expiresAt} DESC`);
+    return codes;
   }
 
   async incrementOtpAttempts(id: string): Promise<void> {

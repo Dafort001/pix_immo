@@ -135,7 +135,7 @@ const handoffLimiter = rateLimit({
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 login attempts per 15 minutes per IP
+  max: process.env.NODE_ENV === "production" ? 5 : 100, // 5 in prod, 100 in dev for testing
   message: { error: "Too many login attempts, please try again later" },
   standardHeaders: true,
   legacyHeaders: false,
@@ -2392,35 +2392,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const normalizedEmail = normalizeEmail(email);
-      const codeHash = await hashOtpCode(code);
       
-      // Find valid OTP code
-      const otpEntry = await storage.getValidOtpCode(normalizedEmail, codeHash);
+      // Get all valid OTP codes for this email
+      const validCodes = await storage.getValidOtpCodesForEmail(normalizedEmail);
       
-      if (!otpEntry) {
-        // Increment attempts if we can find the code (even if expired/used)
-        console.log(`[OTP] Invalid or expired code attempt for ${normalizedEmail}`);
-        return res.status(400).json({ error: "Ungültiger oder abgelaufener Code" });
+      if (validCodes.length === 0) {
+        console.log(`[OTP] No valid codes found for ${normalizedEmail}`);
+        return res.status(400).json({ 
+          error: "Ungültiger oder abgelaufener Code",
+          needNewCode: true 
+        });
       }
       
-      // Check max attempts
-      if (otpEntry.attempts >= OTP_MAX_ATTEMPTS) {
-        console.log(`[OTP] Max attempts exceeded for ${normalizedEmail}`);
-        return res.status(400).json({ error: "Zu viele Fehlversuche. Bitte fordere einen neuen Code an." });
+      // Check if all codes have exceeded max attempts
+      const availableCodes = validCodes.filter(c => c.attempts < OTP_MAX_ATTEMPTS);
+      
+      if (availableCodes.length === 0) {
+        console.log(`[OTP] All codes exhausted for ${normalizedEmail}, need new code`);
+        // Mark all exhausted codes as used to clean them up
+        await Promise.all(validCodes.map(c => storage.markOtpAsUsed(c.id)));
+        return res.status(400).json({ 
+          error: "Zu viele Versuche. Bitte fordere einen neuen Code an.",
+          needNewCode: true 
+        });
       }
       
-      // Verify the code
-      const isValid = await verifyOtpCode(code, otpEntry.codeHash);
+      // Try to verify the code against available codes
+      let matchedOtpEntry: OtpCode | null = null;
+      for (const otpEntry of availableCodes) {
+        // Verify the code using bcrypt comparison
+        const isValid = await verifyOtpCode(code, otpEntry.codeHash);
+        
+        if (isValid) {
+          matchedOtpEntry = otpEntry;
+          break; // Found a match!
+        } else {
+          // Increment failed attempts for this code
+          await storage.incrementOtpAttempts(otpEntry.id);
+          console.log(`[OTP] Failed verification attempt for code ${otpEntry.id} (attempt ${otpEntry.attempts + 1})`);
+        }
+      }
       
-      if (!isValid) {
-        // Increment failed attempts
-        await storage.incrementOtpAttempts(otpEntry.id);
-        console.log(`[OTP] Failed verification attempt for ${normalizedEmail} (attempt ${otpEntry.attempts + 1})`);
-        return res.status(400).json({ error: "Ungültiger Code" });
+      if (!matchedOtpEntry) {
+        console.log(`[OTP] Invalid code provided for ${normalizedEmail}`);
+        return res.status(400).json({ 
+          error: "Ungültiger Code",
+          needNewCode: false 
+        });
       }
       
       // Mark OTP as used
-      await storage.markOtpAsUsed(otpEntry.id);
+      await storage.markOtpAsUsed(matchedOtpEntry.id);
       
       // Get user
       const user = await storage.getUserByEmail(normalizedEmail);
@@ -2436,7 +2458,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Create session
-      const sessionExpiry = Date.now() + SESSION_CONFIG.sessionDuration;
+      const sessionExpiry = Date.now() + SESSION_CONFIG.expiresIn;
       const session = await storage.createSession(user.id, sessionExpiry);
       
       // Set session cookie
@@ -2444,7 +2466,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
-        maxAge: SESSION_CONFIG.sessionDuration,
+        maxAge: SESSION_CONFIG.cookieOptions.maxAge,
       });
       
       console.log(`[OTP] Session created for ${normalizedEmail}`);
