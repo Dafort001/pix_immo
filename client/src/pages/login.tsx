@@ -39,12 +39,18 @@ export default function Login() {
       const res = await apiRequest("POST", "/api/auth/login", data);
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (response) => {
       toast({
         title: "Anmeldung erfolgreich",
         description: "Willkommen zurück!",
       });
-      setLocation("/dashboard");
+      
+      // Role-based redirect
+      if (response.user?.role === "admin") {
+        setLocation("/admin/dashboard");
+      } else {
+        setLocation("/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -102,7 +108,14 @@ export default function Login() {
                   name="password"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Passwort</FormLabel>
+                      <div className="flex items-center justify-between">
+                        <FormLabel>Passwort</FormLabel>
+                        <Link href="/request-password-reset">
+                          <span className="text-sm text-primary hover:underline cursor-pointer" data-testid="link-forgot-password">
+                            Passwort vergessen?
+                          </span>
+                        </Link>
+                      </div>
                       <FormControl>
                         <Input
                           type="password"
@@ -126,6 +139,25 @@ export default function Login() {
                 </Button>
               </form>
             </Form>
+
+            <div className="mt-6 space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">
+                    Oder
+                  </span>
+                </div>
+              </div>
+
+              <Link href="/login-otp">
+                <Button variant="outline" className="w-full" data-testid="button-login-otp">
+                  Mit Code anmelden
+                </Button>
+              </Link>
+            </div>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">Noch kein Konto? </span>

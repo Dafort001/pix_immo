@@ -435,3 +435,77 @@ dein pix.immo Team
 ---
 Diese E-Mail wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.`;
 }
+
+/**
+ * Send password reset email via AWS SES
+ */
+export async function sendPasswordResetEmail(to: string, resetLink: string): Promise<void> {
+  const subject = "Passwort zurücksetzen – pix.immo";
+  const body = generatePasswordResetEmailBody(resetLink);
+
+  if (!isSesConfigured || !sesClient) {
+    // DRY-RUN mode: Log to console
+    console.log("\n" + "=".repeat(60));
+    console.log("[EMAIL DRY-RUN] SES not configured - Password reset email not sent");
+    console.log("=".repeat(60));
+    console.log(`To: ${to}`);
+    console.log(`From: ${AWS_SES_FROM_ADDRESS}`);
+    console.log(`Subject: ${subject}`);
+    console.log("-".repeat(60));
+    console.log(body);
+    console.log("=".repeat(60) + "\n");
+    return;
+  }
+
+  // PRODUCTION mode: Send via SES
+  try {
+    const command = new SendEmailCommand({
+      Source: AWS_SES_FROM_ADDRESS,
+      Destination: {
+        ToAddresses: [to],
+      },
+      Message: {
+        Subject: {
+          Data: subject,
+          Charset: "UTF-8",
+        },
+        Body: {
+          Text: {
+            Data: body,
+            Charset: "UTF-8",
+          },
+        },
+      },
+    });
+
+    await sesClient.send(command);
+    console.log(`[EMAIL] Password reset email sent successfully to ${to} via AWS SES`);
+  } catch (error) {
+    console.error("[EMAIL] Failed to send password reset email via SES:", error);
+    throw new Error("Failed to send password reset email");
+  }
+}
+
+/**
+ * Generate password reset email body (plaintext with link)
+ */
+function generatePasswordResetEmailBody(resetLink: string): string {
+  return `Passwort zurücksetzen – pix.immo
+
+Du hast eine Anfrage zum Zurücksetzen deines Passworts erhalten.
+
+Klicke auf den folgenden Link, um ein neues Passwort festzulegen:
+
+${resetLink}
+
+Dieser Link ist 1 Stunde lang gültig.
+
+Falls du diese Anfrage nicht gestellt hast, kannst du diese E-Mail ignorieren. 
+Dein Passwort bleibt unverändert.
+
+Viele Grüße,
+dein pix.immo Team
+
+---
+Diese E-Mail wurde automatisch generiert. Bitte antworte nicht auf diese E-Mail.`;
+}

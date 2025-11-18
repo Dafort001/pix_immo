@@ -34,7 +34,7 @@ import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 import { GoogleCalendarService } from "./google-calendar";
-import { sendOtpEmail, sendVerificationEmail } from "./email";
+import { sendOtpEmail, sendVerificationEmail, sendPasswordResetEmail } from "./email";
 import { isDisposableEmail, getDisposableEmailErrorMessage } from "./blocked-domains";
 import { checkEmailRateLimit, checkIpRateLimit, getClientIp } from "./otp-rate-limit";
 import { generateOtpCode, hashOtpCode, verifyOtpCode, generateOtpExpiration, normalizeEmail, OTP_MAX_ATTEMPTS } from "./otp-helpers";
@@ -2479,6 +2479,171 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Request OTP error:", error);
       res.status(500).json({ error: "Fehler beim Senden des Codes" });
+    }
+  });
+
+  // POST /api/auth/login - Password-based login
+  const loginSchema = z.object({
+    email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
+    password: z.string().min(1, "Passwort ist erforderlich"),
+  });
+
+  app.post("/api/auth/login", authLimiter, validateBody(loginSchema), async (req: Request, res: Response) => {
+    try {
+      const { email, password } = req.body;
+      
+      const normalizedEmail = normalizeEmail(email);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(normalizedEmail);
+      
+      if (!user) {
+        // Don't reveal if user exists or not (timing-safe)
+        await hashPassword("dummy-password-to-prevent-timing-attacks");
+        return res.status(401).json({ error: "E-Mail oder Passwort ist falsch" });
+      }
+      
+      // Check if email is verified
+      if (!user.emailVerifiedAt) {
+        return res.status(403).json({ 
+          error: "Bitte bestätige zuerst deine E-Mail-Adresse",
+          emailNotVerified: true,
+        });
+      }
+      
+      // Verify password
+      const isPasswordValid = await verifyPassword(password, user.hashedPassword);
+      
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: "E-Mail oder Passwort ist falsch" });
+      }
+      
+      // Create session (30 days expiry)
+      const expiresAt = Date.now() + (1000 * 60 * 60 * 24 * 30); // 30 days
+      const session = await storage.createSession(user.id, expiresAt);
+      
+      res.cookie(SESSION_CONFIG.cookieName, session.id, {
+        ...SESSION_CONFIG.cookieOptions,
+        maxAge: 60 * 60 * 24 * 30 * 1000, // 30 days in milliseconds
+      });
+      
+      console.log(`[AUTH] User logged in: ${user.email}`);
+      
+      res.json({
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ error: "Login fehlgeschlagen" });
+    }
+  });
+
+  // POST /api/auth/request-password-reset - Request password reset
+  const requestPasswordResetSchema = z.object({
+    email: z.string().email("Bitte gib eine gültige E-Mail-Adresse ein"),
+  });
+
+  app.post("/api/auth/request-password-reset", authLimiter, validateBody(requestPasswordResetSchema), async (req: Request, res: Response) => {
+    try {
+      const { email } = req.body;
+      
+      const normalizedEmail = normalizeEmail(email);
+      
+      // Find user by email
+      const user = await storage.getUserByEmail(normalizedEmail);
+      
+      // Always return success to prevent email enumeration
+      if (!user) {
+        console.log(`[PASSWORD RESET] User not found: ${normalizedEmail}`);
+        return res.json({
+          message: "Falls ein Konto mit dieser E-Mail existiert, wurde eine Passwort-Reset-E-Mail gesendet.",
+        });
+      }
+      
+      // Generate reset token (1 hour expiry)
+      const resetToken = randomUUID();
+      const expiresAt = Date.now() + (1000 * 60 * 60); // 1 hour
+      
+      await storage.createPasswordResetToken(
+        randomUUID(),
+        user.id,
+        resetToken,
+        expiresAt
+      );
+      
+      // Send reset email
+      const baseUrl = process.env.FRONTEND_URL || "http://localhost:5000";
+      const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
+      
+      await sendPasswordResetEmail(normalizedEmail, resetLink);
+      
+      console.log(`[PASSWORD RESET] Reset token generated for ${normalizedEmail}`);
+      
+      res.json({
+        message: "Falls ein Konto mit dieser E-Mail existiert, wurde eine Passwort-Reset-E-Mail gesendet.",
+      });
+    } catch (error) {
+      console.error("Request password reset error:", error);
+      res.status(500).json({ error: "Fehler beim Senden der Passwort-Reset-E-Mail" });
+    }
+  });
+
+  // POST /api/auth/reset-password - Reset password with token
+  const resetPasswordSchema = z.object({
+    token: z.string().min(1, "Token ist erforderlich"),
+    newPassword: z.string().min(8, "Das Passwort muss mindestens 8 Zeichen lang sein"),
+  });
+
+  app.post("/api/auth/reset-password", authLimiter, validateBody(resetPasswordSchema), async (req: Request, res: Response) => {
+    try {
+      const { token, newPassword } = req.body;
+      
+      // Find reset token
+      const resetToken = await storage.getPasswordResetToken(token);
+      
+      if (!resetToken) {
+        return res.status(400).json({ error: "Ungültiger oder abgelaufener Reset-Link" });
+      }
+      
+      // Check if token is expired
+      if (resetToken.expiresAt < Date.now()) {
+        // Delete expired token
+        await storage.deletePasswordResetToken(token);
+        return res.status(400).json({ error: "Dieser Reset-Link ist abgelaufen. Bitte fordere einen neuen an." });
+      }
+      
+      // Get user
+      const user = await storage.getUserById(resetToken.userId);
+      
+      if (!user) {
+        return res.status(404).json({ error: "Benutzer nicht gefunden" });
+      }
+      
+      // Hash new password
+      const hashedPassword = await hashPassword(newPassword);
+      
+      // Update user password
+      await storage.updateUser(user.id, {
+        hashedPassword,
+      });
+      
+      // Delete used token
+      await storage.deletePasswordResetToken(token);
+      
+      console.log(`[PASSWORD RESET] Password reset successful for ${user.email}`);
+      
+      res.json({
+        message: "Dein Passwort wurde erfolgreich zurückgesetzt. Du kannst dich jetzt anmelden.",
+      });
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ error: "Passwort-Reset fehlgeschlagen" });
     }
   });
 
