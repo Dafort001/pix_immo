@@ -1,0 +1,40 @@
+Danke für das Architect-Review, das ist absolut relevant.
+Ja, bitte beheben Sie diese Sicherheitslücken – aber strikt begrenzt auf Security-Hardening, ohne neue Features oder UX-Experimente.
+
+Freigabe für folgende Punkte:
+	1.	Reset-Tokens
+	•	Reset-Tokens dürfen nicht im Klartext in der Datenbank liegen.
+	•	Bitte:
+	•	Tokens vor Speicherung hashen (ähnlich wie Passwörter).
+	•	Tokens „one-time use“ machen (nach Verwendung sofort ungültig).
+	•	Eine sinnvolle Ablaufzeit setzen (z. B. 30–60 Minuten).
+	2.	Session-Invalidierung
+	•	Nach einem erfolgreichen Passwort-Reset müssen alle alten Sessions des Users invalidiert werden.
+	•	Ziel: Nach Reset ist ein Account nur noch mit dem neuen Passwort nutzbar.
+	•	Bitte das so umsetzen, dass:
+	•	alle bestehenden Sessions des Users ungültig werden
+	•	neue Session nach Reset sauber erstellt wird.
+	3.	Account-Status-Checks
+	•	Login soll künftig den Account-Status prüfen (z. B. aktiv, gesperrt, gelöscht/deaktiviert).
+	•	Gesperrte oder gelöschte Accounts dürfen sich nicht einloggen, egal ob das Passwort korrekt ist.
+	•	Wenn dafür Flags im Schema fehlen, bitte klein und klar halten (isSuspended, isDeleted etc.) und dokumentieren.
+	4.	Rate-Limiting für Passwort-Reset
+	•	Spezifisches Rate-Limiting pro User/IP für:
+	•	„Passwort vergessen“ Requests
+	•	Eingabe von Reset-Tokens
+	•	Ziel: Brute-Force oder Abuse verhindern, ohne legitime User zu nerven.
+	•	Genaue Limits bitte kurz dokumentieren (z. B. X Versuche pro 15 Minuten).
+	5.	Frontend-Token-Handling
+	•	Reset-Seite soll Token robust validieren, bevor irgendetwas gerendert oder angezeigt wird.
+	•	Kein blindes Vertrauen auf URL-Parameter.
+	•	Fehlerzustände sauber anzeigen (Token abgelaufen/ungültig).
+	6.	Logging-Risiko / SES
+	•	Bitte sicherstellen, dass keine kompletten Reset-Links mit Token in Logs landen – auch nicht im Dry-Run.
+	•	Wenn Logging von E-Mail-Inhalten aktiv ist: entweder entfernen oder Tokens maskieren.
+
+Wichtig:
+	•	Bitte ausschließlich Security-Hardening und Fehlerbehandlung verbessern.
+	•	Keine neuen Features, keine Änderungen am sichtbaren Flow für den Nutzer ohne Rücksprache.
+	•	Vor den Änderungen eine sehr kurze Zusammenfassung schreiben, was konkret angepasst wird (Dateien/Ebenen).
+
+Wenn bei einem der Punkte etwas unklar ist (z. B. Account-Status-Flags oder Rate-Limits), bitte vorher nachfragen, nicht raten.
