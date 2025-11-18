@@ -50,22 +50,7 @@ import {
 import { mockGalleryImages, type GalleryImage, type GalleryImageStatus } from '@shared/gallery-images';
 import { AnnotationOverlay } from '@/components/gallery/annotation-overlay';
 
-// Helper function for aspect ratio classes
-function getAspectRatioClass(aspectRatio?: string) {
-  switch (aspectRatio) {
-    case '2:3':
-      return 'aspect-[2/3]';
-    case '16:9':
-      return 'aspect-[16/9]';
-    case '9:16':
-      return 'aspect-[9/16]';
-    case '1:1':
-      return 'aspect-square';
-    case '3:2':
-    default:
-      return 'aspect-[4/3]'; // Default für Landscape
-  }
-}
+// Einheitliches Grid-Layout - keine Masonry
 
 export default function Galerie() {
   const [, setLocation] = useLocation();
@@ -1196,7 +1181,6 @@ export default function Galerie() {
               </div>
               <p className="text-sm text-muted-foreground">
                 {lightboxImage?.resolution} • {lightboxImage?.uploadDate} • {lightboxImage?.mediaType === 'video' ? 'Video' : 'Bild'} {lightboxIndex + 1} von {filteredImages.length}
-                {lightboxImage?.aspectRatio && ` • ${lightboxImage.aspectRatio}`}
               </p>
             </div>
             <Button
@@ -1392,8 +1376,8 @@ function GalleryImageCard({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {/* Image/Video Container */}
-      <div className={`relative ${getAspectRatioClass(image.aspectRatio)} overflow-hidden bg-muted cursor-pointer group`} onClick={onImageClick}>
+      {/* Image/Video Container - Einheitliche Höhe */}
+      <div className="relative aspect-[4/3] overflow-hidden bg-muted cursor-pointer group" onClick={onImageClick}>
         {image.mediaType === 'video' ? (
           <>
             <img
@@ -1487,7 +1471,6 @@ function GalleryImageCard({
             </div>
             <p className="text-xs text-muted-foreground">
               {image.resolution} • {image.uploadDate}
-              {image.aspectRatio && ` • ${image.aspectRatio}`}
             </p>
             {image.roomType && (
               <p className="text-xs text-muted-foreground">{image.roomType}</p>
