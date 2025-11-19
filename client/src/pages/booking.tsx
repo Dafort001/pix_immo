@@ -61,8 +61,6 @@ function isValidGermanPhone(phone: string): boolean {
 }
 
 const bookingSchema = z.object({
-  region: z.enum(["HH", "B", "EXT"], { required_error: "Region erforderlich" }),
-  kilometers: z.number().int().min(0).optional(),
   contactName: z.string().optional(),
   contactEmail: z.string().email("Ungültige E-Mail").optional().or(z.literal("")),
   contactMobile: z.string()
@@ -93,15 +91,6 @@ const bookingSchema = z.object({
   }),
   serviceSelections: z.record(z.number().min(0)),
 }).refine((data) => {
-  // If region is EXT, kilometers must be provided and > 0
-  if (data.region === "EXT") {
-    return data.kilometers !== undefined && data.kilometers > 0;
-  }
-  return true;
-}, {
-  message: "Kilometer erforderlich für erweiterte Anfahrt (EXT)",
-  path: ["kilometers"],
-}).refine((data) => {
   // At least one service must be selected with quantity > 0
   return Object.values(data.serviceSelections).some(qty => qty > 0);
 }, {
@@ -130,11 +119,6 @@ const categoryOrder = [
   "optimization",
   "travel"
 ];
-
-const regionLabels: Record<string, string> = {
-  HH: "Hamburg (bis 30 km)",
-  EXT: "Erweiterte Anfahrt"
-};
 
 function formatPrice(priceNet: number | null, unit: string, priceRange?: string, priceFrom?: string): string {
   if (priceRange) return priceRange;
@@ -186,8 +170,6 @@ export default function Booking() {
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      region: "HH", // Hamburg als Standard-Region (30 km Radius inkl.)
-      kilometers: undefined,
       contactName: "",
       contactEmail: "",
       contactMobile: "",
@@ -205,9 +187,6 @@ export default function Booking() {
       serviceSelections: {},
     },
   });
-
-  const watchRegion = form.watch("region");
-  const watchKilometers = form.watch("kilometers");
 
   const createBookingMutation = useMutation({
     mutationFn: async (data: BookingFormData) => {
@@ -228,8 +207,6 @@ export default function Booking() {
       const grossAmountCents = Math.round(totalGross * 100);
 
       const bookingPayload = {
-        region: data.region,
-        kilometers: data.region === "EXT" ? data.kilometers : undefined,
         contactName: data.contactName || undefined,
         contactEmail: data.contactEmail || undefined,
         contactMobile: data.contactMobile,
@@ -308,11 +285,7 @@ export default function Booking() {
       if (quantity > 0) {
         const service = services.services.find(s => s.code === code);
         if (service && service.price_net !== null) {
-          if (service.unit === "per_km") {
-            // For AEX: km × 2 (round trip) × price
-            const km = watchKilometers || 0;
-            total += km * 2 * service.price_net;
-          } else if (service.unit === "per_item") {
+          if (service.unit === "per_item") {
             total += service.price_net * quantity;
           } else {
             // flat
@@ -345,9 +318,6 @@ export default function Booking() {
   };
 
   const selectedCount = Object.values(selectedServices).filter(q => q > 0).length;
-
-  // Filter out AEX for HH/B regions
-  const isAEXHidden = watchRegion === "HH" || watchRegion === "B";
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -406,7 +376,7 @@ export default function Booking() {
               <div>
                 <h2 className="text-lg font-semibold mb-2">Leistungen auswählen</h2>
                 <p className="text-muted-foreground">
-                  Wählen Sie die gewünschten Leistungen für Ihr Objekt (Region: Hamburg bis 30 km inkl.)
+                  Wählen Sie die gewünschten Leistungen für Ihr Objekt
                 </p>
               </div>
               {selectedCount > 0 && (
@@ -416,8 +386,15 @@ export default function Booking() {
               )}
             </div>
 
-            {/* Service Selection - Region ist auf HH voreingestellt */}
-            {watchRegion && categoryOrder.map((categoryKey) => {
+            <Alert className="mb-6">
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Anfahrt:</strong> Bis 40 km Umkreis um Hamburg sind die Anfahrtskosten im Paket enthalten. 
+                Für Entfernungen über 40 km können zusätzliche Fahrtkosten anfallen, die vorab individuell abgesprochen werden.
+              </AlertDescription>
+            </Alert>
+
+            {categoryOrder.map((categoryKey) => {
               const categoryServices = servicesByCategory[categoryKey];
               if (!categoryServices || categoryServices.length === 0) return null;
 
@@ -427,12 +404,7 @@ export default function Booking() {
                   
                   <div className="space-y-3">
                     {categoryServices.map((service) => {
-                      // Hide AEX for HH/B regions
-                      if (service.code === "AEX" && isAEXHidden) {
-                        return null;
-                      }
-
-                      const isDisabled = service.price_net === null && service.unit !== "per_km";
+                      const isDisabled = service.price_net === null;
                       const quantity = selectedServices[service.code] || 0;
                       
                       return (
@@ -467,39 +439,27 @@ export default function Booking() {
                                 }}
                                 data-testid={`checkbox-${service.code}`}
                               />
-                              {service.unit === "per_km" ? (
-                                // Special handling for AEX (auto-calculate based on km)
-                                <div className="text-sm text-muted-foreground">
-                                  {watchKilometers 
-                                    ? `${watchKilometers} km × 2 (Hin/Rück) = ${watchKilometers * 2} km × €${service.price_net?.toFixed(2)} = €${((watchKilometers || 0) * 2 * (service.price_net || 0)).toFixed(2)}`
-                                    : "Bitte Kilometer oben eingeben"
-                                  }
+                              {!isDisabled && service.unit !== "flat" && (
+                                <div className="flex items-center gap-2">
+                                  <label className="text-sm text-muted-foreground">Anzahl:</label>
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    value={quantity || ""}
+                                    onChange={(e) => {
+                                      const val = parseInt(e.target.value) || 0;
+                                      handleServiceToggle(service.code, val);
+                                    }}
+                                    className="w-20"
+                                    disabled={isDisabled}
+                                    data-testid={`input-quantity-${service.code}`}
+                                  />
                                 </div>
-                              ) : (
-                                <>
-                                  {!isDisabled && service.unit !== "flat" && (
-                                    <div className="flex items-center gap-2">
-                                      <label className="text-sm text-muted-foreground">Anzahl:</label>
-                                      <Input
-                                        type="number"
-                                        min="0"
-                                        value={quantity || ""}
-                                        onChange={(e) => {
-                                          const val = parseInt(e.target.value) || 0;
-                                          handleServiceToggle(service.code, val);
-                                        }}
-                                        className="w-20"
-                                        disabled={isDisabled}
-                                        data-testid={`input-quantity-${service.code}`}
-                                      />
-                                    </div>
-                                  )}
-                                  {isDisabled && (
-                                    <span className="text-sm text-muted-foreground">
-                                      Preis auf Anfrage - bitte im nächsten Schritt beschreiben
-                                    </span>
-                                  )}
-                                </>
+                              )}
+                              {isDisabled && (
+                                <span className="text-sm text-muted-foreground">
+                                  Preis auf Anfrage - bitte im nächsten Schritt beschreiben
+                                </span>
                               )}
                             </div>
                           </CardContent>
@@ -810,13 +770,6 @@ export default function Booking() {
                 </CardHeader>
                 <CardContent className="space-y-2">
                   <div>
-                    <span className="text-sm text-muted-foreground">Region:</span>
-                    <p className="font-medium" data-testid="text-review-region">
-                      {regionLabels[watchRegion as keyof typeof regionLabels]}
-                      {watchRegion === "EXT" && watchKilometers && ` (${watchKilometers} km einfache Strecke)`}
-                    </p>
-                  </div>
-                  <div>
                     <span className="text-sm text-muted-foreground">Objektbezeichnung:</span>
                     <p className="font-medium" data-testid="text-review-property-name">{form.getValues("propertyName")}</p>
                   </div>
@@ -858,10 +811,7 @@ export default function Booking() {
                         
                         let subtotal = 0;
                         if (service.price_net) {
-                          if (service.unit === "per_km") {
-                            const km = watchKilometers || 0;
-                            subtotal = km * 2 * service.price_net;
-                          } else if (service.unit === "per_item") {
+                          if (service.unit === "per_item") {
                             subtotal = service.price_net * quantity;
                           } else {
                             subtotal = service.price_net;
@@ -873,10 +823,7 @@ export default function Booking() {
                             <div className="flex-1">
                               <p className="font-medium">{service.title}</p>
                               <p className="text-sm text-muted-foreground">
-                                {service.unit === "per_km" 
-                                  ? `${watchKilometers} km × 2 (Hin/Rück) × ${formatPrice(service.price_net, service.unit)}`
-                                  : `${quantity}x ${formatPrice(service.price_net, service.unit, service.price_range, service.price_from)}`
-                                }
+                                {quantity}x {formatPrice(service.price_net, service.unit, service.price_range, service.price_from)}
                               </p>
                             </div>
                             <p className="font-medium">
