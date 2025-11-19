@@ -22,6 +22,10 @@ import { AdminPageHeader } from '@/components/AdminPageHeader';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient, getQueryFn } from '@/lib/queryClient';
 import type { Service } from '@shared/schema';
+import { TimeSlotPicker } from '@/components/TimeSlotPicker';
+import { AddressAutocomplete } from "@shared/components";
+import type { AddressValidationResult } from "@shared/components";
+import { StaticMapThumbnail } from "@shared/components";
 
 type User = {
   id: string;
@@ -403,10 +407,18 @@ export default function AdminInternalBooking() {
                         <FormItem>
                           <FormLabel>Objektadresse</FormLabel>
                           <FormControl>
-                            <Textarea 
-                              {...field} 
-                              placeholder="Straße und Hausnummer, PLZ Ort&#10;z.B. Große Elbstraße 133, 22767 Hamburg"
-                              rows={2}
+                            <AddressAutocomplete
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              onValidated={(result: AddressValidationResult) => {
+                                // Store validated address data in hidden fields
+                                form.setValue("addressLat", result.lat || "", { shouldValidate: true, shouldDirty: true });
+                                form.setValue("addressLng", result.lng || "", { shouldValidate: true, shouldDirty: true });
+                                form.setValue("addressPlaceId", result.placeId || "", { shouldValidate: true, shouldDirty: true });
+                                form.setValue("addressFormatted", result.formattedAddress || "", { shouldValidate: true, shouldDirty: true });
+                              }}
+                              label=""
+                              placeholder="Straße, Hausnummer, PLZ, Stadt"
                               data-testid="input-property-address"
                             />
                           </FormControl>
@@ -439,34 +451,40 @@ export default function AdminInternalBooking() {
                       )}
                     />
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="preferredDate"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Terminwunsch (Datum)</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="date" data-testid="input-preferred-date" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                    {/* Hidden fields for Google Maps data */}
+                    <FormField control={form.control} name="addressLat" render={({ field }) => <input type="hidden" {...field} />} />
+                    <FormField control={form.control} name="addressLng" render={({ field }) => <input type="hidden" {...field} />} />
+                    <FormField control={form.control} name="addressPlaceId" render={({ field }) => <input type="hidden" {...field} />} />
+                    <FormField control={form.control} name="addressFormatted" render={({ field }) => <input type="hidden" {...field} />} />
+
+                    {/* Static Map Preview - shown when address is validated */}
+                    {form.watch("addressLat") && form.watch("addressLng") && (
+                      <StaticMapThumbnail
+                        lat={form.watch("addressLat") || ""}
+                        lng={form.watch("addressLng") || ""}
+                        address={form.watch("addressFormatted") || form.watch("propertyAddress") || ""}
+                        showAddress={true}
+                        className="mt-2"
                       />
-                      <FormField
-                        control={form.control}
-                        name="preferredTime"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Uhrzeit</FormLabel>
-                            <FormControl>
-                              <Input {...field} type="time" data-testid="input-preferred-time" />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
+                    )}
+
+                    {/* Time Slot Picker - replaces manual date/time inputs */}
+                    <TimeSlotPicker
+                      lat={form.watch("addressLat")}
+                      lng={form.watch("addressLng")}
+                      selectedDate={form.watch("preferredDate")}
+                      selectedTime={form.watch("preferredTime")}
+                      onSlotSelect={(date, time) => {
+                        form.setValue("preferredDate", date, { shouldValidate: true, shouldDirty: true });
+                        form.setValue("preferredTime", time, { shouldValidate: true, shouldDirty: true });
+                      }}
+                      dateError={form.formState.errors.preferredDate}
+                      timeError={form.formState.errors.preferredTime}
+                    />
+                    
+                    {/* Hidden fields to store selected date/time for form validation */}
+                    <FormField control={form.control} name="preferredDate" render={({ field }) => <input type="hidden" {...field} />} />
+                    <FormField control={form.control} name="preferredTime" render={({ field }) => <input type="hidden" {...field} />} />
 
                     <div className="rounded-lg bg-muted p-4 text-sm">
                       <p className="font-semibold mb-1">ℹ️ Anfahrt</p>

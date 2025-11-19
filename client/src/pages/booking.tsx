@@ -21,6 +21,7 @@ import { ArrowLeft, ArrowRight, Check, AlertCircle, Info } from "lucide-react";
 import { AddressAutocomplete } from "@shared/components";
 import type { AddressValidationResult } from "@shared/components";
 import { StaticMapThumbnail } from "@shared/components";
+import { TimeSlotPicker } from "@/components/TimeSlotPicker";
 
 // Service types for booking wizard frontend (DTO from backend)
 interface ServiceData {
@@ -690,37 +691,23 @@ export default function Booking() {
                     )}
                   />
 
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="preferredDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Wunschtermin</FormLabel>
-                          <FormControl>
-                            <Input type="date" {...field} data-testid="input-preferred-date" />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="preferredTime"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Uhrzeit</FormLabel>
-                          <FormControl>
-                            <Input type="time" {...field} data-testid="input-preferred-time" />
-                          </FormControl>
-                          <FormDescription>Optional</FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  {/* Time Slot Picker - replaces manual date/time inputs */}
+                  <TimeSlotPicker
+                    lat={form.watch("addressLat")}
+                    lng={form.watch("addressLng")}
+                    selectedDate={form.watch("preferredDate")}
+                    selectedTime={form.watch("preferredTime")}
+                    onSlotSelect={(date, time) => {
+                      form.setValue("preferredDate", date, { shouldValidate: true, shouldDirty: true });
+                      form.setValue("preferredTime", time, { shouldValidate: true, shouldDirty: true });
+                    }}
+                    dateError={form.formState.errors.preferredDate}
+                    timeError={form.formState.errors.preferredTime}
+                  />
+                  
+                  {/* Hidden fields to store selected date/time for form validation */}
+                  <FormField control={form.control} name="preferredDate" render={({ field }) => <input type="hidden" {...field} />} />
+                  <FormField control={form.control} name="preferredTime" render={({ field }) => <input type="hidden" {...field} />} />
 
                   <FormField
                     control={form.control}
