@@ -62,10 +62,7 @@ const categoryOrder = [
   "photography",
   "drone",
   "video",
-  "360tour",
-  "staging",
-  "optimization",
-  "travel"
+  "360tour"
 ];
 
 export default function AdminInternalBooking() {
