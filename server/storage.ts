@@ -1,6 +1,6 @@
 import { users, sessions, refreshTokens, passwordResetTokens, emailVerificationTokens, otpCodes, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, or, inArray, sql } from "drizzle-orm";
+import { eq, desc, and, or, inArray, not, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -122,6 +122,7 @@ export interface IStorage {
   getUserJobs(userId: string): Promise<Job[]>;
   getAllJobs(): Promise<Job[]>;
   getJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]>;
+  getNonCompletedJobs(): Promise<Job[]>;
   updateJobStatus(id: string, status: string): Promise<void>;
   deleteJob(id: string): Promise<void>;
   
@@ -132,6 +133,7 @@ export interface IStorage {
   getJobShoots(jobId: string): Promise<Shoot[]>;
   getJobShootsGallery(jobId: string): Promise<Array<Shoot & { images: Image[] }>>;
   getActiveShootForJob(jobId: string): Promise<Shoot | undefined>;
+  getOrCreateShootForJob(jobId: string): Promise<Shoot>;
   updateShootStatus(id: string, status: string, timestampField?: string): Promise<void>;
   
   // Editor Assignment operations
@@ -1169,6 +1171,11 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(jobs).where(eq(jobs.source, source)).orderBy(desc(jobs.createdAt));
   }
 
+  async getNonCompletedJobs(): Promise<Job[]> {
+    const completedStatuses = ['abgeschlossen', 'abgebrochen', 'delivered'];
+    return await db.select().from(jobs).where(not(inArray(jobs.status, completedStatuses))).orderBy(desc(jobs.createdAt));
+  }
+
   async updateJobStatus(id: string, status: string): Promise<void> {
     await db.update(jobs).set({ status }).where(eq(jobs.id, id));
   }
@@ -1233,6 +1240,16 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(shoots.createdAt))
       .limit(1);
     return shoot || undefined;
+  }
+
+  async getOrCreateShootForJob(jobId: string): Promise<Shoot> {
+    // Try to find existing active shoot
+    const existingShoot = await this.getActiveShootForJob(jobId);
+    if (existingShoot) {
+      return existingShoot;
+    }
+    // Create new shoot if none exists
+    return await this.createShoot(jobId);
   }
 
   async updateShootStatus(id: string, status: string, timestampField?: string): Promise<void> {

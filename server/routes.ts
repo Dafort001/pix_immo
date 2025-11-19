@@ -2967,15 +2967,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // GET /api/jobs - Get all jobs (admin) or user's jobs
+  // GET /api/jobs - Get all non-completed jobs for RAW uploader
   app.get("/api/jobs", async (req: Request, res: Response) => {
     try {
-      // TODO: Get userId and role from session/auth middleware when auth is implemented
-      // For now, show all jobs (demo user is admin)
-      
-      // Filter by source: only show pixcapture jobs (customer DIY jobs)
-      // pix.immo jobs (professional jobs) are shown in a separate dashboard
-      const jobs = await storage.getJobsBySource('pixcapture');
+      // Return only non-completed jobs (excludes 'abgeschlossen', 'abgebrochen', 'delivered')
+      // This is used by the RAW uploader to show jobs that can still receive uploads
+      const jobs = await storage.getNonCompletedJobs();
       
       res.json(jobs);
     } catch (error) {
@@ -3660,7 +3657,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // RAW file upload endpoints (multipart resumable)
   const initRawUploadSchema = z.object({
-    shootId: z.string().uuid(),
+    jobId: z.string().uuid(),
     filename: z.string().min(1).max(255),
     fileSize: z.number().int().positive(),
     roomType: z.string().min(1),
@@ -3675,26 +3672,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ error: "Unauthorized" });
       }
 
-      const { shootId, filename, fileSize, roomType, stackIndex, stackCount } = req.body;
+      const { jobId, filename, fileSize, roomType, stackIndex, stackCount } = req.body;
 
       const filenameValidation = validateRawFilename(filename);
       if (!filenameValidation.valid) {
         return res.status(400).json({ error: filenameValidation.error });
       }
 
-      const shoot = await storage.getShoot(shootId);
-      if (!shoot) {
-        return res.status(404).json({ error: "Shoot not found" });
+      const job = await storage.getJob(jobId);
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
       }
 
-      const r2Key = generateR2ObjectKey(shootId, filename, "raw");
+      // Get or create shoot for this job
+      const shoot = await storage.getOrCreateShootForJob(jobId);
+
+      const r2Key = generateR2ObjectKey(shoot.id, filename, "raw");
       
       const upload = await initMultipartUpload(r2Key, "application/octet-stream");
 
       const session = await storage.createUploadSession({
         id: upload.uploadId,
         userId: user.id,
-        shootId,
+        shootId: shoot.id,
         filename,
         roomType,
         stackIndex,

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Upload, X, FileImage, CheckCircle2, AlertCircle } from "lucide-react";
 import { AdminLayout } from "@/components/AdminLayout";
 import { AdminPageHeader } from "@/components/AdminPageHeader";
+import { useLocation } from "wouter";
 
 type User = {
   id: string;
@@ -27,16 +28,18 @@ interface UploadFile {
   etags?: string[];
 }
 
-interface Shoot {
+interface Job {
   id: string;
-  shootCode: string;
-  jobId: string;
+  jobNumber: string;
+  propertyName: string;
+  status: string;
 }
 
 export default function UploadRawPage() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
-  const [selectedShootId, setSelectedShootId] = useState<string>("");
+  const [, setLocation] = useLocation();
+  const [selectedJobId, setSelectedJobId] = useState<string>("");
   const [uploadFiles, setUploadFiles] = useState<UploadFile[]>([]);
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -45,12 +48,12 @@ export default function UploadRawPage() {
     queryFn: getQueryFn<{ user: User }>({ on401: "returnNull" }),
   });
 
-  const { data: shoots } = useQuery<Shoot[]>({
-    queryKey: ["/api/shoots"],
+  const { data: jobs } = useQuery<Job[]>({
+    queryKey: ["/api/jobs"],
   });
 
   const initUploadMutation = useMutation({
-    mutationFn: async (params: { shootId: string; filename: string; filesize: number; mimetype: string }) => {
+    mutationFn: async (params: { jobId: string; filename: string; filesize: number; mimetype: string }) => {
       const res = await apiRequest("POST", "/api/uploads/init", params);
       return await res.json();
     },
@@ -144,10 +147,10 @@ export default function UploadRawPage() {
   };
 
   const uploadFile = async (uploadFile: UploadFile) => {
-    if (!selectedShootId) {
+    if (!selectedJobId) {
       toast({
         title: "Fehler",
-        description: "Bitte wähle zuerst einen Shoot aus",
+        description: "Bitte wähle zuerst einen Job aus",
         variant: "destructive",
       });
       return;
@@ -159,7 +162,7 @@ export default function UploadRawPage() {
 
     try {
       const initResponse = await initUploadMutation.mutateAsync({
-        shootId: selectedShootId,
+        jobId: selectedJobId,
         filename: uploadFile.file.name,
         filesize: uploadFile.file.size,
         mimetype: uploadFile.file.type || "application/octet-stream",
@@ -203,7 +206,7 @@ export default function UploadRawPage() {
         description: `${uploadFile.file.name} wurde hochgeladen`,
       });
 
-      queryClient.invalidateQueries({ queryKey: ["/api/shoots", selectedShootId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
     } catch (error) {
       console.error("Upload error:", error);
       setUploadFiles((prev) =>
@@ -219,14 +222,35 @@ export default function UploadRawPage() {
         description: `Fehler beim Hochladen von ${uploadFile.file.name}`,
         variant: "destructive",
       });
+      
+      // Rethrow to notify startUpload of the failure
+      throw error;
     }
   };
 
   const startUpload = async () => {
     const pendingFiles = uploadFiles.filter((f) => f.status === "pending");
+    let hasErrors = false;
 
     for (const file of pendingFiles) {
-      await uploadFile(file);
+      try {
+        await uploadFile(file);
+      } catch (error) {
+        hasErrors = true;
+      }
+    }
+
+    // If no errors occurred and we have a selected job, redirect after uploads complete
+    if (!hasErrors && selectedJobId && pendingFiles.length > 0) {
+      toast({
+        title: "Alle Uploads abgeschlossen",
+        description: "Du wirst zur RAW-Stacks-Seite weitergeleitet...",
+      });
+      
+      // Redirect to RAW stacks page
+      setTimeout(() => {
+        setLocation(`/admin/raw-stacks/${selectedJobId}`);
+      }, 1500);
     }
   };
 
@@ -242,20 +266,20 @@ export default function UploadRawPage() {
           <div className="max-w-6xl mx-auto px-6 py-8">
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Shoot auswählen</CardTitle>
-                <CardDescription>Wähle den Shoot aus, zu dem die Dateien gehören</CardDescription>
+                <CardTitle>Job auswählen</CardTitle>
+                <CardDescription>Wähle den Job aus, zu dem die RAW-Dateien gehören</CardDescription>
               </CardHeader>
               <CardContent>
                 <select
                   className="w-full rounded-lg border px-4 py-3"
-                  value={selectedShootId}
-                  onChange={(e) => setSelectedShootId(e.target.value)}
-                  data-testid="select-shoot"
+                  value={selectedJobId}
+                  onChange={(e) => setSelectedJobId(e.target.value)}
+                  data-testid="select-job"
                 >
                   <option value="">Bitte wählen...</option>
-                  {shoots?.map((shoot) => (
-                    <option key={shoot.id} value={shoot.id}>
-                      {shoot.shootCode}
+                  {jobs?.map((job) => (
+                    <option key={job.id} value={job.id}>
+                      {job.jobNumber} - {job.propertyName}
                     </option>
                   ))}
                 </select>
@@ -362,7 +386,7 @@ export default function UploadRawPage() {
                     <Button
                       onClick={startUpload}
                       disabled={
-                        !selectedShootId ||
+                        !selectedJobId ||
                         uploadFiles.filter((f) => f.status === "pending").length === 0
                       }
                       data-testid="button-start-upload"
