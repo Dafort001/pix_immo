@@ -49,13 +49,20 @@ const bookingSchema = z.object({
 type BookingFormData = z.infer<typeof bookingSchema>;
 
 const categoryLabels: Record<string, string> = {
-  photography: "📸 Immobilienfotografie",
+  photography: "📸 Fotopakete (Innen- & Außenaufnahmen)",
   drone: "🚁 Drohnenaufnahmen",
-  video: "🎬 Videoaufnahmen",
-  "360tour": "🏠 Virtuelle Rundgänge / 360°",
+  video: "🎬 Videooptionen",
+  "360tour": "🏠 Virtueller Rundgang (TML)",
   staging: "🖼️ Virtuelles Staging",
   optimization: "🧩 Bildoptimierung und KI-Retusche",
   travel: "🌍 Anfahrt und Service"
+};
+
+const categoryHelpTexts: Record<string, string> = {
+  photography: "Pakete nach Anzahl finaler Bilder. Es werden immer mehr Motive fotografiert, als im Paket enthalten sind. Zusatzbilder werden später in der Galerie als FEX (6 €/Bild) abgerechnet. Quadratmeterangaben sind Richtwerte. Mehrere Wohneinheiten (z. B. Einliegerwohnung, getrennte Apartments): in der Regel F40 oder mehrere Pakete einplanen.",
+  drone: "Drohnenpakete funktionieren analog zu den Fotopaketen. Es werden mehr Perspektiven aufgenommen, als im Paket enthalten sind. Zusatzbilder werden später in der Galerie als FEX (6 €/Bild) berechnet. Kombipreis mit F-Paketen verfügbar.",
+  video: "Filmaufnahmen für Exposé, Website oder Social Media. Zeitlimit beachten. Zusatzmaterial wird nach Aufwand berechnet.",
+  "360tour": "Virtuelle Besichtigung mit interaktiven Rundgängen. Anzahl der 360°-Standpunkte wählen. Zusätzliche Standpunkte nach Absprache."
 };
 
 const categoryOrder = [
@@ -218,7 +225,7 @@ export default function AdminInternalBooking() {
         <Alert className="bg-primary/5 border-primary/20" data-testid="alert-travel-policy">
           <Info className="h-4 w-4 text-primary" />
           <AlertDescription className="text-sm">
-            <strong>Anfahrt:</strong> Anfahrt bis 40 km inklusive, darüber hinaus individuelle Absprache.
+            <strong>Anfahrt:</strong> Anfahrt bis 40 km um Hamburg ist im Preis enthalten. Darüber hinaus Fahrtkosten nur nach individueller Absprache, keine automatische Berechnung im System.
           </AlertDescription>
         </Alert>
         <Form {...form}>
@@ -240,7 +247,14 @@ export default function AdminInternalBooking() {
                     ) : (
                       groupedServices.map(group => (
                         <div key={group.category} className="space-y-3">
-                          <h3 className="font-semibold text-lg">{group.label}</h3>
+                          <div>
+                            <h3 className="font-semibold text-lg">{group.label}</h3>
+                            {categoryHelpTexts[group.category] && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {categoryHelpTexts[group.category]}
+                              </p>
+                            )}
+                          </div>
                           <div className="space-y-2">
                             {group.services.map(service => (
                               <div
@@ -310,6 +324,11 @@ export default function AdminInternalBooking() {
                           )}
                         </div>
                       ))
+                    )}
+                    {!isLoading && (
+                      <div className="text-xs text-muted-foreground mt-4 pt-4 border-t">
+                        <strong>Hinweis:</strong> Staging- und Optimierungsleistungen werden nicht vorab gebucht, sondern später pro Bild in der Galerie ausgewählt.
+                      </div>
                     )}
                   </CardContent>
                 </Card>

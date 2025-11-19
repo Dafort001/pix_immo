@@ -5,10 +5,10 @@ import { eq } from "drizzle-orm";
 
 const serviceData = [
   // Photography
-  { serviceCode: "F10", category: "photography", name: "Fotopaket 10 Bilder", description: "Innen- und Außenaufnahmen, Auswahl + Bearbeitung (max. 60 m² Wohnfläche)", netPrice: 18000, notes: "Standardpaket für kleinere Objekte bis 60 m²" },
-  { serviceCode: "F15", category: "photography", name: "Fotopaket 15 Bilder", description: "erweiterter Umfang, Innen + Außen (max. 200 m² Wohnfläche)", netPrice: 21000, notes: "Ideal für mittlere Wohnungen bis 200 m²" },
-  { serviceCode: "F20", category: "photography", name: "Fotopaket 20 Bilder", description: "umfangreiches Shooting, inkl. Detailaufnahmen (max. 200 m² Wohnfläche)", netPrice: 24000, notes: "Standardpaket für Exposés bis 200 m²" },
-  { serviceCode: "F40", category: "photography", name: "Fotopaket 40 Bilder", description: "große Objekte oder Mehrfamilienhäuser", netPrice: 32000, notes: "auf Anfrage anpassbar" },
+  { serviceCode: "F10", category: "photography", name: "Paket F10 – 10 Bilder", description: "Empfohlen für kleine Wohnungen bis ca. 60 m² (1–2 Zimmer). Es werden mehr Motive fotografiert, als im Paket enthalten sind. In der Online-Galerie wählen Sie Ihre 10 finalen Bilder aus. Weitere Bilder können Sie bei Bedarf gegen Aufpreis dazu buchen.", netPrice: 18000, notes: "Standardpaket für kleinere Objekte bis 60 m²" },
+  { serviceCode: "F15", category: "photography", name: "Paket F15 – 15 Bilder", description: "Für typische Wohnungen oder kleinere Häuser bis ca. 200 m². Sie erhalten eine größere Motivauswahl und wählen daraus 15 finale Bilder. Zusätzliche Bilder können Sie später kostenpflichtig ergänzen.", netPrice: 21000, notes: "Ideal für mittlere Wohnungen bis 200 m²" },
+  { serviceCode: "F20", category: "photography", name: "Paket F20 – 20 Bilder", description: "Für größere Wohnungen, Reihenhäuser oder Objekte mit vielen Raumvarianten (bis ca. 200 m²). Es werden mehr Motive aufgenommen, als im Paket enthalten sind. In der Galerie wählen Sie Ihre 20 finalen Bilder aus.", netPrice: 24000, notes: "Standardpaket für Exposés bis 200 m²" },
+  { serviceCode: "F40", category: "photography", name: "Paket F40 – 40 Bilder", description: "Für große Häuser, Objekte mit mehreren Ebenen oder mehreren Wohneinheiten (z. B. Einliegerwohnung). Dieses Paket ist darauf ausgelegt, ein komplettes Haus mit allen Bereichen abzudecken. Wie bei allen Paketen wählen Sie Ihre finalen Bilder später in der Galerie aus.", netPrice: 32000, notes: "auf Anfrage anpassbar" },
   
   // Drone
   { serviceCode: "D04", category: "drone", name: "4 Drohnenfotos", description: "Lage- und Umfelddarstellung", netPrice: 15000, notes: "Einzelauftrag" },

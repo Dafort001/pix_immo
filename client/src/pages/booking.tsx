@@ -102,13 +102,20 @@ const bookingSchema = z.object({
 type BookingFormData = z.infer<typeof bookingSchema>;
 
 const categoryLabels: Record<string, string> = {
-  photography: "Immobilienfotografie",
+  photography: "Fotopakete (Innen- & Außenaufnahmen)",
   drone: "Drohnenaufnahmen",
-  video: "Videoaufnahmen",
-  "360tour": "Virtuelle Rundgänge / 360°",
+  video: "Videooptionen",
+  "360tour": "Virtueller Rundgang (TML)",
   staging: "Virtuelles Staging",
   optimization: "Bildoptimierung und KI-Retusche",
   travel: "Anfahrt und Service"
+};
+
+const categoryDescriptions: Record<string, string> = {
+  photography: "Die Pakete unterscheiden sich in der Anzahl der finalen Bilder und der typischen Objektgröße. Die Quadratmeterangaben sind reine Richtwerte – im Zweifel stimmen wir den Umfang mit Ihnen ab.",
+  drone: "Drohnenaufnahmen zeigen Ihre Immobilie aus der Luft und ergänzen die klassischen Innen- und Außenfotos. Je nach Paket ist eine bestimmte Anzahl final bearbeiteter Luftbilder enthalten. Wie bei den Fotopaketen werden auch hier mehr Perspektiven aufgenommen, als im Paket inklusive sind. In der Online-Galerie können Sie bei Bedarf zusätzliche Drohnenbilder gegen Aufpreis auswählen.",
+  video: "Auf Wunsch können wir ausgewählte Videooptionen als Ergänzung zu den Fotopaketen produzieren. Die genauen Inhalte und die Länge der Clips stimmen wir nach der Buchung mit Ihnen ab. Die aktuell angezeigten Videopakete verstehen sich als Richtwerte. Das Angebot wird in den nächsten Monaten weiter verfeinert.",
+  "360tour": "Mit dem virtuellen Rundgang (TML) können Interessenten Ihre Immobilie online begehen – ähnlich wie bei einer 360°-Tour. Wir erstellen dafür eine Tour mit ausgewählten Standpunkten in Ihrer Immobilie. Erweiterte Spezialtouren oder hochauflösende Varianten bieten wir aktuell bewusst nicht an, um Aufwand und Kosten überschaubar zu halten."
 };
 
 const categoryOrder = [
@@ -330,7 +337,7 @@ export default function Booking() {
               <ArrowLeft className="mr-2 h-4 w-4" />
               {step === 1 ? "Dashboard" : "Zurück"}
             </Button>
-            <h1 className="text-base font-semibold" data-testid="heading-booking">Neue Bestellung</h1>
+            <h1 className="text-base font-semibold" data-testid="heading-booking">Fotobuchung für Ihre Immobilie</h1>
           </div>
           <div className="flex items-center gap-2">
             <Badge 
@@ -374,7 +381,8 @@ export default function Booking() {
               <div>
                 <h2 className="text-lg font-semibold mb-2">Leistungen auswählen</h2>
                 <p className="text-muted-foreground">
-                  Wählen Sie die gewünschten Leistungen für Ihr Objekt
+                  Wählen Sie die Leistungen aus, die Sie für Ihre Immobilie benötigen.
+                  Die Anzahl der Bilder bezieht sich immer auf die final bearbeiteten Fotos, die Sie nach dem Shooting in einer Online-Galerie auswählen können. Es werden grundsätzlich mehr Motive fotografiert, als im Paket enthalten sind. Zusätzliche Bilder können Sie bei Bedarf später kostenpflichtig dazu buchen.
                 </p>
               </div>
               {selectedCount > 0 && (
@@ -387,8 +395,8 @@ export default function Booking() {
             <Alert className="mb-6">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                <strong>Anfahrt:</strong> Bis 40 km Umkreis um Hamburg sind die Anfahrtskosten im Paket enthalten. 
-                Für Entfernungen über 40 km können zusätzliche Fahrtkosten anfallen, die vorab individuell abgesprochen werden.
+                <strong>Anfahrt:</strong> Die Anfahrt im Raum Hamburg ist bis zu einer Entfernung von 40 km im Preis enthalten.
+                Bei größeren Entfernungen können zusätzliche Fahrtkosten entstehen. Diese werden immer vorab individuell mit Ihnen abgesprochen. Es gibt dafür keine automatische Pauschale im Buchungsformular.
               </AlertDescription>
             </Alert>
 
@@ -397,77 +405,112 @@ export default function Booking() {
               if (!categoryServices || categoryServices.length === 0) return null;
 
               return (
-                <div key={categoryKey} data-testid={`category-${categoryKey}`}>
-                  <h3 className="text-base mb-4">{categoryLabels[categoryKey]}</h3>
-                  
-                  <div className="space-y-3">
-                    {categoryServices.map((service) => {
-                      const isDisabled = service.price_net === null;
-                      const quantity = selectedServices[service.code] || 0;
-                      
-                      return (
-                        <Card key={service.code} data-testid={`service-${service.code}`}>
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <Badge variant="secondary" data-testid={`code-${service.code}`}>
-                                    {service.code}
-                                  </Badge>
-                                  <CardTitle className="text-base">{service.title}</CardTitle>
+                <div key={categoryKey}>
+                  <div data-testid={`category-${categoryKey}`} className="space-y-4">
+                    <div>
+                      <h3 className="text-base font-semibold mb-2">{categoryLabels[categoryKey]}</h3>
+                      {categoryDescriptions[categoryKey] && (
+                        <p className="text-sm text-muted-foreground">{categoryDescriptions[categoryKey]}</p>
+                      )}
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {categoryServices.map((service) => {
+                        const isDisabled = service.price_net === null;
+                        const quantity = selectedServices[service.code] || 0;
+                        
+                        return (
+                          <Card key={service.code} data-testid={`service-${service.code}`}>
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between gap-4">
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <Badge variant="secondary" data-testid={`code-${service.code}`}>
+                                      {service.code}
+                                    </Badge>
+                                    <CardTitle className="text-base">{service.title}</CardTitle>
+                                  </div>
+                                  {service.description && (
+                                    <CardDescription className="text-sm">{service.description}</CardDescription>
+                                  )}
                                 </div>
-                                {service.description && (
-                                  <CardDescription className="text-sm">{service.description}</CardDescription>
+                                <div className="shrink-0 text-right">
+                                  <div className="text-base font-medium" data-testid={`price-${service.code}`}>
+                                    {formatPrice(service.price_net, service.unit, service.price_range, service.price_from)}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardHeader>
+                            <CardContent className="pt-0">
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  checked={quantity > 0}
+                                  disabled={isDisabled}
+                                  onCheckedChange={(checked) => {
+                                    handleServiceToggle(service.code, checked ? 1 : 0);
+                                  }}
+                                  data-testid={`checkbox-${service.code}`}
+                                />
+                                {!isDisabled && service.unit !== "flat" && (
+                                  <div className="flex items-center gap-2">
+                                    <label className="text-sm text-muted-foreground">Anzahl:</label>
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      value={quantity || ""}
+                                      onChange={(e) => {
+                                        const val = parseInt(e.target.value) || 0;
+                                        handleServiceToggle(service.code, val);
+                                      }}
+                                      className="w-20"
+                                      disabled={isDisabled}
+                                      data-testid={`input-quantity-${service.code}`}
+                                    />
+                                  </div>
+                                )}
+                                {isDisabled && (
+                                  <span className="text-sm text-muted-foreground">
+                                    Preis auf Anfrage - bitte im nächsten Schritt beschreiben
+                                  </span>
                                 )}
                               </div>
-                              <div className="shrink-0 text-right">
-                                <div className="text-base font-medium" data-testid={`price-${service.code}`}>
-                                  {formatPrice(service.price_net, service.unit, service.price_range, service.price_from)}
-                                </div>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="pt-0">
-                            <div className="flex items-center gap-3">
-                              <Checkbox
-                                checked={quantity > 0}
-                                disabled={isDisabled}
-                                onCheckedChange={(checked) => {
-                                  handleServiceToggle(service.code, checked ? 1 : 0);
-                                }}
-                                data-testid={`checkbox-${service.code}`}
-                              />
-                              {!isDisabled && service.unit !== "flat" && (
-                                <div className="flex items-center gap-2">
-                                  <label className="text-sm text-muted-foreground">Anzahl:</label>
-                                  <Input
-                                    type="number"
-                                    min="0"
-                                    value={quantity || ""}
-                                    onChange={(e) => {
-                                      const val = parseInt(e.target.value) || 0;
-                                      handleServiceToggle(service.code, val);
-                                    }}
-                                    className="w-20"
-                                    disabled={isDisabled}
-                                    data-testid={`input-quantity-${service.code}`}
-                                  />
-                                </div>
-                              )}
-                              {isDisabled && (
-                                <span className="text-sm text-muted-foreground">
-                                  Preis auf Anfrage - bitte im nächsten Schritt beschreiben
-                                </span>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
+
+                  {categoryKey === "photography" && (
+                    <Alert className="mt-6">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Hinweis zu mehreren Wohneinheiten:</strong> Wenn Ihre Immobilie aus mehreren getrennten Wohneinheiten besteht (z. B. Hauptwohnung plus Einliegerwohnung oder mehrere Apartments im gleichen Haus), reicht ein kleines Paket in der Regel nicht aus. In solchen Fällen empfehlen wir entweder mehrere Pakete oder direkt das 40-Bilder-Paket. Falls Sie unsicher sind, wählen Sie ein Paket und wir klären den Umfang im Anschluss gemeinsam.
+                      </AlertDescription>
+                    </Alert>
+                  )}
                 </div>
               );
             })}
+
+            <div className="space-y-4 mt-8">
+              <div>
+                <h3 className="text-base font-semibold mb-2">Zusätzliche Bilder & Bildbearbeitung</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Nach dem Shooting erhalten Sie eine Online-Galerie mit mehr Motiven, als in Ihrem Paket enthalten sind.
+                </p>
+              </div>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <p>In der Galerie können Sie:</p>
+                <ul className="list-disc list-inside space-y-1 ml-2">
+                  <li>zusätzliche Bilder gegen Aufpreis auswählen und</li>
+                  <li>optionale Bildbearbeitungen (z. B. Objektentfernung, Aufräumen, virtuelles Staging) für einzelne Bilder beauftragen.</li>
+                </ul>
+                <p className="mt-3">
+                  Diese Zusatzleistungen müssen nicht vorab gebucht werden. Sie entscheiden später direkt in der Galerie, was Sie wirklich benötigen.
+                </p>
+              </div>
+            </div>
 
             <div className="flex items-center justify-between pt-6">
               <div>
@@ -869,15 +912,15 @@ export default function Booking() {
                         </FormControl>
                         <div className="space-y-1 leading-none">
                           <FormLabel>
-                            Ich akzeptiere die AGB und Datenschutzbestimmungen *
+                            Ich habe die Datenschutzerklärung und die Allgemeinen Geschäftsbedingungen gelesen und akzeptiere sie. *
                           </FormLabel>
                           <FormDescription>
-                            <a href="/agb" target="_blank" className="underline hover:text-primary">
-                              AGB lesen
+                            <a href="/datenschutz" target="_blank" className="underline hover:text-primary">
+                              Datenschutzerklärung lesen
                             </a>
                             {" · "}
-                            <a href="/impressum" target="_blank" className="underline hover:text-primary">
-                              Datenschutz
+                            <a href="/agb" target="_blank" className="underline hover:text-primary">
+                              AGB lesen
                             </a>
                           </FormDescription>
                           <FormMessage />
@@ -887,6 +930,13 @@ export default function Booking() {
                   />
                 </CardContent>
               </Card>
+
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Ihre Anfrage wird zunächst geprüft. Der Termin gilt erst als endgültig bestätigt, wenn wir ihn Ihnen separat per E-Mail oder SMS bestätigen.
+                </AlertDescription>
+              </Alert>
 
               <div className="flex items-center justify-between pt-4">
                 <Button
