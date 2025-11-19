@@ -31,6 +31,7 @@ import {
   ListOrdered,
   LogOut,
   Image as ImageIcon,
+  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -160,6 +161,13 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
       url: "/upload-raw",
       icon: Upload,
       testId: "nav-raw-upload",
+      adminOnly: true,
+    },
+    {
+      title: "RAW-Stacks (Beta)",
+      url: "/admin/raw-stacks/JOB-2025-11-001",
+      icon: Layers,
+      testId: "nav-raw-stacks",
       adminOnly: true,
     },
     {
