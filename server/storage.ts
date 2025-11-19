@@ -1556,8 +1556,9 @@ export class DatabaseStorage implements IStorage {
         vatAmount: bookingData.vatAmount,
         grossAmount: bookingData.grossAmount,
         agbAccepted: bookingData.agbAccepted ? "true" : "false",
-        status: "pending",
+        status: "confirmed", // Slots shown as available are already validated
         createdAt: timestamp,
+        confirmedAt: timestamp, // Set confirmation timestamp immediately
       })
       .returning();
 

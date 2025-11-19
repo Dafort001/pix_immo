@@ -223,10 +223,11 @@ export function TimeSlotPicker({
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base">
             <CalendarIcon className="h-4 w-4" />
-            Datum wählen
+            Termin auswählen
           </CardTitle>
           <CardDescription>
-            Wählen Sie Ihr Wunschdatum für den Fototermin
+            Bitte wählen Sie einen freien Terminblock im Kalender. 
+            Jeder Termin umfasst etwa 90 Minuten vor Ort. Die angezeigten Slots berücksichtigen bereits andere Buchungen und Fahrzeiten.
           </CardDescription>
         </CardHeader>
         <CardContent>

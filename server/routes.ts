@@ -1102,7 +1102,7 @@ function registerBookingRoutes(app: Express) {
       const userId = req.user.id;
       const { serviceSelections, agbAccepted, ...bookingData } = req.body;
 
-      // Validate travel buffer requirements
+      // Validate travel buffer requirements (Race-Condition safe: check immediately before insert)
       if (bookingData.preferredDate && bookingData.preferredTime) {
         // Get all existing bookings for the same date with status pending or confirmed
         const existingBookings = await db
@@ -1131,7 +1131,12 @@ function registerBookingRoutes(app: Express) {
         );
 
         if (!validation.valid) {
-          return res.status(400).json({ error: validation.error });
+          // Return structured error for race conditions
+          return res.status(400).json({ 
+            error: 'SLOT_NOT_AVAILABLE',
+            message: 'Dieser Termin ist leider nicht mehr verfügbar. Bitte wählen Sie einen anderen Slot.',
+            details: validation.error
+          });
         }
       }
 

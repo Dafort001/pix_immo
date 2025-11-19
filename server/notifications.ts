@@ -211,16 +211,23 @@ export async function notifyBookingConfirmation(params: {
   appointmentTime: string;
   propertyAddress: string;
 }): Promise<void> {
+  // Format date as DD.MM.YYYY (German format without weekday)
   const formattedDate = new Date(params.appointmentDate).toLocaleDateString('de-DE', {
-    weekday: 'long',
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
   });
 
+  // Calculate slot end time (90 minutes after start)
+  const [hours, minutes] = params.appointmentTime.split(':').map(Number);
+  const startDate = new Date();
+  startDate.setHours(hours, minutes, 0, 0);
+  const endDate = new Date(startDate.getTime() + 90 * 60 * 1000);
+  const endTime = `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+
   await sendSMS({
     to: params.phone,
-    message: `Hallo ${params.customerName}, Ihre Buchung ist bei uns eingegangen. Gewünschter Termin: ${formattedDate} um ${params.appointmentTime} Uhr. Wir melden uns, falls es Rückfragen oder Terminänderungen gibt. Viele Grüße, Ihr pix.immo Team`,
+    message: `Hallo ${params.customerName},\n\nIhre Buchung bei pix.immo ist bestätigt.\n\nTermin:\n${formattedDate}, ${params.appointmentTime}–${endTime} Uhr\nAdresse: ${params.propertyAddress}\n\nWir freuen uns auf den Termin.\n\nIhr pix.immo Team`,
   });
 }
 

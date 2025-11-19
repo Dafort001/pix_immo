@@ -117,7 +117,7 @@ function Router() {
       <Route path="/preise" component={Pricing} />
       <Route path="/preisliste" component={Preisliste} />
       <Route path="/buchen" component={Booking} />
-      <Route path="/booking-confirmation" component={BookingConfirmation} />
+      <Route path="/booking-confirmation/:id" component={BookingConfirmation} />
       <Route path="/galerie" component={Galerie} />
       <Route path="/downloads" component={Downloads} />
       <Route path="/intake" component={Intake} />

@@ -174,21 +174,32 @@ export default function AdminInternalBooking() {
         agbAccepted: true, // Admin bookings automatically accept AGB
       });
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Buchung erstellt",
         description: "Die Buchung wurde erfolgreich angelegt und eine SMS-Bestätigung versendet.",
       });
-      form.reset();
-      setServiceQuantities({});
       queryClient.invalidateQueries({ queryKey: ['/api/bookings/all'] });
+      
+      // Redirect to confirmation page with booking ID
+      const bookingId = data.booking?.id || data.id;
+      setLocation(`/booking-confirmation/${bookingId}`);
     },
     onError: (error: any) => {
+      // Check if this is a race condition error (slot no longer available)
+      const isSlotUnavailable = error.message?.includes('SLOT_NOT_AVAILABLE') || 
+                                error.message?.includes('nicht mehr verfügbar');
+      
       toast({
         variant: "destructive",
-        title: "Fehler",
-        description: error.message || "Buchung konnte nicht erstellt werden",
+        title: isSlotUnavailable ? "Termin nicht mehr verfügbar" : "Fehler",
+        description: isSlotUnavailable 
+          ? "Dieser Termin ist leider nicht mehr verfügbar. Bitte wählen Sie einen anderen Slot."
+          : (error.message || "Buchung konnte nicht erstellt werden"),
+        duration: isSlotUnavailable ? 7000 : 5000, // Longer duration for slot unavailable
       });
+      
+      // If slot unavailable, user can select new slot (form remains visible)
     },
   });
 
