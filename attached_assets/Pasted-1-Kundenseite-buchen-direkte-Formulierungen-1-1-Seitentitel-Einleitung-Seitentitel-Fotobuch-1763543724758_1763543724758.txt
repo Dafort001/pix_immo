@@ -1,0 +1,143 @@
+1. Kundenseite /buchen – direkte Formulierungen
+1.1 Seitentitel & Einleitung
+
+Seitentitel:
+
+Fotobuchung für Ihre Immobilie
+
+Intro-Text (unter dem Titel):
+
+Wählen Sie die Leistungen aus, die Sie für Ihre Immobilie benötigen.
+Die Anzahl der Bilder bezieht sich immer auf die final bearbeiteten Fotos, die Sie nach dem Shooting in einer Online-Galerie auswählen können. Es werden grundsätzlich mehr Motive fotografiert, als im Paket enthalten sind. Zusätzliche Bilder können Sie bei Bedarf später kostenpflichtig dazu buchen.
+
+1.2 Abschnitt „Fotopakete“
+
+Abschnittsüberschrift:
+
+Fotopakete (Innen- & Außenaufnahmen)
+
+Kurztext unter der Überschrift:
+
+Die Pakete unterscheiden sich in der Anzahl der finalen Bilder und der typischen Objektgröße. Die Quadratmeterangaben sind reine Richtwerte – im Zweifel stimmen wir den Umfang mit Ihnen ab.
+
+Beschreibungstexte pro Paket (für die Service-Karten):
+
+Paket F10 – 10 Bilder
+
+Empfohlen für kleine Wohnungen bis ca. 60 m² (1–2 Zimmer).
+Es werden mehr Motive fotografiert, als im Paket enthalten sind. In der Online-Galerie wählen Sie Ihre 10 finalen Bilder aus. Weitere Bilder können Sie bei Bedarf gegen Aufpreis dazu buchen.
+
+Paket F15 – 15 Bilder
+
+Für typische Wohnungen oder kleinere Häuser bis ca. 200 m².
+Sie erhalten eine größere Motivauswahl und wählen daraus 15 finale Bilder. Zusätzliche Bilder können Sie später kostenpflichtig ergänzen.
+
+Paket F20 – 20 Bilder
+
+Für größere Wohnungen, Reihenhäuser oder Objekte mit vielen Raumvarianten (bis ca. 200 m²).
+Es werden mehr Motive aufgenommen, als im Paket enthalten sind. In der Galerie wählen Sie Ihre 20 finalen Bilder aus.
+
+Paket F40 – 40 Bilder
+
+Für große Häuser, Objekte mit mehreren Ebenen oder mehreren Wohneinheiten (z. B. Einliegerwohnung).
+Dieses Paket ist darauf ausgelegt, ein komplettes Haus mit allen Bereichen abzudecken. Wie bei allen Paketen wählen Sie Ihre finalen Bilder später in der Galerie aus.
+
+Hinweistext zu mehreren Einheiten (als Info-Box unter den Paketen):
+
+Hinweis zu mehreren Wohneinheiten
+Wenn Ihre Immobilie aus mehreren getrennten Wohneinheiten besteht (z. B. Hauptwohnung plus Einliegerwohnung oder mehrere Apartments im gleichen Haus), reicht ein kleines Paket in der Regel nicht aus. In solchen Fällen empfehlen wir entweder mehrere Pakete oder direkt das 40-Bilder-Paket. Falls Sie unsicher sind, wählen Sie ein Paket und wir klären den Umfang im Anschluss gemeinsam.
+
+1.3 Abschnitt „Drohnenaufnahmen“
+
+Abschnittsüberschrift:
+
+Drohnenaufnahmen
+
+Text:
+
+Drohnenaufnahmen zeigen Ihre Immobilie aus der Luft und ergänzen die klassischen Innen- und Außenfotos. Je nach Paket ist eine bestimmte Anzahl final bearbeiteter Luftbilder enthalten.
+Wie bei den Fotopaketen werden auch hier mehr Perspektiven aufgenommen, als im Paket inklusive sind. In der Online-Galerie können Sie bei Bedarf zusätzliche Drohnenbilder gegen Aufpreis auswählen.
+
+1.4 Abschnitt „Videooptionen“
+
+Abschnittsüberschrift:
+
+Videooptionen
+
+Text:
+
+Auf Wunsch können wir ausgewählte Videooptionen als Ergänzung zu den Fotopaketen produzieren. Die genauen Inhalte und die Länge der Clips stimmen wir nach der Buchung mit Ihnen ab.
+Die aktuell angezeigten Videopakete verstehen sich als Richtwerte. Das Angebot wird in den nächsten Monaten weiter verfeinert.
+
+1.5 Abschnitt „Virtueller Rundgang“
+
+Abschnittsüberschrift:
+
+Virtueller Rundgang (TML)
+
+Text:
+
+Mit dem virtuellen Rundgang (TML) können Interessenten Ihre Immobilie online begehen – ähnlich wie bei einer 360°-Tour.
+Wir erstellen dafür eine Tour mit ausgewählten Standpunkten in Ihrer Immobilie. Erweiterte Spezialtouren oder hochauflösende Varianten bieten wir aktuell bewusst nicht an, um Aufwand und Kosten überschaubar zu halten.
+
+1.6 Abschnitt „Zusätzliche Bilder & Bildbearbeitung“
+
+Abschnittsüberschrift:
+
+Zusätzliche Bilder & Bildbearbeitung
+
+Text:
+
+Nach dem Shooting erhalten Sie eine Online-Galerie mit mehr Motiven, als in Ihrem Paket enthalten sind.
+In der Galerie können Sie:
+
+zusätzliche Bilder gegen Aufpreis auswählen und
+
+optionale Bildbearbeitungen (z. B. Objektentfernung, Aufräumen, virtuelles Staging) für einzelne Bilder beauftragen.
+
+Diese Zusatzleistungen müssen nicht vorab gebucht werden. Sie entscheiden später direkt in der Galerie, was Sie wirklich benötigen.
+
+1.7 Abschnitt „Anfahrt“
+
+Abschnittsüberschrift:
+
+Anfahrt
+
+Text:
+
+Die Anfahrt im Raum Hamburg ist bis zu einer Entfernung von 40 km im Preis enthalten.
+Bei größeren Entfernungen können zusätzliche Fahrtkosten entstehen. Diese werden immer vorab individuell mit Ihnen abgesprochen. Es gibt dafür keine automatische Pauschale im Buchungsformular.
+
+1.8 AGB-Checkbox & Hinweis zur Buchung
+
+Label für die AGB-Checkbox:
+
+Ich habe die Datenschutzerklärung und die Allgemeinen Geschäftsbedingungen gelesen und akzeptiere sie.
+
+Kleiner Hinweistext unter der Checkbox oder beim Absenden-Button:
+
+Ihre Anfrage wird zunächst geprüft. Der Termin gilt erst als endgültig bestätigt, wenn wir ihn Ihnen separat per E-Mail oder SMS bestätigen.
+
+2. Admin-Seite /admin/internal-booking – kurze Hilfetexte
+
+Hier brauchst du nur kurze Hinweise, damit jeder Admin versteht, wie die Logik gedacht ist.
+
+Hinweis über den Fotopaketen:
+
+Pakete nach Anzahl finaler Bilder. Es werden immer mehr Motive fotografiert, als im Paket enthalten sind. Zusatzbilder werden später in der Galerie als FEX (6 €/Bild) abgerechnet. Quadratmeterangaben sind Richtwerte.
+
+Zusätzlicher Kurz-Hinweis (Mehr-Einheiten):
+
+Mehrere Wohneinheiten (z. B. Einliegerwohnung, getrennte Apartments): in der Regel F40 oder mehrere Pakete einplanen.
+
+Hinweis bei Drohne:
+
+Drohnenpakete funktionieren analog zu den Fotopaketen. Mehr Motive als inklusive, Zusatzbilder über Galerie/FEX.
+
+Hinweis zur Anfahrt (z. B. unter oder neben den Formularfeldern):
+
+Anfahrt bis 40 km um Hamburg ist im Preis enthalten. Darüber hinaus Fahrtkosten nur nach individueller Absprache, keine automatische Berechnung im System.
+
+Optionaler Hinweis irgendwo in der Admin-Maske (klein):
+
+Staging- und Optimierungsleistungen werden nicht vorab gebucht, sondern später pro Bild in der Galerie ausgewählt.
