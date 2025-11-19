@@ -58,11 +58,12 @@ export default function AdminRawStacks() {
   };
 
   // Handle bracket size change
-  const handleBracketSizeChange = (size: 3 | 5) => {
+  const handleBracketSizeChange = (size: 1 | 3 | 5) => {
     setJobMeta({ ...jobMeta, bracketSize: size });
+    const text = size === 1 ? "1 Bild" : `${size} Bilder`;
     toast({
-      title: "Bracket-Größe geändert",
-      description: `Bracket-Größe auf ${size} Belichtungen gesetzt.`,
+      title: "Belichtungsreihe geändert",
+      description: `Belichtungsreihe auf ${text} gesetzt.`,
     });
     updateTimestamp();
   };

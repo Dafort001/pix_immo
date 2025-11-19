@@ -1,7 +1,7 @@
 export interface JobStack {
   id: string;
   previewUrl: string;
-  imageCount: 3 | 5;
+  imageCount: 1 | 3 | 5;
   roomTypeKey: string;
   roomTypeLabel: string;
   selected: boolean;
@@ -18,7 +18,7 @@ export interface JobMeta {
   jobId: string;
   shootCode: string;
   date: string;
-  bracketSize: 3 | 5;
+  bracketSize: 1 | 3 | 5;
   rawCount: number;
   stackCount: number;
 }

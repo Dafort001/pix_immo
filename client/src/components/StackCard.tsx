@@ -105,7 +105,7 @@ export function StackCard({
           variant="secondary"
           className="absolute top-2 left-2 bg-black/70 text-white hover:bg-black/70"
         >
-          {stack.imageCount} Bilder
+          {stack.imageCount === 1 ? "1 Bild" : `${stack.imageCount} Bilder`}
         </Badge>
         
         {/* Badge: Status */}

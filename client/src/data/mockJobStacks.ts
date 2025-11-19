@@ -5,8 +5,8 @@ export const mockJobMeta: JobMeta = {
   shootCode: "VILLA_LUXUS_2025",
   date: "19.11.2025",
   bracketSize: 5,
-  rawCount: 120,
-  stackCount: 24,
+  rawCount: 129,
+  stackCount: 29,
 };
 
 const placeholderImages = [
@@ -18,8 +18,10 @@ const placeholderImages = [
 const getPlaceholderImage = (index: number) => 
   placeholderImages[index % placeholderImages.length];
 
-const createExposures = (count: 3 | 5, baseIndex: number) => {
-  const evValues = count === 3 
+const createExposures = (count: 1 | 3 | 5, baseIndex: number) => {
+  const evValues = count === 1
+    ? ["EV 0"]
+    : count === 3 
     ? ["EV -2", "EV 0", "EV +2"]
     : ["EV -2", "EV -1", "EV 0", "EV +1", "EV +2"];
   
@@ -317,5 +319,65 @@ export const mockJobStacks: JobStack[] = [
     flaggedUncertain: false,
     orderIndex: 23,
     exposures: createExposures(5, 2),
+  },
+  {
+    id: "s001",
+    previewUrl: getPlaceholderImage(0),
+    imageCount: 1,
+    roomTypeKey: "detail_window",
+    roomTypeLabel: "Detail: Fenster",
+    selected: false,
+    markedForDeletion: false,
+    flaggedUncertain: false,
+    orderIndex: 24,
+    exposures: createExposures(1, 0),
+  },
+  {
+    id: "s002",
+    previewUrl: getPlaceholderImage(1),
+    imageCount: 1,
+    roomTypeKey: "detail_floor",
+    roomTypeLabel: "Detail: Boden",
+    selected: false,
+    markedForDeletion: false,
+    flaggedUncertain: false,
+    orderIndex: 25,
+    exposures: createExposures(1, 1),
+  },
+  {
+    id: "s003",
+    previewUrl: getPlaceholderImage(2),
+    imageCount: 1,
+    roomTypeKey: "detail_fixture",
+    roomTypeLabel: "Detail: Armaturen",
+    selected: false,
+    markedForDeletion: false,
+    flaggedUncertain: false,
+    orderIndex: 26,
+    exposures: createExposures(1, 2),
+  },
+  {
+    id: "t001",
+    previewUrl: getPlaceholderImage(0),
+    imageCount: 3,
+    roomTypeKey: "kitchen",
+    roomTypeLabel: "Küche",
+    selected: false,
+    markedForDeletion: false,
+    flaggedUncertain: false,
+    orderIndex: 27,
+    exposures: createExposures(3, 0),
+  },
+  {
+    id: "t002",
+    previewUrl: getPlaceholderImage(1),
+    imageCount: 3,
+    roomTypeKey: "living_room",
+    roomTypeLabel: "Wohnzimmer",
+    selected: false,
+    markedForDeletion: false,
+    flaggedUncertain: false,
+    orderIndex: 28,
+    exposures: createExposures(3, 1),
   },
 ];

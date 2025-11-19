@@ -9,7 +9,7 @@ import {
 
 interface JobHeaderProps {
   job: JobMeta;
-  onBracketSizeChange: (size: 3 | 5) => void;
+  onBracketSizeChange: (size: 1 | 3 | 5) => void;
 }
 
 export function JobHeader({ job, onBracketSizeChange }: JobHeaderProps) {
@@ -29,17 +29,18 @@ export function JobHeader({ job, onBracketSizeChange }: JobHeaderProps) {
         </div>
         
         <div>
-          <label className="block text-sm text-muted-foreground mb-1">Bracket-Größe</label>
+          <label className="block text-sm text-muted-foreground mb-1">Belichtungsreihe</label>
           <Select
             value={String(job.bracketSize)}
-            onValueChange={(value) => onBracketSizeChange(Number(value) as 3 | 5)}
+            onValueChange={(value) => onBracketSizeChange(Number(value) as 1 | 3 | 5)}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full" data-testid="select-bracket-size">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="3">3 Belichtungen</SelectItem>
-              <SelectItem value="5">5 Belichtungen</SelectItem>
+              <SelectItem value="1">1 Bild</SelectItem>
+              <SelectItem value="3">3 Bilder</SelectItem>
+              <SelectItem value="5">5 Bilder</SelectItem>
             </SelectContent>
           </Select>
         </div>
