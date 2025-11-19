@@ -1,4 +1,14 @@
 import { google } from 'googleapis';
+import { db } from './db';
+import { bookings } from '@shared/schema';
+import { eq, and, or, sql } from 'drizzle-orm';
+import {
+  calculateDistance,
+  calculateTravelBuffer,
+  parseCoordinate,
+  areCoordinatesValid,
+  parseBookingDateTime
+} from './travel-buffer';
 
 let connectionSettings: any;
 
@@ -74,7 +84,7 @@ export class GoogleCalendarService {
   private static DEFAULT_CALENDAR_ID = 'primary';
   private static BUSINESS_HOURS_START = 9;
   private static BUSINESS_HOURS_END = 18;
-  private static SLOT_DURATION_MINUTES = 60;
+  private static SLOT_DURATION_MINUTES = 90;
 
   static async getAvailableSlots(params: AvailableSlotsParams): Promise<TimeSlot[]> {
     const calendar = await getUncachableGoogleCalendarClient();
@@ -140,6 +150,140 @@ export class GoogleCalendarService {
     }
 
     return slots.filter(slot => slot.available);
+  }
+
+  /**
+   * Get available time slots with travel buffer validation
+   * 
+   * This method filters slots based on travel distance to/from existing bookings.
+   * Buffers are applied between bookings based on distance:
+   * - ≤ 10 km → 0 minutes
+   * - > 10 km and < 20 km → 15 minutes
+   * - ≥ 20 km → 30 minutes
+   * 
+   * @param params - Date, duration, calendar ID, and coordinates for new booking
+   * @returns Array of available time slots that satisfy buffer requirements
+   */
+  static async getAvailableSlotsWithTravelBuffer(params: AvailableSlotsParams & {
+    lat?: string;
+    lng?: string;
+  }): Promise<TimeSlot[]> {
+    // If no coordinates provided, fall back to regular slot fetching
+    if (!params.lat || !params.lng) {
+      return this.getAvailableSlots(params);
+    }
+
+    const newLat = parseCoordinate(params.lat);
+    const newLng = parseCoordinate(params.lng);
+
+    if (newLat === null || newLng === null) {
+      // Invalid coordinates, fall back to regular slots
+      return this.getAvailableSlots(params);
+    }
+
+    // Get base available slots from Google Calendar
+    const baseSlots = await this.getAvailableSlots(params);
+
+    // Get all bookings for the same date with status pending or confirmed
+    const dateObj = new Date(params.date);
+    const startOfDay = new Date(dateObj);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(dateObj);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const existingBookings = await db
+      .select()
+      .from(bookings)
+      .where(
+        and(
+          or(
+            eq(bookings.status, 'pending'),
+            eq(bookings.status, 'confirmed')
+          ),
+          sql`${bookings.preferredDate} = ${params.date}`
+        )
+      );
+
+    // Filter slots based on travel buffer requirements
+    const validSlots = baseSlots.filter(slot => {
+      const newStart = new Date(slot.start);
+      const newEnd = new Date(slot.end);
+
+      // Find previous booking (last booking before this slot)
+      let prevBooking = null;
+      let prevEnd = null;
+
+      for (const booking of existingBookings) {
+        if (!booking.preferredTime) continue;
+
+        // Parse booking time with Europe/Berlin timezone handling
+        const bookingStart = parseBookingDateTime(params.date, booking.preferredTime);
+        const bookingEnd = new Date(bookingStart.getTime() + this.SLOT_DURATION_MINUTES * 60000);
+
+        // Check if this booking ends before the new slot starts
+        if (bookingEnd <= newStart) {
+          if (!prevEnd || bookingEnd > prevEnd) {
+            prevBooking = booking;
+            prevEnd = bookingEnd;
+          }
+        }
+      }
+
+      // Check buffer with previous booking
+      if (prevBooking && prevEnd) {
+        const prevLat = parseCoordinate(prevBooking.addressLat);
+        const prevLng = parseCoordinate(prevBooking.addressLng);
+
+        if (areCoordinatesValid(prevLat, prevLng, newLat, newLng)) {
+          const distance = calculateDistance(prevLat!, prevLng!, newLat, newLng);
+          const buffer = calculateTravelBuffer(distance);
+          const requiredStart = new Date(prevEnd.getTime() + buffer * 60000);
+
+          if (newStart < requiredStart) {
+            return false; // Slot too close to previous booking
+          }
+        }
+      }
+
+      // Find next booking (first booking after this slot)
+      let nextBooking = null;
+      let nextStart = null;
+
+      for (const booking of existingBookings) {
+        if (!booking.preferredTime) continue;
+
+        // Parse booking time with Europe/Berlin timezone handling
+        const bookingStart = parseBookingDateTime(params.date, booking.preferredTime);
+
+        // Check if this booking starts after the new slot ends
+        if (bookingStart >= newEnd) {
+          if (!nextStart || bookingStart < nextStart) {
+            nextBooking = booking;
+            nextStart = bookingStart;
+          }
+        }
+      }
+
+      // Check buffer with next booking
+      if (nextBooking && nextStart) {
+        const nextLat = parseCoordinate(nextBooking.addressLat);
+        const nextLng = parseCoordinate(nextBooking.addressLng);
+
+        if (areCoordinatesValid(newLat, newLng, nextLat, nextLng)) {
+          const distance = calculateDistance(newLat, newLng, nextLat!, nextLng!);
+          const buffer = calculateTravelBuffer(distance);
+          const requiredEnd = new Date(nextStart.getTime() - buffer * 60000);
+
+          if (newEnd > requiredEnd) {
+            return false; // Slot too close to next booking
+          }
+        }
+      }
+
+      return true; // Slot satisfies all buffer requirements
+    });
+
+    return validSlots;
   }
 
   static async createEvent(params: CreateEventParams): Promise<string> {

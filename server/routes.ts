@@ -39,6 +39,10 @@ import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
 import { assertJobAccessOrThrow, assertFileDownloadableOrThrow, filterDownloadableFiles, filterDownloadableImages } from "./download-auth";
 import { GoogleCalendarService } from "./google-calendar";
+import { validateBookingTravelBuffer } from "./travel-buffer";
+import { db } from "./db";
+import { bookings as bookingsTable } from "@shared/schema";
+import { and, or, eq, sql as drizzleSql } from "drizzle-orm";
 import { sendOtpEmail, sendVerificationEmail, sendPasswordResetEmail } from "./email";
 import { isDisposableEmail, getDisposableEmailErrorMessage } from "./blocked-domains";
 import { checkEmailRateLimit, checkIpRateLimit, getClientIp } from "./otp-rate-limit";
@@ -1097,6 +1101,39 @@ function registerBookingRoutes(app: Express) {
 
       const userId = req.user.id;
       const { serviceSelections, agbAccepted, ...bookingData } = req.body;
+
+      // Validate travel buffer requirements
+      if (bookingData.preferredDate && bookingData.preferredTime) {
+        // Get all existing bookings for the same date with status pending or confirmed
+        const existingBookings = await db
+          .select()
+          .from(bookingsTable)
+          .where(
+            and(
+              or(
+                eq(bookingsTable.status, 'pending'),
+                eq(bookingsTable.status, 'confirmed')
+              ),
+              drizzleSql`${bookingsTable.preferredDate} = ${bookingData.preferredDate}`
+            )
+          );
+
+        // Validate buffer requirements
+        const validation = validateBookingTravelBuffer(
+          {
+            preferredDate: bookingData.preferredDate,
+            preferredTime: bookingData.preferredTime,
+            addressLat: bookingData.addressLat,
+            addressLng: bookingData.addressLng,
+          },
+          existingBookings,
+          90 // slot duration in minutes
+        );
+
+        if (!validation.valid) {
+          return res.status(400).json({ error: validation.error });
+        }
+      }
 
       const result = await storage.createBooking(userId, {
         ...bookingData,
@@ -2980,17 +3017,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Google Calendar Integration Routes
   
   // GET /api/calendar/available-slots - Get available time slots for a specific date
+  // with optional travel buffer validation based on coordinates
   app.get("/api/calendar/available-slots", async (req: Request, res: Response) => {
     try {
-      const { date, duration } = req.query;
+      const { date, duration, lat, lng } = req.query;
       
       if (!date || typeof date !== 'string') {
         return res.status(400).json({ error: "Date parameter is required" });
       }
       
-      const slots = await GoogleCalendarService.getAvailableSlots({
+      // Use travel buffer aware method if coordinates are provided
+      const slots = await GoogleCalendarService.getAvailableSlotsWithTravelBuffer({
         date: date as string,
         duration: duration ? parseInt(duration as string) : undefined,
+        lat: lat as string | undefined,
+        lng: lng as string | undefined,
       });
       
       res.json({ slots });
