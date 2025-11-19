@@ -2,15 +2,26 @@ import { JobStack } from "@/types/jobStacks";
 import { getRoomLabelByValue } from "@/data/roomTypes";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { MoreVertical, GripVertical } from "lucide-react";
+import { MoreVertical, GripVertical, Maximize2, Tag, Trash2, AlertCircle } from "lucide-react";
 import { useDrag, useDrop } from "react-dnd";
 import { useRef } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface StackCardProps {
   stack: JobStack;
   isSelected: boolean;
   onSelect: (id: string, selected: boolean) => void;
   onThumbnailClick: (stack: JobStack) => void;
+  onOpenInLightbox: (stack: JobStack) => void;
+  onToggleDeletion: (stackId: string) => void;
+  onToggleUncertain: (stackId: string) => void;
+  onAssignRoomType: (stackId: string) => void;
   index: number;
   moveStack: (dragIndex: number, hoverIndex: number) => void;
 }
@@ -22,6 +33,10 @@ export function StackCard({
   isSelected,
   onSelect,
   onThumbnailClick,
+  onOpenInLightbox,
+  onToggleDeletion,
+  onToggleUncertain,
+  onAssignRoomType,
   index,
   moveStack,
 }: StackCardProps) {
@@ -125,9 +140,52 @@ export function StackCard({
               {getRoomLabelByValue(stack.roomTypeKey)}
             </div>
           </div>
-          <button className="text-muted-foreground hover:text-foreground p-1">
-            <MoreVertical className="size-4" />
-          </button>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button 
+                className="text-muted-foreground hover:text-foreground p-1 rounded hover-elevate"
+                data-testid={`button-menu-${stack.id}`}
+              >
+                <MoreVertical className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem 
+                onClick={() => onOpenInLightbox(stack)}
+                data-testid={`menu-lightbox-${stack.id}`}
+              >
+                <Maximize2 className="mr-2 h-4 w-4" />
+                In Lightbox öffnen
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={() => onAssignRoomType(stack.id)}
+                data-testid={`menu-assign-room-${stack.id}`}
+              >
+                <Tag className="mr-2 h-4 w-4" />
+                Raumtyp zuweisen
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              
+              <DropdownMenuItem 
+                onClick={() => onToggleDeletion(stack.id)}
+                data-testid={`menu-toggle-deletion-${stack.id}`}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {stack.markedForDeletion ? "Löschmarkierung entfernen" : "Zur Löschung markieren"}
+              </DropdownMenuItem>
+              
+              <DropdownMenuItem 
+                onClick={() => onToggleUncertain(stack.id)}
+                data-testid={`menu-toggle-uncertain-${stack.id}`}
+              >
+                <AlertCircle className="mr-2 h-4 w-4" />
+                {stack.flaggedUncertain ? "Unsicher-Markierung entfernen" : "Als unsicher markieren"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Checkbox */}

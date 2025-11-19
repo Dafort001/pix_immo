@@ -1,6 +1,7 @@
 import { JobStack } from "@/types/jobStacks";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect } from "react";
 
 interface StackLightboxProps {
   stack: JobStack | null;
@@ -8,11 +9,24 @@ interface StackLightboxProps {
 }
 
 export function StackLightbox({ stack, onClose }: StackLightboxProps) {
+  useEffect(() => {
+    if (!stack) return;
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [stack, onClose]);
+
   if (!stack) return null;
 
   return (
     <div
-      className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-8"
+      className="fixed inset-0 bg-black/90 z-40 flex items-center justify-center p-8"
       onClick={onClose}
       data-testid="lightbox-overlay"
     >

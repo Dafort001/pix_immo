@@ -7,6 +7,7 @@ import { StackCard } from "@/components/StackCard";
 import { StackLightbox } from "@/components/StackLightbox";
 import { RoomAssignmentPanel } from "@/components/RoomAssignmentPanel";
 import { StatusBar } from "@/components/StatusBar";
+import { RoomTypeDropdown } from "@/components/RoomTypeDropdown";
 import { mockJobMeta, mockJobStacks } from "@/data/mockJobStacks";
 import { JobStack, JobMeta } from "@/types/jobStacks";
 import { getRoomLabelByValue } from "@/data/roomTypes";
@@ -34,6 +35,8 @@ export default function AdminRawStacks() {
   const [lastChangeTime, setLastChangeTime] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [showFilenameDialog, setShowFilenameDialog] = useState(false);
+  const [assignRoomDialogStack, setAssignRoomDialogStack] = useState<string | null>(null);
+  const [selectedRoomTypeInDialog, setSelectedRoomTypeInDialog] = useState("");
 
   // Computed values
   const selectedCount = selectedStackIds.size;
@@ -191,6 +194,79 @@ export default function AdminRawStacks() {
     updateTimestamp();
   }, []);
 
+  // Single Stack Actions (from Dropdown Menu)
+  const handleOpenInLightbox = (stack: JobStack) => {
+    setLightboxStack(stack);
+  };
+
+  const handleToggleDeletion = (stackId: string) => {
+    setStacks((prev) =>
+      prev.map((stack) =>
+        stack.id === stackId
+          ? { ...stack, markedForDeletion: !stack.markedForDeletion }
+          : stack
+      )
+    );
+
+    const stack = stacks.find((s) => s.id === stackId);
+    const newState = !stack?.markedForDeletion;
+
+    toast({
+      title: newState ? "Zur Löschung markiert" : "Löschmarkierung entfernt",
+      description: `Stack ${stackId} ${newState ? "wurde zur Löschung markiert" : "Markierung entfernt"}.`,
+      variant: newState ? "destructive" : "default",
+    });
+
+    updateTimestamp();
+  };
+
+  const handleToggleUncertain = (stackId: string) => {
+    setStacks((prev) =>
+      prev.map((stack) =>
+        stack.id === stackId
+          ? { ...stack, flaggedUncertain: !stack.flaggedUncertain }
+          : stack
+      )
+    );
+
+    const stack = stacks.find((s) => s.id === stackId);
+    const newState = !stack?.flaggedUncertain;
+
+    toast({
+      title: newState ? "Als unsicher markiert" : "Unsicher-Markierung entfernt",
+      description: `Stack ${stackId} ${newState ? "wurde als unsicher markiert" : "Markierung entfernt"}.`,
+    });
+
+    updateTimestamp();
+  };
+
+  const handleAssignRoomType = (stackId: string) => {
+    setAssignRoomDialogStack(stackId);
+  };
+
+  const handleAssignRoomTypeToSingleStack = (roomTypeKey: string) => {
+    if (!assignRoomDialogStack) return;
+
+    const roomTypeLabel = getRoomLabelByValue(roomTypeKey);
+
+    setStacks((prev) =>
+      prev.map((stack) =>
+        stack.id === assignRoomDialogStack
+          ? { ...stack, roomTypeKey, roomTypeLabel }
+          : stack
+      )
+    );
+
+    toast({
+      title: "Raumtyp zugewiesen",
+      description: `Stack ${assignRoomDialogStack} wurde "${roomTypeLabel}" zugewiesen.`,
+    });
+
+    setAssignRoomDialogStack(null);
+    updateTimestamp();
+    showSuccess(`Raumtyp "${roomTypeLabel}" zugewiesen`);
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className="flex flex-col h-screen">
@@ -210,6 +286,10 @@ export default function AdminRawStacks() {
                   isSelected={selectedStackIds.has(stack.id)}
                   onSelect={handleStackSelect}
                   onThumbnailClick={setLightboxStack}
+                  onOpenInLightbox={handleOpenInLightbox}
+                  onToggleDeletion={handleToggleDeletion}
+                  onToggleUncertain={handleToggleUncertain}
+                  onAssignRoomType={handleAssignRoomType}
                   moveStack={moveStack}
                 />
               ))}
@@ -278,6 +358,56 @@ export default function AdminRawStacks() {
             <div className="mt-6 flex justify-end">
               <Button onClick={() => setShowFilenameDialog(false)} data-testid="button-close-preview">
                 Schließen
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Assign Room Type Dialog (Single Stack) */}
+        <Dialog 
+          open={assignRoomDialogStack !== null} 
+          onOpenChange={(open) => {
+            if (!open) {
+              setAssignRoomDialogStack(null);
+              setSelectedRoomTypeInDialog("");
+            }
+          }}
+        >
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Raumtyp zuweisen</DialogTitle>
+              <DialogDescription>
+                Wählen Sie einen Raumtyp für Stack {assignRoomDialogStack}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="mt-4">
+              <RoomTypeDropdown
+                value={selectedRoomTypeInDialog}
+                onValueChange={setSelectedRoomTypeInDialog}
+              />
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAssignRoomDialogStack(null);
+                  setSelectedRoomTypeInDialog("");
+                }}
+                data-testid="button-cancel-assign-room"
+              >
+                Abbrechen
+              </Button>
+              <Button
+                onClick={() => {
+                  if (selectedRoomTypeInDialog) {
+                    handleAssignRoomTypeToSingleStack(selectedRoomTypeInDialog);
+                    setSelectedRoomTypeInDialog("");
+                  }
+                }}
+                disabled={!selectedRoomTypeInDialog}
+                data-testid="button-confirm-assign-room"
+              >
+                Zuweisen
               </Button>
             </div>
           </DialogContent>
