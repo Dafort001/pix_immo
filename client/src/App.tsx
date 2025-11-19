@@ -58,7 +58,6 @@ import Payment from "@/pages/portal/payment";
 import StatusTimeline from "@/pages/portal/status-timeline";
 import Delivery from "@/pages/portal/delivery";
 import CustomerUploadGallery from "@/pages/portal/gallery-upload";
-import PhotographerUploadGallery from "@/pages/portal/gallery-photographer";
 import EditingGallery from "@/pages/portal/gallery-editing";
 import OrderStacksPage from "@/pages/orders/stacks";
 import OrderReviewPage from "@/pages/orders/review";
@@ -150,7 +149,6 @@ function Router() {
       <Route path="/portal/status/:jobId" component={StatusTimeline} />
       <Route path="/portal/delivery/:jobId" component={Delivery} />
       <Route path="/portal/gallery-upload" component={CustomerUploadGallery} />
-      <Route path="/portal/gallery-photographer" component={PhotographerUploadGallery} />
       <Route path="/portal/gallery-editing" component={EditingGallery} />
       <Route path="/orders/:orderId/stacks" component={OrderStacksPage} />
       <Route path="/orders/:orderId/review" component={OrderReviewPage} />

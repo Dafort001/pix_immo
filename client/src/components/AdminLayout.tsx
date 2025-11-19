@@ -143,13 +143,6 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
   // Photo workflow
   const photoWorkflow: NavigationItem[] = [
     {
-      title: "Photo Upload",
-      url: "/portal/gallery-photographer",
-      icon: Camera,
-      testId: "nav-photo-upload",
-      adminOnly: true,
-    },
-    {
       title: "Final Editing",
       url: "/portal/gallery-editing",
       icon: ImagePlus,
