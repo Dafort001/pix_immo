@@ -88,3 +88,13 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
 - **pix.immo Layout**: Mixed aspect ratios (3:2, 16:9, 9:16) for visual variety, identical ScrollingImageStrip implementation
 - **User Management**: Single admin account (admin@piximmo.de) for both pix.immo and pixcapture.app
 - **Twilio SMS Integration**: Fully integrated - sends automated booking confirmations, appointment reminders (24h before), and cancellation notifications. Uses environment variables for credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER) with graceful fallback to console logs in dev mode.
+- **RAW Upload Workflow Refactoring (Nov 19, 2025)**: 
+  - Migrated from shoot-based to job-based workflow
+  - Backend API changed from `shootId` to `jobId` with automatic shoot creation via `getOrCreateShootForJob()`
+  - Job selection displays `{jobNumber} - {propertyName}` format (e.g., "J-2024-001 - Musterwohnung Hamburg")
+  - Automatic redirect to `/admin/raw-stacks/{jobId}` after successful uploads
+  - Extended bracketSize support from {3, 5} to {1, 3, 5} for single-shot photography
+  - Implemented context menu (⋮) for individual stack actions and single-stack room assignment
+  - Enhanced StackLightbox with Escape key handling and corrected z-index
+  - Removed redundant "Photo Upload" (gallery-photographer) feature to eliminate confusion
+  - Next Step: Build Editor Handoff/Weitergabe page for delivering processed images to editors
