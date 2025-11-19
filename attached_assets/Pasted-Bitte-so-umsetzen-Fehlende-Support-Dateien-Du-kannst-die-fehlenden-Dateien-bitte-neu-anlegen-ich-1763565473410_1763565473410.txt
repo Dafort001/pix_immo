@@ -1,0 +1,177 @@
+Bitte so umsetzen:
+
+
+Fehlende Support-Dateien
+Du kannst die fehlenden Dateien bitte neu anlegen, ich habe sie nicht bereits im Repo:
+
+
+
+
+types
+Lege eine Datei z. B. src/types/jobStacks.ts an mit einfachen Interfaces, ungefähr so (vom Feldinhalt her, Code kannst du selbst definieren):
+
+
+JobStack
+
+
+id (string, z. B. "g001")
+
+
+previewUrl (string, Thumbnail-URL)
+
+
+imageCount (number, 3 oder 5)
+
+
+roomTypeKey (string, z. B. "living_room")
+
+
+roomTypeLabel (string, z. B. "Wohnzimmer")
+
+
+selected (boolean)
+
+
+markedForDeletion (boolean)
+
+
+flaggedUncertain (boolean)
+
+
+orderIndex (number, Sortierung)
+
+
+
+
+JobMeta
+
+
+jobId
+
+
+shootCode
+
+
+date
+
+
+bracketSize
+
+
+rawCount
+
+
+stackCount
+
+
+
+
+
+
+data/roomTypes
+Lege eine Datei z. B. src/data/roomTypes.ts an mit:
+
+
+roomTypeGroups: Array von Gruppen mit label und options, z. B.:
+
+
+Gruppe „Wohnbereiche“: living_room, dining_area, kitchen_dining, kitchen, living_dining_combined, office
+
+
+Gruppe „Schlafbereiche“: bedroom_master, bedroom_child, bedroom_guest, dressing_room
+
+
+Gruppe „Bäder & Sanitär“: bathroom_main, bathroom_guest
+
+
+Gruppe „Flure & Übergänge“: entry, hallway, staircase
+
+
+Gruppe „Funktionsräume“: storage_room, utility_room, laundry_room, hobby_room, fitness_room, basement, attic
+
+
+Gruppe „Außenbereiche“: balcony, terrace, wintergarden, garden, outdoor_area, facade, parking_space, garage
+
+
+Gruppe „Spezialräume“: technical_room, heating_room, multipurpose_room
+
+
+Gruppe „Fallback“: undefined_space
+
+
+
+
+Helper getRoomLabelByValue(key: string): string, der den Anzeigenamen zurückgibt.
+
+
+
+
+Mock-Daten
+Lege eine Datei z. B. src/data/mockJobStacks.ts an mit:
+
+
+einem JobMeta (z. B. VILLA_LUXUS_2025)
+
+
+ca. 24 JobStack-Einträgen mit gemischten Raumtypen (nicht alles Wohnzimmer).
+
+
+
+
+
+
+Routing & Integration
+
+
+
+
+Route bitte als: /admin/raw-stacks/:jobId
+
+
+Nutze den bestehenden Admin-Layout-Wrapper, der auch für /admin/internal-booking bzw. andere Admin-Seiten verwendet wird (gleiche Sidebar/Topbar).
+
+
+Im Admin-Menü kannst du einen einfachen Link hinzufügen, z. B. unter einem internen Bereich: „RAW-Stacks (Beta)“ → /admin/raw-stacks/JOB-2025-11-001.
+Reicht, wenn das nur intern sichtbar ist – kein Public-Link nötig.
+
+
+
+
+Drag & Drop Dependency
+Ja, bitte react-dnd und react-dnd-html5-backend installieren und für die StackCards nutzen.
+Wenn es im Projekt bereits eine andere DnD-Library gibt, kannst du alternativ diese verwenden – wichtig ist nur, dass Drag & Drop innerhalb der Gallery funktioniert und die neue Reihenfolge im lokalen State gehalten wird.
+
+
+Mock-Bilder
+Bitte einfach statische Placeholder-Bilder verwenden, z. B.:
+
+
+
+
+ein kleines Set an JPGs in /public/mock-stacks oder ähnlichem Ordner
+
+
+diese dann in den Mock-Daten referenzieren (previewUrl)
+
+
+Es müssen keine echten URLs von externen Diensten sein; lokale Assets reichen völlig.
+
+
+Dateinamen-Vorschau Dialog
+Ein schlichter Dialog mit einer Liste reicht:
+
+
+
+
+Titel: „Dateinamen-Vorschau“
+
+
+Einfaches <ul> / Liste der generierten Beispiel-Dateinamen pro Stack in aktueller Reihenfolge und mit aktuellem roomTypeKey.
+
+
+Ein „Schließen“-Button ist ausreichend.
+Keine komplexe Tabellen-UI nötig in dieser Iteration.
+
+
+Damit hast du alle Freigaben.
+Bitte auf dieser Basis den Implementierungsplan erstellen und dann mit der Umsetzung starten.
