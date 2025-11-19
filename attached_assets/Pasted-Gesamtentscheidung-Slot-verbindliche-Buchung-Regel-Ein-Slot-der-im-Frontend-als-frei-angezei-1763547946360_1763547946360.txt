@@ -1,0 +1,209 @@
+Gesamtentscheidung: Slot = verbindliche Buchung
+
+Regel:
+Ein Slot, der im Frontend als „frei“ angezeigt wird, ist bereits vom Backend geprüft.
+Wenn der Kunde diesen Slot bucht, ist die Buchung fix (Status: confirmed).
+
+Es gibt keine nachgelagerte manuelle Prüfung mehr wegen Zeit/Puffer/Entfernung.
+Die Entfernungs-/Pufferlogik muss vollständig im Backend abgebildet sein, bevor Slots als „available“ ausgegeben werden.
+
+1. Backend-Logik (Slot & Buchung)
+1.1 Availability-Endpoint (Konzept)
+
+Route (Beispiel):
+GET /api/availability?date=YYYY-MM-DD
+
+Backend liefert für einen Tag nur Slots, die:
+
+in deinen Arbeitszeiten liegen
+
+nicht mit bestehenden Bookings kollidieren
+
+die Entfernungs-/Pufferlogik erfüllen
+
+Antwort-Struktur (vereinfachtes Beispiel):
+
+{
+  "date": "2025-11-25",
+  "slots": [
+    { "start": "09:00", "end": "10:30", "available": true },
+    { "start": "11:00", "end": "12:30", "available": true },
+    { "start": "13:00", "end": "14:30", "available": false }
+  ]
+}
+
+
+Wichtig:
+Alle Slots mit available: true sind realistisch machbar.
+Nur diese dürfen buchbar sein.
+
+1.2 Buchungs-Endpoint (POST /api/bookings)
+
+Wenn der Kunde bucht (egal ob /buchen oder /admin/internal-booking):
+
+Request enthält u. a.:
+
+preferredDate (Datum)
+
+preferredTime (Slot-Startzeit, z. B. "09:00")
+
+Backend berechnet darauf basierend:
+
+startTime = preferredDate + preferredTime
+
+endTime = startTime + 90 Minuten (Slotlänge)
+
+Backend prüft ein letztes Mal:
+
+Slot ist noch frei
+
+Slot kollidiert nicht mit anderen Bookings
+
+Wenn ok:
+
+bookings.status = "confirmed"
+
+createBookingItems(...)
+
+sendBookingConfirmationSMS(...) (falls konfiguriert)
+
+Response = 200 + Booking-Daten
+
+Wenn nicht ok (Race Condition o. ä.):
+
+Response 400 mit verständlicher Fehler-Nachricht:
+
+„Dieser Termin ist leider nicht mehr verfügbar. Bitte wählen Sie einen anderen Slot.“
+
+2. Booking-Status
+
+Standardfall (Kunde bucht freien Slot):
+
+status = "confirmed"
+
+Ein „pending“-Status ist für diese Art Slot-Buchung nicht mehr nötig.
+Wenn du pending behalten willst, dann nur für Sonderfälle oder andere Buchungstypen – hier nicht.
+
+3. Frontend-Verhalten
+3.1 /buchen (Kundenseite)
+
+Kunde wählt:
+
+Datum (preferredDate)
+
+Slot aus Liste der available Slots (Buttons)
+
+preferredTime wird beim Klick auf einen Slot gesetzt (z. B. "09:00").
+
+Texte im UI:
+
+Über dem Kalender / Slots:
+
+Termin auswählen
+
+Bitte wählen Sie einen freien Terminblock im Kalender.
+Jeder Termin umfasst etwa 90 Minuten vor Ort. Die angezeigten Slots berücksichtigen bereits andere Buchungen und Fahrzeiten.
+
+3.2 /admin/internal-booking (Admin-Seite)
+
+Admin verwendet dieselbe Slot-Logik:
+
+Datum wählen
+
+Slot wählen (oder ggf. später eine erweiterte Option – jetzt nicht nötig)
+
+Verhalten identisch: Slot = fix, wenn gespeichert.
+
+4. Buchungsbestätigungsseite /booking-confirmation
+
+Diese Seite wird nach erfolgreicher Buchung angezeigt.
+
+4.1 Texte für Kunden (Kundenseite)
+
+Titel:
+
+Ihre Buchung war erfolgreich
+
+Subline:
+
+Vielen Dank. Ihr Termin wurde fest eingetragen.
+
+Überschrift der Box:
+
+Ihre Buchungsdetails
+
+Inhalt (Label + Werte):
+
+Name:
+[contactName]
+
+Termin:
+[preferredDate], [slotStart]–[slotEnd] Uhr
+
+Objekt:
+[propertyAddress]
+
+Leistungen:
+[ServiceListe] (z. B. „Fotopaket F15, Drohnenaufnahmen, Virtueller Rundgang (TML)”)
+
+Abschluss:
+
+Sie erhalten zusätzlich eine Bestätigung per SMS.
+Bei Fragen: info@pix.immo
+
+4.2 Texte für Admin-Flow
+
+Falls die Buchung über /admin/internal-booking angelegt wurde:
+
+Titel:
+
+Buchung gespeichert
+
+Subline:
+
+Der Termin wurde fest eingetragen. Der Kunde erhält eine Bestätigung per SMS.
+
+Weitere Details kannst du identisch zur Kundenversion anzeigen.
+
+5. SMS-Bestätigung (Twilio)
+
+Sobald POST /api/bookings erfolgreich war und status="confirmed" gesetzt wurde:
+
+SMS-Text:
+
+Hallo [contactName],
+
+Ihre Buchung bei pix.immo ist bestätigt.
+
+Termin:
+[preferredDate], [slotStart]–[slotEnd] Uhr
+Adresse: [propertyAddress]
+
+Wir freuen uns auf den Termin.
+
+Ihr pix.immo Team
+
+
+Anforderungen:
+
+Datum im deutschen Format (z. B. 25.11.2025)
+
+Zeiten im Format HH:MM (24-Stunden)
+
+Wenn Twilio nicht konfiguriert ist → kein Fehler, nur console.warn("Twilio not configured").
+
+6. Fehlermeldung bei Race-Condition / Slot weg
+
+Falls zwischen Anzeige und Klick ein anderer Job denselben Slot belegt:
+
+Backend gibt 400 zurück mit einem klaren Text, z. B.:
+
+{
+  "error": "SLOT_NOT_AVAILABLE",
+  "message": "Dieser Termin ist leider nicht mehr verfügbar. Bitte wählen Sie einen anderen Slot."
+}
+
+
+Frontend:
+
+Zeigt diese Meldung als Toast/Alert und fordert den Kunden auf, einen anderen Slot zu wählen.

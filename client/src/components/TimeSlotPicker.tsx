@@ -101,11 +101,11 @@ export function TimeSlotPicker({
   // Only fetch slots if we have a date and coordinates
   const shouldFetchSlots = Boolean(formattedDate && lat && lng);
 
-  const { data: slots, isLoading, error } = useQuery<TimeSlot[]>({
+  const { data: slotsResponse, isLoading, error } = useQuery<{ slots: TimeSlot[] }>({
     queryKey: ['/api/calendar/available-slots', formattedDate, lat, lng],
     enabled: shouldFetchSlots,
     queryFn: async () => {
-      if (!formattedDate || !lat || !lng) return [];
+      if (!formattedDate || !lat || !lng) return { slots: [] };
       
       const params = new URLSearchParams({
         date: formattedDate,
@@ -121,6 +121,9 @@ export function TimeSlotPicker({
     },
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Extract slots array from response
+  const slots = slotsResponse?.slots || [];
 
   // Handle date selection
   const handleDateSelect = (newDate: Date | undefined) => {
