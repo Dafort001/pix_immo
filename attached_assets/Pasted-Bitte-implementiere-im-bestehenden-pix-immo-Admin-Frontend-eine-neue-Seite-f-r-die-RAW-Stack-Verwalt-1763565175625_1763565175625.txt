@@ -1,0 +1,391 @@
+Bitte implementiere im bestehenden pix.immo Admin-Frontend eine neue Seite für die RAW-Stack-Verwaltung nach folgendem Briefing. Keine Änderungen an Auth, Routing-Basis oder bestehenden Business-Regeln, nur UI + minimal notwendige Datenmodelle/Mocks.
+Ziel der Seite
+
+
+Interne Admin-Seite, auf der ein Job mit bereits erkannten RAW-Stacks (3er- oder 5er-Belichtungsreihen) visuell verwaltet wird.
+
+
+Fotograf/Operator soll:
+
+
+alle Motive (Stacks) als Karten sehen,
+
+
+mehrere Stacks auswählen,
+
+
+diesen Stacks einen Raumtyp zuweisen,
+
+
+die Reihenfolge der Motive per Drag & Drop ändern,
+
+
+Stacks als „löschen“ oder „unsicher“ markieren,
+
+
+eine Dateinamen-Vorschau sehen,
+
+
+am Ende „Umbenennung anwenden“ auslösen (zunächst nur Stub).
+
+
+
+
+Technischer Rahmen
+
+
+Nutze den bestehenden Frontend-Stack dieses Projekts (gleiche Komponenten-Bibliothek, gleiche Styles, gleiche Layout-Hooks).
+
+
+Die Seite kann vorerst auf statischen Mock-Daten basieren (ein Job, ca. 24 Stacks).
+
+
+Alle „Server“-Aktionen (Umbenennung anwenden etc.) zunächst nur als Stub-Funktionen/Console-Log.
+
+
+Seitenlayout
+
+
+Job-Header (oben)
+
+
+Anzeige der Job-Metadaten in einer Zeile/Zeile+Grid:
+
+
+Job-ID (Read Only, z. B. „JOB-2025-11-001“)
+
+
+Datum (z. B. „19.11.2025“)
+
+
+Bracket-Größe (Dropdown: 3 Belichtungen / 5 Belichtungen)
+
+
+RAW-Dateien (Anzahl, nur Anzeige, z. B. „120“)
+
+
+Erkannte Stacks (Anzahl, z. B. „24“)
+
+
+
+
+Überschrift über dem Block: „Job: VILLA_LUXUS_2025“.
+
+
+
+
+Hauptbereich mit zwei Spalten
+
+
+Linke/mittlere Spalte: Stack-Gallery (Grid aus Karten)
+
+
+Rechte Spalte: Room-Assignment-Panel (Sidebar mit Aktionen)
+
+
+
+
+Stack-Gallery (linke/mittlere Spalte)
+
+
+Grid mit 4 Karten pro Reihe (responsive: 3 bei kleineren Viewports ok).
+
+
+Jede Karte entspricht genau einem Stack (einem Motiv).
+
+
+Mindestens 20–24 Mock-Stacks anlegen, mit gemischten Raumtypen (Wohnzimmer, Küche, Essbereich, Schlafzimmer, Bad, Flur, Balkon, Außen etc.), nicht alles „Wohnzimmer“.
+
+
+Vertikales Scrollen der Gallery, Right-Panel bleibt sticky.
+
+
+Stack-Card (Einzelkarte)
+
+
+Inhalt:
+
+
+Oben: Thumbnail-Bild (Mittlere Belichtung/Beispielbild).
+
+
+Links oben: Badge „3 Bilder“ oder „5 Bilder“ (Stackgröße).
+
+
+
+
+Darunter:
+
+
+Zeile 1: „Stack-ID: g001“ (oder g002, g003, …).
+
+
+Zeile 2: aktueller Raumtyp (Anzeigename, z. B. „Wohnzimmer“).
+
+
+
+
+Unten: Checkbox „Auswählen“ + optionales Drei-Punkte-Menü rechts.
+
+
+
+
+Zustände:
+
+
+Normal
+
+
+Selected: klar sichtbarer Rahmen in der Projekt-Akzentfarbe + Checkbox aktiv
+
+
+Markiert für Löschung: roter Badge oder roter Rahmen
+
+
+Unsicher: gelber Badge
+
+
+
+
+Auswahlverhalten:
+
+
+Mehrfachauswahl möglich: mehrere Karten können gleichzeitig aktiv sein.
+
+
+Klick auf die Checkbox toggelt Auswahl, Klick auf Karte kann optional auch selektieren.
+
+
+
+
+Drag & Drop
+
+
+Stacks sollen innerhalb der Gallery per Drag & Drop neu sortiert werden können (mindestens Desktop).
+
+
+Visueller Hinweis auf Drag-Handle (z. B. kleines Grip-Icon oben oder neben der Stack-ID).
+
+
+Reihenfolgeänderung wird in einem lokalen State gespeichert (Job-Order), später per API nutzbar.
+
+
+Lightbox / Stack-Detail
+
+
+Beim Klick auf das Thumbnail einer Stack-Card soll sich eine einfache Lightbox öffnen:
+
+
+Overlay mit dunklem Hintergrund
+
+
+In der Mitte: Preview aller 3 oder 5 Bilder dieses Stacks (Mock-Bilder reichen), horizontal nebeneinander.
+
+
+Unter jedem Bild: kleine Beschriftung „EV -2“, „EV 0“, „EV +2“ usw. (hart verdrahtet für den Prototyp).
+
+
+Schließen-Icon oben rechts, ESC-Handling optional.
+
+
+
+
+Keinerlei Bearbeitungsfunktionen – reine Ansicht.
+
+
+Right-Side Panel (Room-Assignment-Panel, rechte Spalte)
+
+
+Feste Breite, sticky neben der Gallery.
+
+
+Blöcke von oben nach unten:
+A) Raumtyp auswählen
+
+
+Label: „Raumtyp auswählen“.
+
+
+Dropdown mit integrierter Suchleiste (siehe unten).
+
+
+Unter dem Dropdown: Button „Auf ausgewählte Stacks anwenden“.
+
+
+Darunter: Text „X Stacks ausgewählt“ (X dynamisch, basierend auf Auswahl).
+
+
+B) Markierungen
+
+
+Checkbox: „Zur Löschung markieren“.
+
+
+Checkbox: „Unsicher“.
+
+
+Diese Markierungen sollen auf alle ausgewählten Stacks angewendet werden.
+
+
+C) Aktionen
+
+
+Button: „Dateinamen-Vorschau anzeigen“ → öffnet modalen Dialog oder Drawer mit einer Liste geplanter Dateinamen.
+
+
+Vorerst: simple, generische Vorschau z. B.
+
+
+„2025-11-19-VILLA_LUXUS_living_room_01_v1“
+
+
+„…_kitchen_01_v1“
+
+
+
+
+Logik kann stub sein; wichtig ist die UI-Struktur.
+
+
+
+
+Button: „Umbenennung anwenden“ → aktuell nur Stub (Console.log + Success-Toast).
+
+
+Link oder kleiner Button „Reset Auswahl“.
+
+
+D) Info-Bereich
+
+
+Kleine Hinweisbox mit Text wie: „Änderungen werden erst nach ‚Umbenennung anwenden‘ gespeichert.“
+
+
+
+
+Room-Type-Dropdown mit Suche
+
+
+Dropdown-Komponente im Panel:
+
+
+Oben innerhalb des geöffneten Dropdowns: Suchfeld („Raum suchen…“, Lupe links, 36–40 px hoch).
+
+
+Darunter scrollbare Liste von Raumtypen, gruppiert nach Kategorien, z. B.:
+
+
+Wohnbereiche: Wohnzimmer, Essbereich, Wohnküche (offen), Küche, Wohn-/Esszimmer kombiniert, Arbeitszimmer/Büro
+
+
+Schlafbereiche: Schlafzimmer, Kinderzimmer, Gästezimmer, Ankleidezimmer
+
+
+Bäder & Sanitär: Badezimmer, Gäste-WC
+
+
+Flure & Übergänge: Eingangsbereich, Flur, Treppenhaus
+
+
+Funktionsräume: Abstellraum, Hauswirtschaftsraum, Waschküche, Hobbyraum, Fitnessraum, Keller, Dachboden
+
+
+Außenbereiche: Balkon, Terrasse, Wintergarten, Garten, Außenansicht, Fassade, Parkplatz, Garage
+
+
+Spezialräume: Technikraum, Heizungsraum, Mehrzweckraum
+
+
+Fallback: Raum unbestimmt
+
+
+
+
+Suchlogik im Frontend: Filter nach Anzeigename oder internem Key (einfacher includes-Match, Case-insensitive).
+
+
+Gruppen ohne Treffer bei laufender Suche ausblenden.
+
+
+„Keine passenden Räume gefunden“-Text, wenn die Liste leer ist.
+
+
+
+
+Statusleiste (unten)
+
+
+Am unteren Rand der Seite (unter der Gallery) eine schmale Statuszeile mit:
+
+
+„X Stacks ausgewählt“
+
+
+„Y Stacks ohne Raumtyp“
+
+
+Platz für Erfolgsmeldungen („Umbenennung erfolgreich simuliert“) oder Warnungen.
+
+
+
+
+Umsetzung kann als simpler Textblock mit dynamischen Werten erfolgen.
+
+
+State & Datenmodell (Frontend)
+
+
+Job-Objekt (Mock): jobId, shootCode, date, bracketSize, rawCount, stackCount.
+
+
+Stack-Objekt:
+
+
+id (z. B. „g001“)
+
+
+previewUrl (Bild)
+
+
+imageCount (3 oder 5)
+
+
+roomTypeKey (z. B. „living_room“)
+
+
+roomTypeLabel (z. B. „Wohnzimmer“)
+
+
+selected (bool)
+
+
+markedForDeletion (bool)
+
+
+flaggedUncertain (bool)
+
+
+orderIndex (Zahl für Sortierung)
+
+
+
+
+Alle Aktionen (Zuweisen, Markieren, Drag & Drop, Reset) sollen nur diesen lokalen State verändern.
+
+
+Nicht-Ziele / Einschränkungen
+
+
+Kein echter API-Call, keine DB-Anpassungen, kein File-Renaming in dieser Iteration.
+
+
+Keine Änderungen an Auth, Login oder anderen Seiten.
+
+
+Keine Performance-Optimierung nötig; Fokus ist funktionales, klares UI auf Basis von Mock-Daten.
+
+
+Mobile-Ansicht kann basic sein, Fokus ist Desktop-Admin-View.
+
+
+Bitte implementiere diese Seite so, dass sie im bestehenden Projekt als eigenständige Route aufrufbar ist (z. B. /admin/job-stacks/:jobId mit fest kodiertem Job für den Prototyp). Konsistenz zu bestehendem Design (Buttons, Typo, Spacing) ist wichtig – bitte vorhandene Design-Tokens/Komponenten wiederverwenden, statt komplett neue Styles zu erfinden.
