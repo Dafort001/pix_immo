@@ -89,7 +89,7 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
   - 200+ sqm properties require minimum Standard-Paket (F20)
   - Einliegerwohnungen/additional units: minimum €50 surcharge after consultation
   - Sticky price header displays net + gross prices across all 3 booking steps
-  - New content services: Alt-Texte für KI-Bildsuche (€10), Basis-Exposé Texterstellung (€15, requires Alt-Texte)
+  - New content services: Alt-Texte für KI-Bildsuche (€10, CSV-Export für CRM-Import), Basis-Exposé Texterstellung (€15, requires Alt-Texte)
   - Updated drone pricing: Einzelbuchung (€200), Kombipaket with photography package (€100)
   - Updated service catalog via seed script (`tsx server/seed-services.ts`)
 - **Booking System Overhaul (Nov 23, 2025)**: 

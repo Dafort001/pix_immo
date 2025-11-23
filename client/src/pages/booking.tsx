@@ -115,7 +115,7 @@ const categoryLabels: Record<string, string> = {
 
 const categoryDescriptions: Record<string, string> = {
   photography: "Die Pakete unterscheiden sich in der Anzahl der finalen Bilder und der typischen Objektgröße. Die Quadratmeterangaben sind reine Richtwerte – im Zweifel stimmen wir den Umfang mit Ihnen ab.",
-  content: "Professionelle Texterstellung für Ihre Immobilie. Alt-Texte verbessern die Auffindbarkeit in Bildersuchmaschinen (SEO) und sind Voraussetzung für die KI-gestützte Exposé-Texterstellung.",
+  content: "Professionelle Texterstellung für Ihre Immobilie. Alt-Texte verbessern die Auffindbarkeit in Bildersuchmaschinen (SEO), werden als CSV-Datei für CRM-Systeme (Fido, Propstack, onOffice, etc.) geliefert und sind Voraussetzung für die KI-gestützte Exposé-Texterstellung.",
   drone: "Drohnenaufnahmen zeigen Ihre Immobilie aus der Luft und ergänzen die klassischen Innen- und Außenfotos. Wählen Sie zwischen Einzelbuchung (200€) oder vergünstigtem Kombipaket mit einem Fotopaket (100€).",
   video: "Auf Wunsch können wir ausgewählte Videooptionen als Ergänzung zu den Fotopaketen produzieren. Die genauen Inhalte und die Länge der Clips stimmen wir nach der Buchung mit Ihnen ab. Die aktuell angezeigten Videopakete verstehen sich als Richtwerte. Das Angebot wird in den nächsten Monaten weiter verfeinert.",
   "360tour": "Mit dem virtuellen Rundgang (TML) können Interessenten Ihre Immobilie online begehen – ähnlich wie bei einer 360°-Tour. Wir erstellen dafür eine Tour mit ausgewählten Standpunkten in Ihrer Immobilie. Erweiterte Spezialtouren oder hochauflösende Varianten bieten wir aktuell bewusst nicht an, um Aufwand und Kosten überschaubar zu halten."

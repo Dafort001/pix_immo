@@ -19,7 +19,7 @@ const serviceData = [
   { serviceCode: "DVI", category: "drone", name: "Drohnenvideo 1 min", description: "Außenaufnahmen Video", netPrice: 39900, notes: "ggf. Sondergenehmigung nötig" },
   
   // Content & Text Services
-  { serviceCode: "ALT", category: "content", name: "Alt-Texte für KI-Bildsuche", description: "SEO-optimierte Alt-Texte für alle Bilder Ihres Pakets, ideal für bessere Auffindbarkeit in Bildersuchmaschinen und Barrierefreiheit. Automatisch generiert und manuell geprüft.", netPrice: 1000, notes: "Pro Paket, unabhängig von Bildanzahl" },
+  { serviceCode: "ALT", category: "content", name: "Alt-Texte für KI-Bildsuche", description: "SEO-optimierte Alt-Texte für alle Bilder Ihres Pakets, ideal für bessere Auffindbarkeit in Bildersuchmaschinen und Barrierefreiheit. Automatisch generiert und manuell geprüft. Lieferung als CSV-Datei zur direkten Verwendung in Ihrem CRM (Fido, Propstack, onOffice, etc.).", netPrice: 1000, notes: "CSV-Export für CRM-Import (Fido, Propstack, etc.)" },
   { serviceCode: "EXP", category: "content", name: "Basis-Exposé Texterstellung", description: "Professioneller Exposé-Text für Ihre Immobilie basierend auf den Bildern und Objektdaten. Inkludiert Objektbeschreibung, Lage und Ausstattung. Wichtig: Alt-Texte werden für die KI-gestützte Texterstellung benötigt.", netPrice: 1500, notes: "Benötigt Alt-Texte (ALT) als Voraussetzung" },
   
   // Video
