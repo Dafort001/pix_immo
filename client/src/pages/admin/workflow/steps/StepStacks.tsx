@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GripVertical, Film, Globe } from 'lucide-react';
+import { GripVertical, Film, Globe, Image as ImageIcon } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -8,11 +8,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import type { Stack } from '../UploadWorkflow';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { Stack, UploadFile } from '../UploadWorkflow';
 
 interface StepStacksProps {
   stacks: Stack[];
   setStacks: (stacks: Stack[]) => void;
+  unsortedFiles?: UploadFile[];
 }
 
 const ROOM_TYPES = [
@@ -23,7 +25,9 @@ const ROOM_TYPES = [
   'Gemeinschaftsraum/Lobby', 'Konferenzraum', 'Gewerbefläche', 'Sonstiger Raum'
 ];
 
-export function StepStacks({ stacks, setStacks }: StepStacksProps) {
+export function StepStacks({ stacks, setStacks, unsortedFiles = [] }: StepStacksProps) {
+  const [activeTab, setActiveTab] = useState<'stacks' | 'unsorted'>('stacks');
+  
   const handleRoomTypeChange = (stackId: string, roomType: string) => {
     setStacks(
       stacks.map((stack) =>
@@ -40,16 +44,16 @@ export function StepStacks({ stacks, setStacks }: StepStacksProps) {
     );
   };
 
-  return (
-    <div className="space-y-8 pb-24">
-      <div>
-        <h2 className="mb-2 text-2xl font-semibold">Stapel & Raumtypen</h2>
-        <p className="text-[#6F6F6F] mb-6">
-          Ihre Aufnahmen wurden automatisch in Stapel gruppiert.
-          Sie können den Raumtyp zuweisen und Kommentare hinzufügen.
-        </p>
-      </div>
-
+  const renderStacksGrid = () => {
+    if (stacks.length === 0) {
+      return (
+        <div className="text-center py-12 text-[#6F6F6F]">
+          <p>Keine Stapel vorhanden. Bitte laden Sie zuerst Dateien hoch.</p>
+        </div>
+      );
+    }
+    
+    return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {stacks.map((stack, index) => (
           <div
@@ -75,7 +79,12 @@ export function StepStacks({ stacks, setStacks }: StepStacksProps) {
                 {stack.stackType === 'single' && 'Einzelaufnahme'}
                 {stack.stackType === 'bracket3' && '3er-Bracket'}
                 {stack.stackType === 'bracket5' && '5er-Bracket'}
-                {stack.stackType === 'video' && 'Video'}
+                {stack.stackType === 'video' && (
+                  <span className="flex items-center gap-1">
+                    <Film className="size-3" />
+                    Video
+                  </span>
+                )}
                 {stack.stackType === 'pano360' && (
                   <span className="flex items-center gap-1">
                     <Globe className="size-3" />
@@ -134,12 +143,82 @@ export function StepStacks({ stacks, setStacks }: StepStacksProps) {
           </div>
         ))}
       </div>
-
-      {stacks.length === 0 && (
+    );
+  };
+  
+  const renderUnsortedGrid = () => {
+    if (unsortedFiles.length === 0) {
+      return (
         <div className="text-center py-12 text-[#6F6F6F]">
-          <p>Keine Stapel vorhanden. Bitte laden Sie zuerst Dateien hoch.</p>
+          <p>Alle Dateien sind bereits in Stapeln organisiert.</p>
         </div>
-      )}
+      );
+    }
+    
+    return (
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+        {unsortedFiles.map((file) => (
+          <div
+            key={file.id}
+            className="border border-[#C7C7C7] rounded-lg bg-white overflow-hidden"
+            data-testid={`unsorted-file-${file.id}`}
+          >
+            <div className="relative aspect-square bg-[#E6E6E6] flex items-center justify-center">
+              {file.url ? (
+                <img
+                  src={file.url}
+                  alt={file.name}
+                  className="max-w-full max-h-full object-contain"
+                />
+              ) : (
+                <ImageIcon className="size-8 text-[#C7C7C7]" />
+              )}
+            </div>
+            <div className="p-3">
+              <p className="text-xs text-[#6F6F6F] truncate" title={file.name}>
+                {file.name}
+              </p>
+              <p className="text-xs text-[#999] mt-1">
+                {(file.size / (1024 * 1024)).toFixed(1)} MB
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-8 pb-24">
+      <div>
+        <h2 className="mb-2 text-2xl font-semibold">Stapel & Raumtypen</h2>
+        <p className="text-[#6F6F6F] mb-6">
+          Ihre Aufnahmen wurden automatisch in Stapel gruppiert.
+          Sie können den Raumtyp zuweisen und Kommentare hinzufügen.
+        </p>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
+        <TabsList className="border-b border-[#C7C7C7] bg-transparent rounded-none w-full justify-start p-0">
+          <TabsTrigger 
+            value="stacks" 
+            className="border-b-2 border-transparent data-[state=active]:border-black rounded-none px-6 py-3"
+            data-testid="tab-stacks"
+          >
+            Stapel ({stacks.length})
+          </TabsTrigger>
+          <TabsTrigger 
+            value="unsorted" 
+            className="border-b-2 border-transparent data-[state=active]:border-black rounded-none px-6 py-3"
+            data-testid="tab-unsorted"
+          >
+            Unsortiert ({unsortedFiles.length})
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="stacks" className="mt-6">{renderStacksGrid()}</TabsContent>
+        <TabsContent value="unsorted" className="mt-6">{renderUnsortedGrid()}</TabsContent>
+      </Tabs>
     </div>
   );
 }
