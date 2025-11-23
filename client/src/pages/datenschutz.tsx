@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Datenschutz() {
   return (
@@ -10,7 +9,6 @@ export default function Datenschutz() {
         description="Datenschutzerklärung von PIX.IMMO. Informationen zur Datenverarbeitung, KI-Bildoptimierung und Ihren Rechten gemäß DSGVO."
         path="/datenschutz"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">

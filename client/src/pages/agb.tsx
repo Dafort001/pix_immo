@@ -1,9 +1,6 @@
-import { SimplePageHeader } from "@/components/SimplePageHeader";
-
 export default function AGB() {
   return (
     <div className="min-h-screen bg-white">
-      <SimplePageHeader />
 
       {/* Content */}
       <article className="py-12 md:py-20">

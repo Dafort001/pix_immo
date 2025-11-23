@@ -1,6 +1,5 @@
 import { Mail, Phone } from "lucide-react";
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Contact() {
   return (
@@ -10,7 +9,6 @@ export default function Contact() {
         description="Kontaktieren Sie PIX.IMMO in Hamburg. Professionelle Immobilienfotografie mit schneller Buchung und persönlichem Service."
         path="/kontakt"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">

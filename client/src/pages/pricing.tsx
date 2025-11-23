@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Pricing() {
   return (
@@ -10,7 +9,6 @@ export default function Pricing() {
         description="Professionelle Immobilienfotografie ab 180€. Drohnenaufnahmen, 360°-Touren, Videos und KI-gestützte Bildoptimierung für Hamburg."
         path="/preise"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">

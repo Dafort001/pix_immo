@@ -1,13 +1,9 @@
-import { useState } from "react";
 import { Link } from "wouter";
 import { SEOHead, SchemaTemplates } from "@shared/components";
 import { ScrollingImageStrip } from "@/components/ScrollingImageStrip";
-import { Menu, X } from "lucide-react";
 import { homePageImages, formatForScrollingStrip } from "@/data/images";
 
 export default function Home() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   const homeImages = formatForScrollingStrip(homePageImages);
 
   return (
@@ -18,97 +14,6 @@ export default function Home() {
         path="/"
         schema={SchemaTemplates.localBusiness}
       />
-
-      {/* Logo und Hamburger Menu - Fixed Top */}
-      <div className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between">
-        <Link href="/">
-          <h1 className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-black leading-none hover:text-gray-600 transition-colors" data-testid="brand-logo">
-            PIX.IMMO
-          </h1>
-        </Link>
-        
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 text-black"
-          aria-label="Menu"
-          data-testid="button-menu-toggle"
-        >
-          {menuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
-      {/* Mobile Menu */}
-      {menuOpen && (
-        <div className="fixed top-20 right-8 z-50 bg-white shadow-lg rounded-md">
-          <nav className="flex flex-col px-8 py-6 gap-6">
-            <Link href="/gallery">
-              <span
-                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
-                onClick={() => setMenuOpen(false)}
-                data-testid="menu-link-portfolio"
-              >
-                Portfolio
-              </span>
-            </Link>
-            <Link href="/preise">
-              <span
-                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
-                onClick={() => setMenuOpen(false)}
-                data-testid="menu-link-preise"
-              >
-                Preise
-              </span>
-            </Link>
-            <Link href="/blog">
-              <span
-                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
-                onClick={() => setMenuOpen(false)}
-                data-testid="menu-link-blog"
-              >
-                Blog
-              </span>
-            </Link>
-            <Link href="/login">
-              <span
-                className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
-                onClick={() => setMenuOpen(false)}
-                data-testid="menu-link-login"
-              >
-                Login
-              </span>
-            </Link>
-            <div className="pt-4 mt-2 border-t border-gray-200 flex flex-col gap-3">
-              <Link href="/impressum">
-                <span
-                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                  data-testid="menu-link-impressum"
-                >
-                  Impressum
-                </span>
-              </Link>
-              <Link href="/datenschutz">
-                <span
-                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                  data-testid="menu-link-datenschutz"
-                >
-                  Datenschutz
-                </span>
-              </Link>
-              <Link href="/agb">
-                <span
-                  className="text-[13px] text-gray-600 cursor-pointer hover:text-black transition-colors"
-                  onClick={() => setMenuOpen(false)}
-                  data-testid="menu-link-agb"
-                >
-                  AGB
-                </span>
-              </Link>
-            </div>
-          </nav>
-        </div>
-      )}
 
       {/* Main viewport section - h-screen */}
       <div className="h-screen flex flex-col">

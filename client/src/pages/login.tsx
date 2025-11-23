@@ -10,7 +10,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { WebHeader } from "@/components/WebHeader";
 import { SEOHead } from "@shared/components";
 
 const loginSchema = z.object({

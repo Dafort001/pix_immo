@@ -114,114 +114,82 @@ export function GlobalLayout({ children }: GlobalLayoutProps) {
 
   return (
     <>
-      {/* Global Header */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200">
-        <div className="flex items-center justify-between px-[5vw] py-4">
-          {/* Logo - links to homepage */}
-          <Link href="/">
-            <div
-              className="text-base font-semibold tracking-wide cursor-pointer hover:opacity-70 transition-opacity"
-              data-testid="brand-logo"
-            >
-              PIX.IMMO
-            </div>
-          </Link>
-
-          {/* Hamburger Menu Button */}
-          <button
-            onClick={() => setIsMenuOpen(true)}
-            className="flex items-center gap-2 hover:opacity-70 transition-opacity"
-            aria-label="Menü öffnen"
-            aria-expanded={isMenuOpen}
-            data-testid="button-menu-open"
+      {/* Global Header - Fixed position like homepage */}
+      <div className="fixed top-6 left-8 right-8 z-50 flex items-center justify-between">
+        <Link href="/">
+          <h1
+            className="text-[24px] font-medium tracking-[0.05em] cursor-pointer text-black leading-none hover:text-gray-600 transition-colors"
+            data-testid="brand-logo"
           >
-            <Menu className="h-5 w-5" />
-          </button>
-        </div>
-      </header>
+            PIX.IMMO
+          </h1>
+        </Link>
+
+        {/* Hamburger Menu Button - size 24 like homepage */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="p-2 text-black hover:text-gray-600 transition-colors"
+          aria-label="Menu"
+          data-testid="button-menu-toggle"
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
 
       {/* Main Content */}
       {children}
 
-      {/* Hamburger Menu Drawer (right side) */}
+      {/* Compact Dropdown Menu - like homepage */}
       {isMenuOpen && (
-        <aside
-          className="fixed inset-0 z-50 bg-black/50"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) setIsMenuOpen(false);
-          }}
-          data-testid="menu-overlay"
+        <div
+          className="fixed top-20 right-8 z-50 bg-white shadow-lg rounded-md"
+          data-testid="menu-drawer"
         >
-          <div
-            className="fixed right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto"
-            data-testid="menu-drawer"
-          >
-            {/* Drawer Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <Link href="/">
-                <div
-                  className="text-base font-semibold tracking-wide cursor-pointer"
+          <nav className="flex flex-col px-8 py-6 gap-6">
+            {menuItems.map((item) => (
+              <Link key={item.href} href={item.href}>
+                <span
+                  className="text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors"
                   onClick={() => setIsMenuOpen(false)}
+                  data-testid={item.testId}
                 >
-                  PIX.IMMO
-                </div>
+                  {item.label}
+                </span>
               </Link>
-              <button
-                onClick={() => setIsMenuOpen(false)}
-                className="hover:opacity-70"
-                aria-label="Menü schließen"
-                data-testid="button-menu-close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+            ))}
 
-            {/* Menu Items */}
-            <nav className="flex flex-col px-6 py-8">
-              <div className="space-y-1">
-                {menuItems.map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <div
-                      className="block px-4 py-3 text-base rounded-md hover-elevate active-elevate-2 cursor-pointer"
-                      onClick={() => setIsMenuOpen(false)}
-                      data-testid={item.testId}
-                    >
-                      {item.label}
-                    </div>
-                  </Link>
-                ))}
-
-                {/* Logout button (only when authenticated) */}
-                {isAuthenticated && (
-                  <>
-                    <div className="my-4 border-t" />
-                    <button
-                      onClick={() => logoutMutation.mutate()}
-                      disabled={logoutMutation.isPending}
-                      className="w-full flex items-center gap-3 px-4 py-3 text-base rounded-md hover-elevate active-elevate-2 text-left"
-                      data-testid="button-logout"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Abmelden</span>
-                    </button>
-                  </>
-                )}
-              </div>
-            </nav>
+            {/* Logout button (only when authenticated) */}
+            {isAuthenticated && (
+              <>
+                <div className="border-t border-gray-200" />
+                <button
+                  onClick={() => logoutMutation.mutate()}
+                  disabled={logoutMutation.isPending}
+                  className="flex items-center gap-2 text-[16px] text-black cursor-pointer tracking-[-0.02em] hover:text-gray-600 transition-colors text-left"
+                  data-testid="button-logout"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Abmelden</span>
+                </button>
+              </>
+            )}
 
             {/* User Info (when authenticated) */}
             {isAuthenticated && userData?.user && (
-              <div className="absolute bottom-0 left-0 right-0 px-6 py-4 border-t bg-gray-50">
-                <div className="text-sm text-gray-600" data-testid="user-email">
-                  {userData.user.email}
+              <>
+                <div className="border-t border-gray-200" />
+                <div className="space-y-1">
+                  <div className="text-[13px] text-gray-600" data-testid="user-email">
+                    {userData.user.email}
+                  </div>
+                  <div className="text-[13px] text-gray-500 capitalize" data-testid="user-role">
+                    {userData.user.role}
+                  </div>
                 </div>
-                <div className="text-xs text-gray-500 capitalize" data-testid="user-role">
-                  {userData.user.role}
-                </div>
-              </div>
+              </>
             )}
-          </div>
-        </aside>
+          </nav>
+        </div>
       )}
     </>
   );

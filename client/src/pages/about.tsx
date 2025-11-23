@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { Camera, Plane, Video, Box, Wand2 } from "lucide-react";
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function About() {
   return (
@@ -11,7 +10,6 @@ export default function About() {
         description="Professionelle Immobilienfotografie für Hamburg. Hochwertige Aufnahmen, Drohnenvideos, 360°-Touren und KI-gestützte Bildoptimierung."
         path="/about"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">

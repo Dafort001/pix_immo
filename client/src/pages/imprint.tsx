@@ -1,5 +1,4 @@
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function Imprint() {
   return (
@@ -9,7 +8,6 @@ export default function Imprint() {
         description="Rechtliche Informationen und Datenschutzerklärung von PIX.IMMO - Daniel Fortmann, Hamburg."
         path="/impressum"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <article className="py-12 md:py-20">

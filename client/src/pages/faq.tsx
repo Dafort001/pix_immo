@@ -6,7 +6,6 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { SEOHead } from "@shared/components";
-import { SimplePageHeader } from "@/components/SimplePageHeader";
 
 export default function FAQ() {
   return (
@@ -16,7 +15,6 @@ export default function FAQ() {
         description="Antworten auf häufige Fragen zu Buchung, Ablauf, Bearbeitungszeiten, Rechten und Kosten der Immobilienfotografie."
         path="/faq"
       />
-      <SimplePageHeader />
 
       {/* Content */}
       <div className="py-12 md:py-20">
