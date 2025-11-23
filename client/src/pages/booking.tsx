@@ -341,49 +341,67 @@ export default function Booking() {
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b">
-        <div className="container max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              onClick={() => step === 1 ? setLocation("/dashboard") : setStep(step - 1)}
-              data-testid="button-back"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {step === 1 ? "Dashboard" : "Zurück"}
-            </Button>
-            <h1 className="text-base font-semibold" data-testid="heading-booking">Fotobuchung für Ihre Immobilie</h1>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge 
-              variant={step === 1 ? "default" : "outline"} 
-              data-testid="badge-step-1"
-              className={step > 1 ? "cursor-pointer hover-elevate" : ""}
-              onClick={() => step > 1 && setStep(1)}
-            >
-              1. Leistungen
-            </Badge>
-            <Badge 
-              variant={step === 2 ? "default" : "outline"} 
-              data-testid="badge-step-2"
-              className={step !== 2 ? "cursor-pointer hover-elevate" : ""}
-              onClick={() => {
-                // Can only go to step 2 if step 1 is valid
-                if (step === 1 && selectedCount > 0) {
-                  setStep(2);
-                } else if (step > 2) {
-                  setStep(2);
-                }
-              }}
-            >
-              2. Details
-            </Badge>
-            <Badge 
-              variant={step === 3 ? "default" : "outline"} 
-              data-testid="badge-step-3"
-              className={step !== 3 ? "cursor-not-allowed opacity-50" : ""}
-            >
-              3. Prüfen
-            </Badge>
+        <div className="container max-w-6xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                onClick={() => step === 1 ? setLocation("/dashboard") : setStep(step - 1)}
+                data-testid="button-back"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                {step === 1 ? "Dashboard" : "Zurück"}
+              </Button>
+              <h1 className="text-base font-semibold" data-testid="heading-booking">Fotobuchung für Ihre Immobilie</h1>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <Badge 
+                  variant={step === 1 ? "default" : "outline"} 
+                  data-testid="badge-step-1"
+                  className={step > 1 ? "cursor-pointer hover-elevate" : ""}
+                  onClick={() => step > 1 && setStep(1)}
+                >
+                  1. Leistungen
+                </Badge>
+                <Badge 
+                  variant={step === 2 ? "default" : "outline"} 
+                  data-testid="badge-step-2"
+                  className={step !== 2 ? "cursor-pointer hover-elevate" : ""}
+                  onClick={() => {
+                    // Can only go to step 2 if step 1 is valid
+                    if (step === 1 && selectedCount > 0) {
+                      setStep(2);
+                    } else if (step > 2) {
+                      setStep(2);
+                    }
+                  }}
+                >
+                  2. Details
+                </Badge>
+                <Badge 
+                  variant={step === 3 ? "default" : "outline"} 
+                  data-testid="badge-step-3"
+                  className={step !== 3 ? "cursor-not-allowed opacity-50" : ""}
+                >
+                  3. Prüfen
+                </Badge>
+              </div>
+              
+              <div className="flex flex-col items-end" data-testid="sticky-price-summary">
+                <p className="text-xs text-muted-foreground">Gesamtpreis</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-sm font-medium" data-testid="text-sticky-price-net">
+                    €{totalNet.toFixed(2).replace(".", ",")}
+                  </p>
+                  <p className="text-xs text-muted-foreground">netto</p>
+                </div>
+                <p className="text-xs text-muted-foreground" data-testid="text-sticky-price-gross">
+                  €{totalGross.toFixed(2).replace(".", ",")} inkl. MwSt
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -496,12 +514,20 @@ export default function Booking() {
                   </div>
 
                   {categoryKey === "photography" && (
-                    <Alert className="mt-6">
-                      <Info className="h-4 w-4" />
-                      <AlertDescription>
-                        <strong>Hinweis zu mehreren Wohneinheiten:</strong> Wenn Ihre Immobilie aus mehreren getrennten Wohneinheiten besteht (z. B. Hauptwohnung plus Einliegerwohnung oder mehrere Apartments im gleichen Haus), reicht ein kleines Paket in der Regel nicht aus. In solchen Fällen empfehlen wir entweder mehrere Pakete oder direkt das 40-Bilder-Paket. Falls Sie unsicher sind, wählen Sie ein Paket und wir klären den Umfang im Anschluss gemeinsam.
-                      </AlertDescription>
-                    </Alert>
+                    <div className="space-y-3 mt-6">
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Objekte über 200 m²:</strong> Bei Wohnungen oder Häusern über 200 m² ist mindestens das <strong>Standard-Paket (20 Bilder)</strong> erforderlich. Für größere Objekte empfehlen wir das Plus-Paket (25 Bilder) oder Premium-Paket (30 Bilder).
+                        </AlertDescription>
+                      </Alert>
+                      <Alert>
+                        <Info className="h-4 w-4" />
+                        <AlertDescription>
+                          <strong>Einliegerwohnungen & mehrere Einheiten:</strong> Wenn Ihre Immobilie aus mehreren getrennten Wohneinheiten besteht (z. B. Hauptwohnung + Einliegerwohnung), entstehen zusätzliche Kosten (Aufpreis mind. 50€ nach Absprache). Wählen Sie ein Basis-Paket und kontaktieren Sie uns für ein individuelles Angebot.
+                        </AlertDescription>
+                      </Alert>
+                    </div>
                   )}
                 </div>
               );

@@ -83,6 +83,13 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
   - **Text & Captions**: OpenAI ChatGPT (GPT-4 Vision)
 
 ## Recent Updates (November 2025)
+- **Photography Package System Redesign (Nov 23, 2025)**:
+  - New 6-tier package structure for flexible pricing based on property size
+  - Packages: Mini (10 photos, €180), Klein (15 photos, €200), Standard (20 photos, €220), Plus (25 photos, €240), Premium (30 photos, €280), Luxus (40 photos, €320)
+  - 200+ sqm properties require minimum Standard-Paket (F20)
+  - Einliegerwohnungen/additional units: minimum €50 surcharge after consultation
+  - Sticky price header displays net + gross prices across all 3 booking steps
+  - Updated service catalog via seed script (`tsx server/seed-services.ts`)
 - **Booking System Overhaul (Nov 23, 2025)**: 
   - Extended business hours from 08:00-20:30 (last appointment starts at 19:00, ends at 20:30)
   - Flexible time slot selection in 15-minute increments (08:00, 08:15, 08:30, etc.) while maintaining 90-minute appointment duration
