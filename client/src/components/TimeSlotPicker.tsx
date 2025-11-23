@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "@/components/ui/calendar";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon, Clock, MapPin, AlertCircle, Info } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { FieldError } from "react-hook-form";
 
 /**
@@ -144,8 +142,8 @@ export function TimeSlotPicker({
     }
   };
 
-  // Handle slot selection
-  const handleSlotSelect = (slot: TimeSlot) => {
+  // Handle time selection from dropdown
+  const handleTimeSelect = (time: string) => {
     if (!date) return;
     
     // Format date in local timezone (avoid UTC shift)
@@ -154,46 +152,7 @@ export function TimeSlotPicker({
     const day = String(date.getDate()).padStart(2, '0');
     const localDateStr = `${year}-${month}-${day}`;
     
-    // Extract time from ISO timestamp (formatted field is safer)
-    const time = slot.formatted || new Date(slot.start).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Berlin',
-      hour12: false
-    });
-    
     onSlotSelect(localDateStr, time);
-  };
-
-  // Format time range for display
-  const formatTimeRange = (slot: TimeSlot): string => {
-    const startTime = slot.formatted || new Date(slot.start).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Berlin',
-      hour12: false
-    });
-    
-    const endTime = new Date(slot.end).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Berlin',
-      hour12: false
-    });
-    
-    return `${startTime} - ${endTime}`;
-  };
-
-  // Check if a slot is currently selected
-  const isSlotSelected = (slot: TimeSlot): boolean => {
-    if (!selectedTime || !date) return false;
-    const slotTime = slot.formatted || new Date(slot.start).toLocaleTimeString('de-DE', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Europe/Berlin',
-      hour12: false
-    });
-    return slotTime === selectedTime;
   };
 
   return (
@@ -248,13 +207,13 @@ export function TimeSlotPicker({
         </CardContent>
       </Card>
 
-      {/* Time Slots */}
+      {/* Time Selection */}
       {formattedDate && (lat && lng) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base">
               <Clock className="h-4 w-4" />
-              Verfügbare Zeiten
+              Wunschzeit wählen
             </CardTitle>
             <CardDescription>
               {date && date.toLocaleDateString('de-DE', {
@@ -268,10 +227,8 @@ export function TimeSlotPicker({
           <CardContent className="space-y-3">
             {/* Loading state */}
             {isLoading && (
-              <div className="space-y-2" data-testid="loading-slots">
-                {[...Array(5)].map((_, i) => (
-                  <Skeleton key={i} className="h-12 w-full" />
-                ))}
+              <div data-testid="loading-slots">
+                <Skeleton className="h-10 w-full" />
               </div>
             )}
 
@@ -285,7 +242,7 @@ export function TimeSlotPicker({
               </Alert>
             )}
 
-            {/* Available slots */}
+            {/* Time selector dropdown */}
             {!isLoading && !error && slots && (
               <>
                 {slots.filter(s => s.available).length === 0 ? (
@@ -296,43 +253,47 @@ export function TimeSlotPicker({
                     </AlertDescription>
                   </Alert>
                 ) : (
-                  <div className="grid gap-2" data-testid="slots-grid">
-                    {slots
-                      .filter(s => s.available)
-                      .map((slot, index) => (
-                        <Button
-                          key={index}
-                          variant={isSlotSelected(slot) ? "default" : "outline"}
-                          className={cn(
-                            "h-auto py-3 px-4 justify-between",
-                            isSlotSelected(slot) && "border-primary"
-                          )}
-                          onClick={() => handleSlotSelect(slot)}
-                          data-testid={`slot-${index}`}
-                        >
-                          <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            <span className="font-medium">
-                              {formatTimeRange(slot)}
-                            </span>
-                          </div>
-                          {isSlotSelected(slot) && (
-                            <Badge variant="secondary" data-testid="badge-selected">
-                              Ausgewählt
-                            </Badge>
-                          )}
-                        </Button>
-                      ))}
+                  <div className="space-y-2">
+                    <Select
+                      value={selectedTime}
+                      onValueChange={handleTimeSelect}
+                      data-testid="select-time"
+                    >
+                      <SelectTrigger className="w-full" data-testid="trigger-select-time">
+                        <SelectValue placeholder="Bitte wählen Sie eine Uhrzeit" />
+                      </SelectTrigger>
+                      <SelectContent data-testid="content-select-time">
+                        {slots
+                          .filter(s => s.available)
+                          .map((slot, index) => {
+                            const timeValue = slot.formatted || new Date(slot.start).toLocaleTimeString('de-DE', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              timeZone: 'Europe/Berlin',
+                              hour12: false
+                            });
+                            return (
+                              <SelectItem 
+                                key={index} 
+                                value={timeValue}
+                                data-testid={`option-time-${timeValue}`}
+                              >
+                                {timeValue} Uhr
+                              </SelectItem>
+                            );
+                          })}
+                      </SelectContent>
+                    </Select>
+                    
+                    <p className="text-xs text-muted-foreground">
+                      Wählen Sie Ihre Wunsch-Startzeit zwischen 08:00 und 19:00 Uhr. 
+                      Die Zeiten berücksichtigen automatisch Anfahrtswege zu anderen Terminen.
+                      Jeder Termin dauert ca. 90 Minuten.
+                    </p>
                   </div>
                 )}
               </>
             )}
-
-            {/* Info text */}
-            <p className="text-xs text-muted-foreground mt-4">
-              Die Zeiten berücksichtigen automatisch Anfahrtswege zu anderen Terminen.
-              Jeder Termin dauert ca. 90 Minuten.
-            </p>
           </CardContent>
         </Card>
       )}

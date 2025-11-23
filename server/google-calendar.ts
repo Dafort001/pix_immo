@@ -82,9 +82,10 @@ export interface CreateEventParams {
 
 export class GoogleCalendarService {
   private static DEFAULT_CALENDAR_ID = 'primary';
-  private static BUSINESS_HOURS_START = 9;
-  private static BUSINESS_HOURS_END = 18;
-  private static SLOT_DURATION_MINUTES = 90;
+  private static BUSINESS_HOURS_START = 8;
+  private static BUSINESS_HOURS_END = 19;
+  private static SLOT_DURATION_MINUTES = 90; // Customer can book in 15min steps, but appointments are 90min long
+  private static SLOT_INCREMENT_MINUTES = 15; // Time slot increment for availability checking
 
   static async getAvailableSlots(params: AvailableSlotsParams): Promise<TimeSlot[]> {
     const calendar = await getUncachableGoogleCalendarClient();
@@ -116,11 +117,14 @@ export class GoogleCalendarService {
     const slots: TimeSlot[] = [];
     let currentTime = new Date(timeMin);
 
+    // Generate slots in 15-minute increments, but check if a 90-minute appointment can fit
     while (currentTime < timeMax) {
       const slotEnd = new Date(currentTime.getTime() + duration * 60000);
       
+      // Stop if a 90-minute appointment starting at this time would exceed business hours
       if (slotEnd > timeMax) break;
 
+      // Check if the 90-minute appointment slot conflicts with any busy periods
       const isBusy = busySlots.some((busy) => {
         const busyStart = new Date(busy.start!);
         const busyEnd = new Date(busy.end!);
@@ -146,7 +150,8 @@ export class GoogleCalendarService {
         formatted,
       });
 
-      currentTime = new Date(currentTime.getTime() + duration * 60000);
+      // Move to next 15-minute slot
+      currentTime = new Date(currentTime.getTime() + this.SLOT_INCREMENT_MINUTES * 60000);
     }
 
     return slots.filter(slot => slot.available);
