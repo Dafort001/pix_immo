@@ -7,6 +7,7 @@ import { I18nProvider } from "@/lib/i18n";
 import { FEATURE_QA_GUARD } from "@/config/flags";
 import { RollbackBanner } from "@/components/RollbackBanner";
 import { useSmokeChecks } from "@/hooks/useSmokeChecks";
+import { GlobalLayout } from "@/components/GlobalLayout";
 import Home from "@/pages/home";
 import Login from "@/pages/login";
 import LoginOtp from "@/pages/login-otp";
@@ -172,7 +173,9 @@ function App() {
         <TooltipProvider>
           {FEATURE_QA_GUARD && <RollbackBanner visible={hasFailures} />}
           <Toaster />
-          <Router />
+          <GlobalLayout>
+            <Router />
+          </GlobalLayout>
         </TooltipProvider>
       </I18nProvider>
     </QueryClientProvider>
