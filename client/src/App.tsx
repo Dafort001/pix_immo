@@ -79,6 +79,7 @@ import AdminJobs from "@/pages/admin-jobs";
 import AdminPixJobs from "@/pages/admin-pix-jobs";
 import AdminInternalBooking from "@/pages/admin-internal-booking";
 import AdminUploadWorkflow from "@/pages/admin-upload-workflow";
+import EditorJobPage from "@/pages/editor-job";
 import QAPage from "@/routes/qa";
 
 function Router() {
@@ -154,6 +155,7 @@ function Router() {
       <Route path="/orders/:orderId/exports" component={OrderExportsPage} />
       <Route path="/editor-dashboard" component={EditorDashboard} />
       <Route path="/editor-job-detail" component={EditorJobDetail} />
+      <Route path="/editor/job/:jobId" component={EditorJobPage} />
       <Route path="/test" component={TestDebug} />
       {FEATURE_QA_GUARD && <Route path="/qa" component={QAPage} />}
       <Route component={NotFound} />

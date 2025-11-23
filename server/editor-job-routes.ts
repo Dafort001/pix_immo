@@ -2,8 +2,8 @@ import type { Express, Request, Response } from "express";
 import { storage } from "./storage";
 import { z } from "zod";
 import rateLimit from "express-rate-limit";
-import { generatePresignedDownloadUrl, generatePresignedPutUrl } from "./r2-client";
-import { randomBytes, createHash } from "crypto";
+import { generatePresignedDownloadUrl, generateSignedPutUrl } from "./r2-client";
+import { randomBytes, createHash, randomUUID } from "crypto";
 
 // Rate limiter for public editor routes (more restrictive)
 const editorApiLimiter = rateLimit({
@@ -66,8 +66,8 @@ export function registerEditorJobRoutes(app: Express): void {
   // Public Editor Job Page Routes (Token-authenticated)
   // ============================================================
 
-  // GET /api/editor/jobs/:jobId - Get job details for editor
-  app.get("/api/editor/jobs/:jobId", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
+  // GET /api/editor/job/:jobId - Get job details for editor
+  app.get("/api/editor/job/:jobId", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
     try {
       const { jobId } = req.params;
       const shoot = (req as any).shoot;
@@ -79,71 +79,38 @@ export function registerEditorJobRoutes(app: Express): void {
         return res.status(404).json({ error: "Job not found" });
       }
 
-      // Extract city from address
-      let city = "Unknown";
-      if (job.addressFormatted) {
-        // Try to extract city from formatted address
-        const parts = job.addressFormatted.split(",");
-        if (parts.length >= 2) {
-          city = parts[parts.length - 2].trim();
-        }
-      } else if (job.propertyAddress) {
-        // Fallback to property address
-        const parts = job.propertyAddress.split(",");
-        if (parts.length >= 2) {
-          city = parts[parts.length - 2].trim();
-        }
-      }
+      // Get all shoots for this job
+      const allShoots = await storage.getShootsByJob(jobId);
 
-      // Format deadline
-      let deadlineDisplay = "No deadline set";
-      if (job.deadlineAt) {
-        const deadline = new Date(job.deadlineAt);
-        deadlineDisplay = deadline.toLocaleString("en-US", {
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
+      // Count total stacks and images across all shoots
+      let totalStacks = 0;
+      let totalRawImages = 0;
+      const shootsData = [];
+
+      for (const s of allShoots) {
+        const stacks = await storage.getStacksByShoot(s.id);
+        const images = await storage.getShootImages(s.id);
+        
+        totalStacks += stacks.length;
+        totalRawImages += images.length;
+
+        shootsData.push({
+          id: s.id,
+          name: s.shootCode || `Shoot ${s.id}`,
+          stackCount: stacks.length,
+          imageCount: images.length,
         });
       }
 
-      // Determine status based on shoot status
-      let status = "NOT_UPLOADED";
-      if (shoot.status === "editor_returned") {
-        status = "UPLOADED";
-      } else if (shoot.status === "in_progress") {
-        status = "UPLOADING";
-      }
-
-      // Check if upload is allowed
-      const allowUpload = shoot.status !== "editor_returned" && shoot.status !== "completed";
-
-      // Generate download URL for handoff package
-      let downloadUrl: string | null = null;
-      if (shoot.handoffGeneratedAt) {
-        try {
-          const objectKey = `pix-shoots/${shoot.id}/handoff.zip`;
-          downloadUrl = await generatePresignedDownloadUrl(objectKey, 3600); // 1 hour
-        } catch (error) {
-          console.error("Error generating download URL:", error);
-        }
-      }
-
-      // Placeholder notes (can be customized per job later)
-      const placeholderNotes = job.customerCommentEn || "";
-
       res.json({
-        jobId: job.id,
-        shootCode: shoot.shootCode,
-        objectName: job.propertyName,
-        city,
-        deadlineDisplay,
-        status,
-        downloadUrl,
-        allowUpload,
-        placeholderNotes,
+        jobNumber: job.jobNumber,
+        propertyName: job.propertyName || "Unknown Property",
+        propertyAddress: job.addressFormatted || job.propertyAddress || "No address",
+        scheduledAt: job.scheduledAt || null,
+        totalStacks,
+        totalRawImages,
+        shoots: shootsData,
+        briefing: job.customerCommentEn || undefined,
       });
     } catch (error) {
       console.error("Get editor job error:", error);
@@ -151,51 +118,84 @@ export function registerEditorJobRoutes(app: Express): void {
     }
   });
 
-  // POST /api/editor/jobs/:jobId/upload-url - Request presigned upload URL
-  app.post("/api/editor/jobs/:jobId/upload-url", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
+  // POST /api/editor/job/:jobId/download - Generate download URL for RAW files
+  app.post("/api/editor/job/:jobId/download", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
     try {
       const shoot = (req as any).shoot;
+
+      // Check if handoff package exists
+      if (!shoot.handoffGeneratedAt) {
+        return res.status(404).json({ error: "RAW files package not yet available" });
+      }
+
+      // Generate presigned download URL for the handoff ZIP
+      const objectKey = `pix-shoots/${shoot.id}/handoff.zip`;
+      const downloadUrl = await generatePresignedDownloadUrl(objectKey, 3600); // 1 hour
+
+      res.json({ downloadUrl });
+    } catch (error) {
+      console.error("Generate download URL error:", error);
+      res.status(500).json({ error: "Failed to generate download URL" });
+    }
+  });
+
+  // POST /api/editor/job/:jobId/upload-url - Request presigned upload URL
+  app.post("/api/editor/job/:jobId/upload-url", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
+    try {
+      const shoot = (req as any).shoot;
+      const { filename, fileSize, mimeType } = req.body;
+
+      // Validate request body
+      if (!filename || !fileSize || !mimeType) {
+        return res.status(400).json({ error: "Missing required fields: filename, fileSize, mimeType" });
+      }
 
       // Check if upload is allowed
       if (shoot.status === "editor_returned" || shoot.status === "completed") {
         return res.status(403).json({ error: "Uploads are no longer allowed for this job" });
       }
 
-      // Generate presigned PUT URL for the edited ZIP file
-      const objectKey = `pix-shoots/${shoot.id}/edited/final.zip`;
-      const uploadUrl = await generatePresignedPutUrl(objectKey, 3600); // 1 hour
+      // Generate R2 object key for the edited image
+      const timestamp = Date.now();
+      const sanitizedFilename = filename.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const r2Key = `pix-shoots/${shoot.id}/edited/${timestamp}_${sanitizedFilename}`;
 
-      res.json({ uploadUrl });
+      // Generate presigned PUT URL
+      const uploadUrl = await generateSignedPutUrl(r2Key, 3600); // 1 hour
+
+      res.json({ uploadUrl, r2Key });
     } catch (error) {
       console.error("Generate upload URL error:", error);
       res.status(500).json({ error: "Failed to generate upload URL" });
     }
   });
 
-  // POST /api/editor/jobs/:jobId/upload-complete - Notify upload completion
-  app.post("/api/editor/jobs/:jobId/upload-complete", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
+  // POST /api/editor/job/:jobId/upload-complete - Notify upload completion
+  app.post("/api/editor/job/:jobId/upload-complete", editorApiLimiter, validateEditorToken, async (req: Request, res: Response) => {
     try {
       const shoot = (req as any).shoot;
       const editorToken = (req as any).editorToken;
+      const { filename, r2Key } = req.body;
 
-      // Update shoot status to editor_returned
-      await storage.updateShoot(shoot.id, {
-        status: "editor_returned",
-        editorReturnedAt: Date.now(),
+      // Validate request body
+      if (!filename || !r2Key) {
+        return res.status(400).json({ error: "Missing required fields: filename, r2Key" });
+      }
+
+      // Create edited image record in database
+      const editedImage = await storage.createEditedImage({
+        id: crypto.randomUUID(),
+        shootId: shoot.id,
+        filename,
+        filePath: r2Key,
+        version: 1,
+        createdAt: Date.now(),
       });
-
-      // Mark token as used
-      await storage.updateEditorToken(editorToken.id, {
-        usedAt: Date.now(),
-      });
-
-      // Get updated job data
-      const job = await storage.getJob(shoot.jobId);
 
       res.json({
-        status: "UPLOADED",
-        allowUpload: false,
-        message: "Upload completed successfully",
+        success: true,
+        imageId: editedImage.id,
+        message: "File uploaded successfully",
       });
     } catch (error) {
       console.error("Upload complete error:", error);
