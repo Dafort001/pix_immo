@@ -231,6 +231,7 @@ export default function AdminEditorial() {
       <div className="flex flex-col h-full">
         <AdminPageHeader
           title="Redaktionsplan"
+          showBackButton
           actions={
             <Dialog open={isCreateOpen} onOpenChange={handleDialogOpenChange}>
               <DialogTrigger asChild>

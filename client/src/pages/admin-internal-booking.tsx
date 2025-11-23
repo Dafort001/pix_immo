@@ -232,6 +232,7 @@ export default function AdminInternalBooking() {
     <AdminLayout>
       <AdminPageHeader
         title="Interne Buchung"
+        showBackButton
         description="Neue Buchung für Kunden anlegen"
       />
 

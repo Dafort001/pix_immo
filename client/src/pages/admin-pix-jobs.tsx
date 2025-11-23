@@ -139,6 +139,7 @@ export default function AdminPixJobs() {
       <div className="space-y-6">
         <AdminPageHeader
           title="pix.immo Aufträge"
+          showBackButton
           actions={
             <Button
               onClick={() => setShowCreateDialog(true)}

@@ -337,6 +337,7 @@ export default function AdminBlog() {
       <div className="flex flex-col h-full">
         <AdminPageHeader
           title="Blog-Verwaltung"
+          showBackButton
           actions={
             <Button onClick={() => handleOpenDialog()} data-testid="button-create-post">
               <Plus className="h-4 w-4 mr-2" />

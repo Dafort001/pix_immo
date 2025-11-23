@@ -219,6 +219,7 @@ export default function AdminMediaLibrary() {
       <div className="flex flex-col h-full">
         <AdminPageHeader
           title="Media Library"
+          showBackButton
           actions={
             <Button onClick={() => setShowUploadDialog(true)} data-testid="button-add-image">
               <Plus className="h-4 w-4 mr-2" />
