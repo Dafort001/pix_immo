@@ -15,6 +15,7 @@ interface StepStacksProps {
   stacks: Stack[];
   setStacks: (stacks: Stack[]) => void;
   unsortedFiles?: UploadFile[];
+  isLocked?: boolean;
 }
 
 const ROOM_TYPES = [
@@ -25,7 +26,7 @@ const ROOM_TYPES = [
   'Gemeinschaftsraum/Lobby', 'Konferenzraum', 'Gewerbefläche', 'Sonstiger Raum'
 ];
 
-export function StepStacks({ stacks, setStacks, unsortedFiles = [] }: StepStacksProps) {
+export function StepStacks({ stacks, setStacks, unsortedFiles = [], isLocked = false }: StepStacksProps) {
   const [activeTab, setActiveTab] = useState<'stacks' | 'unsorted'>('stacks');
   
   const handleRoomTypeChange = (stackId: string, roomType: string) => {
@@ -108,8 +109,9 @@ export function StepStacks({ stacks, setStacks, unsortedFiles = [] }: StepStacks
                 <Select
                   value={stack.roomType}
                   onValueChange={(value) => handleRoomTypeChange(stack.id, value)}
+                  disabled={isLocked}
                 >
-                  <SelectTrigger className="w-full border-[#C7C7C7]" data-testid={`select-roomtype-${stack.id}`}>
+                  <SelectTrigger className="w-full border-[#C7C7C7]" data-testid={`select-roomtype-${stack.id}`} disabled={isLocked}>
                     <SelectValue placeholder="Raumtyp wählen" />
                   </SelectTrigger>
                   <SelectContent>
@@ -137,6 +139,7 @@ export function StepStacks({ stacks, setStacks, unsortedFiles = [] }: StepStacks
                   onChange={(e) => handleCommentChange(stack.id, e.target.value)}
                   className="min-h-[80px] border-[#C7C7C7] resize-none"
                   data-testid={`textarea-comment-${stack.id}`}
+                  disabled={isLocked}
                 />
               </div>
             </div>

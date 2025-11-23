@@ -12,6 +12,7 @@ interface StepUploadProps {
   unsortedFiles: UploadFile[];
   setUnsortedFiles: (files: UploadFile[]) => void;
   jobId: string;
+  isLocked?: boolean;
 }
 
 export function StepUpload({
@@ -20,6 +21,7 @@ export function StepUpload({
   stacks,
   setStacks,
   jobId,
+  isLocked = false,
 }: StepUploadProps) {
   const { toast } = useToast();
   const [isDragging, setIsDragging] = useState(false);
@@ -107,8 +109,10 @@ export function StepUpload({
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(true);
-  }, []);
+    if (!isLocked) {
+      setIsDragging(true);
+    }
+  }, [isLocked]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -120,15 +124,19 @@ export function StepUpload({
       e.preventDefault();
       setIsDragging(false);
 
+      if (isLocked) return;
+
       const droppedFiles = e.dataTransfer.files;
       if (droppedFiles.length > 0) {
         uploadMutation.mutate(droppedFiles);
       }
     },
-    [uploadMutation]
+    [uploadMutation, isLocked]
   );
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (isLocked) return;
+    
     if (e.target.files && e.target.files.length > 0) {
       uploadMutation.mutate(e.target.files);
     }
@@ -143,11 +151,13 @@ export function StepUpload({
         </p>
 
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
+          onDragOver={!isLocked ? handleDragOver : undefined}
+          onDragLeave={!isLocked ? handleDragLeave : undefined}
+          onDrop={!isLocked ? handleDrop : undefined}
           className={`border-2 border-dashed rounded-lg p-24 text-center transition-colors ${
-            isDragging
+            isLocked
+              ? 'border-[#C7C7C7] bg-[#F0F0F0] opacity-60 cursor-not-allowed'
+              : isDragging
               ? 'border-black bg-[#F7F7F7]'
               : 'border-[#C7C7C7] bg-[#F7F7F7]'
           }`}
@@ -155,22 +165,31 @@ export function StepUpload({
         >
           <Upload className="size-16 mx-auto mb-6 text-[#6F6F6F]" />
           <p className="text-xl mb-3">
-            Dateien hierher ziehen oder{' '}
-            <label className="text-black underline cursor-pointer">
-              durchsuchen
-              <input
-                type="file"
-                multiple
-                onChange={handleFileInput}
-                className="hidden"
-                accept="image/*,video/*"
-                data-testid="input-file-upload"
-              />
-            </label>
+            {isLocked ? (
+              'Upload deaktiviert – Workflow ist gesperrt'
+            ) : (
+              <>
+                Dateien hierher ziehen oder{' '}
+                <label className="text-black underline cursor-pointer">
+                  durchsuchen
+                  <input
+                    type="file"
+                    multiple
+                    onChange={handleFileInput}
+                    className="hidden"
+                    accept="image/*,video/*"
+                    data-testid="input-file-upload"
+                    disabled={isLocked}
+                  />
+                </label>
+              </>
+            )}
           </p>
-          <p className="text-[#6F6F6F] text-lg">
-            Alle Dateitypen werden akzeptiert
-          </p>
+          {!isLocked && (
+            <p className="text-[#6F6F6F] text-lg">
+              Alle Dateitypen werden akzeptiert
+            </p>
+          )}
         </div>
 
         {uploadMutation.isPending && (

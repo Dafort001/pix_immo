@@ -299,7 +299,7 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
 
   return (
     <div className="min-h-screen bg-white">
-      <OrderHeader orderData={orderData} />
+      <OrderHeader orderData={orderData} isLocked={isLocked} />
       
       <div className="max-w-7xl mx-auto px-8 py-8">
         <StepIndicator
@@ -319,6 +319,7 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
               unsortedFiles={unsortedFiles}
               setUnsortedFiles={setUnsortedFiles}
               jobId={jobId}
+              isLocked={isLocked}
             />
           )}
 
@@ -327,6 +328,7 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
               stacks={stacks}
               setStacks={setStacks}
               unsortedFiles={unsortedFiles}
+              isLocked={isLocked}
             />
           )}
 
@@ -347,6 +349,7 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
               setFloorplan={setFloorplan}
               startPanorama={startPanorama}
               setStartPanorama={setStartPanorama}
+              isLocked={isLocked}
             />
           )}
 

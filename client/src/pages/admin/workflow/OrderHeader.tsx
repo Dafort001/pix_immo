@@ -1,4 +1,4 @@
-import { Menu } from 'lucide-react';
+import { Menu, Lock } from 'lucide-react';
 
 interface OrderData {
   address: string;
@@ -9,9 +9,10 @@ interface OrderData {
 
 interface OrderHeaderProps {
   orderData: OrderData;
+  isLocked?: boolean;
 }
 
-export function OrderHeader({ orderData }: OrderHeaderProps) {
+export function OrderHeader({ orderData, isLocked = false }: OrderHeaderProps) {
   return (
     <div className="bg-white border-b border-[#C7C7C7]">
       <div className="max-w-7xl mx-auto px-8 py-6">
@@ -24,7 +25,17 @@ export function OrderHeader({ orderData }: OrderHeaderProps) {
           </button>
         </div>
         
-        <h1 className="mb-4 text-black text-2xl font-semibold">Upload & Auftragsdetails</h1>
+        <div className="flex items-start justify-between mb-4">
+          <h1 className="text-black text-2xl font-semibold">Upload & Auftragsdetails</h1>
+          {isLocked && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-[#E8F5E9] border border-[#4CAF50] rounded-lg">
+              <Lock className="size-4 text-[#2E7D32]" />
+              <span className="text-sm font-medium text-[#2E7D32]">
+                Workflow gesperrt – In Bearbeitung
+              </span>
+            </div>
+          )}
+        </div>
         
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           <div>
