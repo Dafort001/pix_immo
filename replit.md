@@ -44,6 +44,7 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 - **Sidecar Export System**: CRM-compatible export with `object_meta.json` and `alt_text.txt`, implemented in `shared/sidecar-export.ts`.
 - **Server-Side Job Deduplication**: Offline-first sync queue deduplication using ULID-based localId for idempotent job creation.
 - **Edit Queue Worker System**: Asynchronous edit job processing with Cron Worker, file locking, R2 bucket organization, Sharp-based image processing, retry logic, and status tracking.
+- **Final-Input-Pipeline**: Automated image processing workflow for pix.immo deliverables. Accepts final edited images uploaded to `pix-jobs/{jobId}/final_input/`, processes them through a pipeline (thumbnails, metadata extraction, depth/segmentation stubs), generates `job_expose.json`, and creates a draft gallery at `pix-jobs/{jobId}/gallery/` for admin review. Gallery visibility controlled via `galleryStatus` (no_images/draft/approved) and `galleryVisibility` (internal/customer) fields on jobs table. Pipeline implemented in `server/image-pipeline.ts` with R2 helpers in `server/r2-helpers.ts`.
 
 ### Feature Specifications
 - **Authentication**: Signup, login, logout, password reset, session management.
@@ -112,3 +113,14 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
   - Enhanced StackLightbox with Escape key handling and corrected z-index
   - Removed redundant "Photo Upload" (gallery-photographer) feature to eliminate confusion
   - Next Step: Build Editor Handoff/Weitergabe page for delivering processed images to editors
+- **Final-Input-Pipeline Implementation (Nov 23, 2025)**:
+  - New automated image processing workflow for pix.immo final deliverables
+  - Database schema: `finalImages` table with status tracking (pending/processing/completed/failed)
+  - Jobs table extended with `galleryStatus` (no_images/draft/approved) and `galleryVisibility` (internal/customer)
+  - R2 folder structure: `pix-jobs/{jobId}/final_input/` → `pipeline/` (thumbs, meta, depth, segments) → `gallery/`
+  - Admin API routes: POST upload to final_input, GET job images, POST approve gallery, GET gallery status
+  - Image processing: Sharp-based thumbnail generation (800x600), metadata extraction (width, height, EXIF)
+  - Stub implementations for future FAL/LLM integration (depth maps, segmentation)
+  - Auto-generates `job_expose.json` with image metadata for customer delivery
+  - Default gallery visibility: "internal" for admin review, manual approval changes to "customer"
+  - Files: `server/r2-helpers.ts`, `server/image-pipeline.ts`, extended `server/storage.ts` and `server/routes.ts`
