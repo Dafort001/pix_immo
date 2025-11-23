@@ -31,6 +31,7 @@ interface ServiceCatalog {
 
 const categoryLabels: Record<string, string> = {
   photography: "Immobilienfotografie",
+  content: "Text & SEO-Services",
   drone: "Drohnenaufnahmen",
   video: "Videoaufnahmen",
   "360tour": "Virtuelle Rundgänge / 360°",
@@ -41,6 +42,7 @@ const categoryLabels: Record<string, string> = {
 
 const categoryOrder = [
   "photography",
+  "content",
   "drone",
   "video",
   "360tour",
@@ -70,7 +72,7 @@ export default function Preisliste() {
   const [, setLocation] = useLocation();
   
   const { data: catalog, isLoading, error } = useQuery<ServiceCatalog>({
-    queryKey: ["/api/services"],
+    queryKey: ["/api/services/catalog"],
     queryFn: getQueryFn<ServiceCatalog>({ on401: "returnNull" }),
   });
 

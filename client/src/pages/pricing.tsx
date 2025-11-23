@@ -49,10 +49,52 @@ export default function Pricing() {
               </p>
             </section>
 
+            {/* Text & SEO-Services */}
+            <section data-testid="section-content">
+              <h2 className="text-lg font-semibold mb-3">Text & SEO-Services</h2>
+              <div className="mb-4">
+                <p className="text-base font-medium text-gray-900 mb-2">Alt-Texte für KI-Bildsuche: 10 € zzgl. MwSt.</p>
+                <ul className="space-y-2 text-gray-700 mb-3">
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>SEO-optimierte Alt-Texte für alle Bilder Ihres Pakets</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Lieferung als CSV-Datei für CRM-Systeme (Fido, Propstack, onOffice)</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Verbessert Auffindbarkeit in Bildersuchmaschinen</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <p className="text-base font-medium text-gray-900 mb-2">Basis-Exposé Texterstellung: 15 € zzgl. MwSt.</p>
+                <ul className="space-y-2 text-gray-700 mb-3">
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>KI-gestützter professioneller Exposé-Text</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Basierend auf Bildern und Objektdaten</span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-gray-400">•</span>
+                    <span>Benötigt Alt-Texte als Voraussetzung</span>
+                  </li>
+                </ul>
+              </div>
+              <p className="text-base text-gray-600 italic">
+                Professionelle Texte für bessere Online-Präsentation und SEO.
+              </p>
+            </section>
+
             {/* Drohnenaufnahmen */}
             <section data-testid="section-drone">
               <h2 className="text-lg font-semibold mb-3">Drohnenaufnahmen</h2>
-              <p className="text-base font-medium text-gray-900 mb-1">ab 150 € zzgl. MwSt.</p>
+              <p className="text-base font-medium text-gray-900 mb-1">ab 200 € zzgl. MwSt.</p>
               <p className="text-base font-medium text-gray-700 mb-4">ab 100 €, wenn Bestandteil eines Fotopakets</p>
               <ul className="space-y-2 text-gray-700 mb-4">
                 <li className="flex gap-2">
