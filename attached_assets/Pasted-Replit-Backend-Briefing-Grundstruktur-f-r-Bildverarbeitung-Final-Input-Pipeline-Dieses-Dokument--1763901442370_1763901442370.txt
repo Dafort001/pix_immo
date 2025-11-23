@@ -1,0 +1,274 @@
+Replit–Backend-Briefing: Grundstruktur für Bildverarbeitung (Final-Input-Pipeline)
+
+Dieses Dokument beschreibt die verbindliche Ordner- und Prozessstruktur, wie das Backend mit finalen Bildern umgehen muss, die vom Editor oder vom Administrator (Daniel) hochgeladen werden.
+
+Es enthält:
+
+die relevante Speicherstruktur
+
+den zentralen Ordner, der als Startpunkt dient
+
+den Pflichtablauf, der ausgelöst wird, wenn neue Bilder dort erscheinen
+
+die erwarteten Artefakte für die spätere Exposé-Erstellung
+
+die Struktur der Kundengalerie (Draft → Freigabe)
+
+Dieses Dokument ist keine FAL- oder LLM-Implementierung.
+Es definiert nur Struktur, Logik und Datenfluss.
+Die API-Integration kommt später.
+
+1. Speicherstruktur (R2 / Dateisystem)
+
+Basisverzeichnis für alle Aufträge:
+
+pix-jobs/
+
+
+Jeder Auftrag erhält seinen eigenen Ordner:
+
+pix-jobs/{job_id}/
+
+
+Beispiel: pix-jobs/ABC123/
+
+2. Zentraler Startpunkt: FINAL_INPUT
+
+Der folgende Ordner ist der einzige Eingangspunkt, an dem finale Bilder abgelegt werden:
+
+pix-jobs/{job_id}/final_input/
+
+
+Eigenschaften:
+
+Hier landen die fertig bearbeiteten Bilder vom Editor.
+
+Hier landen auch Daniels eigene finalen Bilder (Direktweg, ohne Editing).
+
+Sobald eine neue Datei in diesem Ordner erscheint, muss das Backend sie automatisch registrieren und in die Pipeline übergeben.
+
+Die Herkunft (Editor vs. Daniel) ist für die Pipeline irrelevant.
+Sie wird nur als Metadatum gespeichert.
+
+3. Pipeline-Artefakte (Outputs der Verarbeitung)
+
+Alle abgeleiteten Ergebnisse gehören NICHT in den final_input-Ordner, sondern in:
+
+pix-jobs/{job_id}/pipeline/
+
+
+Unterordner:
+
+pix-jobs/{job_id}/pipeline/thumbs/       # kleine Vorschauen
+pix-jobs/{job_id}/pipeline/depth/        # Depthmaps (optional)
+pix-jobs/{job_id}/pipeline/segments/     # SAM-Masken (optional)
+pix-jobs/{job_id}/pipeline/meta/         # Metadaten
+pix-jobs/{job_id}/pipeline/meta/images/  # einzelne Bild-Metadateien
+
+
+Zusätzlich:
+
+pix-jobs/{job_id}/pipeline/meta/job_expose.json
+
+
+Dieses JSON enthält später die aggregierten Informationen für alle Bilder des Jobs (Beschreibungen, Objekte, Raumtypen, etc.).
+
+4. Galerie-Struktur (für finale Kundensicht)
+
+Sobald die Pipeline für alle neuen Bilder durchgelaufen ist, muss das Backend eine Draft-Galerie erzeugen:
+
+pix-jobs/{job_id}/gallery/
+pix-jobs/{job_id}/gallery/images/      # Bilder für Kundengalerie
+pix-jobs/{job_id}/gallery/expose.json  # Exposé-JSON für Frontend
+
+
+Wichtig:
+
+gallery/ bleibt unsichtbar für Kunden, bis Daniel die Galerie manuell freigibt.
+
+Vergabe der Sichtbarkeit erfolgt über den Job-Status, nicht durch Ordnerwechsel.
+
+5. Verhalten bei neuen Dateien im FINAL_INPUT
+
+Sobald eine Datei in pix-jobs/{job_id}/final_input/ erscheint, muss Folgendes passieren:
+
+5.1. Registrieren
+
+Backend legt/aktualisiert einen Datensatz:
+
+image_entry = {
+  image_id: UUID,
+  job_id: {job_id},
+  filename: {filename},
+  storage_path: pix-jobs/{job_id}/final_input/{filename},
+  source: "editor" oder "manual",
+  status: "pending_processing"
+}
+
+
+Prüfung:
+
+Datei ist JPEG
+
+Datei ist lesbar
+
+Datei ist > 0 Bytes
+
+5.2. Pipeline starten
+
+Für jedes Bild mit status = pending_processing muss der Worker einen Ablauf starten:
+
+(a) Thumbnails
+
+Thumbnail erzeugen → pipeline/thumbs/
+
+(b) Privacy-OCR (kein Voll-Qualitycheck)
+
+Gesichter? Kennzeichen? Logos?
+
+Text (Hausnummern etc.)?
+
+Metadaten speichern unter pipeline/meta/images/{image_id}.json
+
+(c) Depth (optional, falls aktiviert)
+
+Depthmap erzeugen → pipeline/depth/
+
+(d) Semantik (Hauptteil der späteren Exposé-Daten)
+
+caption_short
+
+caption_long
+
+room_type
+
+view_type
+
+object detection
+→ Alles in pipeline/meta/images/{image_id}.json
+
+(e) Cleanup-Vorbereitung
+
+DINO nach „störenden“ Objekten fragen
+
+Wenn vorhanden:
+cleanup_possible = true
+cleanup_candidates = [list]
+
+SAM wird nicht automatisch ausgeführt.
+
+5.3. Status setzen
+
+Nach erfolgreicher Pipeline:
+
+status = "processed"
+
+
+Bei Fehlern:
+
+status = "error"
+error_message = "...technische Beschreibung..."
+
+
+Fehler dürfen andere Bilder nicht blockieren.
+
+6. Aggregation auf Job-Ebene
+
+Nach der Verarbeitung (Batch oder Cron):
+
+Backend sammelt alle Bilder eines Jobs mit status = processed und erzeugt:
+
+pix-jobs/{job_id}/pipeline/meta/job_expose.json
+
+
+Dieses JSON enthält:
+
+alle Bildmetadaten
+
+finalen Short-/Long-Caption-Text
+
+Raumtypen
+
+Objektlisten
+
+Optionen für Cleanup
+
+sämtliche Exposé-relevanten Informationen
+
+7. Transfer zur Galerie (Draft-Modus)
+
+Wenn job_expose.json aktualisiert ist:
+
+gallery/images/ synchronisieren mit final_input/
+(nur verwendbare Bilder kopieren)
+
+gallery/expose.json aus job_expose.json spiegeln
+
+Job-Status setzen:
+
+gallery_status = "draft_ready"
+gallery_visibility = "internal"
+
+
+Kunde sieht noch nichts.
+
+8. Manuelle Freigabe
+
+Erst wenn Daniel im Backend klickt:
+
+"Galerie freigeben"
+
+ändert sich:
+
+gallery_visibility = "customer"
+
+
+Dann wird der Kunde benachrichtigt.
+
+9. Zusammenfassung für Replit
+
+Replit muss Folgendes anlegen:
+
+Ordner
+
+pix-jobs/
+
+pix-jobs/{job_id}/
+
+pix-jobs/{job_id}/final_input/
+
+pix-jobs/{job_id}/pipeline/{thumbs, depth, segments, meta, meta/images}
+
+pix-jobs/{job_id}/gallery/images/
+
+Datenbankfelder
+
+image_id, job_id, filename, storage_path, status
+
+source ("editor"/"manual")
+
+meta_fields (placeholder, später befüllt)
+
+job.gallery_status
+
+job.gallery_visibility
+
+Worker/Service
+
+watcher: erkennt neue Dateien in final_input
+
+processFinalImage(job_id, filename): führt Pipeline aus
+
+buildJobExpose(job_id): aggregiert alle Bilder in job_expose.json
+
+syncGallery(job_id): Draft-Galerie aktualisieren
+
+Noch nicht implementieren (nur vorbereiten):
+
+FAL-API Calls
+
+LLM-API Calls
+
+SAM-Ausführung
+
+tiefe Qualitätsanalyse

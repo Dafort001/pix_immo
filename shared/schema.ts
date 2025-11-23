@@ -49,6 +49,21 @@ export const auditEntityScopeEnum = pgEnum("audit_entity_scope", [
   "legacy_image",
 ]);
 
+// Final Image Processing Status (Final-Input-Pipeline)
+export const finalImageStatusEnum = pgEnum("final_image_status", [
+  "pending_processing",  // Image uploaded, waiting for pipeline
+  "processing",          // Pipeline in progress
+  "processed",           // Successfully processed
+  "error",              // Processing failed
+]);
+
+// Gallery Status (Final-Input-Pipeline)
+export const galleryStatusEnum = pgEnum("gallery_status", [
+  "none",              // No gallery yet
+  "draft_ready",       // Gallery prepared but not visible
+  "customer_visible",  // Gallery released to customer
+]);
+
 // Drizzle Tables
 export const users = pgTable("users", {
   id: varchar("id").primaryKey(),
@@ -187,6 +202,9 @@ export const jobs = pgTable("jobs", {
   // Upload Workflow: 360° Tour & Floor Plan
   tour360: jsonb("tour_360"), // JSON: { startPanoId, floors: [{id, name, floorplanImageId}], panos: [{id, imageId, floorId, type, heightLevel, x, y}], links: [{from, to, linkType}] }
   workflowLocked: boolean("workflow_locked").notNull().default(false), // Whether upload workflow is locked (no further edits allowed)
+  // Gallery Status (Final-Input-Pipeline)
+  galleryStatus: galleryStatusEnum("gallery_status").notNull().default("none"), // Gallery preparation status
+  galleryVisibility: varchar("gallery_visibility", { length: 20 }).notNull().default("internal"), // 'internal' or 'customer'
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
@@ -214,6 +232,36 @@ export const stacks = pgTable("stacks", {
   sequenceIndex: bigint("sequence_index", { mode: "number" }).notNull(), // ordering within room_type
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
+
+// Final Images (Final-Input-Pipeline)
+// Tracks final edited images uploaded to pix-jobs/{job_id}/final_input/
+export const finalImages = pgTable("final_images", {
+  id: varchar("id").primaryKey(),
+  jobId: varchar("job_id").notNull().references(() => jobs.id, { onDelete: "cascade" }),
+  filename: varchar("filename", { length: 255 }).notNull(),
+  storagePath: text("storage_path").notNull(), // Full R2 path: pix-jobs/{job_id}/final_input/{filename}
+  source: varchar("source", { length: 20 }).notNull().default("editor"), // 'editor' or 'manual' (Daniel's direct uploads)
+  status: finalImageStatusEnum("status").notNull().default("pending_processing"),
+  errorMessage: text("error_message"), // Error details if status = 'error'
+  // Pipeline Artifacts (paths to generated files)
+  thumbnailPath: text("thumbnail_path"), // pipeline/thumbs/{filename}
+  depthPath: text("depth_path"), // pipeline/depth/{filename} (optional)
+  segmentPath: text("segment_path"), // pipeline/segments/{filename} (optional, SAM masks)
+  metaPath: text("meta_path"), // pipeline/meta/images/{id}.json
+  // Metadata (from pipeline processing, stored for quick access)
+  roomType: varchar("room_type", { length: 50 }), // Detected room type
+  viewType: varchar("view_type", { length: 50 }), // Detected view type
+  captionShort: text("caption_short"), // Short caption
+  captionLong: text("caption_long"), // Long caption
+  privacyIssues: jsonb("privacy_issues").$type<string[]>().default([]), // ['face_detected', 'license_plate', 'logo']
+  cleanupCandidates: jsonb("cleanup_candidates").$type<string[]>().default([]), // Objects that can be cleaned up
+  cleanupPossible: boolean("cleanup_possible").notNull().default(false),
+  createdAt: bigint("created_at", { mode: "number" }).notNull(),
+  processedAt: bigint("processed_at", { mode: "number" }), // When pipeline completed
+}, (table) => ({
+  jobIdIdx: index("final_images_job_id_idx").on(table.jobId),
+  statusIdx: index("final_images_status_idx").on(table.status),
+}));
 
 // PixCapture Uploaded Files (Intent-based Upload System)
 // Extended for Order Files Management (Phase 0)
@@ -762,6 +810,7 @@ export const jobsRelations = relations(jobs, ({ one, many }) => ({
   }),
   shoots: many(shoots),
   exposes: many(exposes),
+  finalImages: many(finalImages),
 }));
 
 export const shootsRelations = relations(shoots, ({ one, many }) => ({
@@ -784,6 +833,13 @@ export const stacksRelations = relations(stacks, ({ one, many }) => ({
   }),
   images: many(images),
   editedImages: many(editedImages),
+}));
+
+export const finalImagesRelations = relations(finalImages, ({ one }) => ({
+  job: one(jobs, {
+    fields: [finalImages.jobId],
+    references: [jobs.id],
+  }),
 }));
 
 export const imagesRelations = relations(images, ({ one, many }) => ({
@@ -956,6 +1012,8 @@ export type Shoot = typeof shoots.$inferSelect;
 export type InsertShoot = typeof shoots.$inferInsert;
 export type Stack = typeof stacks.$inferSelect;
 export type InsertStack = typeof stacks.$inferInsert;
+export type FinalImage = typeof finalImages.$inferSelect;
+export type InsertFinalImage = typeof finalImages.$inferInsert;
 export type Image = typeof images.$inferSelect;
 export type InsertImage = typeof images.$inferInsert;
 export type EditorToken = typeof editorTokens.$inferSelect;
