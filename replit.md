@@ -28,7 +28,7 @@ The frontend is a React 18 SPA using Wouter for routing, Shadcn UI components, a
 - **Order Management**: API for managing property photography orders with role-based authorization.
 - **Service Catalog & Booking**: Comprehensive catalog and multi-step booking wizard.
 - **Google Maps Integration**: For address verification and thumbnail previews.
-- **Google Calendar Integration**: Automated appointment scheduling with CET timezone support (09:00-18:00), time slot query API, and automatic event creation with stored event IDs.
+- **Google Calendar Integration**: Automated appointment scheduling with CET timezone support (08:00-20:30), time slot query API in 15-minute increments, and automatic event creation with stored event IDs.
 - **SMS Notifications (Twilio)**: Fully integrated - sends automated booking confirmations, appointment reminders (24h before), and cancellation notifications. Uses environment variables for credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER) with graceful fallback to console logs in dev mode.
 - **Photo Workflow System**: Manages jobs, shoots, image stacks, RAW file handling, editor tokens, and ZIP handoff packages.
 - **Client Gallery**: Features image viewer, favorites, comments, and download functionality.
@@ -83,7 +83,12 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
   - **Text & Captions**: OpenAI ChatGPT (GPT-4 Vision)
 
 ## Recent Updates (November 2025)
-- **Google Calendar Integration**: Complete booking flow with timezone fixes (CET: 09:00-18:00), automated event creation
+- **Booking System Overhaul (Nov 23, 2025)**: 
+  - Extended business hours from 08:00-20:30 (last appointment starts at 19:00, ends at 20:30)
+  - Flexible time slot selection in 15-minute increments (08:00, 08:15, 08:30, etc.) while maintaining 90-minute appointment duration
+  - TimeSlotPicker redesigned with Select dropdown for better UX
+  - Backend API generates all possible 15-minute start times and validates 90-minute appointment availability
+- **Google Calendar Integration**: Complete booking flow with timezone fixes (CET timezone), automated event creation
 - **PixCapture.app Layout**: Unified design with pix.immo - identical ScrollingImageStrip component (ref-based hover pause, dynamic aspect ratio width calculation), uniform 3:2 images (540×360px), matching typography and spacing
 - **pix.immo Layout**: Mixed aspect ratios (3:2, 16:9, 9:16) for visual variety, identical ScrollingImageStrip implementation
 - **User Management**: Single admin account (admin@piximmo.de) for both pix.immo and pixcapture.app

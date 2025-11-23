@@ -82,8 +82,10 @@ export interface CreateEventParams {
 
 export class GoogleCalendarService {
   private static DEFAULT_CALENDAR_ID = 'primary';
-  private static BUSINESS_HOURS_START = 8;
-  private static BUSINESS_HOURS_END = 19;
+  private static BUSINESS_HOURS_START = 8; // Start hour (08:00)
+  private static BUSINESS_HOURS_START_MINUTE = 0; // Start minute
+  private static BUSINESS_HOURS_END = 20; // End hour (20:30)
+  private static BUSINESS_HOURS_END_MINUTE = 30; // End minute
   private static SLOT_DURATION_MINUTES = 90; // Customer can book in 15min steps, but appointments are 90min long
   private static SLOT_INCREMENT_MINUTES = 15; // Time slot increment for availability checking
 
@@ -101,8 +103,8 @@ export class GoogleCalendarService {
     const berlinOffset = 1; // CET is UTC+1 (adjust to +2 for CEST in summer if needed)
     
     // Create UTC dates that represent the correct Berlin local time
-    const timeMin = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_START - berlinOffset, 0, 0, 0));
-    const timeMax = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_END - berlinOffset, 0, 0, 0));
+    const timeMin = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_START - berlinOffset, this.BUSINESS_HOURS_START_MINUTE, 0, 0));
+    const timeMax = new Date(Date.UTC(year, month - 1, day, this.BUSINESS_HOURS_END - berlinOffset, this.BUSINESS_HOURS_END_MINUTE, 0, 0));
 
     const freeBusyResponse = await calendar.freebusy.query({
       requestBody: {
