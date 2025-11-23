@@ -22,7 +22,7 @@ function hashToken(token: string): string {
 // Middleware to validate editor token from query parameter
 async function validateEditorToken(req: Request, res: Response, next: any) {
   try {
-    const token = req.query.t as string;
+    const token = req.query.token as string;
     const { jobId } = req.params;
 
     if (!token) {
