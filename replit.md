@@ -115,12 +115,18 @@ The architecture prioritizes Cloudflare Workers compatibility using Hono, mainta
   - Next Step: Build Editor Handoff/Weitergabe page for delivering processed images to editors
 - **Final-Input-Pipeline Implementation (Nov 23, 2025)**:
   - New automated image processing workflow for pix.immo final deliverables
-  - Database schema: `finalImages` table with status tracking (pending/processing/completed/failed)
+  - Database schema: `finalImages` table with status tracking (pending_processing/processing/processed/error)
   - Jobs table extended with `galleryStatus` (no_images/draft/approved) and `galleryVisibility` (internal/customer)
   - R2 folder structure: `pix-jobs/{jobId}/final_input/` → `pipeline/` (thumbs, meta, depth, segments) → `gallery/`
-  - Admin API routes: POST upload to final_input, GET job images, POST approve gallery, GET gallery status
+  - Admin API routes: 
+    - POST `/api/admin/jobs/:jobId/final-images/upload` - Upload to final_input
+    - GET `/api/admin/jobs/:jobId/final-images` - List job images
+    - POST `/api/admin/jobs/:jobId/gallery/approve` - Approve gallery for customer
+    - GET `/api/admin/jobs/:jobId/gallery/status` - Query gallery status
   - Image processing: Sharp-based thumbnail generation (800x600), metadata extraction (width, height, EXIF)
   - Stub implementations for future FAL/LLM integration (depth maps, segmentation)
   - Auto-generates `job_expose.json` with image metadata for customer delivery
   - Default gallery visibility: "internal" for admin review, manual approval changes to "customer"
   - Files: `server/r2-helpers.ts`, `server/image-pipeline.ts`, extended `server/storage.ts` and `server/routes.ts`
+  - Migration: `migrations/0001_final_input_pipeline.sql` with idempotent guards
+  - **Known Technical Debt**: Drizzle-kit v0.31.4 has interactive prompt limitations with enum creation. Database schema is correct and server runs successfully, but migration metadata partially out of sync. Future schema changes may require manual intervention via SQL or drizzle-kit upgrade.
