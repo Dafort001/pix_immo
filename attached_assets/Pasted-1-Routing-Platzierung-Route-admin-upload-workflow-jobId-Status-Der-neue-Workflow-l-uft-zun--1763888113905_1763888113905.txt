@@ -1,0 +1,146 @@
+1. Routing & Platzierung
+
+Route:
+/admin/upload-workflow/:jobId
+
+Status:
+Der neue Workflow läuft zunächst parallel zu den alten Seiten.
+Also:
+
+NICHT sofort /upload-raw oder /admin/raw-stacks/:jobId ersetzen,
+
+sondern als neue, eigenständige Route einbauen.
+
+Zielbild (später):
+Wenn sich der neue Workflow bewährt, ersetzt er die alten Seiten – aber das ist nicht Teil dieser Implementierung.
+
+2. Navigation
+
+Admin-Menü:
+Der Workflow gehört in den Admin-Bereich, wo auch Job-/Shoot-Übersichten sind.
+
+Menü-Name:
+Upload & Review (neu)
+
+Platzierung:
+Unter oder neben dem bisherigen Upload-/RAW-Bereich, damit klar ist, dass das die „neue“ Variante ist und parallel existiert.
+
+3. Backend-Integration
+
+Grundsatz:
+Der neue Workflow soll so weit wie möglich die bestehende Job/Shoot/Stack-Struktur und APIs nutzen.
+
+Ja, nutzen:
+
+/api/jobs
+
+/api/stacks
+
+/api/images
+
+Neu / Ergänzend (nur Interface vorbereiten, keine Monster-API bauen):
+
+Job-Metadaten für Editing/Retusche:
+
+editing_style (A–D)
+
+window_style
+
+sky_style (A–F oder none)
+
+retouch_profile (JSON für Checkboxen + Freitext)
+
+customer_comment_de, customer_comment_en
+
+360°-Tour + Grundriss:
+
+floorplan_assets (pro Etage ein Bild-Asset)
+
+panorama_positions (Koordinaten + Etage + Typ)
+
+tour_graph (Knoten/Kanten, inkl. Link-Typen)
+
+start_pano_id
+
+Wichtig:
+In diesem Schritt reicht es, wenn der Frontend-Workflow die Daten an bestehende oder einfache neue Endpunkte postet/patcht.
+Kein komplexer Workflow, keine Asynchronität – nur CRUD für diese Job-Felder.
+
+4. Job-Auswahl
+
+Kein Hardcoding mehr.
+
+Job-Quelle real:
+
+Job wird vorher gewählt (z. B. aus einer bestehenden Job-Liste).
+
+Der Workflow wird dann mit URL gestartet:
+/admin/upload-workflow/:jobId
+
+D. h.:
+
+jobId kommt aus der URL.
+
+Der Workflow lädt die Jobdaten einmal am Anfang via /api/jobs/:jobId.
+
+Kein eigenes Dropdown im Workflow nötig, außer du willst zusätzlich eine Job-Auswahl im Header haben (nicht Pflicht).
+
+5. Design System
+
+Neues Farbschema (Schwarz/Weiß):
+Gilt nur für diesen neuen Workflow in dieser Phase.
+
+Ansage an Replit:
+
+Bitte das neue Look&Feel lokal zum Workflow scopen (z. B. über eine Wrapper-Klasse, Layout-Komponente o. ä.).
+
+Die bestehende Sage/Copper-Welt nicht global überschreiben.
+
+shadcn-Komponenten:
+
+Bestehende shadcn-Komponenten weiterverwenden.
+
+Keine „zweite Version“ davon bauen.
+
+Falls Styles angepasst werden müssen, bitte nur lokal im Workflow-Styling, nicht global.
+
+Langfristig:
+Ob Schwarz/Weiß das neue globale Design wird, entscheiden wir später. Jetzt ist es ein „isolierter Pilot“.
+
+6. Assets & Logo
+
+Ja, bitte das bestehende pix.immo Logo verwenden.
+
+Kein Figma-Asset-Murks in Produktion.
+
+Figma-Referenzen durch reale Logo-Datei ersetzen,
+
+z. B. vorhandene Logo-Komponente / Asset aus dem Projekt.
+
+7. Panorama & Floor Plan Features
+
+Ja, die Features sind neu.
+
+Backend-Support (minimal, aber nötig):
+
+Speicherung von:
+
+hochgeladenen Grundriss-Bildern (Floorplans)
+
+Panorama-Metadaten
+
+Tour-JSON (Positionen + Verbindungen + Startpunkt)
+
+Speicherort:
+
+Technisch:
+
+Bilddateien (Grundrisse, Panoramen) wie bisher in R2 / S3-Äquivalent oder im bestehenden Images-Bucket.
+
+Metadaten (Koordinaten, Graph, Einstellungen) als Teil der job- oder tour-Tabelle in der DB.
+
+Für diese Implementierungsrunde reicht:
+
+Frontend speichert Tour-Config + Floorplan-Referenz via einfachem PUT /api/jobs/:jobId/tour-360 oder ähnlichem.
+
+Details der späteren Viewer-Integration sind nicht Teil dieses Tasks.
