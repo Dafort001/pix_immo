@@ -2179,13 +2179,84 @@ function registerUploadWorkflowRoutes(app: Express) {
       // Get shoot for job
       const shoots = await storage.getJobShoots(jobId);
       if (shoots.length === 0) {
-        return res.json({ stacks: [] });
+        return res.json({ stacks: [], unsortedImages: [] });
       }
 
       const shoot = shoots[0];
       const stacks = await storage.getShootStacks(shoot.id);
+      
+      // Helper to determine image type from MIME type
+      const getImageType = (mimeType: string): 'photo' | 'video' | '360' => {
+        if (mimeType.startsWith('video/')) return 'video';
+        // 360° detection: could be enhanced with EXIF metadata check
+        // For now, we assume regular photos - 360° will be enhanced later
+        return 'photo';
+      };
+      
+      // Get all images for each stack with thumbnail URLs
+      const stacksWithImages = await Promise.all(
+        stacks.map(async (stack) => {
+          const images = await storage.getStackImages(stack.id);
+          
+          // Generate thumbnail URLs and enrich image data
+          const enrichedImages = await Promise.all(
+            images.map(async (img) => {
+              // Use previewPath if available, otherwise filePath
+              const thumbnailKey = img.previewPath || img.filePath;
+              const thumbnailUrl = thumbnailKey 
+                ? await generatePresignedDownloadUrl(thumbnailKey, 3600) // 1 hour expiry
+                : null;
+              
+              return {
+                id: img.id,
+                originalFilename: img.originalFilename,
+                thumbnailUrl,
+                type: getImageType(img.mimeType || ''),
+                mimeType: img.mimeType,
+                fileSize: img.fileSize,
+                exposureValue: img.exposureValue,
+                positionInStack: img.positionInStack,
+              };
+            })
+          );
+          
+          return {
+            ...stack,
+            images: enrichedImages,
+          };
+        })
+      );
 
-      res.json({ jobId, shootId: shoot.id, stacks });
+      // Get unsorted images (images without stackId)
+      const allImages = await storage.getShootImages(shoot.id);
+      const unsortedImageRecords = allImages.filter(img => !img.stackId);
+      
+      // Enrich unsorted images with thumbnails
+      const unsortedImages = await Promise.all(
+        unsortedImageRecords.map(async (img) => {
+          const thumbnailKey = img.previewPath || img.filePath;
+          const thumbnailUrl = thumbnailKey 
+            ? await generatePresignedDownloadUrl(thumbnailKey, 3600)
+            : null;
+          
+          return {
+            id: img.id,
+            originalFilename: img.originalFilename,
+            thumbnailUrl,
+            type: getImageType(img.mimeType || ''),
+            mimeType: img.mimeType,
+            fileSize: img.fileSize,
+            roomType: img.roomType,
+          };
+        })
+      );
+
+      res.json({ 
+        jobId, 
+        shootId: shoot.id, 
+        stacks: stacksWithImages, 
+        unsortedImages 
+      });
     } catch (error) {
       console.error("Error fetching stacks:", error);
       res.status(500).json({ error: "Failed to fetch stacks" });
