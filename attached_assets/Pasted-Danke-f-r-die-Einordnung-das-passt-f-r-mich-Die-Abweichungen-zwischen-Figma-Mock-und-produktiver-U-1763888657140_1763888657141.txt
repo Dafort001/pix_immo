@@ -1,0 +1,123 @@
+Danke für die Einordnung, das passt für mich. Die Abweichungen zwischen Figma-Mock und produktiver Umsetzung sind soweit logisch und erwünscht.
+
+Bitte wie folgt umsetzen:
+
+Routing & Einbindung
+
+Route: /admin/upload-workflow/:jobId
+
+Integration in bestehendes Wouter-Routing.
+
+Im Admin-Menü als Punkt „Upload & Review (neu)“ einhängen.
+
+Alte Seiten (/upload-raw, /admin/raw-stacks/:jobId) zunächst parallel weiterlaufen lassen, NICHT löschen/ersetzen.
+
+Auth & Berechtigungen
+
+Zugriff nur für:
+
+role: admin (alle Jobs)
+
+role: photographer (nur eigene Jobs, Ownership-Check auf jobId)
+
+Kein Zugriff für Kunden.
+
+Bei fehlender Berechtigung → sauberer 403/Redirect.
+
+Bildupload
+
+Bitte die bestehende R2-/Object-Storage-Infrastruktur weiterverwenden.
+
+Falls es schon Upload-Endpoints gibt (RAW-Upload etc.), diese nutzen.
+
+Falls nicht: neuen Endpoint POST /api/jobs/:jobId/upload anlegen, der:
+
+Dateien in R2 speichert
+
+passende DB-Einträge für Images/Files erzeugt
+
+die Metadaten dem neuen Workflow zur Verfügung stellt.
+
+Stacks / Brackets
+
+Bracket-/Stack-Erkennung serverseitig implementieren oder vorhandene Logik aus /admin/raw-stacks/:jobId auslagern und wiederverwenden.
+
+Frontend soll nur das Ergebnis über eine API laden, z. B. GET /api/jobs/:jobId/stacks.
+
+Im UI reicht: Einzelbild, 3er-Stack, 5er-Stack, Video, 360°.
+
+Raumtypen
+
+Raumtypen zunächst als fest definierte Liste im Frontend, wie besprochen (Wohnzimmer, Schlafzimmer, Küche, Bad, Flur, Arbeitszimmer/Büro, Abstellraum, Kellerraum, Hauswirtschaftsraum, Balkon, Terrasse, Garten, Dachterrasse, Dachboden, Wintergarten, Außenbereich, Hobbyraum, Garage/Carport, Poolbereich, Wellness/Sauna, Fitnessraum, Gemeinschaftsraum/Lobby, Konferenzraum, Gewerbefläche, „Sonstiger Raum“ mit Freitext).
+
+Bitte so anlegen, dass eine spätere Auslagerung in /api/room-types einfach möglich ist.
+
+Editing Styles / Window / Sky
+
+In V1 im Frontend fest verdrahtet, im Backend nur Codes speichern:
+
+editing_style: "A" | "B" | "C" | "D"
+
+window_style: "neutral" | "clear_view" | "privacy" | "scandi"
+
+sky_style: "A" | "B" | "C" | "D" | "E" | "F" | "none"`
+
+Labels im UI wie besprochen:
+
+Stil A – Pix.immo Standard
+
+Stil B – Klar & kühl
+
+Stil C – Warm & soft
+
+Stil D – Magazin Plus
+
+360°-Tour & Grundriss
+
+Neues, einfaches Tour-JSON-Schema verwenden (Nodes/Edges), wie vorgeschlagen:
+
+Panos mit: id, imageId, floorId, type (interior/exterior/drone), heightLevel, x, y
+
+Links mit: from, to, linkType (same_level/vertical_up/vertical_down)
+
+startPanoId
+
+floors mit floorplanImageId
+
+Speicherung z. B. als tour_360-Feld am Job.
+
+Frontend: Zoom, Pan, Etagen-Tabs, Drag & Drop, sichtbare Linien, Startpunkt.
+
+Workflow-Lock / Status
+
+Beim Klick auf „Bestätigen & sperren“:
+
+Job-Status auf locked (oder sinnvollen bestehenden Status) setzen
+
+Backend: keine weiteren Mutationen dieses Jobs mehr zulassen (Upload, Neuordnung, Retusche-Änderung).
+
+Frontend: alle Eingabefelder/Controls read-only, klarer Hinweis „Auftrag gesperrt“.
+
+Notifications aktuell weglassen, spätere E-Mail/Editor-Info ist ein eigener Task.
+
+Design / Styling
+
+Schwarz-Weiß-Design nur für diesen Workflow scopen, bestehendes Sage/Copper-Design nicht global überschreiben.
+
+shadcn-Komponenten weiterverwenden, keine zweite UI-Bibliothek einführen.
+
+Figma-Assets (figma:asset/…) durch das bestehende pix.immo-Logo und vorhandene Assets ersetzen.
+
+Übersetzungsfunktion
+
+In V1 nur UI-seitig vorbereiten:
+
+großes Freitextfeld „Zusätzliche Wünsche“
+
+Hinweis „wird automatisch für das Editing-Team übersetzt“
+
+Backendschnittstelle: Felder anlegen (customer_comment_de, customer_comment_en), aber die eigentliche Übersetzungs-Logik kann zunächst stub/dummy bleiben.
+
+Wenn du dazu noch Rückfragen hast, bitte jeweils nur auf konkrete Unklarheiten bezogen nachfragen (z. B. „Tour-Schema“ oder „Upload-Endpunkt“), nicht den gesamten Scope neu aufrollen.
+
+Von meiner Seite: Du kannst mit der Implementierung starten.

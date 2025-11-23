@@ -9,7 +9,7 @@ import { logger, generateRequestId, type LogContext } from "./logger";
 import { createJobSchema, initUploadSchema, presignedUploadSchema, assignRoomTypeSchema, insertPublicImageSchema, insertInvoiceSchema, insertBlogPostSchema, insertServiceSchema, insertBookingSchema, uploadIntentSchema, uploadFinalizeSchema, type InitUploadResponse, type PresignedUrlResponse, type UploadIntentResponse } from "@shared/schema";
 import { generateBearerToken } from "./bearer-auth";
 import { validateRawFilename, extractRoomTypeFromFilename, extractStackNumberFromFilename, calculatePartCount, MULTIPART_CHUNK_SIZE } from "./raw-upload-helpers";
-import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl, getObject, generatePresignedDownloadUrl } from "./r2-client";
+import { initMultipartUpload, generatePresignedUploadUrl, completeMultipartUpload, generateR2ObjectKey, generateSignedPutUrl, getObject, generatePresignedDownloadUrl, uploadObject } from "./r2-client";
 import { runAITool, getToolById, getAllTools } from "./replicate-adapter";
 import { z } from "zod";
 import { randomBytes, randomUUID, createHash } from "crypto";
@@ -2072,6 +2072,177 @@ function registerUploadManifestRoutes(app: Express) {
     } catch (error) {
       console.error("Error getting session:", error);
       res.status(500).json({ error: "Failed to get session" });
+    }
+  });
+}
+
+// Upload Workflow Routes (pix.immo - New Workflow Design)
+function registerUploadWorkflowRoutes(app: Express) {
+  // Helper: Verify job access (Admin = all jobs, Photographer = own jobs only)
+  async function verifyJobAccess(jobId: string, user: any): Promise<boolean> {
+    if (user.role === "admin") return true;
+    if (user.role === "photographer") {
+      const job = await storage.getJob(jobId);
+      return job && job.userId === user.id;
+    }
+    return false;
+  }
+
+  // Helper: Get or create shoot for job (replaces shoot-based workflow)
+  async function getOrCreateShootForJob(jobId: string): Promise<{ id: string }> {
+    const existingShoots = await storage.getJobShoots(jobId);
+    if (existingShoots.length > 0) {
+      return existingShoots[0];
+    }
+    // Create new shoot for job
+    const shootCode = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const newShoot = await storage.createShoot({
+      id: randomUUID(),
+      shootCode,
+      jobId,
+      status: "initialized",
+      createdAt: Date.now(),
+    });
+    return newShoot;
+  }
+
+  // POST /api/jobs/:jobId/workflow/upload - Upload files for job (job-based workflow)
+  app.post("/api/jobs/:jobId/workflow/upload", uploadLimiter, validateUuidParam("jobId"), upload.array("files"), async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      if (!["admin", "photographer"].includes(user.role)) {
+        return res.status(403).json({ error: "Access denied. Admin or Photographer role required." });
+      }
+
+      const jobId = req.params.jobId;
+      const hasAccess = await verifyJobAccess(jobId, user);
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied to this job." });
+      }
+
+      // Check if workflow is locked
+      const job = await storage.getJob(jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+      if (job.workflowLocked) {
+        return res.status(403).json({ error: "Workflow is locked. No further uploads allowed." });
+      }
+
+      // Get or create shoot for job
+      const shoot = await getOrCreateShootForJob(jobId);
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      // Upload files to R2 using existing infrastructure
+      const uploadedFiles = await Promise.all(files.map(async (file) => {
+        const objectKey = generateR2ObjectKey("raw", shoot.id, file.originalname);
+        await uploadObject(objectKey, file.buffer, file.mimetype);
+        return {
+          objectKey,
+          originalFilename: file.originalname,
+          mimeType: file.mimetype,
+          fileSize: file.size,
+        };
+      }));
+
+      res.json({
+        success: true,
+        shootId: shoot.id,
+        jobId,
+        uploadedCount: uploadedFiles.length,
+        files: uploadedFiles,
+      });
+    } catch (error) {
+      console.error("Workflow upload error:", error);
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
+
+  // GET /api/jobs/:jobId/workflow/stacks - Get stacks for job (server-side bracket detection)
+  app.get("/api/jobs/:jobId/workflow/stacks", validateUuidParam("jobId"), async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      if (!["admin", "photographer"].includes(user.role)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const jobId = req.params.jobId;
+      const hasAccess = await verifyJobAccess(jobId, user);
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied to this job." });
+      }
+
+      // Get shoot for job
+      const shoots = await storage.getJobShoots(jobId);
+      if (shoots.length === 0) {
+        return res.json({ stacks: [] });
+      }
+
+      const shoot = shoots[0];
+      const stacks = await storage.getShootStacks(shoot.id);
+
+      res.json({ jobId, shootId: shoot.id, stacks });
+    } catch (error) {
+      console.error("Error fetching stacks:", error);
+      res.status(500).json({ error: "Failed to fetch stacks" });
+    }
+  });
+
+  // PATCH /api/jobs/:jobId/workflow - Update job workflow data (editing options, lock, tour 360)
+  app.patch("/api/jobs/:jobId/workflow", uploadLimiter, validateUuidParam("jobId"), async (req: Request, res: Response) => {
+    try {
+      const user = req.user;
+      if (!user) return res.status(401).json({ error: "Unauthorized" });
+      if (!["admin", "photographer"].includes(user.role)) {
+        return res.status(403).json({ error: "Access denied" });
+      }
+
+      const jobId = req.params.jobId;
+      const hasAccess = await verifyJobAccess(jobId, user);
+      if (!hasAccess) {
+        return res.status(403).json({ error: "Access denied to this job." });
+      }
+
+      const job = await storage.getJob(jobId);
+      if (!job) return res.status(404).json({ error: "Job not found" });
+
+      // Check if already locked (only allow lock toggle, no other updates)
+      if (job.workflowLocked && !req.body.workflowLocked === false) {
+        return res.status(403).json({ error: "Workflow is locked. No updates allowed." });
+      }
+
+      const {
+        editingStyle,
+        windowStyle,
+        skyStyle,
+        retouchProfile,
+        customerCommentDe,
+        customerCommentEn,
+        tour360,
+        workflowLocked,
+      } = req.body;
+
+      // Build update object (only include provided fields)
+      const updates: any = {};
+      if (editingStyle !== undefined) updates.editingStyle = editingStyle;
+      if (windowStyle !== undefined) updates.windowStyle = windowStyle;
+      if (skyStyle !== undefined) updates.skyStyle = skyStyle;
+      if (retouchProfile !== undefined) updates.retouchProfile = retouchProfile;
+      if (customerCommentDe !== undefined) updates.customerCommentDe = customerCommentDe;
+      if (customerCommentEn !== undefined) updates.customerCommentEn = customerCommentEn;
+      if (tour360 !== undefined) updates.tour360 = tour360;
+      if (workflowLocked !== undefined) updates.workflowLocked = workflowLocked;
+
+      const updatedJob = await storage.updateJob(jobId, updates);
+
+      res.json({ success: true, job: updatedJob });
+    } catch (error) {
+      console.error("Error updating job workflow:", error);
+      res.status(500).json({ error: "Failed to update job" });
     }
   });
 }
@@ -4428,6 +4599,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Edit Workflow routes (Phase 2 - Stubs)
   registerEditWorkflowRoutes(app);
+
+  // Upload Workflow Routes (pix.immo - New Design)
+  registerUploadWorkflowRoutes(app);
 
   // P1: Test Helper routes (NODE_ENV === 'test' only)
   if (process.env.NODE_ENV === 'test') {

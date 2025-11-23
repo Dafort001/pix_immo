@@ -177,6 +177,16 @@ export const jobs = pgTable("jobs", {
   allowFreeExtras: boolean("allow_free_extras").notNull().default(true), // Whether kulanz extras can be given
   freeExtraQuota: integer("free_extra_quota"), // How many free extras can be granted (null = unlimited for admins)
   allImagesIncluded: boolean("all_images_included").notNull().default(false), // Kulanz: all images are free (no package limit)
+  // Upload Workflow: Editing & Retouch Options
+  editingStyle: varchar("editing_style", { length: 10 }), // 'A', 'B', 'C', 'D' - Style A = Pix.immo Standard, B = Klar & kühl, C = Warm & soft, D = Magazin Plus
+  windowStyle: varchar("window_style", { length: 20 }), // 'neutral', 'clear_view', 'privacy', 'scandi'
+  skyStyle: varchar("sky_style", { length: 10 }), // 'A', 'B', 'C', 'D', 'E', 'F', 'none'
+  retouchProfile: jsonb("retouch_profile"), // JSON: { removeOutlets, removeBins, reducePersonalItems, neutralizeTV, optimizeLawn, addFireplace, additionalNotes }
+  customerCommentDe: text("customer_comment_de"), // Customer's additional wishes in German
+  customerCommentEn: text("customer_comment_en"), // Automatically translated customer comment in English
+  // Upload Workflow: 360° Tour & Floor Plan
+  tour360: jsonb("tour_360"), // JSON: { startPanoId, floors: [{id, name, floorplanImageId}], panos: [{id, imageId, floorId, type, heightLevel, x, y}], links: [{from, to, linkType}] }
+  workflowLocked: boolean("workflow_locked").notNull().default(false), // Whether upload workflow is locked (no further edits allowed)
   createdAt: bigint("created_at", { mode: "number" }).notNull(),
 });
 
