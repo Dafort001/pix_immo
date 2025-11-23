@@ -1,4 +1,4 @@
-import { users, sessions, refreshTokens, passwordResetTokens, emailVerificationTokens, otpCodes, orders, jobs, shoots, stacks, images, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
+import { users, sessions, refreshTokens, passwordResetTokens, emailVerificationTokens, otpCodes, orders, jobs, shoots, stacks, images, finalImages, editorTokens, editedImages, services, bookings, bookingItems, imageFavorites, imageComments, editorialItems, editorialComments, seoMetadata, personalAccessTokens, uploadSessions, aiJobs, captions, exposes, galleries, galleryFiles, galleryAnnotations, editors, editorAssignments, publicImages, invoices, blogPosts, uploadedFiles, fileNotes, editJobs, uploadManifestSessions, uploadManifestItems, auditLogs, type User, type Session, type RefreshToken, type PasswordResetToken, type OtpCode, type Order, type Job, type Shoot, type Stack, type Image, type FinalImage, type EditorToken, type EditedImage, type Service, type Booking, type BookingItem, type ImageFavorite, type ImageComment, type EditorialItem, type EditorialComment, type SeoMetadata, type PersonalAccessToken, type UploadSession, type AiJob, type Caption, type Expose, type Gallery, type GalleryFile, type GalleryAnnotation, type Editor, type EditorAssignment, type PublicImage, type Invoice, type BlogPost, type UploadManifestSession, type UploadManifestItem, type AuditLog } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, or, inArray, not, sql } from "drizzle-orm";
 import { randomUUID } from "crypto";
@@ -172,6 +172,22 @@ export interface IStorage {
   updateImageQCStatus(id: string, qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision', qcComment?: string, qcTechnicalIssues?: string[], userId?: string): Promise<void>;
   getImagesByQCStatus(qcStatus: 'pending' | 'approved' | 'rejected' | 'needs-revision'): Promise<Image[]>;
   getShootImagesWithQC(shootId: string): Promise<Image[]>;
+  
+  // Final Images operations (Final-Input-Pipeline)
+  createFinalImage(data: {
+    jobId: number;
+    filename: string;
+    r2Key: string;
+    fileSize: number;
+    mimeType: string;
+    width?: number;
+    height?: number;
+    status?: 'pending' | 'processing' | 'completed' | 'failed';
+  }): Promise<any>;
+  getFinalImage(id: number): Promise<any>;
+  getJobFinalImages(jobId: number): Promise<any[]>;
+  updateFinalImageStatus(id: number, status: 'pending' | 'processing' | 'completed' | 'failed', errorMessage?: string): Promise<void>;
+  updateJobGalleryStatus(jobId: number, status: 'no_images' | 'draft' | 'approved', visibility?: 'internal' | 'customer'): Promise<void>;
   
   // Workflow operations - Editor Tokens
   createEditorToken(shootId: string, tokenType: 'download' | 'upload', token: string, expiresAt: number, filePath?: string): Promise<EditorToken>;
@@ -1448,6 +1464,66 @@ export class DatabaseStorage implements IStorage {
 
   async getShootImagesWithQC(shootId: string): Promise<Image[]> {
     return await db.select().from(images).where(eq(images.shootId, shootId));
+  }
+
+  // Final Images operations (Final-Input-Pipeline)
+  async createFinalImage(data: {
+    jobId: number;
+    filename: string;
+    r2Key: string;
+    fileSize: number;
+    mimeType: string;
+    width?: number;
+    height?: number;
+    status?: 'pending' | 'processing' | 'completed' | 'failed';
+  }): Promise<any> {
+    const [finalImage] = await db
+      .insert(finalImages)
+      .values({
+        jobId: data.jobId,
+        filename: data.filename,
+        r2Key: data.r2Key,
+        fileSize: data.fileSize,
+        mimeType: data.mimeType,
+        width: data.width || null,
+        height: data.height || null,
+        status: data.status || 'pending',
+        createdAt: Date.now(),
+      })
+      .returning();
+    return finalImage;
+  }
+
+  async getFinalImage(id: number): Promise<any> {
+    const [finalImage] = await db.select().from(finalImages).where(eq(finalImages.id, id));
+    return finalImage || undefined;
+  }
+
+  async getJobFinalImages(jobId: number): Promise<any[]> {
+    return await db
+      .select()
+      .from(finalImages)
+      .where(eq(finalImages.jobId, jobId))
+      .orderBy(desc(finalImages.createdAt));
+  }
+
+  async updateFinalImageStatus(id: number, status: 'pending' | 'processing' | 'completed' | 'failed', errorMessage?: string): Promise<void> {
+    await db
+      .update(finalImages)
+      .set({
+        status,
+        errorMessage: errorMessage || null,
+        processedAt: status === 'completed' ? Date.now() : null,
+      })
+      .where(eq(finalImages.id, id));
+  }
+
+  async updateJobGalleryStatus(jobId: number, status: 'no_images' | 'draft' | 'approved', visibility?: 'internal' | 'customer'): Promise<void> {
+    const updateData: any = { galleryStatus: status };
+    if (visibility) {
+      updateData.galleryVisibility = visibility;
+    }
+    await db.update(jobs).set(updateData).where(eq(jobs.id, jobId));
   }
 
   // Editor Token operations
