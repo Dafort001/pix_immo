@@ -34,6 +34,7 @@ import { isValidFilenameV31 } from "./fileNaming";
 import { processJobDemo } from "./demo-processing";
 import { registerGalleryRoutes } from "./gallery-routes";
 import { registerEditorRoutes } from "./editor-routes";
+import { registerEditorJobRoutes } from "./editor-job-routes";
 import { registerOrderFilesRoutes } from "./order-files-routes";
 import { registerEditWorkflowRoutes } from "./edit-workflow-routes";
 import { hashPassword, verifyPassword, SESSION_CONFIG } from "./auth";
@@ -4803,6 +4804,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Register Editor Management System routes (Admin-only)
   registerEditorRoutes(app);
+
+  // Register Editor Job Page routes (Public, token-authenticated)
+  registerEditorJobRoutes(app);
 
   // Register Media Library routes
   registerMediaLibraryRoutes(app);

@@ -1,0 +1,300 @@
+Implement “Editor Job Page” (placeholder version, English only)
+
+Goal
+
+Implement a simple Editor Job Page that external photo editors can access via a tokenized link.
+The page is:
+
+fully in English (no German words in UI, labels or messages),
+
+showing a placeholder editing briefing (dummy text),
+
+providing one download button for the raw ZIP
+
+and one upload section for the finished ZIP.
+
+The detailed editing styles and rules will be added later. For now, we just need a working page with placeholder texts.
+
+1. Route / URL
+
+Create a new page reachable via:
+
+Frontend route: /editor/job/:jobId
+
+The page must be called with a t query parameter (token), e.g.:
+
+/editor/job/ABC12?t=someLongTokenString
+
+On initial load the frontend must call a backend API like:
+
+GET /api/editor/jobs/:jobId?t=<token>
+
+If the backend responds with an error (401/403/404):
+
+Show a minimal error page in English:
+
+Title:
+Link not available
+
+Text:
+This link is not available or has expired. Please contact your client if you think this is a mistake.
+
+No German on this page.
+
+2. Backend response shape (assumption)
+
+Assume the backend returns JSON like this on success:
+
+{
+  "jobId": "12345",
+  "shootCode": "ABC12",
+  "objectName": "Penthouse with river view",
+  "city": "Hamburg",
+  "deadlineDisplay": "25 Nov 2025, 18:00",
+  "status": "NOT_UPLOADED", 
+  "downloadUrl": "https://r2...signed.zip",
+  "allowUpload": true,
+  "placeholderNotes": "No final briefing available yet. Please follow the general guidelines."
+}
+
+
+You can adapt field names if our existing conventions require it, but the page needs at least these fields:
+
+shootCode
+
+objectName
+
+city
+
+deadlineDisplay (already formatted string is OK)
+
+status (NOT_UPLOADED | UPLOADING | UPLOADED)
+
+downloadUrl (signed URL to ZIP)
+
+allowUpload (boolean)
+
+placeholderNotes (string, text that we can fill later)
+
+3. Layout / Content (all in English)
+3.1 Header section
+
+At the top of the page, show:
+
+Line 1 (Title):
+Job: {shootCode} – {objectName}
+
+Line 2:
+Location: {city}
+
+Line 3:
+Deadline: {deadlineDisplay}
+
+Line 4 (short status text, depending on status):
+
+NOT_UPLOADED → Status: No files uploaded yet
+
+UPLOADING → Status: Upload in progress
+
+UPLOADED → Status: Files uploaded
+
+No German on the page.
+
+3.2 Placeholder “Editing Briefing” section
+
+Below the header, show a card/box titled:
+
+Title:
+Editing briefing (placeholder)
+
+Content (fixed English text for now):
+
+This job does not yet contain a finalized editing briefing.
+Please follow the general guidelines below until a full briefing is provided.
+
+• Keep colors natural and realistic.
+• Avoid heavy saturation or artificial tones.
+• Maintain straight vertical lines where possible.
+• Keep the interior bright and clean.
+• Do not rename any files.
+• Return all edited images in a single ZIP file.
+
+Additional notes:
+{placeholderNotes}
+
+
+Where {placeholderNotes} comes from the backend field placeholderNotes.
+If placeholderNotes is empty, just show Additional notes: with an empty line below.
+
+3.3 Download section
+
+Below the briefing, add a Download section.
+
+Title:
+Download raw images
+
+Text:
+
+Click the button below to download the ZIP file containing all original images for this job.
+
+Button:
+Download ZIP
+
+Clicking this button must open downloadUrl from the backend.
+If downloadUrl is missing or empty, disable the button and show:
+
+No download is currently available for this job.
+
+3.4 Upload section
+
+Under the download section, add an Upload area.
+
+Title:
+Upload finished images (ZIP only)
+
+Text:
+
+Please upload one ZIP file containing all edited images.
+Do not upload individual files.
+Do not rename any files before uploading.
+
+
+If allowUpload is true:
+
+Show:
+
+a file input (drag & drop or simple button), restricted to .zip
+
+an upload button: Upload ZIP
+
+If allowUpload is false:
+
+Do not show the file input.
+
+Show this message instead:
+
+Uploads are no longer allowed for this job. Please contact your client if you need to submit a correction.
+
+All texts in English.
+
+4. Upload flow & API calls
+
+We need a simple two-step upload flow:
+
+Request upload URL
+
+When the editor selects a file and clicks Upload ZIP, call:
+
+POST /api/editor/jobs/:jobId/upload-url?t=<token>
+
+Backend returns JSON like:
+
+{
+  "uploadUrl": "https://r2...signedUploadUrl.zip"
+}
+
+
+If allowUpload is false or token invalid, backend must return an error; frontend shows:
+
+Upload is not allowed for this job. Please contact your client.
+
+Upload file to R2
+
+The frontend then uploads the selected ZIP to uploadUrl (direct upload to R2).
+
+While upload is in progress:
+
+set status text to:
+Status: Upload in progress
+
+optionally disable the upload button to prevent a second attempt.
+
+Notify backend after successful upload
+
+After the R2 upload succeeds, call:
+
+POST /api/editor/jobs/:jobId/upload-complete?t=<token>
+
+Backend should update the job status internally (e.g. UPLOADED / QC_PENDING) and respond with updated job data, including:
+
+{
+  "status": "UPLOADED",
+  "allowUpload": false
+}
+
+
+Frontend then:
+
+updates status line to: Status: Files uploaded
+
+hides the upload input and button
+
+shows a short message:
+
+Your files have been uploaded successfully. Thank you.
+
+Error handling, messages (all English)
+
+If file type is not .zip:
+
+Only ZIP files are allowed. Please select a .zip file.
+
+If upload fails (network or server error):
+
+Upload failed. Please try again.
+
+If it keeps failing:
+
+If the problem persists, please contact your client.
+
+If no file selected and user clicks upload:
+
+Please select a ZIP file before uploading.
+
+5. Styling
+
+Use the existing design system / Tailwind baseline of the app.
+
+Keep it simple, clean and neutral:
+
+white background, clear typography
+
+no fancy branding notwendig
+
+The most important parts visually:
+
+Job header (code, object name, deadline)
+
+Briefing placeholder box
+
+Download button
+
+Upload section
+
+6. Language constraint
+
+Very important:
+All visible text on this Editor Job Page must be English only:
+
+Labels
+
+Buttons
+
+Headings
+
+Status messages
+
+Error messages
+
+No German text or mixed-language strings on this page.
+German is only allowed in internal code comments if absolutely necessary, but not in the rendered UI.
+
+7. Future extensibility (just keep in mind)
+
+This V1 implementation must allow us later to replace the placeholder briefing with a structured object (editing styles, clear window, retouch levels, etc.).
+
+For now:
+
+Use the single placeholderNotes field.
+
+Keep the briefing box as one clear section, so we can later add more detail inside it without changing the overall layout.

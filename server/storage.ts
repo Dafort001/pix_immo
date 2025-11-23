@@ -192,6 +192,8 @@ export interface IStorage {
   // Workflow operations - Editor Tokens
   createEditorToken(shootId: string, tokenType: 'download' | 'upload', token: string, expiresAt: number, filePath?: string): Promise<EditorToken>;
   getEditorToken(token: string): Promise<EditorToken | undefined>;
+  getEditorTokenByHash(tokenHash: string): Promise<EditorToken | undefined>;
+  updateEditorToken(id: string, data: Partial<EditorToken>): Promise<void>;
   markEditorTokenUsed(token: string): Promise<void>;
   
   // Workflow operations - Edited Images
@@ -1553,6 +1555,21 @@ export class DatabaseStorage implements IStorage {
     }
     
     return editorToken || undefined;
+  }
+
+  async getEditorTokenByHash(tokenHash: string): Promise<EditorToken | undefined> {
+    const [editorToken] = await db.select().from(editorTokens).where(eq(editorTokens.token, tokenHash));
+    
+    // Return undefined if expired
+    if (editorToken && editorToken.expiresAt < Date.now()) {
+      return undefined;
+    }
+    
+    return editorToken || undefined;
+  }
+
+  async updateEditorToken(id: string, data: Partial<EditorToken>): Promise<void> {
+    await db.update(editorTokens).set(data).where(eq(editorTokens.id, id));
   }
 
   async markEditorTokenUsed(token: string): Promise<void> {
