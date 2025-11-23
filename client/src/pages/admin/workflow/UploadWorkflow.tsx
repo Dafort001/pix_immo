@@ -157,9 +157,39 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
       // Convert backend stacks to frontend format
       setStacks(stacksData.stacks.map((s: any) => ({
         id: s.id,
-        files: [], // TODO: map files from backend
-        roomType: s.roomType,
-        stackType: s.frameCount === 3 ? 'bracket3' : s.frameCount === 5 ? 'bracket5' : 'single',
+        files: (s.images || []).map((img: any) => ({
+          id: img.id,
+          name: img.originalFilename,
+          size: img.fileSize,
+          type: img.mimeType,
+          url: img.thumbnailUrl,
+          timestamp: new Date(),
+          width: 0,
+          height: 0,
+          is360: img.type === '360',
+        })),
+        roomType: s.roomType || '',
+        stackType: 
+          s.frameCount === 3 ? 'bracket3' : 
+          s.frameCount === 5 ? 'bracket5' : 
+          (s.images?.[0]?.type === 'video' ? 'video' : 
+          (s.images?.[0]?.type === '360' ? 'pano360' : 'single')),
+        comment: s.comment || '',
+      })));
+    }
+
+    if (stacksData?.unsortedImages) {
+      // Convert unsorted images to frontend format
+      setUnsortedFiles(stacksData.unsortedImages.map((img: any) => ({
+        id: img.id,
+        name: img.originalFilename,
+        size: img.fileSize,
+        type: img.mimeType,
+        url: img.thumbnailUrl,
+        timestamp: new Date(),
+        width: 0,
+        height: 0,
+        is360: img.type === '360',
       })));
     }
   }, [stacksData]);
@@ -296,6 +326,7 @@ export function UploadWorkflow({ jobId }: UploadWorkflowProps) {
             <StepStacks
               stacks={stacks}
               setStacks={setStacks}
+              unsortedFiles={unsortedFiles}
             />
           )}
 
