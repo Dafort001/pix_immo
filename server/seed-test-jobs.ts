@@ -1,6 +1,7 @@
 import { db } from './db';
-import { users, pixJobs } from '../shared/schema';
+import { users, jobs } from '../shared/schema';
 import { eq } from 'drizzle-orm';
+import { ulid } from 'ulid';
 
 async function seedTestJobs() {
   console.log('🌱 Seeding test pix.immo jobs...');
@@ -21,6 +22,7 @@ async function seedTestJobs() {
     // Create test jobs
     const testJobs = [
       {
+        id: ulid(),
         jobNumber: 'J-2024-TEST-001',
         userId: admin.id,
         source: 'pix.immo',
@@ -32,6 +34,7 @@ async function seedTestJobs() {
         createdAt: Date.now(),
       },
       {
+        id: ulid(),
         jobNumber: 'J-2024-TEST-002',
         userId: admin.id,
         source: 'pix.immo',
@@ -43,6 +46,7 @@ async function seedTestJobs() {
         createdAt: Date.now() - 86400000, // 1 day ago
       },
       {
+        id: ulid(),
         jobNumber: 'J-2024-TEST-003',
         userId: admin.id,
         source: 'pix.immo',
@@ -59,8 +63,8 @@ async function seedTestJobs() {
       // Check if job already exists
       const [existing] = await db
         .select()
-        .from(pixJobs)
-        .where(eq(pixJobs.jobNumber, jobData.jobNumber))
+        .from(jobs)
+        .where(eq(jobs.jobNumber, jobData.jobNumber))
         .limit(1);
 
       if (existing) {
@@ -68,7 +72,7 @@ async function seedTestJobs() {
         continue;
       }
 
-      await db.insert(pixJobs).values(jobData);
+      await db.insert(jobs).values(jobData);
       console.log(`✅ Created test job: ${jobData.jobNumber} - ${jobData.propertyName}`);
     }
 
