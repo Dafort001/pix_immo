@@ -59,9 +59,9 @@ export const finalImageStatusEnum = pgEnum("final_image_status", [
 
 // Gallery Status (Final-Input-Pipeline)
 export const galleryStatusEnum = pgEnum("gallery_status", [
-  "none",              // No gallery yet
-  "draft_ready",       // Gallery prepared but not visible
-  "customer_visible",  // Gallery released to customer
+  "no_images",  // No gallery yet
+  "draft",      // Gallery prepared but not visible to customer
+  "approved",   // Gallery released to customer
 ]);
 
 // Drizzle Tables
