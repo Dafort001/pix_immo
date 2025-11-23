@@ -1,6 +1,8 @@
 import { GetObjectCommand, PutObjectCommand, ListObjectsV2Command, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { r2Client, R2_BUCKET } from "./r2";
+import { r2Client } from "./r2-client";
+
+const R2_BUCKET = process.env.CF_R2_BUCKET || "";
 
 export interface JobPaths {
   base: string;

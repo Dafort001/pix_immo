@@ -2318,6 +2318,164 @@ function registerUploadWorkflowRoutes(app: Express) {
   });
 }
 
+// Final-Input-Pipeline Routes (Admin-only)
+async function registerFinalInputPipelineRoutes(app: Express) {
+  // Import R2 helpers and image pipeline
+  const { getJobPaths, uploadToR2, listR2Objects, getR2ObjectBuffer } = await import("./r2-helpers");
+  const { runFullPipeline, generateJobExpose } = await import("./image-pipeline");
+
+  // POST /api/admin/final-input/:jobId/upload - Upload images to final_input
+  app.post("/api/admin/final-input/:jobId/upload", uploadLimiter, upload.array("files", 50), async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const jobId = parseInt(req.params.jobId);
+      const files = req.files as Express.Multer.File[];
+
+      if (!files || files.length === 0) {
+        return res.status(400).json({ error: "No files uploaded" });
+      }
+
+      const job = await storage.getJob(jobId.toString());
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      const paths = getJobPaths(jobId);
+      const createdImages = [];
+
+      for (const file of files) {
+        if (!file.mimetype.startsWith('image/')) {
+          console.warn(`Skipping non-image file: ${file.originalname}`);
+          continue;
+        }
+
+        const r2Key = `${paths.finalInput}/${file.originalname}`;
+        
+        await uploadToR2(r2Key, file.buffer, file.mimetype);
+
+        const finalImage = await storage.createFinalImage({
+          jobId,
+          filename: file.originalname,
+          r2Key,
+          fileSize: file.size,
+          mimeType: file.mimetype,
+          status: 'pending',
+        });
+
+        createdImages.push(finalImage);
+
+        runFullPipeline(finalImage, file.buffer).catch(error => {
+          console.error(`[Pipeline] Error processing ${file.originalname}:`, error);
+          storage.updateFinalImageStatus(finalImage.id, 'failed', error.message);
+        });
+      }
+
+      await storage.updateJobGalleryStatus(jobId, 'draft', 'internal');
+
+      res.json({
+        success: true,
+        uploaded: createdImages.length,
+        images: createdImages,
+      });
+    } catch (error) {
+      console.error("Error uploading to final_input:", error);
+      res.status(500).json({ error: "Failed to upload images" });
+    }
+  });
+
+  // GET /api/admin/final-input/:jobId - Get all final images for a job
+  app.get("/api/admin/final-input/:jobId", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const jobId = parseInt(req.params.jobId);
+      const finalImages = await storage.getJobFinalImages(jobId);
+
+      res.json({ finalImages });
+    } catch (error) {
+      console.error("Error fetching final images:", error);
+      res.status(500).json({ error: "Failed to fetch final images" });
+    }
+  });
+
+  // POST /api/admin/gallery/:jobId/approve - Approve gallery for customer visibility
+  app.post("/api/admin/gallery/:jobId/approve", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const jobId = parseInt(req.params.jobId);
+      
+      const job = await storage.getJob(jobId.toString());
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      const finalImages = await storage.getJobFinalImages(jobId);
+      if (finalImages.length === 0) {
+        return res.status(400).json({ error: "No images to approve" });
+      }
+
+      const paths = getJobPaths(jobId);
+      
+      for (const img of finalImages) {
+        const sourceKey = `${paths.pipeline.thumbs}/${img.filename}`;
+        const destKey = `${paths.gallery}/${img.filename}`;
+        
+        try {
+          const buffer = await getR2ObjectBuffer(sourceKey);
+          await uploadToR2(destKey, buffer, 'image/jpeg');
+        } catch (error) {
+          console.warn(`[Gallery] Failed to copy ${img.filename} to gallery:`, error);
+        }
+      }
+
+      await generateJobExpose(jobId, finalImages);
+
+      await storage.updateJobGalleryStatus(jobId, 'approved', 'customer');
+
+      res.json({
+        success: true,
+        message: "Gallery approved and published to customer",
+        imageCount: finalImages.length,
+      });
+    } catch (error) {
+      console.error("Error approving gallery:", error);
+      res.status(500).json({ error: "Failed to approve gallery" });
+    }
+  });
+
+  // GET /api/admin/gallery/:jobId/status - Get gallery status for a job
+  app.get("/api/admin/gallery/:jobId/status", async (req: Request, res: Response) => {
+    try {
+      if (!req.user) return res.status(401).json({ error: "Unauthorized" });
+      if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
+
+      const jobId = parseInt(req.params.jobId);
+      
+      const job = await storage.getJob(jobId.toString());
+      if (!job) {
+        return res.status(404).json({ error: "Job not found" });
+      }
+
+      const finalImages = await storage.getJobFinalImages(jobId);
+      
+      res.json({
+        galleryStatus: job.galleryStatus,
+        galleryVisibility: job.galleryVisibility,
+        imageCount: finalImages.length,
+        images: finalImages,
+      });
+    } catch (error) {
+      console.error("Error fetching gallery status:", error);
+      res.status(500).json({ error: "Failed to fetch gallery status" });
+    }
+  });
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Enable trust proxy for correct IP detection with Replit's reverse proxy
   // Set to 1 to trust only the first proxy (Replit's reverse proxy)
@@ -4673,6 +4831,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Upload Workflow Routes (pix.immo - New Design)
   registerUploadWorkflowRoutes(app);
+
+  // Final-Input-Pipeline routes (Admin-only)
+  await registerFinalInputPipelineRoutes(app);
 
   // P1: Test Helper routes (NODE_ENV === 'test' only)
   if (process.env.NODE_ENV === 'test') {
