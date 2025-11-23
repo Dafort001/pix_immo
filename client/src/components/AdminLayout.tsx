@@ -150,20 +150,6 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
       adminOnly: true,
     },
     {
-      title: "RAW Upload",
-      url: "/upload-raw",
-      icon: Upload,
-      testId: "nav-raw-upload",
-      adminOnly: true,
-    },
-    {
-      title: "RAW-Stacks (Beta)",
-      url: "/admin/raw-stacks/JOB-2025-11-001",
-      icon: Layers,
-      testId: "nav-raw-stacks",
-      adminOnly: true,
-    },
-    {
       title: "AI Lab",
       url: "/ai-lab",
       icon: Sparkles,

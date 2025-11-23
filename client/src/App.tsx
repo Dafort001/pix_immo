@@ -36,7 +36,6 @@ import FAQ from "@/pages/faq";
 import Downloads from "@/pages/downloads";
 import AdminEditorial from "@/pages/admin-editorial";
 import AdminSeo from "@/pages/admin-seo";
-import UploadRaw from "@/pages/upload-raw";
 import AILab from "@/pages/ai-lab";
 import DemoUpload from "@/pages/demo-upload";
 import DemoJobs from "@/pages/demo-jobs";
@@ -78,7 +77,6 @@ import AdminBookings from "@/pages/admin-bookings";
 import AdminJobs from "@/pages/admin-jobs";
 import AdminPixJobs from "@/pages/admin-pix-jobs";
 import AdminInternalBooking from "@/pages/admin-internal-booking";
-import AdminRawStacks from "@/pages/admin-raw-stacks";
 import QAPage from "@/routes/qa";
 
 function Router() {
@@ -103,7 +101,6 @@ function Router() {
       <Route path="/admin/internal-booking" component={AdminInternalBooking} />
       <Route path="/admin/jobs" component={AdminJobs} />
       <Route path="/admin/pix-jobs" component={AdminPixJobs} />
-      <Route path="/admin/raw-stacks/:jobId" component={AdminRawStacks} />
       <Route path="/qc-quality-check" component={QCQualityCheck} />
       <Route path="/gallery" component={Gallery} />
       <Route path="/blog" component={Blog} />
@@ -126,7 +123,6 @@ function Router() {
       <Route path="/review/:jobId/:shootId" component={Review} />
       <Route path="/admin/editorial" component={AdminEditorial} />
       <Route path="/admin/seo" component={AdminSeo} />
-      <Route path="/upload-raw" component={UploadRaw} />
       <Route path="/ai-lab" component={AILab} />
       <Route path="/demo-upload" component={DemoUpload} />
       <Route path="/demo-jobs" component={DemoJobs} />
