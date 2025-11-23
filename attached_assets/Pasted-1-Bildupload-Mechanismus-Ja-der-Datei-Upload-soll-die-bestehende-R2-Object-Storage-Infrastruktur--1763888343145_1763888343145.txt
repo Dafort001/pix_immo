@@ -1,0 +1,288 @@
+1. Bildupload-Mechanismus
+
+Ja, der Datei-Upload soll die bestehende R2/Object-Storage-Infrastruktur weiter nutzen.
+
+Ziel: kein zweites Storage-System, sondern derselbe Weg wie beim bisherigen RAW-Upload.
+
+Wenn es bereits einen Upload-Endpunkt gibt (z. B. /api/upload, /api/raw-upload o. Ä.):
+→ bitte diesen weiterverwenden und nur das Frontend bzw. die Metadaten-Anbindung an den neuen Workflow koppeln.
+
+Falls bisher alles sehr „direkt“ verdrahtet ist:
+→ neuer, generischer Endpunkt:
+POST /api/jobs/:jobId/upload
+
+nimmt beliebige Dateien an
+
+schreibt nach R2 in den bestehenden Bucket
+
+legt Einträge in der bestehenden Images-/Files-Tabelle an
+
+gibt eine Liste der neuen Datei-IDs zurück
+
+Wichtig:
+Der neue Workflow ist kein eigener Storage-Layer. Er hängt nur „vorne dran“ an das, was jetzt schon für RAW funktioniert.
+
+2. Stacks/Brackets Automatik
+
+Die Logik zur Erkennung von 3er/5er-Brackets soll serverseitig laufen, nicht im Browser.
+Gründe:
+
+einheitliche Logik für Web, PixCapture-App, zukünftige Tools
+
+weniger Code-Duplikat
+
+stabilere Auswertung von EXIF / Zeitstempeln
+
+Algorithmus grob:
+
+gruppieren nach
+
+Basis-Dateiname (falls vorhanden)
+
+Zeitstempel (z. B. alles innerhalb von 1–2 Sekunden)
+
+gleicher Aufnahmemodus (falls erkennbar)
+
+Ergebnisklassifizierung: Einzelbild, 3er-Stack, 5er-Stack, Video, 360°.
+
+Frontend-Verhalten:
+
+ruft nach dem Upload oder beim Laden GET /api/jobs/:jobId/stacks
+
+zeigt nur das serverseitig berechnete Ergebnis an.
+
+Falls es bereits interne Logik gibt (z. B. in /admin/raw-stacks/:jobId):
+→ bitte diese wiederverwenden und in eine saubere API-Funktion auslagern, statt komplett neu zu erfinden.
+
+3. Room Types (Raumtypen)
+
+Es soll eine zentrale, erweiterte Liste verwendet werden – nicht nur „20 AI-optimierte Types“.
+
+Für den Moment: fest definierte Liste im Frontend, die zu PixCapture passt.
+(Später kann das in eine /api/room-types ausgelagert werden, ist aber jetzt nicht zwingend.)
+
+Liste im Dropdown (Kurzversion, konsolidiert):
+
+Wohnzimmer
+
+Esszimmer
+
+Wohn-/Essbereich
+
+Schlafzimmer
+
+Kinderzimmer
+
+Gästezimmer
+
+Küche
+
+Bad
+
+Gäste-WC
+
+Flur / Diele
+
+Eingangsbereich
+
+Arbeitszimmer / Büro
+
+Abstellraum
+
+Kellerraum
+
+Hauswirtschaftsraum / Laundry
+
+Technikraum
+
+Balkon
+
+Terrasse
+
+Garten
+
+Dachterrasse
+
+Dachboden
+
+Wintergarten
+
+Außenbereich
+
+Hobbyraum
+
+Carport / Garage
+
+Loggia
+
+Poolbereich
+
+Wellness / Sauna
+
+Fitnessraum
+
+Gemeinschaftsraum / Lobby
+
+Konferenzraum
+
+Gewerbefläche / Showroom
+
+Sonstiger Raum (mit Freitexteingabe)
+
+Wichtig:
+Die Liste soll so im UI verfügbar sein und mit dem späteren PixCapture-Raumtypen-Set kompatibel bleiben.
+
+4. Editing Styles & Presets
+
+In V1 sind „Style A–D“, „Window Style“ und „Sky Style A–F“ fest codierte Presets, keine DB-gesteuerten Profile.
+
+Frontend:
+
+Dropdown mit:
+
+Stil A – Pix.immo Standard
+
+Stil B – Klar & kühl
+
+Stil C – Warm & soft
+
+Stil D – Magazin Plus
+
+Fensterstil:
+
+Neutral
+
+Clear View
+
+Privacy
+
+Skandinavisch hell
+
+Himmelstil:
+
+Himmel A
+
+Himmel B
+
+Himmel C
+
+Himmel D
+
+Himmel E
+
+Himmel F
+
+Kein Himmeltausch
+
+Backend:
+
+im Job / Auftrag werden nur Codes gespeichert, z. B.:
+
+editing_style: "A" | "B" | "C" | "D"
+
+window_style: "neutral" | "clear_view" | "privacy" | "scandi"
+
+sky_style: "A" | "B" | "C" | "D" | "E" | "F" | "none"
+
+Bedeutungen / echte Presets (LUTs, Grading usw.) werden später intern hinterlegt – der Workflow muss nur die Auswahl stabil speichern.
+
+5. 360° Tour Graph Format
+
+Es gibt aktuell kein bestehendes festes Schema, also bitte ein einfaches, klares neues Format definieren.
+
+Vorschlag (Nodes/Edges-Ansatz), gespeichert z. B. als tour_360-Feld im Job:
+
+{
+  "startPanoId": "pano_001",
+  "floors": [
+    {
+      "id": "EG",
+      "name": "Erdgeschoss",
+      "floorplanImageId": "file_123"
+    }
+  ],
+  "panos": [
+    {
+      "id": "pano_001",
+      "imageId": "img_123",
+      "floorId": "EG",
+      "type": "interior",          // interior | exterior | drone
+      "heightLevel": "ground",     // ground | upper | drone_low | drone_high
+      "x": 0.42,
+      "y": 0.63
+    }
+  ],
+  "links": [
+    {
+      "from": "pano_001",
+      "to": "pano_002",
+      "linkType": "same_level"     // same_level | vertical_up | vertical_down
+    }
+  ]
+}
+
+
+Das reicht für:
+
+Viewer-Integration später
+
+einfache Navigation
+
+Etagen-Management
+
+Unterscheidung Boden vs. Drohne.
+
+6. Workflow Lock & Status
+
+Wenn „Auftrag bestätigen und sperren“ geklickt wird, passiert folgendes:
+
+Job-Status wird auf z. B. locked gesetzt (oder in_editing, je nachdem, wie die Statusnamen derzeit sind).
+
+Im Frontend wird der Workflow in einen Read-only-Modus versetzt:
+
+keine Uploads
+
+keine Änderungen an Stacks
+
+kein Umsortieren
+
+keine Änderung von Retusche-/Editing-Optionen
+
+Technisch:
+
+API-Level: keine weiteren Mutationen für diesen Job zulassen, außer durch einen expliziten Admin-Unlock (falls wir den später brauchen).
+
+Frontend-Level: alle Eingabeelemente disabled, eindeutiger Hinweis „Auftrag gesperrt“.
+
+Notifications:
+
+Für diese Implementierungsrunde keine automatische E-Mail / Push-Notification implementieren.
+
+Das kann später nachgerüstet werden (z. B. Benachrichtigung an Editor).
+
+7. Berechtigungen (Permissions)
+
+Der Workflow ist kein Kundentool, sondern ein internes Werkzeug.
+
+Zugriff:
+
+role: admin
+
+darf alle Jobs sehen und bearbeiten.
+
+role: photographer
+
+darf nur Jobs sehen/bearbeiten, die ihm zugeordnet sind (assignedToUserId o. Ä.).
+
+Umsetzung:
+
+Beim Laden der Route /admin/upload-workflow/:jobId:
+
+Role-Check (admin oder photographer)
+
+für photographer zusätzlich Ownership-Check auf jobId
+
+falls Check scheitert → 403 oder Redirect
+
+Wichtig:
+Keine Öffnung für „role: customer“ im jetzigen Schritt. Kundenseitige UI wird später separat gebaut.
