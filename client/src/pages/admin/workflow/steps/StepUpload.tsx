@@ -49,14 +49,14 @@ export function StepUpload({
         description: `${data.uploadedCount} Dateien hochgeladen`,
       });
       
-      // Fetch updated stacks from backend
+      // Fetch updated stacks from backend (replace, don't append to avoid double-counting)
       try {
         const stacksResponse = await fetch(`/api/jobs/${jobId}/workflow/stacks`);
         if (stacksResponse.ok) {
           const stacksData = await stacksResponse.json();
           
           // Convert backend stacks to frontend format
-          const newStacks: Stack[] = stacksData.stacks.map((s: any) => ({
+          const fetchedStacks: Stack[] = stacksData.stacks.map((s: any) => ({
             id: s.id,
             files: s.imageIds?.map((imgId: string) => ({
               id: imgId,
@@ -72,9 +72,10 @@ export function StepUpload({
                       'single' as const,
           }));
           
-          setStacks([...stacks, ...newStacks]);
+          // Replace entire stacks array with server truth
+          setStacks(fetchedStacks);
           
-          const newFiles: UploadFile[] = stacksData.stacks.flatMap((s: any) =>
+          const fetchedFiles: UploadFile[] = stacksData.stacks.flatMap((s: any) =>
             s.imageIds?.map((imgId: string) => ({
               id: imgId,
               name: `Image ${imgId}`,
@@ -85,7 +86,8 @@ export function StepUpload({
             })) || []
           );
           
-          setFiles([...files, ...newFiles]);
+          // Replace entire files array with server truth
+          setFiles(fetchedFiles);
         }
       } catch (error) {
         console.error('Failed to fetch stacks:', error);

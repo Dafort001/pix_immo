@@ -143,13 +143,6 @@ export function AdminLayout({ children, userRole }: AdminLayoutProps) {
   // Photo workflow
   const photoWorkflow: NavigationItem[] = [
     {
-      title: "RAW-Upload Workflow",
-      url: "/admin/raw-stacks",
-      icon: Layers,
-      testId: "nav-upload-workflow",
-      adminOnly: true,
-    },
-    {
       title: "Final Editing",
       url: "/portal/gallery-editing",
       icon: ImagePlus,

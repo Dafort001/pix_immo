@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useAuthGuard } from '@/hooks/use-auth-guard';
-import { Plus, Eye, Trash2 } from 'lucide-react';
+import { Plus, Eye, Trash2, Upload } from 'lucide-react';
+import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ type PixJob = {
 export default function AdminPixJobs() {
   const { isLoading: authLoading } = useAuthGuard({ requiredRole: "admin" });
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showShootsDialog, setShowShootsDialog] = useState(false);
@@ -195,6 +197,15 @@ export default function AdminPixJobs() {
                         {formatDate(job.deadlineAt)}
                       </TableCell>
                       <TableCell className="text-right space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setLocation(`/admin/upload-workflow/${job.id}`)}
+                          data-testid={`button-upload-workflow-${job.id}`}
+                          title="Upload Workflow öffnen"
+                        >
+                          <Upload className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
