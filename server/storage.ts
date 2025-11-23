@@ -122,6 +122,7 @@ export interface IStorage {
   getUserJobs(userId: string): Promise<Job[]>;
   getAllJobs(): Promise<Job[]>;
   getJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]>;
+  getCompletedJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]>;
   getNonCompletedJobs(): Promise<Job[]>;
   updateJobStatus(id: string, status: string): Promise<void>;
   deleteJob(id: string): Promise<void>;
@@ -1169,6 +1170,20 @@ export class DatabaseStorage implements IStorage {
 
   async getJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]> {
     return await db.select().from(jobs).where(eq(jobs.source, source)).orderBy(desc(jobs.createdAt));
+  }
+
+  async getCompletedJobsBySource(source: 'piximmo' | 'pixcapture'): Promise<Job[]> {
+    const now = Date.now();
+    return await db
+      .select()
+      .from(jobs)
+      .where(
+        and(
+          eq(jobs.source, source),
+          sql`${jobs.appointmentDate} < ${now}`
+        )
+      )
+      .orderBy(desc(jobs.createdAt));
   }
 
   async getNonCompletedJobs(): Promise<Job[]> {

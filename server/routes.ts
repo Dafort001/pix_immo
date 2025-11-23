@@ -3394,8 +3394,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!req.user) return res.status(401).json({ error: "Unauthorized" });
       if (req.user.role !== "admin") return res.status(403).json({ error: "Admin access required" });
       
-      // Filter by source: only show piximmo jobs (professional jobs)
-      const jobs = await storage.getJobsBySource('piximmo');
+      // Filter by source: only show COMPLETED piximmo jobs (appointments in the past)
+      const jobs = await storage.getCompletedJobsBySource('piximmo');
       
       res.json(jobs);
     } catch (error) {
