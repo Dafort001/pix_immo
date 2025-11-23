@@ -104,6 +104,7 @@ type BookingFormData = z.infer<typeof bookingSchema>;
 
 const categoryLabels: Record<string, string> = {
   photography: "Fotopakete (Innen- & Außenaufnahmen)",
+  content: "Text & SEO-Services",
   drone: "Drohnenaufnahmen",
   video: "Videooptionen",
   "360tour": "Virtueller Rundgang (TML)",
@@ -114,13 +115,15 @@ const categoryLabels: Record<string, string> = {
 
 const categoryDescriptions: Record<string, string> = {
   photography: "Die Pakete unterscheiden sich in der Anzahl der finalen Bilder und der typischen Objektgröße. Die Quadratmeterangaben sind reine Richtwerte – im Zweifel stimmen wir den Umfang mit Ihnen ab.",
-  drone: "Drohnenaufnahmen zeigen Ihre Immobilie aus der Luft und ergänzen die klassischen Innen- und Außenfotos. Je nach Paket ist eine bestimmte Anzahl final bearbeiteter Luftbilder enthalten. Wie bei den Fotopaketen werden auch hier mehr Perspektiven aufgenommen, als im Paket inklusive sind. In der Online-Galerie können Sie bei Bedarf zusätzliche Drohnenbilder gegen Aufpreis auswählen.",
+  content: "Professionelle Texterstellung für Ihre Immobilie. Alt-Texte verbessern die Auffindbarkeit in Bildersuchmaschinen (SEO) und sind Voraussetzung für die KI-gestützte Exposé-Texterstellung.",
+  drone: "Drohnenaufnahmen zeigen Ihre Immobilie aus der Luft und ergänzen die klassischen Innen- und Außenfotos. Wählen Sie zwischen Einzelbuchung (200€) oder vergünstigtem Kombipaket mit einem Fotopaket (100€).",
   video: "Auf Wunsch können wir ausgewählte Videooptionen als Ergänzung zu den Fotopaketen produzieren. Die genauen Inhalte und die Länge der Clips stimmen wir nach der Buchung mit Ihnen ab. Die aktuell angezeigten Videopakete verstehen sich als Richtwerte. Das Angebot wird in den nächsten Monaten weiter verfeinert.",
   "360tour": "Mit dem virtuellen Rundgang (TML) können Interessenten Ihre Immobilie online begehen – ähnlich wie bei einer 360°-Tour. Wir erstellen dafür eine Tour mit ausgewählten Standpunkten in Ihrer Immobilie. Erweiterte Spezialtouren oder hochauflösende Varianten bieten wir aktuell bewusst nicht an, um Aufwand und Kosten überschaubar zu halten."
 };
 
 const categoryOrder = [
   "photography",
+  "content",
   "drone",
   "video",
   "360tour"
@@ -528,6 +531,15 @@ export default function Booking() {
                         </AlertDescription>
                       </Alert>
                     </div>
+                  )}
+                  
+                  {categoryKey === "content" && (
+                    <Alert className="mt-6">
+                      <Info className="h-4 w-4" />
+                      <AlertDescription>
+                        <strong>Wichtiger Hinweis zur Exposé-Texterstellung:</strong> Die KI-gestützte Exposé-Texterstellung benötigt Alt-Texte als Grundlage. Bitte buchen Sie "Alt-Texte für KI-Bildsuche" zusätzlich, wenn Sie ein Basis-Exposé wünschen. Alt-Texte verbessern außerdem die Auffindbarkeit Ihrer Bilder in Suchmaschinen.
+                      </AlertDescription>
+                    </Alert>
                   )}
                 </div>
               );

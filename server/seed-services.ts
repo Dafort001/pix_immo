@@ -13,10 +13,14 @@ const serviceData = [
   { serviceCode: "F40", category: "photography", name: "Luxus-Paket – 40 Bilder", description: "Für außergewöhnlich große Objekte über 300 m², Mehrfamilienhäuser oder mehrere Wohneinheiten (z. B. Hauptwohnung + Einliegerwohnung). Einliegerwohnungen oder weitere Einheiten nach individueller Absprache (Aufpreis mind. 50€). Komplette Abdeckung aller Bereiche mit maximaler Bildauswahl.", netPrice: 32000, notes: "Für Objekte 300+ m² oder mehrere Einheiten" },
   
   // Drone
-  { serviceCode: "D04", category: "drone", name: "4 Drohnenfotos", description: "Lage- und Umfelddarstellung", netPrice: 15000, notes: "Einzelauftrag" },
-  { serviceCode: "D04C", category: "drone", name: "4 Drohnenfotos im Kombipaket", description: "in Verbindung mit Fotopaket", netPrice: 10000, notes: "rabattierte Variante" },
+  { serviceCode: "D04", category: "drone", name: "Drohnenaufnahmen (Einzelbuchung)", description: "4 Drohnenfotos für Lage- und Umfelddarstellung als eigenständige Buchung ohne Fotopaket", netPrice: 20000, notes: "Einzelbuchung ohne Fotopaket" },
+  { serviceCode: "D04C", category: "drone", name: "Drohnenaufnahmen (Kombipaket)", description: "4 Drohnenfotos in Verbindung mit einem Fotopaket – vergünstigter Preis bei gemeinsamer Buchung", netPrice: 10000, notes: "Aufschlag bei Kombination mit Fotopaket" },
   { serviceCode: "D10", category: "drone", name: "10 Drohnenfotos", description: "mehrere Perspektiven, höherer Aufwand", netPrice: 22000, notes: "nach Wetterlage" },
   { serviceCode: "DVI", category: "drone", name: "Drohnenvideo 1 min", description: "Außenaufnahmen Video", netPrice: 39900, notes: "ggf. Sondergenehmigung nötig" },
+  
+  // Content & Text Services
+  { serviceCode: "ALT", category: "content", name: "Alt-Texte für KI-Bildsuche", description: "SEO-optimierte Alt-Texte für alle Bilder Ihres Pakets, ideal für bessere Auffindbarkeit in Bildersuchmaschinen und Barrierefreiheit. Automatisch generiert und manuell geprüft.", netPrice: 1000, notes: "Pro Paket, unabhängig von Bildanzahl" },
+  { serviceCode: "EXP", category: "content", name: "Basis-Exposé Texterstellung", description: "Professioneller Exposé-Text für Ihre Immobilie basierend auf den Bildern und Objektdaten. Inkludiert Objektbeschreibung, Lage und Ausstattung. Wichtig: Alt-Texte werden für die KI-gestützte Texterstellung benötigt.", netPrice: 1500, notes: "Benötigt Alt-Texte (ALT) als Voraussetzung" },
   
   // Video
   { serviceCode: "V30", category: "video", name: "Video-Teaser 30 Sek.", description: "Kurzclip, Hoch/Querformat", netPrice: 19900, notes: "Social-Media-Version" },
